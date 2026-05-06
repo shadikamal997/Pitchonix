@@ -1,0 +1,264 @@
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { Maximize2, Minimize2, ZoomIn, ZoomOut, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { SectionErrorBoundary } from '@/components/ErrorBoundary';
+
+interface A4PreviewProps {
+  content: string;
+  title?: string;
+  template?: string;
+  brandKit?: any;
+  onExport?: () => void;
+}
+
+/**
+ * A4 Preview Component
+ * Displays document in proper A4 dimensions (210mm × 297mm)
+ * with real-time rendering and zoom controls
+ */
+export function A4Preview({
+  content,
+  title = 'Untitled Document',
+  template = 'modern',
+  brandKit,
+  onExport,
+}: A4PreviewProps) {
+  const [zoom, setZoom] = useState(100);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // A4 dimensions in pixels at 96 DPI
+  const A4_WIDTH_PX = 794; // 210mm
+  const A4_HEIGHT_PX = 1123; // 297mm
+
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 10, 200));
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 10, 50));
+  const handleResetZoom = () => setZoom(100);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Parse content into sections
+  const sections = content.split('\n\n').filter((s) => s.trim());
+
+  return (
+    <SectionErrorBoundary sectionName="A4 Preview">
+      <div className="flex flex-col h-full bg-gray-100 dark:bg-gray-900">
+        {/* Toolbar */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              {title}
+            </h3>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              A4 (210 × 297mm)
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Zoom Controls */}
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleZoomOut}
+                disabled={zoom <= 50}
+                className="h-8 w-8"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <button
+                onClick={handleResetZoom}
+                className="px-3 py-1 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+              >
+                {zoom}%
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleZoomIn}
+                disabled={zoom >= 200}
+                className="h-8 w-8"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Fullscreen */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleFullscreen}
+              className="h-8 w-8"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
+
+            {/* Export */}
+            {onExport && (
+              <Button
+                onClick={onExport}
+                size="sm"
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export PDF
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Preview Area */}
+        <div
+          ref={containerRef}
+          className="flex-1 overflow-auto p-8 flex justify-center items-start"
+          style={{ backgroundColor: '#525659' }}
+        >
+          {/* A4 Page */}
+          <div
+            className="bg-white shadow-2xl transition-transform duration-200"
+            style={{
+              width: `${A4_WIDTH_PX}px`,
+              minHeight: `${A4_HEIGHT_PX}px`,
+              transform: `scale(${zoom / 100})`,
+              transformOrigin: 'top center',
+            }}
+          >
+            {/* Page Content */}
+            <div className="p-16">
+              {/* Header */}
+              {brandKit?.logo && (
+                <div className="mb-8">
+                  <img
+                    src={brandKit.logo}
+                    alt="Logo"
+                    className="h-12 object-contain"
+                  />
+                </div>
+              )}
+
+              {/* Title */}
+              <h1
+                className="text-4xl font-bold mb-8"
+                style={{
+                  color: brandKit?.colors?.primary || '#1E40AF',
+                }}
+              >
+                {title}
+              </h1>
+
+              {/* Content Sections */}
+              <div className="space-y-6">
+                {sections.map((section, index) => {
+                  const lines = section.split('\n');
+                  const isHeading =
+                    section.startsWith('#') ||
+                    /^[A-Z][^.!?]*:$/.test(lines[0]);
+
+                  if (isHeading) {
+                    const headingText = lines[0]
+                      .replace(/^#+\s*/, '')
+                      .replace(/:$/, '');
+                    const bodyText = lines.slice(1).join('\n');
+
+                    return (
+                      <div key={index}>
+                        <h2
+                          className="text-2xl font-semibold mb-3"
+                          style={{
+                            color: brandKit?.colors?.primary || '#1E40AF',
+                          }}
+                        >
+                          {headingText}
+                        </h2>
+                        {bodyText && (
+                          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                            {bodyText}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // Regular paragraph or bullet points
+                  const isBulletList = lines.some((line) =>
+                    /^[-•*]\s/.test(line)
+                  );
+
+                  if (isBulletList) {
+                    return (
+                      <ul key={index} className="list-disc list-inside space-y-2">
+                        {lines.map((line, lineIdx) => {
+                          const bulletText = line.replace(/^[-•*]\s*/, '');
+                          return bulletText ? (
+                            <li key={lineIdx} className="text-gray-700">
+                              {bulletText}
+                            </li>
+                          ) : null;
+                        })}
+                      </ul>
+                    );
+                  }
+
+                  return (
+                    <p
+                      key={index}
+                      className="text-gray-700 leading-relaxed whitespace-pre-wrap"
+                    >
+                      {section}
+                    </p>
+                  );
+                })}
+              </div>
+
+              {/* Footer */}
+              {brandKit?.contact && (
+                <div className="mt-16 pt-8 border-t border-gray-200 text-sm text-gray-500">
+                  <div className="flex justify-between">
+                    {brandKit.contact.email && (
+                      <span>{brandKit.contact.email}</span>
+                    )}
+                    {brandKit.contact.website && (
+                      <span>{brandKit.contact.website}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Page Info */}
+        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 text-center text-xs text-gray-500 dark:text-gray-400">
+          Page 1 of 1 • {Math.round((content.length / 2500) * 100)}% filled
+        </div>
+      </div>
+    </SectionErrorBoundary>
+  );
+}
+
+export default A4Preview;

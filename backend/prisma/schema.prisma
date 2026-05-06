@@ -1,0 +1,581 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String
+  name            String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  projects        Project[]
+  brandKits       BrandKit[]
+  exportTemplates ExportTemplate[]
+  exportJobs      ExportJob[]
+
+  @@map("users")
+}
+
+model Project {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  documentType   String   @default("pitch_deck") // pitch_deck, business_plan, proposal, sales_deck, company_profile, marketing_plan, etc.
+  documentFormat String   @default("slides") // 'slides' for presentations, 'pdf' for PDF Studio documents
+  industry       String?
+  status         String   @default("draft") // draft, generated, reviewed, exported
+  businessInfo   Json?    // Stores all wizard data (problem, solution, market, competitors, etc.)
+  audience       String?  // investors, customers, partners, internal, board, banks, government
+  tone           String?  // professional, investor-focused, luxury, bold, simple, technical, corporate
+  
+  // Media & Branding
+  logoUrl        String?  // Company logo URL
+  imageUrls      String[] // Additional images (products, team, etc.)
+  
+  qualityScore   Int?     // 0-100 Pitchonix Score
+  lastEditedAt   DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  decks          Deck[]
+  pdfDocuments   PdfDocument[] // PDF Studio documents
+  generationJobs GenerationJob[]
+  qualityReports QualityReport[]
+
+  @@map("projects")
+}
+
+model Deck {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  templateId  String?
+  template    Template? @relation(fields: [templateId], references: [id])
+  brandKitId  String?
+  brandKit    BrandKit? @relation(fields: [brandKitId], references: [id])
+  title       String
+  description String?
+  status      String   @default("draft") // draft, generating, ready, exporting
+  metadata    Json?    // Store additional metadata
+  
+  // Quality Control fields (Phase 7/8)
+  qualityScore      Json?     // QualityScore object with overall, grade, dimensions, breakdown
+  validationResult  Json?     // ValidationResult object with errors, warnings, info
+  generationMetrics Json?     // GenerationMetrics with timing, stages, performance
+  lastQualityCheck  DateTime? // When quality was last checked
+  exportReady       Boolean   @default(false) // Whether deck passes quality checks for export
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  slides          Slide[]
+  exports         Export[]
+  qualityHistory  QualityHistory[] // Phase 10: Quality tracking over time
+
+  @@map("decks")
+  @@index([projectId])
+  @@index([exportReady])
+  @@index([lastQualityCheck])
+}
+
+model Slide {
+  id           String   @id @default(uuid())
+  deckId       String
+  deck         Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  type         String   // cover, problem, solution, market_size, tam_sam_som, business_model, revenue_streams, traction, customer_segment, competitor_analysis, competitive_advantage, go_to_market, roadmap, team, financial_projection, use_of_funds, investment_ask, closing, appendix
+  order        Int
+  title        String
+  subtitle     String?
+  content      Json     // Flexible JSON structure for slide content (bullets, metrics, charts, etc.)
+  layoutKey    String?  // Which template layout to use
+  themeKey     String?  // Which theme to apply
+  speakerNotes String?  // Speaker notes
+  qualityScore Int?     // Individual slide quality score
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("slides")
+  @@index([deckId, order])
+}
+
+model Template {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  thumbnail   String?  // URL to template preview image
+  isPublic    Boolean  @default(true)
+  config      Json     // Template configuration (colors, fonts, layout)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  decks       Deck[]
+
+  @@map("templates")
+}
+
+model BrandKit {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  logo        String?  // URL to logo
+  primaryColor String? // Hex color
+  secondaryColor String? // Hex color
+  fontFamily  String?
+  config      Json?    // Additional brand settings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  decks       Deck[]
+  pdfDocuments PdfDocument[] // PDF documents using this brand kit
+
+  @@map("brand_kits")
+}
+
+model Export {
+  id        String   @id @default(uuid())
+  deckId    String
+  deck      Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  format    String   // pptx, pdf
+  status    String   @default("pending") // pending, processing, completed, failed
+  fileUrl   String?  // URL to exported file
+  error     String?  // Error message if failed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("exports")
+}
+
+model GenerationJob {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status    String   @default("queued") // queued, processing, generating_outline, generating_slides, applying_design, checking_quality, completed, failed
+  progress  Int      @default(0) // 0-100
+  result    Json?    // Generated content result
+  error     String?  // Error message if failed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("generation_jobs")
+}
+
+model QualityReport {
+  id           String   @id @default(uuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  overallScore Int      // 0-100 overall Pitchonix Score
+  breakdown    Json     // Scores by category (clarity, investor_readiness, design, business_logic, market_strength, financial_completeness, story_flow)
+  issues       Json     // Array of issues with severity (low, medium, high)
+  suggestions  Json     // Array of suggested fixes
+  fixedIssues  Json?    // Array of issues that were auto-fixed
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("quality_reports")
+}
+
+// Phase 10: Export Templates
+model ExportTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String   // 'system' or 'custom'
+  format      String   // 'pptx', 'pdf', 'html'
+  
+  // Template configuration
+  config      Json     // Template-specific settings
+  
+  // Branding
+  logoUrl     String?
+  watermark   String?
+  colors      Json?    // Color palette
+  fonts       Json?    // Font settings
+  
+  // Metadata
+  isDefault   Boolean  @default(false)
+  isPublic    Boolean  @default(false)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  exportJobs  ExportJob[]
+  
+  @@map("export_templates")
+  @@index([userId])
+  @@index([type])
+  @@index([format])
+}
+
+// Phase 10: Quality History Tracking
+model QualityHistory {
+  id                String   @id @default(uuid())
+  deckId            String
+  deck              Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  
+  // Quality metrics
+  overallScore      Float
+  grade             String
+  contentScore      Float
+  visualScore       Float
+  aiScore           Float
+  exportScore       Float
+  
+  // Validation results
+  validationPassed  Boolean
+  errorCount        Int      @default(0)
+  warningCount      Int      @default(0)
+  infoCount         Int      @default(0)
+  
+  // Context
+  trigger           String   // 'generation', 'manual', 'scheduled'
+  version           Int      @default(1)
+  changes           Json?    // What changed since last check
+  
+  createdAt         DateTime @default(now())
+  
+  @@map("quality_history")
+  @@index([deckId])
+  @@index([createdAt])
+}
+
+// Phase 10: Batch Export Jobs
+model ExportJob {
+  id            String          @id @default(uuid())
+  deckIds       String[]        // Support batch export
+  format        String          // 'pptx', 'pdf', 'html'
+  
+  // Template and options
+  templateId    String?
+  template      ExportTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  options       Json            // Export-specific options
+  
+  // Status
+  status        String          // 'pending', 'processing', 'completed', 'failed'
+  progress      Int             @default(0)
+  currentDeck   String?
+  
+  // Results
+  outputUrls    String[]        // Generated file URLs
+  errors        Json?
+  
+  // Metadata
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime        @default(now())
+  
+  @@map("export_jobs")
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ===== PDF STUDIO MODELS =====
+
+// PDF Documents (distinct from slide decks)
+model PdfDocument {
+  id             String        @id @default(uuid())
+  projectId      String
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Document info
+  title          String
+  description    String?
+  documentType   String        // business_plan, proposal, company_profile, executive_summary, marketing_plan, etc.
+  
+  // Design
+  brandKitId     String?
+  brandKit       BrandKit?     @relation(fields: [brandKitId], references: [id])
+  brandColor     String?       // Primary brand color (hex)
+  accentColor    String?       // Secondary accent color (hex)
+  
+  // Content & Structure
+  outline        Json?         // Document outline/structure
+  metadata       Json?         // Additional metadata
+  
+  // Status & Quality
+  status         String        @default("draft") // draft, generating, ready, exporting
+  qualityScore   Float?        // 0-100
+  validationResult Json?       // Validation results
+  exportReady    Boolean       @default(false)
+  lastQualityCheck DateTime?
+  
+  // Timestamps
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  // Relations
+  pages          PdfPage[]
+  exports        PdfExport[]
+  qualityHistory PdfQualityHistory[]
+  contentAnalysis ContentAnalysis?
+  smartBuilderConfig SmartBuilderConfig?
+  contentEnhancements ContentEnhancement[]
+  
+  @@map("pdf_documents")
+  @@index([projectId])
+  @@index([documentType])
+  @@index([status])
+  @@index([exportReady])
+}
+
+// Individual PDF Pages
+model PdfPage {
+  id             String       @id @default(uuid())
+  documentId     String
+  document       PdfDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  // Page info
+  order          Int
+  pageType       String       // cover, toc, executive_summary, section_divider, content, metrics, chart, financial_table, timeline, case_study, conclusion
+  title          String?
+  
+  // Content
+  content        Json         // Page-specific content based on template
+  
+  // Template & Design
+  templateId     String?
+  template       PdfTemplate? @relation(fields: [templateId], references: [id])
+  customStyles   Json?        // Custom styling overrides
+  
+  // Quality & Status
+  qualityScore   Float?       // Individual page quality score
+  validationIssues Json?      // Page-specific validation issues
+  
+  // Timestamps
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  @@map("pdf_pages")
+  @@index([documentId, order])
+  @@index([pageType])
+}
+
+// PDF Page Templates
+model PdfTemplate {
+  id             String    @id @default(uuid())
+  
+  // Template info
+  name           String
+  description    String?
+  pageType       String    // cover, toc, executive_summary, etc.
+  thumbnail      String?   // Preview image URL
+  
+  // Template config
+  structure      Json      // Page structure/layout definition
+  defaultContent Json?     // Default content values
+  styleConfig    Json?     // Styling configuration
+  
+  // Metadata
+  isSystem       Boolean   @default(false) // System vs custom template
+  isPublic       Boolean   @default(false)
+  tags           String[]  // Searchable tags
+  
+  // Timestamps
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  // Relations
+  pages          PdfPage[]
+  
+  @@map("pdf_templates")
+  @@index([pageType])
+  @@index([isSystem])
+}
+
+// PDF Export Records
+model PdfExport {
+  id            String       @id @default(uuid())
+  documentId    String
+  document      PdfDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  // Export config
+  format        String       @default("pdf") // pdf (could support html, docx in future)
+  options       Json?        // Export options (page size, margins, etc.)
+  
+  // Status
+  status        String       @default("pending") // pending, processing, completed, failed
+  progress      Int          @default(0) // 0-100
+  
+  // Result
+  fileUrl       String?      // Generated PDF URL
+  fileSize      Int?         // File size in bytes
+  pageCount     Int?         // Number of pages
+  error         String?      // Error message if failed
+  
+  // Timestamps
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  
+  @@map("pdf_exports")
+  @@index([documentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// PDF Quality History (similar to QualityHistory for decks)
+model PdfQualityHistory {
+  id                String      @id @default(uuid())
+  documentId        String
+  document          PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  // Quality metrics
+  overallScore      Float
+  grade             String
+  contentScore      Float
+  designScore       Float
+  structureScore    Float
+  professionalScore Float
+  
+  // Validation results
+  validationPassed  Boolean
+  errorCount        Int      @default(0)
+  warningCount      Int      @default(0)
+  infoCount         Int      @default(0)
+  
+  // Context
+  trigger           String   // 'generation', 'manual', 'scheduled'
+  version           Int      @default(1)
+  changes           Json?    // What changed since last check
+  
+  createdAt         DateTime @default(now())
+  
+  @@map("pdf_quality_history")
+  @@index([documentId])
+  @@index([createdAt])
+}
+
+// ===== SMART PDF BUILDER MODELS =====
+
+// Content Analysis for raw input
+model ContentAnalysis {
+  id               String       @id @default(uuid())
+  documentId       String?      @unique
+  document         PdfDocument? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  // Raw input
+  rawContent       String       @db.Text // Original raw content
+  contentLength    Int          // Character count
+  
+  // Auto-detection results
+  detectedType     String       // business, academic, report, article, notes, technical, mixed, unknown
+  confidence       Float        // 0-1 confidence score
+  primaryLanguage  String       @default("en")
+  
+  // Content classification
+  categories       String[]     // Tags/categories detected
+  keywords         String[]     // Key terms extracted
+  topics           String[]     // Main topics identified
+  
+  // Structure analysis
+  hasTitle         Boolean      @default(false)
+  hasHeadings      Boolean      @default(false)
+  hasBullets       Boolean      @default(false)
+  hasNumbers       Boolean      @default(false)
+  sectionCount     Int          @default(0)
+  paragraphCount   Int          @default(0)
+  
+  // Content quality
+  readabilityScore Float?       // Flesch reading ease score
+  grammarIssues    Int          @default(0)
+  spellingIssues   Int          @default(0)
+  clarityScore     Float?       // 0-1 clarity score
+  
+  // Extracted information
+  extractedData    Json?        // Structured data extracted (names, dates, numbers, etc.)
+  suggestedTitle   String?
+  suggestedSections Json?       // Recommended section structure
+  
+  // Processing metadata
+  processingTime   Int?         // Processing time in ms
+  aiModel          String?      // Which AI model was used
+  
+  createdAt        DateTime     @default(now())
+  
+  @@map("content_analyses")
+  @@index([detectedType])
+  @@index([createdAt])
+}
+
+// Smart Builder Configuration (user preferences for content transformation)
+model SmartBuilderConfig {
+  id              String   @id @default(uuid())
+  documentId      String   @unique
+  document        PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  // User selections
+  documentGoal    String?  // inform, persuade, report, educate, pitch, document
+  targetAudience  String?  // executives, investors, clients, team, public, academic
+  tone            String   // formal, casual, academic, persuasive, technical, friendly
+  designStyle     String   // minimal, modern, corporate, creative, academic, bold
+  
+  // Content transformation preferences
+  improveWriting  Boolean  @default(true)
+  fixGrammar      Boolean  @default(true)
+  addStructure    Boolean  @default(true)
+  generateIntro   Boolean  @default(false)
+  generateSummary Boolean  @default(false)
+  generateConclusion Boolean @default(false)
+  expandContent   Boolean  @default(false)
+  shortenContent  Boolean  @default(false)
+  
+  // Layout preferences
+  includeTableOfContents Boolean @default(true)
+  includeCoverPage Boolean @default(true)
+  includePageNumbers Boolean @default(true)
+  includeHeaders Boolean @default(true)
+  includeFooters Boolean @default(true)
+  
+  // Advanced options
+  customInstructions String? @db.Text
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("smart_builder_configs")
+}
+
+// Content Enhancement History (track content improvements)
+model ContentEnhancement {
+  id              String       @id @default(uuid())
+  documentId      String
+  document        PdfDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  // Enhancement details
+  enhancementType String       // improve_writing, fix_grammar, restructure, expand, shorten, professionalize, engage
+  scope           String       // full_document, single_section, single_page
+  targetId        String?      // Page or section ID if applicable
+  
+  // Content before/after
+  originalContent String       @db.Text
+  enhancedContent String       @db.Text
+  changes         Json?        // Detailed changes made
+  
+  // Quality impact
+  qualityBefore   Float?
+  qualityAfter    Float?
+  improvement     Float?       // Percentage improvement
+  
+  // Metadata
+  aiModel         String?
+  processingTime  Int?         // ms
+  userAccepted    Boolean      @default(false)
+  
+  createdAt       DateTime     @default(now())
+  
+  @@map("content_enhancements")
+  @@index([documentId])
+  @@index([enhancementType])
+  @@index([createdAt])
+}

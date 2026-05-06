@@ -1,0 +1,100 @@
+import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { join } from 'path';
+import * as fs from 'fs';
+
+async function bootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Enable CORS
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+    credentials: true,
+  });
+
+  // Serve exported files as static assets
+  const exportsDir = join(process.cwd(), 'exports');
+  if (!fs.existsSync(exportsDir)) {
+    fs.mkdirSync(exportsDir, { recursive: true });
+  }
+  app.useStaticAssets(exportsDir, { prefix: '/exports' });
+
+  // Serve uploaded files as static assets
+  const uploadsDir = join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  app.useStaticAssets(uploadsDir, { prefix: '/uploads' });
+
+  // Global exception filter for consistent error responses
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Global logging interceptor
+  app.useGlobalInterceptors(new LoggingInterceptor());
+
+  // Global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+      exceptionFactory: (errors) => {
+        const formattedErrors: Record<string, string[]> = {};
+        errors.forEach((error) => {
+          if (error.constraints) {
+            formattedErrors[error.property] = Object.values(error.constraints);
+          }
+        });
+        return {
+          statusCode: 400,
+          message: 'Validation failed',
+          error: 'ValidationError',
+          details: formattedErrors,
+        };
+      },
+    }),
+  );
+
+  // API prefix
+  app.setGlobalPrefix('api');
+
+  // Swagger documentation
+  const config = new DocumentBuilder()
+    .setTitle('Pitchonix API')
+    .setDescription('API documentation for Pitchonix - AI-powered presentation generator')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
+  const port = process.env.PORT || 4000;
+  await app.listen(port);
+
+  const logger = new Logger('Bootstrap');
+  logger.log(`🚀 Application is running on: http://localhost:${port}`);
+  logger.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+
+  // PHASE 10: Seed system templates on startup
+  try {
+    const { ExportTemplateService } = await import('./export/services');
+    const { PrismaService } = await import('./prisma/prisma.service');
+    
+    const prisma = app.get(PrismaService);
+    const templateService = new ExportTemplateService(prisma);
+    
+    await templateService.seedSystemTemplates();
+  } catch (error) {
+    const logger = new Logger('Bootstrap');
+    logger.error('⚠️  Failed to seed system templates:', error.message);
+    // Don't fail app startup if seeding fails
+  }
+}
+
+bootstrap();
