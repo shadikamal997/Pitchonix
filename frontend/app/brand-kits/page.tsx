@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ModernSidebar } from '@/components/ui/modern-sidebar';
 import { useAuthStore } from '@/lib/store';
+import { useToast } from '@/components/ToastProvider';
 import { Button } from '@/components/ui/button';
 import { Palette, Plus, Edit, Trash, X } from 'lucide-react';
 import api from '@/lib/api';
@@ -11,9 +12,11 @@ import api from '@/lib/api';
 export default function BrandKitsPage() {
   const router = useRouter();
   const { user, _hasHydrated } = useAuthStore();
+  const toast = useToast();
   const [brandKits, setBrandKits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingKit, setEditingKit] = useState<any | null>(null);
 
   useEffect(() => {
     if (!_hasHydrated) return;
@@ -27,7 +30,7 @@ export default function BrandKitsPage() {
   const fetchBrandKits = async () => {
     try {
       const { data } = await api.get('/brand-kits');
-      setBrandKits(data);
+      setBrandKits(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch brand kits:', error);
       setBrandKits([]);
@@ -71,18 +74,41 @@ export default function BrandKitsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {brandKits.map((kit: any) => (
-                <BrandKitCard key={kit.id} kit={kit} onRefresh={fetchBrandKits} />
+                <BrandKitCard
+                  key={kit.id}
+                  kit={kit}
+                  onEdit={() => setEditingKit(kit)}
+                  onRefresh={fetchBrandKits}
+                  toast={toast}
+                />
               ))}
             </div>
           )}
 
           {showCreateDialog && (
-            <CreateBrandKitDialog
+            <BrandKitDialog
+              mode="create"
               onClose={() => setShowCreateDialog(false)}
               onSuccess={() => {
                 setShowCreateDialog(false);
                 fetchBrandKits();
+                toast.success('Brand kit created');
               }}
+              toast={toast}
+            />
+          )}
+
+          {editingKit && (
+            <BrandKitDialog
+              mode="edit"
+              kit={editingKit}
+              onClose={() => setEditingKit(null)}
+              onSuccess={() => {
+                setEditingKit(null);
+                fetchBrandKits();
+                toast.success('Brand kit updated');
+              }}
+              toast={toast}
             />
           )}
         </div>
@@ -91,15 +117,15 @@ export default function BrandKitsPage() {
   );
 }
 
-function BrandKitCard({ kit, onRefresh }: any) {
+function BrandKitCard({ kit, onEdit, onRefresh, toast }: any) {
   const handleDelete = async () => {
     if (!confirm('Delete this brand kit?')) return;
     try {
       await api.delete(`/brand-kits/${kit.id}`);
       onRefresh();
-    } catch (error) {
-      console.error('Failed to delete brand kit:', error);
-      alert('Failed to delete brand kit');
+      toast.success('Brand kit deleted');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to delete brand kit');
     }
   };
 
@@ -120,11 +146,12 @@ function BrandKitCard({ kit, onRefresh }: any) {
           <div
             className="w-8 h-8 rounded border border-gray-200"
             style={{ backgroundColor: kit.secondaryColor }}
+            title={kit.secondaryColor}
           />
         )}
       </div>
       <div className="flex gap-2">
-        <Button size="sm" variant="outline" className="flex-1">
+        <Button size="sm" variant="outline" className="flex-1" onClick={onEdit}>
           <Edit className="h-3 w-3 mr-1" /> Edit
         </Button>
         <Button size="sm" variant="outline" onClick={handleDelete}>
@@ -135,30 +162,28 @@ function BrandKitCard({ kit, onRefresh }: any) {
   );
 }
 
-function CreateBrandKitDialog({ onClose, onSuccess }: any) {
-  const [name, setName] = useState('');
-  const [primaryColor, setPrimaryColor] = useState('#8B5CF6');
-  const [secondaryColor, setSecondaryColor] = useState('#06B6D4');
+function BrandKitDialog({ mode, kit, onClose, onSuccess, toast }: any) {
+  const [name, setName] = useState(kit?.name || '');
+  const [primaryColor, setPrimaryColor] = useState(kit?.primaryColor || '#8B5CF6');
+  const [secondaryColor, setSecondaryColor] = useState(kit?.secondaryColor || '#06B6D4');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      alert('Please enter a name');
+      toast.error('Please enter a name');
       return;
     }
-    
     setSubmitting(true);
     try {
-      await api.post('/brand-kits', { 
-        name: name.trim(), 
-        primaryColor, 
-        secondaryColor 
-      });
+      if (mode === 'edit') {
+        await api.patch(`/brand-kits/${kit.id}`, { name: name.trim(), primaryColor, secondaryColor });
+      } else {
+        await api.post('/brand-kits', { name: name.trim(), primaryColor, secondaryColor });
+      }
       onSuccess();
-    } catch (error) {
-      console.error('Failed to create brand kit:', error);
-      alert('Failed to create brand kit. The API endpoint may not be implemented yet.');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || `Failed to ${mode} brand kit`);
     } finally {
       setSubmitting(false);
     }
@@ -168,7 +193,9 @@ function CreateBrandKitDialog({ onClose, onSuccess }: any) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Create Brand Kit</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            {mode === 'edit' ? 'Edit Brand Kit' : 'Create Brand Kit'}
+          </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="h-5 w-5" />
           </button>
@@ -221,7 +248,7 @@ function CreateBrandKitDialog({ onClose, onSuccess }: any) {
           </div>
           <div className="flex gap-2 mt-6">
             <Button type="submit" disabled={submitting} className="flex-1">
-              {submitting ? 'Creating...' : 'Create'}
+              {submitting ? (mode === 'edit' ? 'Saving...' : 'Creating...') : (mode === 'edit' ? 'Save Changes' : 'Create')}
             </Button>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel

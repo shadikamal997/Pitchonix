@@ -1,7 +1,12 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, FileText, Briefcase, Building, TrendingUp, DollarSign, Users, PieChart, File } from 'lucide-react';
+import { useToast } from '@/components/ToastProvider';
+import { ArrowLeft, FileText, Briefcase, Building, TrendingUp, DollarSign, Users, PieChart, File, Loader2 } from 'lucide-react';
+import { TemplateCard } from '@/components/pdf-studio/StandardCard';
+import api from '@/lib/api';
 
 const DOCUMENT_TEMPLATES = [
   {
@@ -74,6 +79,56 @@ const colorClasses: Record<string, { bg: string; text: string; hover: string; ic
 };
 
 export default function StructuredDocumentsPage() {
+  const router = useRouter();
+  const toast = useToast();
+  const [creatingDocument, setCreatingDocument] = useState<string | null>(null);
+
+  const handleCreateDocument = async (templateId: string, templateName: string) => {
+    try {
+      setCreatingDocument(templateId);
+
+      // Create a new structured document using Smart PDF Builder endpoint
+      const response = await api.post('/pdf-studio/smart-builder/generate', {
+        rawContent: `# ${templateName}\n\n## Executive Summary\n\nProvide a brief overview of your ${templateName.toLowerCase()}.\n\n## Introduction\n\nStart creating your ${templateName.toLowerCase()} here...\n\n## Main Content\n\nAdd your detailed content in this section.\n\n### Key Points\n\n- Point 1\n- Point 2\n- Point 3\n\n## Conclusion\n\nSummarize your key points here.`,
+        config: {
+          title: templateName,
+          tone: 'professional',
+          designStyle: 'corporate',
+          improveWriting: true,
+          fixGrammar: true,
+          addStructure: true,
+          generateIntro: false,
+          generateSummary: false,
+          generateConclusion: false,
+          includeTableOfContents: true,
+          includeCoverPage: true,
+        }
+      });
+
+      const responseData = response.data.data;
+      
+      // Check if user needs to authenticate
+      if (responseData.requiresAuth) {
+        router.push('/login');
+        return;
+      }
+
+      const documentId = responseData.document?.id;
+      
+      if (!documentId) {
+        throw new Error('No document ID returned from server');
+      }
+
+      // Navigate to editor
+      router.push(`/pdf-studio/editor/${documentId}`);
+    } catch (error: any) {
+      console.error('Failed to create document:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create document. Please try again.';
+      toast.error(errorMessage);
+      setCreatingDocument(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50">
       {/* Header */}
@@ -100,32 +155,19 @@ export default function StructuredDocumentsPage() {
           {DOCUMENT_TEMPLATES.map((template) => {
             const Icon = template.icon;
             const colors = colorClasses[template.color];
+            const isCreating = creatingDocument === template.id;
             
             return (
-              <Link
+              <TemplateCard
                 key={template.id}
-                href="/pdf-studio/smart-builder"
-                className={`relative bg-white rounded-xl shadow-sm border-2 border-gray-200 hover:shadow-md hover:border-${template.color}-300 transition-all p-6`}
-              >
-                <div className={`w-14 h-14 ${colors.bg} rounded-xl flex items-center justify-center mb-4`}>
-                  <Icon className={`w-7 h-7 ${colors.icon}`} />
-                </div>
-                
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {template.name}
-                </h3>
-                
-                <p className="text-sm text-gray-600 mb-4">
-                  {template.description}
-                </p>
-                
-                <div className="flex items-center text-sm font-medium text-blue-600">
-                  Create Document
-                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </Link>
+                name={template.name}
+                description={template.description}
+                icon={Icon}
+                iconColor={colors.icon}
+                iconBg={colors.bg}
+                onClick={() => handleCreateDocument(template.id, template.name)}
+                isLoading={isCreating}
+              />
             );
           })}
         </div>

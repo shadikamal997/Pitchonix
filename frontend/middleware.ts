@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PROTECTED_PATHS = ['/dashboard', '/create', '/projects', '/editor'];
+const PROTECTED_PATHS = ['/dashboard', '/create', '/projects', '/editor', '/onboarding', '/settings', '/pdf-studio', '/brand-kits', '/templates', '/analytics'];
 const AUTH_PATHS = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
@@ -32,6 +32,12 @@ export const config = {
     '/create/:path*',
     '/projects/:path*',
     '/editor/:path*',
+    '/onboarding/:path*',
+    '/settings/:path*',
+    '/pdf-studio/:path*',
+    '/brand-kits/:path*',
+    '/templates/:path*',
+    '/analytics/:path*',
     '/login',
     '/register',
   ],

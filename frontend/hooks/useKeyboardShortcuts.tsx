@@ -128,68 +128,71 @@ export function KeyboardShortcutsHelp({
 }
 
 /**
- * Default shortcuts for the app
+ * Returns navigation shortcuts wired to the app router.
+ * Call this inside a component/hook where router is available.
  */
+export function getAppShortcuts(
+  router: { push: (path: string) => void },
+  extras?: {
+    onShowShortcuts?: () => void;
+    onSave?: () => void;
+  }
+): KeyboardShortcut[] {
+  return [
+    {
+      key: 'n',
+      ctrl: true,
+      description: 'New document',
+      action: () => router.push('/create'),
+    },
+    {
+      key: 'h',
+      ctrl: true,
+      description: 'Go to dashboard',
+      action: () => router.push('/dashboard'),
+    },
+    {
+      key: 't',
+      ctrl: true,
+      description: 'Browse templates',
+      action: () => router.push('/templates'),
+    },
+    {
+      key: 'b',
+      ctrl: true,
+      description: 'Open brand kits',
+      action: () => router.push('/brand-kits'),
+    },
+    {
+      key: 's',
+      ctrl: true,
+      description: 'Save (in editor)',
+      action: () => extras?.onSave?.(),
+    },
+    {
+      key: '/',
+      ctrl: true,
+      description: 'Show keyboard shortcuts',
+      action: () => extras?.onShowShortcuts?.(),
+    },
+    {
+      key: ',',
+      ctrl: true,
+      description: 'Open settings',
+      action: () => router.push('/settings'),
+    },
+  ];
+}
+
+/** Flat list of all shortcuts for the help modal (no actions needed) */
 export const defaultShortcuts: KeyboardShortcut[] = [
-  {
-    key: 'k',
-    ctrl: true,
-    description: 'Open command palette',
-    action: () => console.log('Command palette'),
-  },
-  {
-    key: 's',
-    ctrl: true,
-    description: 'Save document',
-    action: () => console.log('Save'),
-  },
-  {
-    key: 'p',
-    ctrl: true,
-    description: 'Print / Export PDF',
-    action: () => console.log('Print'),
-  },
-  {
-    key: 'n',
-    ctrl: true,
-    description: 'New document',
-    action: () => console.log('New document'),
-  },
-  {
-    key: 'f',
-    ctrl: true,
-    description: 'Search in document',
-    action: () => console.log('Search'),
-  },
-  {
-    key: '/',
-    ctrl: true,
-    description: 'Show keyboard shortcuts',
-    action: () => console.log('Show shortcuts'),
-  },
-  {
-    key: 'd',
-    ctrl: true,
-    description: 'Toggle dark mode',
-    action: () => console.log('Toggle dark mode'),
-  },
-  {
-    key: 'b',
-    ctrl: true,
-    description: 'Toggle sidebar',
-    action: () => console.log('Toggle sidebar'),
-  },
-  {
-    key: 'z',
-    ctrl: true,
-    description: 'Undo',
-    action: () => console.log('Undo'),
-  },
-  {
-    key: 'z',
-    ctrl: true,
-    shift: true,
-    description: 'Redo',
-    action: () => console.log('Redo'),
-  },
+  { key: 'n', ctrl: true, description: 'New document', action: () => {} },
+  { key: 'h', ctrl: true, description: 'Go to dashboard', action: () => {} },
+  { key: 't', ctrl: true, description: 'Browse templates', action: () => {} },
+  { key: 'b', ctrl: true, description: 'Open brand kits', action: () => {} },
+  { key: 's', ctrl: true, description: 'Save (in editor)', action: () => {} },
+  { key: '/', ctrl: true, description: 'Show keyboard shortcuts', action: () => {} },
+  { key: ',', ctrl: true, description: 'Open settings', action: () => {} },
+  { key: 'z', ctrl: true, description: 'Undo', action: () => {} },
+  { key: 'z', ctrl: true, shift: true, description: 'Redo', action: () => {} },
 ];

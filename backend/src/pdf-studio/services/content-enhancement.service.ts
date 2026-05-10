@@ -846,26 +846,40 @@ export class ContentEnhancementService {
   }
 
   /**
-   * Shorten content
+   * Shorten content — safe version.
+   * Only removes truly byte-identical consecutive duplicate sentences.
+   * NEVER removes sentences that merely share similar wording.
    */
   private shortenContent(content: string): { content: string; changes: any[] } {
     const changes: any[] = [];
 
-    // Remove redundant sentences
     const paragraphs = content.split(/\n\s*\n/);
     const shortened = paragraphs
       .map((para) => {
-        const sentences = para.split(/[.!?]+/).filter((s) => s.trim());
-        // Keep only unique sentences
-        const unique = Array.from(new Set(sentences));
-        return unique.join('. ') + '.';
+        // Split into sentences keeping punctuation
+        const sentenceMatches = para.match(/[^.!?]*[.!?]+/g) ?? [para];
+        const seen = new Set<string>();
+        const kept: string[] = [];
+
+        for (const sentence of sentenceMatches) {
+          // Only deduplicate EXACT byte-identical sentences (with same casing/spacing)
+          const key = sentence.trim();
+          if (key && !seen.has(key)) {
+            seen.add(key);
+            kept.push(sentence);
+          }
+        }
+
+        // If nothing was deduped, return the original paragraph unchanged
+        const result = kept.join('');
+        return result.trim() || para;
       })
       .join('\n\n');
 
     if (shortened !== content) {
       changes.push({
         type: 'shortening',
-        description: 'Removed redundant sentences',
+        description: 'Removed exact duplicate sentences',
         before: content.substring(0, 100),
         after: shortened.substring(0, 100),
       });

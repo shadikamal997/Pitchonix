@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api';
-import { ArrowLeft, Edit, FileText, Loader2, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Loader2, TrendingUp, Share2 } from 'lucide-react';
+import ShareProjectModal from '@/components/ShareProjectModal';
 import { QualityScoreBadge } from '@/components/quality/QualityScoreBadge';
 import { GenerationProgress } from '@/components/quality/GenerationProgress';
 import { ExportReadinessIndicator } from '@/components/quality/ExportReadinessIndicator';
@@ -27,6 +28,7 @@ interface Project {
   description?: string;
   status: string;
   decks: Deck[];
+  businessInfo?: Record<string, any>;
 }
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
@@ -36,6 +38,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
   const [polling, setPolling] = useState(false);
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = () => {
@@ -156,9 +159,24 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
             >
               {project.status}
             </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowShareModal(true)}
+              className="flex items-center gap-1.5"
+            >
+              <Share2 className="h-4 w-4" />
+              Share
+            </Button>
           </div>
         </div>
       </header>
+
+      <ShareProjectModal
+        projectId={params.id}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
 
       <div className="container mx-auto px-4 py-8">
         {/* 3-column grid on desktop: 2 cols main content, 1 col quality sidebar */}
@@ -185,8 +203,32 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                   <p className="text-gray-600 mb-4">
                     {project.status === 'generating'
                       ? 'Your deck is being generated...'
+                      : project.status === 'draft'
+                      ? 'This project is in draft mode.'
                       : 'This project doesnt have any decks yet.'}
                   </p>
+                  {project.status === 'draft' && (
+                    <Button
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          await api.post('/generate', {
+                            projectId: project.id,
+                            input: project.businessInfo || {},
+                          });
+                          fetchProject(); // Refresh to show generating status
+                        } catch (error: any) {
+                          console.error('Failed to start generation:', error);
+                          alert(error.response?.data?.message || 'Failed to start generation');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
+                    >
+                      {loading ? 'Starting...' : 'Generate Deck'}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ) : (

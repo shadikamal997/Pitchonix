@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PerformanceService } from '../../common/performance.service';
+import { SemanticStructureEngine, SemanticAnalysisResult, DocumentIntelligence } from './semantic-structure-engine.service';
 const nlp = require('compromise');
 
 export interface ContentIssue {
@@ -35,6 +36,11 @@ export interface ContentAnalysisResult {
   suggestedSections: any[];
   issues: ContentIssue[];
   recommendedEnhancements: string[];
+  // NEW: Semantic intelligence fields
+  semanticAnalysis?: SemanticAnalysisResult;
+  documentIntelligence?: DocumentIntelligence;
+  hasImplicitStructure?: boolean;
+  semanticFeedback?: string[];
 }
 
 @Injectable()
@@ -44,6 +50,7 @@ export class ContentAnalysisService {
   constructor(
     private prisma: PrismaService,
     private performanceService: PerformanceService,
+    private semanticStructureEngine: SemanticStructureEngine,
   ) {}
 
   /**
@@ -172,6 +179,29 @@ export class ContentAnalysisService {
       wordCount,
     );
 
+    // Step 10: Semantic intelligence analysis (NEW)
+    let semanticAnalysis: SemanticAnalysisResult | undefined;
+    let documentIntelligence: DocumentIntelligence | undefined;
+    let hasImplicitStructure = false;
+    let semanticFeedback: string[] = [];
+
+    try {
+      // Perform semantic analysis
+      semanticAnalysis = await this.semanticStructureEngine.analyzeDocument(rawContent);
+      documentIntelligence = semanticAnalysis.documentIntelligence;
+      hasImplicitStructure = semanticAnalysis.inferredStructure.hasImplicitStructure;
+      semanticFeedback = this.semanticStructureEngine.generateContextualFeedback(semanticAnalysis);
+
+      this.logger.log(
+        `Semantic analysis: ${semanticAnalysis.topicSegments.length} topics, ` +
+        `${semanticAnalysis.semanticSections.length} sections, ` +
+        `intelligence score: ${documentIntelligence.overallScore}/100`
+      );
+    } catch (error) {
+      this.logger.warn(`Semantic analysis failed: ${error.message}`);
+      // Continue without semantic analysis - it's optional
+    }
+
     const processingTime = Date.now() - startTime;
     this.logger.log(
       `Content analysis completed in ${processingTime}ms - Type: ${detectedType} (${Math.round(confidence * 100)}% confidence)`,
@@ -200,6 +230,11 @@ export class ContentAnalysisService {
       suggestedSections,
       issues,
       recommendedEnhancements,
+      // NEW: Semantic intelligence
+      semanticAnalysis,
+      documentIntelligence,
+      hasImplicitStructure,
+      semanticFeedback,
     };
   }
 
@@ -718,12 +753,21 @@ export class ContentAnalysisService {
     if (lines.length === 0) return false;
 
     const firstLine = lines[0].trim();
-    // Title is likely if first line is short, capitalized, and no period
+
+    // Markdown H1
+    if (/^#\s+.+/.test(firstLine)) return true;
+
+    // ALL-CAPS title
+    if (firstLine.length >= 4 && firstLine.length < 100 && /^[A-Z][A-Z\s:,&()\-/]+$/.test(firstLine)) return true;
+
+    // Title-case: starts with capital, short, no trailing period, not a bullet
     return (
       firstLine.length > 0 &&
       firstLine.length < 100 &&
       !firstLine.endsWith('.') &&
-      /^[A-Z]/.test(firstLine)
+      /^[A-Z]/.test(firstLine) &&
+      !/^[-*•]\s/.test(firstLine) &&
+      !/^\d+[.)]\s/.test(firstLine)
     );
   }
 
@@ -914,35 +958,97 @@ export class ContentAnalysisService {
   }
 
   /**
-   * Detect grammar issues (simplified)
+   * Detect grammar issues using NLP patterns + compromise library
    */
   private detectGrammarIssues(content: string): number {
+    if (!content || content.trim().length < 10) return 0;
     let issues = 0;
 
-    // Check for common grammar issues
-    const patterns = [
-      /\s+their\s+is\s+/gi, // their/there confusion
-      /\s+your\s+(doing|going|being)\s+/gi, // your/you're
-      /\s+its\s+(a|the|an)\s+/gi, // its/it's
-      /\bi\s+[a-z]/g, // lowercase i
-      /\.\s*[a-z]/g, // lowercase after period
+    const patterns: RegExp[] = [
+      // Word confusion
+      /\btheir\s+is\b/gi,
+      /\bthere\s+(house|car|dog|cat|office|company|team)\b/gi,
+      /\byour\s+(doing|going|being|having|making|taking|coming|getting|saying)\b/gi,
+      /\bits\s+(a|an|the)\s+\w/gi,
+      // Capitalization
+      /\bi\s+[a-z]/g,
+      /[.!?]\s+[a-z][a-zA-Z]{2,}/g,
+      // Double words
+      /\b(\w{3,})\s+\1\b/gi,
+      // Double spaces
+      /\s{2,}/g,
+      // Passive voice overuse (is/are/was/were + -ed verb)
+      /\b(is|are|was|were)\s+\w+ed\b/gi,
+      // Missing comma in compound sentence
+      /\b(and|but|or|so|yet)\s+(i|we|they|he|she|it)\s+\w+ed\b/gi,
+      // Sentence starting with lowercase
+      /\n[a-z][a-z]{2,}/g,
+      // Commonly misused: then vs than, less vs fewer, good vs well
+      /\bbetter\s+then\b/gi,
+      /\bmore\s+then\b/gi,
+      /\bless\s+people\b/gi,
+      /\bamount\s+of\s+(people|users|customers|employees)\b/gi,
     ];
 
-    patterns.forEach((pattern) => {
+    for (const pattern of patterns) {
       const matches = content.match(pattern);
       if (matches) issues += matches.length;
-    });
+    }
 
-    return issues;
+    // NLP-based: detect very long run-on sentences (> 50 words)
+    try {
+      const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      for (const s of sentences) {
+        const wc = s.trim().split(/\s+/).length;
+        if (wc > 50) issues++;
+      }
+
+      // Detect sentences with no verb (fragments) using compromise
+      const doc = nlp(content);
+      const sentenceDocs = doc.sentences().out('array') as string[];
+      for (const sent of sentenceDocs) {
+        if (sent.split(/\s+/).length > 4 && nlp(sent).verbs().length === 0) {
+          issues++;
+        }
+      }
+    } catch (_) {
+      // NLP unavailable — pattern results still valid
+    }
+
+    return Math.min(issues, 50);
   }
 
   /**
-   * Detect spelling issues (simplified)
+   * Detect spelling issues using a common-misspellings dictionary
    */
   private detectSpellingIssues(content: string): number {
-    // Simple check for repeated characters (likely typos)
+    if (!content || content.trim().length < 10) return 0;
+
+    const misspellings = [
+      'recieve', 'beleive', 'occured', 'seperate', 'definately',
+      'accomodate', 'independant', 'neccessary', 'existance', 'occurance',
+      'persistance', 'relevence', 'concious', 'goverment', 'enviroment',
+      'begining', 'successfull', 'commited', 'responsibilty', 'knowlege',
+      'arguement', 'embarass', 'priviledge', 'untill', 'tommorrow',
+      'occassion', 'thier', 'truely', 'wierd', 'reccommend', 'adress',
+      'profesional', 'buisness', 'managment', 'developement', 'stratagey',
+      'benifits', 'experiance', 'intergration', 'implmentation', 'opportunites',
+    ];
+
+    let issues = 0;
+    const lower = content.toLowerCase();
+
+    for (const word of misspellings) {
+      const re = new RegExp(`\\b${word}\\b`, 'g');
+      const found = lower.match(re);
+      if (found) issues += found.length;
+    }
+
+    // Repeated characters that aren't intentional (e.g. "verrry")
     const repeatedChars = content.match(/([a-z])\1{2,}/gi);
-    return repeatedChars ? repeatedChars.length : 0;
+    if (repeatedChars) issues += repeatedChars.length;
+
+    return Math.min(issues, 30);
   }
 
   /**
@@ -1037,9 +1143,9 @@ export class ContentAnalysisService {
   private generateTitle(content: string, detectedType: string): string {
     const lines = content.trim().split('\n');
 
-    // If first line looks like a title, use it
+    // If first line looks like a title, use it (strip markdown markers)
     if (this.detectTitle(content)) {
-      return lines[0].trim();
+      return lines[0].trim().replace(/^#+\s+/, '').trim();
     }
 
     // Otherwise, generate based on content type

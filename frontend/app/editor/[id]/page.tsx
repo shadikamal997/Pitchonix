@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import EnhancementPanel from '@/components/editor/EnhancementPanel';
+import { PresenceIndicator } from '@/components/PresenceIndicator';
 import api from '@/lib/api';
 import {
   ArrowLeft,
@@ -162,6 +163,7 @@ export default function EditorPage({ params }: { params: { id: string } }) {
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          <PresenceIndicator documentId={params.id} />
           {saveMessage && (
             <span
               className={`text-sm px-3 py-1 rounded-lg ${

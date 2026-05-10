@@ -5,6 +5,9 @@ interface User {
   id: string;
   email: string;
   name?: string;
+  isVerified?: boolean;
+  onboardingCompleted?: boolean;
+  twoFactorEnabled?: boolean;
 }
 
 interface AuthState {

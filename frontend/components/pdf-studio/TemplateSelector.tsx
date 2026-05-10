@@ -123,26 +123,26 @@ export default function TemplateSelector({
   const categories = ['all', ...Object.keys(groupedTemplates)];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-4">
+      {/* Compact Header */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Choose Your Template</h2>
-        <p className="text-gray-600 mt-1">
-          Select a professionally designed template for your document
+        <h2 className="text-xl font-bold text-gray-900">Choose Template</h2>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Select a professional design
           {autoSelectedTemplate && (
-            <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-              <Sparkles className="w-3 h-3 mr-1" />
-              Auto-suggested: {templates.find(t => t.type === autoSelectedTemplate)?.name}
+            <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+              <Sparkles className="w-3 h-3 mr-0.5" />
+              Suggested
             </span>
           )}
         </p>
       </div>
 
-      {/* Category Filters */}
-      <div className="flex flex-wrap gap-2">
+      {/* Compact Category Pills */}
+      <div className="flex flex-wrap gap-1.5">
         {categories.map((category) => {
           const info = category === 'all' 
-            ? { label: 'All Templates', icon: FileText, color: 'text-gray-700', bgColor: 'bg-gray-100', borderColor: 'border-gray-300' }
+            ? { label: 'All', icon: FileText, color: 'text-gray-700', bgColor: 'bg-gray-100', borderColor: 'border-gray-300' }
             : CATEGORY_INFO[category as keyof typeof CATEGORY_INFO];
           
           if (!info) return null;
@@ -155,27 +155,22 @@ export default function TemplateSelector({
               key={category}
               onClick={() => setActiveCategory(category)}
               className={`
-                inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all
+                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all
                 ${isActive 
-                  ? `${info.bgColor} ${info.borderColor} ${info.color} font-medium shadow-sm` 
-                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? `${info.bgColor} ${info.color} shadow-sm` 
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                 }
               `}
             >
-              <Icon className="w-4 h-4" />
-              <span className="text-sm">{info.label}</span>
-              {category !== 'all' && (
-                <span className="text-xs opacity-75">
-                  ({groupedTemplates[category]?.length || 0})
-                </span>
-              )}
+              <Icon className="w-3.5 h-3.5" />
+              <span>{info.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Template Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Compact Template Grid */}
+      <div className="grid grid-cols-2 gap-3 max-h-[520px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {filteredTemplates.map((template) => {
           const categoryInfo = CATEGORY_INFO[template.category as keyof typeof CATEGORY_INFO];
           const isSelected = selectedTemplate === template.type;
@@ -187,123 +182,94 @@ export default function TemplateSelector({
               key={template.type}
               onClick={() => onSelectTemplate(template.type)}
               className={`
-                relative group cursor-pointer rounded-xl border-2 overflow-hidden
-                transition-all duration-300 hover:shadow-xl hover:-translate-y-1
+                relative group cursor-pointer rounded-lg border overflow-hidden
+                transition-all duration-200 hover:shadow-md
                 ${isSelected 
-                  ? `${categoryInfo?.borderColor} ring-4 ring-opacity-50 shadow-lg` 
+                  ? 'border-blue-500 ring-2 ring-blue-100 shadow-sm' 
                   : 'border-gray-200 hover:border-gray-300'
                 }
               `}
             >
-              {/* Preview/Thumbnail Area */}
+              {/* Visual Preview - Image Dominant */}
               <div className={`
-                h-48 flex items-center justify-center relative overflow-hidden
-                ${categoryInfo?.bgColor || 'bg-gray-100'}
+                h-32 relative overflow-hidden flex items-center justify-center
+                ${categoryInfo?.bgColor || 'bg-gray-50'}
               `}>
-                {/* Decorative Pattern */}
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-4 left-4 w-24 h-24 border-4 border-current rounded-lg transform -rotate-6"></div>
-                  <div className="absolute bottom-4 right-4 w-32 h-32 border-4 border-current rounded-lg transform rotate-12"></div>
+                {/* Minimal Pattern */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="absolute top-2 left-2 w-16 h-16 border-2 border-current rounded transform -rotate-6"></div>
+                  <div className="absolute bottom-2 right-2 w-20 h-20 border-2 border-current rounded transform rotate-12"></div>
                 </div>
                 
-                {/* Icon */}
-                <CategoryIcon className={`w-16 h-16 ${categoryInfo?.color || 'text-gray-400'}`} />
+                {/* Icon - Smaller */}
+                <CategoryIcon className={`w-10 h-10 ${categoryInfo?.color || 'text-gray-400'} opacity-80`} />
 
-                {/* Selection Overlay */}
+                {/* Selection Badge */}
                 {isSelected && (
-                  <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-                    <div className="bg-white rounded-full p-3 shadow-lg">
-                      <Check className="w-8 h-8 text-green-600" />
-                    </div>
+                  <div className="absolute top-2 right-2 bg-blue-500 rounded-full p-1.5 shadow-md">
+                    <Check className="w-3.5 h-3.5 text-white" />
                   </div>
                 )}
 
                 {/* Auto-suggested Badge */}
                 {isAutoSuggested && !isSelected && (
-                  <div className="absolute top-3 right-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    Suggested
+                  <div className="absolute top-2 right-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-1.5 py-0.5 rounded-full text-xs font-medium flex items-center gap-0.5">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    <span className="text-[10px]">AI</span>
                   </div>
                 )}
               </div>
 
-              {/* Content */}
-              <div className="p-5 bg-white">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900 text-lg leading-tight">
-                    {template.name}
-                  </h3>
-                  {isSelected && (
-                    <div className="bg-green-100 rounded-full p-1">
-                      <Check className="w-4 h-4 text-green-600" />
-                    </div>
-                  )}
-                </div>
+              {/* Compact Content */}
+              <div className="p-3 bg-white">
+                {/* Title - Clean and Scannable */}
+                <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1 line-clamp-1">
+                  {template.name}
+                </h3>
 
-                {/* Category Badge */}
-                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${categoryInfo?.bgColor} ${categoryInfo?.color} mb-3`}>
-                  <CategoryIcon className="w-3 h-3" />
-                  {categoryInfo?.label}
-                </div>
-
-                {/* Description */}
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                {/* Description - Smaller and Subtle */}
+                <p className="text-xs text-gray-500 mb-2 line-clamp-2 leading-relaxed">
                   {template.description}
                 </p>
 
-                {/* Features */}
+                {/* Features - Compact Pills */}
                 {template.features && template.features.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {template.features.slice(0, 3).map((feature, idx) => (
+                    {template.features.slice(0, 2).map((feature, idx) => (
                       <span
                         key={idx}
-                        className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded"
+                        className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded"
                       >
                         {feature}
                       </span>
                     ))}
-                    {template.features.length > 3 && (
-                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded">
-                        +{template.features.length - 3} more
+                    {template.features.length > 2 && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-400 rounded">
+                        +{template.features.length - 2}
                       </span>
                     )}
                   </div>
                 )}
-
-                {/* Color Scheme Indicator */}
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Color Scheme</span>
-                    <div className="flex gap-1">
-                      {getColorSwatches(template.colorScheme).map((color, idx) => (
-                        <div
-                          key={idx}
-                          className="w-4 h-4 rounded-full border border-gray-300"
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              {/* Hover Effect */}
+              {/* Elegant Hover Border */}
               <div className={`
-                absolute inset-0 border-2 rounded-xl pointer-events-none
-                ${isSelected ? categoryInfo?.borderColor : 'border-transparent'}
-                group-hover:border-gray-400 transition-colors
+                absolute inset-0 rounded-lg pointer-events-none transition-all duration-200
+                ${isSelected 
+                  ? 'ring-2 ring-blue-500 ring-opacity-50' 
+                  : 'group-hover:ring-1 group-hover:ring-gray-300'
+                }
               `} />
             </div>
           );
         })}
       </div>
 
-      {/* Empty State */}
+      {/* Compact Empty State */}
       {filteredTemplates.length === 0 && (
-        <div className="text-center py-12">
-          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">No templates found in this category</p>
+        <div className="text-center py-8">
+          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+          <p className="text-gray-500 text-sm">No templates in this category</p>
         </div>
       )}
     </div>

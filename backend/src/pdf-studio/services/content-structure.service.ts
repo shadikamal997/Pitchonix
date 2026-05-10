@@ -43,18 +43,19 @@ export class ContentStructureService {
 
     // Add cover page if configured
     if (userConfig?.includeCoverPage !== false) {
+      const coverTitle = userConfig?.title || analysis.suggestedTitle;
       sections.push({
         id: `section-cover`,
-        title: analysis.suggestedTitle,
+        title: coverTitle,
         type: 'cover',
-        content: this.generateCoverContent(analysis.suggestedTitle, rawContent),
+        content: this.generateCoverContent(coverTitle, rawContent),
         order: sectionOrder++,
         pageTemplate: 'CoverPage',
       });
     }
 
-    // Add table of contents if configured
-    if (userConfig?.includeTableOfContents !== false) {
+    // Add table of contents only if explicitly requested
+    if (userConfig?.includeTableOfContents === true) {
       sections.push({
         id: `section-toc`,
         title: 'Table of Contents',
@@ -89,18 +90,26 @@ export class ContentStructureService {
       });
     }
 
-    // Add main content sections
+    // Add main content sections (split large sections into multiple pages)
+    this.logger.log(`Splitting ${contentSections.length} sections into pages`);
     contentSections.forEach((section, index) => {
-      sections.push({
-        id: `section-${index}`,
-        title: section.title,
-        type: section.type,
-        content: section.content,
-        order: sectionOrder++,
-        pageTemplate: this.selectTemplate(section.type, section.content),
-        metadata: section.metadata,
+      const sectionWords = section.content.split(/\s+/).filter(w => w.trim()).length;
+      const pages = this.splitSectionIntoPages(section);
+      this.logger.log(`Section "${section.title}": ${sectionWords} words → ${pages.length} pages`);
+
+      pages.forEach((page, pageIndex) => {
+        sections.push({
+          id: `section-${index}-${pageIndex}`,
+          title: pageIndex === 0 ? section.title : `${section.title} (continued)`,
+          type: section.type,
+          content: page.content,
+          order: sectionOrder++,
+          pageTemplate: this.selectTemplate(section.type, page.content),
+          metadata: section.metadata,
+        });
       });
     });
+    this.logger.log(`Total sections created: ${sections.length}`);
 
     // Add conclusion if configured
     if (userConfig?.generateConclusion) {
@@ -127,6 +136,15 @@ export class ContentStructureService {
       hasTableOfContents: userConfig?.includeTableOfContents !== false,
       hasCoverPage: userConfig?.includeCoverPage !== false,
     };
+
+    // Populate TOC content now that all sections are known
+    const tocSection = sections.find(s => s.type === 'toc');
+    if (tocSection) {
+      const contentSections = sections.filter(s => s.type !== 'cover' && s.type !== 'toc');
+      tocSection.content = contentSections
+        .map((s, i) => `${i + 1}. ${s.title}`)
+        .join('\n');
+    }
 
     this.logger.log(
       `Created structured document with ${sections.length} sections, ~${totalPages} pages`,
@@ -262,6 +280,7 @@ export class ContentStructureService {
 
   /**
    * Split content by paragraphs (fallback)
+   * Creates sections with reasonable word counts
    */
   private splitByParagraphs(content: string): Array<{
     title: string;
@@ -271,16 +290,42 @@ export class ContentStructureService {
     const paragraphs = content.split(/\n\s*\n/).filter((p) => p.trim());
     const sections: Array<{ title: string; type: string; content: string }> = [];
 
-    // Group every 3-5 paragraphs into a section
-    const groupSize = 4;
-    for (let i = 0; i < paragraphs.length; i += groupSize) {
-      const group = paragraphs.slice(i, i + groupSize);
-      const title = this.generateSectionTitle(group[0], i / groupSize + 1);
+    // Target: 800-1200 words per section (will be further split into pages later)
+    const TARGET_WORDS_PER_SECTION = 1000;
+    let currentSection: string[] = [];
+    let currentWordCount = 0;
+    let sectionNumber = 1;
 
+    for (const paragraph of paragraphs) {
+      const paragraphWords = paragraph.split(/\s+/).length;
+      
+      // If adding this paragraph would exceed target and we have content
+      if (currentWordCount + paragraphWords > TARGET_WORDS_PER_SECTION && currentSection.length > 0) {
+        // Save current section and start new one
+        const sectionContent = currentSection.join('\n\n');
+        sections.push({
+          title: this.generateSectionTitle(currentSection[0], sectionNumber),
+          type: 'content',
+          content: sectionContent,
+        });
+        
+        sectionNumber++;
+        currentSection = [paragraph];
+        currentWordCount = paragraphWords;
+      } else {
+        // Add paragraph to current section
+        currentSection.push(paragraph);
+        currentWordCount += paragraphWords;
+      }
+    }
+
+    // Add remaining content as last section
+    if (currentSection.length > 0) {
+      const sectionContent = currentSection.join('\n\n');
       sections.push({
-        title,
+        title: this.generateSectionTitle(currentSection[0], sectionNumber),
         type: 'content',
-        content: group.join('\n\n'),
+        content: sectionContent,
       });
     }
 
@@ -373,6 +418,102 @@ export class ContentStructureService {
   }
 
   /**
+   * Split large sections into page-sized chunks
+   * Target: 500-800 words per page for readability
+   */
+  private splitSectionIntoPages(section: {
+    title: string;
+    type: string;
+    content: string;
+    metadata?: any;
+  }): Array<{ content: string }> {
+    const WORDS_PER_PAGE = 300; // Target words per page (aggressive splitting for better pagination)
+    const MIN_WORDS_PER_PAGE = 200; // Minimum to avoid tiny pages
+    const MAX_WORDS_PER_PAGE = 400; // Maximum before forced split (set to split 418-word content)
+    
+    const words = section.content.split(/\s+/).filter(w => w.trim());
+    const totalWords = words.length;
+
+    // If content is small enough for one page, return as-is
+    if (totalWords <= MAX_WORDS_PER_PAGE) {
+      return [{ content: section.content }];
+    }
+
+    // Try to split on paragraph boundaries first (double line breaks)
+    let paragraphs = section.content.split(/\n\s*\n/).filter((p) => p.trim());
+
+    // If no paragraphs (content is one big block), split on single line breaks
+    if (paragraphs.length === 1) {
+      paragraphs = section.content.split(/\n/).filter((p) => p.trim());
+    }
+
+    // If still one big block (no line breaks at all), split by sentences
+    if (paragraphs.length === 1) {
+      paragraphs = section.content.split(/\.\s+/).filter((s) => s.trim());
+    }
+
+    // If STILL one block, force split by word count
+    if (paragraphs.length === 1 && totalWords > MAX_WORDS_PER_PAGE) {
+      const allWords = section.content.split(/\s+/);
+      const pages: Array<{ content: string }> = [];
+      for (let i = 0; i < allWords.length; i += WORDS_PER_PAGE) {
+        const chunk = allWords.slice(i, i + WORDS_PER_PAGE).join(' ');
+        pages.push({ content: chunk });
+      }
+      return pages;
+    }
+    
+    const pages: Array<{ content: string }> = [];
+    let currentPage: string[] = [];
+    let currentWordCount = 0;
+    
+    for (const paragraph of paragraphs) {
+      const paragraphWords = paragraph.split(/\s+/).filter(w => w.trim()).length;
+      
+      // If this single paragraph is huge (>650 words), split it by word count
+      if (paragraphWords > MAX_WORDS_PER_PAGE) {
+        // Save current page if it has content
+        if (currentPage.length > 0) {
+          pages.push({ content: currentPage.join('\n\n') });
+          currentPage = [];
+          currentWordCount = 0;
+        }
+        
+        // Split the huge paragraph by words
+        const paraWords = paragraph.split(/\s+/);
+        for (let i = 0; i < paraWords.length; i += WORDS_PER_PAGE) {
+          const chunk = paraWords.slice(i, i + WORDS_PER_PAGE).join(' ');
+          pages.push({ content: chunk });
+        }
+        continue;
+      }
+      
+      // If adding this paragraph exceeds page limit and we have content
+      if (currentWordCount + paragraphWords > WORDS_PER_PAGE && currentWordCount >= MIN_WORDS_PER_PAGE) {
+        // Save current page and start new one
+        pages.push({ content: currentPage.join('\n\n') });
+        currentPage = [paragraph];
+        currentWordCount = paragraphWords;
+      } else {
+        // Add paragraph to current page
+        currentPage.push(paragraph);
+        currentWordCount += paragraphWords;
+      }
+    }
+    
+    // Add remaining content as last page
+    if (currentPage.length > 0) {
+      pages.push({ content: currentPage.join('\n\n') });
+    }
+    
+    this.logger.log(
+      `Split section "${section.title}" (${totalWords} words) into ${pages.length} pages`,
+    );
+    
+    return pages.length > 0 ? pages : [{ content: section.content }];
+  }
+
+  /**
    * Select appropriate template for section
    */
   private selectTemplate(type: string, content: string): string {
@@ -415,7 +556,8 @@ export class ContentStructureService {
   }
 
   /**
-   * Generate cover content
+   * Generate cover content as clean readable text (NOT JSON).
+   * The editor and preview both render this as plain markdown.
    */
   private generateCoverContent(title: string, rawContent: string): string {
     const subtitle = this.extractSubtitle(rawContent);
@@ -425,11 +567,10 @@ export class ContentStructureService {
       day: 'numeric',
     });
 
-    return JSON.stringify({
-      title,
-      subtitle,
-      date,
-    });
+    const lines = [`# ${title}`];
+    if (subtitle) lines.push(subtitle);
+    lines.push(date);
+    return lines.join('\n\n');
   }
 
   private extractSubtitle(content: string): string {
@@ -520,13 +661,18 @@ export class ContentStructureService {
     const seenTitles = new Set<string>();
 
     sections.forEach((section) => {
+      // Never deduplicate structural pages — their content is not prose
+      if (section.type === 'cover' || section.type === 'toc') {
+        merged.push(section);
+        return;
+      }
+
       const normalizedTitle = section.title.toLowerCase().trim();
 
       if (!seenTitles.has(normalizedTitle)) {
         merged.push(section);
         seenTitles.add(normalizedTitle);
       } else {
-        // Merge with existing section
         const existing = merged.find(
           (s) => s.title.toLowerCase().trim() === normalizedTitle,
         );
@@ -536,25 +682,39 @@ export class ContentStructureService {
       }
     });
 
+    // Re-index order to close any gaps left by deduplication
+    merged.forEach((s, i) => { s.order = i; });
+
     return merged;
   }
 
   /**
-   * Remove redundant content
+   * Remove redundancy — safe version.
+   * Only removes sentences that are EXACTLY byte-identical (same casing, same spacing).
+   * Cover and TOC sections are never touched.
+   * NEVER removes sentences that merely sound similar.
    */
   removeRedundancy(sections: StructuredSection[]): StructuredSection[] {
     return sections.map((section) => {
-      const sentences = section.content.split(/[.!?]+/).filter((s) => s.trim());
-      const uniqueSentences = Array.from(
-        new Set(sentences.map((s) => s.trim().toLowerCase())),
-      ).map((lower) => {
-        return sentences.find((s) => s.trim().toLowerCase() === lower) || '';
-      });
+      if (section.type === 'cover' || section.type === 'toc') {
+        return section;
+      }
 
-      return {
-        ...section,
-        content: uniqueSentences.join('. ') + '.',
-      };
+      const sentenceMatches = section.content.match(/[^.!?]*[.!?]+/g);
+      if (!sentenceMatches || sentenceMatches.length === 0) return section;
+
+      const seen = new Set<string>();
+      const kept: string[] = [];
+      for (const sentence of sentenceMatches) {
+        const key = sentence.trim();
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          kept.push(sentence);
+        }
+      }
+
+      const result = kept.join('');
+      return { ...section, content: result.trim() || section.content };
     });
   }
 }

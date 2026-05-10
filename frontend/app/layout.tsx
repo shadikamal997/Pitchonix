@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ToastProvider } from "@/components/ToastProvider";
 
 const inter = Inter({ 
   subsets: ['latin'], 
@@ -31,10 +32,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ErrorBoundary>
-            {children}
-            <Toaster />
-          </ErrorBoundary>
+          <ToastProvider>
+            <ErrorBoundary>
+              {children}
+              <Toaster />
+            </ErrorBoundary>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

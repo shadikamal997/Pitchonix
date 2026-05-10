@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -29,7 +30,13 @@ export class PdfPagesController {
     return this.pdfPagesService.findOne(id);
   }
 
+  // Accept both PUT and PATCH so either verb saves correctly
   @Put(':id')
+  async updatePut(@Param('id') id: string, @Body() updateDto: any) {
+    return this.pdfPagesService.update(id, updateDto);
+  }
+
+  @Patch(':id')
   async update(@Param('id') id: string, @Body() updateDto: any) {
     return this.pdfPagesService.update(id, updateDto);
   }

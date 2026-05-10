@@ -9,6 +9,7 @@ import * as z from 'zod';
 import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import { ArrowRight, TrendingUp } from 'lucide-react';
+import { PasswordStrengthMeter } from '@/components/PasswordStrengthMeter';
 
 const registerSchema = z.object({
   name: z.string().optional(),
@@ -28,10 +29,12 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
   });
+  const passwordValue = watch('password', '');
 
   const onSubmit = async (data: RegisterForm) => {
     setLoading(true);
@@ -41,7 +44,7 @@ export default function RegisterPage() {
       const response = await api.post('/auth/register', data);
       const { user, token } = response.data;
       login(user, token);
-      router.push('/dashboard');
+      router.push(user.onboardingCompleted ? '/dashboard' : '/onboarding');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Something went wrong');
     } finally {
@@ -151,6 +154,7 @@ export default function RegisterPage() {
                 {...register('password')}
                 className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:border-black focus:outline-none transition-colors text-base"
               />
+              <PasswordStrengthMeter password={passwordValue} />
               {errors.password && (
                 <p className="text-sm text-red-500 mt-2">{errors.password.message}</p>
               )}

@@ -1,5 +1,8 @@
 import { LayoutComponentType, LayoutComponent } from './template-types';
 
+// Re-export types for convenience
+export { LayoutComponentType, LayoutComponent } from './template-types';
+
 /**
  * Modular Layout Components
  * Internal building blocks for template composition
@@ -17,27 +20,103 @@ export interface LayoutRenderer {
 export const CoverPageLayout: LayoutRenderer = {
   type: LayoutComponentType.COVER_PAGE,
   render: (data, style) => {
-    const { title, subtitle, author, date, logo } = data;
+    const { title, subtitle, author, date, logo, description, overview = [] } = data;
     const colorScheme = getColorScheme(style.colorScheme);
-    
+
     return `
       <div class="cover-page" style="
-        min-height: 100vh;
+        min-height: 297mm;
+        background: white;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        background: linear-gradient(135deg, ${colorScheme.primary} 0%, ${colorScheme.secondary} 100%);
-        padding: 60px;
-        text-align: center;
-        color: white;
+        position: relative;
+        overflow: hidden;
       ">
-        ${logo ? `<img src="${logo}" alt="Logo" style="max-width: 120px; margin-bottom: 40px;" />` : ''}
-        <h1 style="font-size: 48px; font-weight: 700; margin: 0 0 20px 0; line-height: 1.2;">${title}</h1>
-        ${subtitle ? `<p style="font-size: 24px; opacity: 0.9; margin: 0 0 60px 0;">${subtitle}</p>` : ''}
-        <div style="margin-top: auto;">
-          ${author ? `<p style="font-size: 16px; margin: 5px 0;">${author}</p>` : ''}
-          ${date ? `<p style="font-size: 14px; opacity: 0.8; margin: 5px 0;">${date}</p>` : ''}
+        <!-- Colored top header band (~40% of page) -->
+        <div style="
+          background: ${colorScheme.primary};
+          padding: 56px 64px 72px;
+          position: relative;
+          overflow: hidden;
+        ">
+          <!-- Decorative background circles -->
+          <div style="position:absolute;right:-50px;top:-50px;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,0.07);"></div>
+          <div style="position:absolute;right:80px;bottom:-80px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,0.04);"></div>
+          <div style="position:absolute;left:-30px;bottom:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
+
+          ${logo ? `<img src="${logo}" alt="Logo" style="max-width:80px;margin-bottom:32px;position:relative;z-index:1;" />` : ''}
+
+          ${subtitle ? `<div style="
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+          ">${subtitle}</div>` : ''}
+
+          <h1 style="
+            font-size: 44px;
+            font-weight: 800;
+            color: white;
+            line-height: 1.18;
+            margin: 0;
+            max-width: 78%;
+            position: relative;
+            z-index: 1;
+          ">${title}</h1>
+        </div>
+
+        <!-- White lower section -->
+        <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;justify-content:space-between;background:white;">
+          <div>
+            <!-- Accent divider -->
+            <div style="width:52px;height:4px;background:${colorScheme.accent};border-radius:2px;margin-bottom:28px;"></div>
+
+            ${author ? `<p style="font-size:16px;font-weight:600;color:#111827;margin:0 0 6px 0;">${author}</p>` : ''}
+            ${date ? `<p style="font-size:14px;color:#6B7280;margin:0;">${date}</p>` : ''}
+
+            ${description ? `<p style="
+              font-size: 15px;
+              color: #374151;
+              line-height: 1.65;
+              max-width: 600px;
+              margin: 28px 0 0;
+            ">${description}</p>` : ''}
+
+            ${Array.isArray(overview) && overview.length > 0 ? `<div style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              margin-top: 24px;
+            ">
+              ${overview.slice(0, 6).map((item: string) => `<span style="
+                border: 1px solid #E5E7EB;
+                border-radius: 999px;
+                padding: 7px 11px;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+                color: ${colorScheme.primary};
+                background: #F9FAFB;
+              ">${item}</span>`).join('')}
+            </div>` : ''}
+          </div>
+
+          <!-- Footer row -->
+          <div style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            border-top:1px solid #E5E7EB;
+            padding-top:20px;
+          ">
+            <span style="font-size:11px;color:#9CA3AF;letter-spacing:1px;text-transform:uppercase;">Confidential</span>
+            <div style="width:28px;height:28px;border-radius:6px;background:${colorScheme.primary};"></div>
+          </div>
         </div>
       </div>
     `;
@@ -53,30 +132,23 @@ export const HeroHeaderLayout: LayoutRenderer = {
   render: (data, style) => {
     const { title, description } = data;
     const colorScheme = getColorScheme(style.colorScheme);
-    const headerStyle = style.headerStyle || 'gradient';
-    
-    let background = '';
-    if (headerStyle === 'gradient') {
-      background = `linear-gradient(135deg, ${colorScheme.primary} 0%, ${colorScheme.secondary} 100%)`;
-    } else if (headerStyle === 'solid') {
-      background = colorScheme.primary;
-    } else {
-      background = 'white';
-    }
-    
-    const textColor = headerStyle === 'minimal' ? colorScheme.primary : 'white';
-    
+    const radius = style.cardStyle === 'rounded' ? '12px' : style.cardStyle === 'soft' ? '8px' : '4px';
+
     return `
       <div class="hero-header" style="
-        background: ${background};
-        padding: 48px 40px;
-        margin-bottom: 32px;
-        border-radius: ${style.cardStyle === 'rounded' ? '12px' : style.cardStyle === 'soft' ? '8px' : '0'};
-        ${headerStyle === 'minimal' ? `border: 2px solid ${colorScheme.primary};` : ''}
-        ${headerStyle !== 'minimal' ? 'box-shadow: 0 4px 12px rgba(0,0,0,0.08);' : ''}
+        background: white;
+        padding: 36px 40px 32px;
+        margin-bottom: 28px;
+        border-radius: ${radius};
+        border-top: 5px solid ${colorScheme.primary};
+        border-left: 1px solid #E5E7EB;
+        border-right: 1px solid #E5E7EB;
+        border-bottom: 1px solid #E5E7EB;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       ">
-        <h1 style="font-size: 36px; font-weight: 700; margin: 0 0 12px 0; color: ${textColor};">${title}</h1>
-        ${description ? `<p style="font-size: 18px; margin: 0; opacity: ${headerStyle === 'minimal' ? '0.8' : '0.9'}; color: ${textColor};">${description}</p>` : ''}
+        <h1 style="font-size: 32px; font-weight: 800; margin: 0 0 10px 0; color: #111827; line-height: 1.2;">${title}</h1>
+        ${description ? `<p style="font-size: 16px; margin: 0; color: ${colorScheme.primary}; font-weight: 500;">${description}</p>` : ''}
+        <div style="width: 40px; height: 3px; background: ${colorScheme.accent}; border-radius: 2px; margin-top: 16px;"></div>
       </div>
     `;
   },
@@ -287,18 +359,29 @@ export const ConclusionBlockLayout: LayoutRenderer = {
   render: (data, style) => {
     const { title, content, cta } = data;
     const colorScheme = getColorScheme(style.colorScheme);
-    
+    const radius = style.cardStyle === 'rounded' ? '12px' : style.cardStyle === 'soft' ? '8px' : '4px';
+
     return `
       <div class="conclusion-block" style="
-        background: linear-gradient(135deg, ${colorScheme.primary} 0%, ${colorScheme.secondary} 100%);
-        padding: 40px;
-        border-radius: ${style.cardStyle === 'rounded' ? '12px' : style.cardStyle === 'soft' ? '8px' : '4px'};
-        color: white;
+        background: white;
+        padding: 36px 40px;
+        border-radius: ${radius};
+        border: 1px solid #E5E7EB;
+        border-left: 5px solid ${colorScheme.primary};
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         margin-bottom: 32px;
       ">
-        <h2 style="font-size: 28px; font-weight: 700; margin: 0 0 16px 0;">${title || 'Conclusion'}</h2>
-        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 24px 0; opacity: 0.95;">${content}</p>
-        ${cta ? `<div style="font-size: 18px; font-weight: 600;">${cta}</div>` : ''}
+        <h2 style="font-size: 24px; font-weight: 700; margin: 0 0 14px 0; color: ${colorScheme.primary};">${title || 'Conclusion'}</h2>
+        <p style="font-size: 15px; line-height: 1.7; margin: 0 0 20px 0; color: #374151;">${content}</p>
+        ${cta ? `<div style="
+          display: inline-block;
+          font-size: 15px;
+          font-weight: 600;
+          color: white;
+          background: ${colorScheme.primary};
+          padding: 10px 22px;
+          border-radius: 6px;
+        ">${cta}</div>` : ''}
       </div>
     `;
   },
@@ -372,8 +455,48 @@ function getColorScheme(name: string) {
       secondary: '#B91C1C',
       accent: '#F87171',
     },
+    teal: {
+      primary: '#0D9488',
+      secondary: '#0F766E',
+      accent: '#2DD4BF',
+    },
+    indigo: {
+      primary: '#4F46E5',
+      secondary: '#4338CA',
+      accent: '#818CF8',
+    },
+    emerald: {
+      primary: '#10B981',
+      secondary: '#059669',
+      accent: '#6EE7B7',
+    },
+    amber: {
+      primary: '#D97706',
+      secondary: '#B45309',
+      accent: '#FBBF24',
+    },
+    orange: {
+      primary: '#EA580C',
+      secondary: '#C2410C',
+      accent: '#FB923C',
+    },
+    rose: {
+      primary: '#F43F5E',
+      secondary: '#E11D48',
+      accent: '#FB7185',
+    },
+    slate: {
+      primary: '#475569',
+      secondary: '#334155',
+      accent: '#94A3B8',
+    },
+    dark: {
+      primary: '#1F2937',
+      secondary: '#111827',
+      accent: '#6B7280',
+    },
   };
-  
+
   return schemes[name] || schemes.blue;
 }
 

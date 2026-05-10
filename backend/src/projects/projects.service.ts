@@ -25,7 +25,7 @@ export class ProjectsService {
   }
 
   async findAll(userId: string, query?: QueryProjectsDto) {
-    const where: any = { userId };
+    const where: any = { userId, archivedAt: null };
 
     // Add search filter
     if (query?.search) {
@@ -196,13 +196,94 @@ export class ProjectsService {
   }
 
   async remove(id: string, userId: string) {
-    // Check ownership
     await this.findOne(id, userId);
-
-    await this.prisma.project.delete({
-      where: { id },
-    });
-
+    await this.prisma.project.delete({ where: { id } });
     return { message: 'Project deleted successfully' };
+  }
+
+  async archive(id: string, userId: string) {
+    await this.findOne(id, userId);
+    await this.prisma.project.update({ where: { id }, data: { archivedAt: new Date() } });
+    return { message: 'Project archived' };
+  }
+
+  async restore(id: string, userId: string) {
+    const project = await this.prisma.project.findUnique({ where: { id } });
+    if (!project || project.userId !== userId) throw new NotFoundException('Project not found');
+    await this.prisma.project.update({ where: { id }, data: { archivedAt: null } });
+    return { message: 'Project restored' };
+  }
+
+  async findArchived(userId: string) {
+    return this.prisma.project.findMany({
+      where: { userId, archivedAt: { not: null } },
+      orderBy: { archivedAt: 'desc' },
+      include: { decks: { select: { id: true } } },
+    });
+  }
+
+  async bulkDelete(userId: string, ids: string[]) {
+    await this.prisma.project.deleteMany({ where: { id: { in: ids }, userId } });
+    return { message: `${ids.length} projects deleted` };
+  }
+
+  async bulkArchive(userId: string, ids: string[]) {
+    await this.prisma.project.updateMany({
+      where: { id: { in: ids }, userId },
+      data: { archivedAt: new Date() },
+    });
+    return { message: `${ids.length} projects archived` };
+  }
+
+  async generatePublicLink(id: string, userId: string) {
+    await this.findOne(id, userId);
+    const token = require('crypto').randomBytes(20).toString('hex');
+    await this.prisma.project.update({ where: { id }, data: { publicToken: token } });
+    return { token };
+  }
+
+  async revokePublicLink(id: string, userId: string) {
+    await this.findOne(id, userId);
+    await this.prisma.project.update({ where: { id }, data: { publicToken: null } });
+    return { message: 'Public link revoked' };
+  }
+
+  async getPublicProject(token: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { publicToken: token },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        decks: {
+          include: { slides: { orderBy: { order: 'asc' } } },
+        },
+      },
+    });
+    if (!project) throw new NotFoundException('Share link not found or has been revoked');
+    await this.prisma.project.update({ where: { id: project.id }, data: { viewCount: { increment: 1 } } });
+    return {
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      type: project.documentType,
+      viewCount: project.viewCount + 1,
+      owner: { name: project.user?.name ?? null, email: project.user?.email ?? '' },
+      decks: project.decks,
+    };
+  }
+
+  async getAnalytics(id: string, userId: string) {
+    const project = await this.findOne(id, userId);
+    return {
+      viewCount: project.viewCount,
+      exportCount: project.exportCount,
+      qualityScore: project.qualityScore,
+      createdAt: project.createdAt,
+      lastEditedAt: project.lastEditedAt,
+      status: project.status,
+    };
+  }
+
+  async incrementExport(id: string) {
+    await this.prisma.project.update({ where: { id }, data: { exportCount: { increment: 1 } } });
   }
 }

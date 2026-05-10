@@ -9,11 +9,21 @@ import { join } from 'path';
 import * as fs from 'fs';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
+
+  // Warn loudly if JWT_SECRET is missing — auth tokens will be insecure
+  if (!process.env.JWT_SECRET) {
+    logger.warn('⚠️  JWT_SECRET is not set. Using an insecure default. Set JWT_SECRET in your .env file before deploying.');
+  }
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Enable CORS
+  // Enable CORS — support comma-separated FRONTEND_URL list for multi-origin setups
+  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim());
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+    origin: allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins,
     credentials: true,
   });
 
@@ -30,6 +40,13 @@ async function bootstrap() {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
   app.useStaticAssets(uploadsDir, { prefix: '/uploads' });
+
+  // Serve public files (test pages, etc.)
+  const publicDir = join(process.cwd(), 'public');
+  if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+  }
+  app.useStaticAssets(publicDir);
 
   // Global exception filter for consistent error responses
   app.useGlobalFilters(new GlobalExceptionFilter());
@@ -77,7 +94,6 @@ async function bootstrap() {
   const port = process.env.PORT || 4000;
   await app.listen(port);
 
-  const logger = new Logger('Bootstrap');
   logger.log(`🚀 Application is running on: http://localhost:${port}`);
   logger.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
 

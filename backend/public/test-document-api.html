@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Document API Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        .section { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; color: #333; }
+        pre { background: #f8f8f8; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 11px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+        .page-item { background: #f0f0f0; padding: 10px; margin: 5px 0; border-left: 3px solid #007bff; }
+    </style>
+</head>
+<body>
+    <h1>📄 Document API Diagnostic</h1>
+    <div id="results"></div>
+
+    <script>
+        const docId = '5435a8c5-98af-41d4-bcd0-2000b8f7ed51';
+        const apiUrl = 'http://localhost:3001/api/pdf-studio/smart-builder/documents/' + docId;
+        const results = document.getElementById('results');
+
+        function addSection(title, content, className = '') {
+            const div = document.createElement('div');
+            div.className = 'section ' + className;
+            div.innerHTML = '<h2>' + title + '</h2>' + content;
+            results.appendChild(div);
+        }
+
+        async function testAPI() {
+            addSection('🔍 Testing API Endpoint', `
+                <p>Fetching: <code>${apiUrl}</code></p>
+                <p>Please wait...</p>
+            `);
+
+            try {
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    addSection('❌ API Request Failed', `
+                        <p class="error">Status: ${response.status} ${response.statusText}</p>
+                        <pre>${await response.text()}</pre>
+                    `, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                
+                addSection('✅ API Response Received', `
+                    <p class="success">Status: ${response.status} OK</p>
+                    <p>Response structure:</p>
+                    <pre>${JSON.stringify(Object.keys(data), null, 2)}</pre>
+                `);
+
+                if (!data.success) {
+                    addSection('⚠️ API Returned Error', `
+                        <p class="warning">Success: ${data.success}</p>
+                        <p>Message: ${data.message || 'Unknown error'}</p>
+                    `, 'warning');
+                    return;
+                }
+
+                const document = data.data.document;
+                
+                addSection('📄 Document Information', `
+                    <p><strong>ID:</strong> ${document.id}</p>
+                    <p><strong>Title:</strong> ${document.title}</p>
+                    <p><strong>Type:</strong> ${document.documentType}</p>
+                    <p><strong>Status:</strong> ${document.status}</p>
+                    <p><strong>Created:</strong> ${new Date(document.createdAt).toLocaleString()}</p>
+                `);
+
+                const pages = document.pages || [];
+                
+                addSection('📊 Page Count Analysis', `
+                    <p><strong>Total Pages:</strong> <span class="success">${pages.length}</span></p>
+                    <p><strong>Pages Array Type:</strong> ${Array.isArray(pages) ? 'Array ✓' : 'NOT ARRAY ✗'}</p>
+                    <p><strong>Expected Display:</strong> "Page 1 of ${pages.length}"</p>
+                `);
+
+                if (pages.length === 0) {
+                    addSection('❌ No Pages Found', `
+                        <p class="error">Document has no pages!</p>
+                        <p>This will cause "Page 1 of 0" or empty display.</p>
+                    `, 'error');
+                    return;
+                }
+
+                addSection('📝 Page Details', pages.map((page, i) => `
+                    <div class="page-item">
+                        <strong>Page ${i + 1}</strong><br>
+                        • ID: ${page.id}<br>
+                        • Title: ${page.title}<br>
+                        • Type: ${page.pageType}<br>
+                        • Order: ${page.order}<br>
+                        • Has Content: ${page.content ? 'Yes' : 'No'}<br>
+                        • Content Type: ${typeof page.content}<br>
+                        ${page.content ? `• Content.text length: ${page.content.text ? page.content.text.length + ' chars' : 'No text field'}` : ''}
+                    </div>
+                `).join(''));
+
+                // Check content format
+                const page3 = pages[2]; // Executive Summary
+                if (page3 && page3.content && page3.content.text) {
+                    const text = page3.content.text;
+                    const hasHTMLTags = /<[^>]+>/.test(text);
+                    const hasMarkdown = /\*\*|\-\ |^\d+\.\ /m.test(text);
+                    
+                    addSection('🔍 Content Format Analysis (Page 3)', `
+                        <p><strong>Content Length:</strong> ${text.length} characters</p>
+                        <p><strong>Has HTML Tags:</strong> ${hasHTMLTags ? '<span class="warning">YES - This might render as raw HTML</span>' : '<span class="success">NO</span>'}</p>
+                        <p><strong>Has Markdown:</strong> ${hasMarkdown ? '<span class="success">YES - Formatted as markdown</span>' : 'NO'}</p>
+                        <p><strong>First 500 characters:</strong></p>
+                        <pre>${text.substring(0, 500)}</pre>
+                    `);
+                }
+
+                // Frontend code simulation
+                addSection('🖥️ Frontend State Simulation', `
+                    <p><strong>What frontend should do:</strong></p>
+                    <pre>const { document, analysis, config } = response.data.data;
+setDocument(document);
+setPages(document.pages || []);  // Should be array of ${pages.length} pages
+setLoading(false);</pre>
+                    <p><strong>Expected UI State:</strong></p>
+                    <ul>
+                        <li>Left sidebar: ${pages.length} page thumbnails</li>
+                        <li>Page navigator: "Page 1 of ${pages.length}"</li>
+                        <li>Current page index: 0 (first page)</li>
+                        <li>Total pages available: ${pages.length}</li>
+                    </ul>
+                `);
+
+                // Preview endpoint test
+                addSection('🖼️ Testing Preview Endpoint', '<p>Checking preview generation...</p>');
+                
+                try {
+                    const previewResponse = await fetch(`http://localhost:3001/api/pdf-studio/export/preview/${docId}`);
+                    if (previewResponse.ok) {
+                        const html = await previewResponse.text();
+                        const pageBreaks = (html.match(/page-break/g) || []).length;
+                        addSection('✅ Preview Generated', `
+                            <p class="success">Preview HTML generated successfully</p>
+                            <p><strong>HTML Length:</strong> ${html.length} characters</p>
+                            <p><strong>Page Breaks Found:</strong> ${pageBreaks}</p>
+                            <p><strong>Expected Pages in Preview:</strong> ${pageBreaks + 1}</p>
+                            ${pageBreaks === pages.length - 1 ? '<p class="success">✓ Page break count matches!</p>' : '<p class="warning">⚠ Page break count mismatch</p>'}
+                        `);
+                    } else {
+                        addSection('❌ Preview Failed', `<p class="error">Status: ${previewResponse.status}</p>`, 'error');
+                    }
+                } catch (err) {
+                    addSection('❌ Preview Error', `<p class="error">${err.message}</p>`, 'error');
+                }
+
+                addSection('🎯 Conclusion', `
+                    ${pages.length > 1 
+                        ? `<p class="success">✅ BACKEND IS CORRECT: ${pages.length} pages exist in document</p>
+                           <p>If browser shows "Page 1 of 1", the issue is in:</p>
+                           <ul>
+                               <li>Frontend not receiving all pages from API</li>
+                               <li>Frontend pages state not being set correctly</li>
+                               <li>Frontend using wrong source for page count</li>
+                               <li>Console errors preventing state updates</li>
+                           </ul>
+                           <p><strong>Next Step:</strong> Open browser DevTools and check:</p>
+                           <ol>
+                               <li>Network tab: verify API returns ${pages.length} pages</li>
+                               <li>Console tab: check for JavaScript errors</li>
+                               <li>React DevTools: inspect pages state array length</li>
+                           </ol>`
+                        : `<p class="error">❌ BACKEND ISSUE: Only ${pages.length} page in document</p>
+                           <p>Content should have been split into multiple pages.</p>`
+                    }
+                `);
+
+            } catch (error) {
+                addSection('❌ Fatal Error', `
+                    <p class="error">${error.message}</p>
+                    <pre>${error.stack}</pre>
+                `, 'error');
+            }
+        }
+
+        testAPI();
+    </script>
+</body>
+</html>

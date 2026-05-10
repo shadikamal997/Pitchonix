@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { 
@@ -19,7 +19,8 @@ import {
   HelpCircle,
   Plus,
   Sparkles,
-  FileType
+  FileType,
+  BarChart2,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -42,6 +43,7 @@ const navigationItems: NavigationItem[] = [
   { id: "pdf-studio", name: "PDF Studio", icon: FileType, href: "/pdf-studio" },
   { id: "brand-kits", name: "Brand Kits", icon: Palette, href: "/brand-kits" },
   { id: "export-templates", name: "Export Templates", icon: Download, href: "/export-templates" },
+  { id: "analytics", name: "Analytics", icon: BarChart2, href: "/analytics" },
   { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
   { id: "help", name: "Help & Support", icon: HelpCircle, href: "/help" },
 ];
@@ -53,6 +55,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Handle component mounting
   useEffect(() => {
@@ -95,6 +98,12 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
   };
 
   const activeItem = getActiveItem();
+
+  const filteredNavItems = useMemo(() => {
+    if (!searchQuery.trim()) return navigationItems;
+    const q = searchQuery.toLowerCase();
+    return navigationItems.filter((item) => item.name.toLowerCase().includes(q));
+  }, [searchQuery]);
 
   // Get user initials
   const getUserInitials = () => {
@@ -185,6 +194,8 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
               <input
                 type="text"
                 placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200"
               />
             </div>
@@ -194,7 +205,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 px-3 py-2 overflow-y-auto">
           <ul className="space-y-0.5">
-            {navigationItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeItem === item.id;
 
@@ -274,8 +285,12 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
           {/* Profile Section */}
           <div className={`border-b border-slate-200 bg-slate-50/30 ${isCollapsed ? 'py-3 px-2' : 'p-3'}`}>
             {!isCollapsed ? (
-              <div className="flex items-center px-3 py-2 rounded-md bg-white hover:bg-slate-50 transition-colors duration-200 cursor-pointer">
-                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-cyan-500 rounded-full flex items-center justify-center">
+              <button
+                onClick={() => router.push('/settings')}
+                className="w-full flex items-center px-3 py-2 rounded-md bg-white hover:bg-slate-50 transition-colors duration-200 text-left"
+                title="Go to Settings"
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-medium text-sm">{getUserInitials()}</span>
                 </div>
                 <div className="flex-1 min-w-0 ml-2.5">
@@ -283,16 +298,20 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
                   <p className="text-xs text-slate-500 truncate">{user?.email || 'user@pitchonix.com'}</p>
                 </div>
                 <div className="w-2 h-2 bg-green-500 rounded-full ml-2" title="Online" />
-              </div>
+              </button>
             ) : (
-              <div className="flex justify-center">
+              <button
+                onClick={() => router.push('/settings')}
+                className="flex justify-center w-full"
+                title="Go to Settings"
+              >
                 <div className="relative">
                   <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-cyan-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">{getUserInitials()}</span>
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                 </div>
-              </div>
+              </button>
             )}
           </div>
 

@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useKeyboardShortcuts, getAppShortcuts, KeyboardShortcutsHelp } from '@/hooks/useKeyboardShortcuts';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -11,12 +12,13 @@ import { DashboardSkeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
-import { 
-  Plus, 
-  FileText, 
-  LogOut, 
-  Sparkles, 
-  Search, 
+import NotificationBell from '@/components/NotificationBell';
+import {
+  Plus,
+  FileText,
+  LogOut,
+  Sparkles,
+  Search,
   Filter,
   MoreVertical,
   Copy,
@@ -36,7 +38,11 @@ import {
   Eye,
   Layers,
   Star,
-  CheckCircle2
+  CheckCircle2,
+  Archive,
+  ArchiveRestore,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -62,6 +68,7 @@ interface Project {
   lastEditedAt: string;
   createdAt: string;
   decks: any[];
+  archivedAt?: string | null;
 }
 
 const DOCUMENT_TYPES = {
@@ -102,19 +109,29 @@ export default function DashboardPage() {
   const [documentTypeFilter, setDocumentTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [actionError, setActionError] = useState('');
+  const [activities, setActivities] = useState<any[]>([]);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const shortcuts = useMemo(
+    () => getAppShortcuts(router, { onShowShortcuts: () => setShowShortcuts(true) }),
+    [router]
+  );
+  useKeyboardShortcuts(shortcuts);
+
   useEffect(() => {
-    // Wait for Zustand to rehydrate from localStorage before checking auth.
-    // Without this guard, isAuthenticated is always false on first render
-    // (initial state) and the user gets redirected to /login immediately.
     if (!_hasHydrated) return;
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
     fetchProjects();
-  }, [_hasHydrated, isAuthenticated, documentTypeFilter, statusFilter]);
+    fetchActivities();
+    setSelectedIds(new Set());
+  }, [_hasHydrated, isAuthenticated, documentTypeFilter, statusFilter, showArchived]);
 
   // Debounced search — wait 300 ms after typing stops before hitting the API
   useEffect(() => {
@@ -128,14 +145,27 @@ export default function DashboardPage() {
     };
   }, [searchQuery]);
 
+  const fetchActivities = async () => {
+    try {
+      const res = await api.get('/activity?limit=5');
+      setActivities(res.data);
+    } catch (_) {}
+  };
+
   const fetchProjects = async () => {
     try {
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (documentTypeFilter !== 'all') params.append('documentType', documentTypeFilter);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
+      let url: string;
+      if (showArchived) {
+        url = '/projects/archived';
+      } else {
+        const params = new URLSearchParams();
+        if (searchQuery) params.append('search', searchQuery);
+        if (documentTypeFilter !== 'all') params.append('documentType', documentTypeFilter);
+        if (statusFilter !== 'all') params.append('status', statusFilter);
+        url = `/projects?${params.toString()}`;
+      }
 
-      const response = await api.get(`/projects?${params.toString()}`);
+      const response = await api.get(url);
       const projectsData = response.data.data || response.data;
       // Ensure projectsData is always an array
       const projectsArray = Array.isArray(projectsData) ? projectsData : [];
@@ -166,6 +196,67 @@ export default function DashboardPage() {
       fetchProjects();
     } catch (error: any) {
       setActionError(error.response?.data?.message || 'Failed to delete project.');
+    }
+  };
+
+  const handleArchive = async (projectId: string) => {
+    try {
+      await api.post(`/projects/${projectId}/archive`);
+      fetchProjects();
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to archive project.');
+    }
+  };
+
+  const handleRestore = async (projectId: string) => {
+    try {
+      await api.post(`/projects/${projectId}/restore`);
+      fetchProjects();
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to restore project.');
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === projects.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(projects.map(p => p.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedIds.size} project(s)? This cannot be undone.`)) return;
+    setBulkLoading(true);
+    try {
+      await api.post('/projects/bulk/delete', { ids: Array.from(selectedIds) });
+      setSelectedIds(new Set());
+      fetchProjects();
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Bulk delete failed.');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    setBulkLoading(true);
+    try {
+      await api.post('/projects/bulk/archive', { ids: Array.from(selectedIds) });
+      setSelectedIds(new Set());
+      fetchProjects();
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Bulk archive failed.');
+    } finally {
+      setBulkLoading(false);
     }
   };
 
@@ -231,7 +322,6 @@ export default function DashboardPage() {
                 Pitchonix
               </div>
               <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-100">
-                <Sparkles className="h-3 w-3 text-violet-600" />
                 <span className="text-xs font-medium text-violet-700">AI-Powered</span>
               </div>
             </div>
@@ -242,7 +332,6 @@ export default function DashboardPage() {
                   variant="outline"
                   className="hidden sm:flex border-violet-200 text-violet-700 hover:bg-violet-50"
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
                   Browse Templates
                 </Button>
               </Link>
@@ -256,6 +345,7 @@ export default function DashboardPage() {
               </Button>
               
               <div className="flex items-center gap-3">
+                <NotificationBell />
                 <span className="hidden md:block text-sm text-slate-600">{user?.email}</span>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm shadow-lg">
                   {user?.email?.[0]?.toUpperCase() || 'U'}
@@ -286,40 +376,39 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-violet-700 to-cyan-600 p-8 sm:p-12 shadow-2xl shadow-violet-500/20">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-violet-700 to-cyan-600 p-5 sm:p-6 shadow-lg shadow-violet-500/20">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
           
-          <div className="relative grid md:grid-cols-2 gap-8 items-center">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-                <Sparkles className="h-4 w-4 text-cyan-200" />
-                <span className="text-sm font-medium text-white">AI-Powered Platform</span>
+          <div className="relative grid md:grid-cols-2 gap-6 items-center">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+                <span className="text-xs font-medium text-white">AI-Powered Platform</span>
               </div>
               
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white leading-tight">
                 Create investor-ready business documents
               </h2>
               
-              <p className="text-violet-100 text-lg leading-relaxed">
+              <p className="text-violet-100 text-sm leading-relaxed">
                 Generate pitch decks, business plans, proposals, and sales decks with structured workflows and beautiful templates.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button 
                   onClick={() => handleCreateProject('pitch_deck')}
-                  size="lg"
-                  className="bg-white text-violet-700 hover:bg-violet-50 shadow-xl shadow-black/10 transition-all hover:-translate-y-0.5"
+                  size="sm"
+                  className="bg-white text-violet-700 hover:bg-violet-50 shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5"
                 >
-                  <Rocket className="h-5 w-5 mr-2" />
+                  <Rocket className="h-4 w-4 mr-2" />
                   Create Pitch Deck
                 </Button>
                 <Button 
                   onClick={() => handleCreateProject('business_plan')}
-                  size="lg"
+                  size="sm"
                   variant="outline"
                   className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
                 >
-                  <Briefcase className="h-5 w-5 mr-2" />
+                  <Briefcase className="h-4 w-4 mr-2" />
                   Create Business Plan
                 </Button>
               </div>
@@ -338,7 +427,9 @@ export default function DashboardPage() {
                       <div className="text-violet-200 text-sm">AI-Powered Analysis</div>
                     </div>
                   </div>
-                  <div className="text-4xl font-bold text-white">92/100</div>
+                  <div className="text-4xl font-bold text-white">
+                    {avgScore !== null ? `${avgScore}/100` : '—/100'}
+                  </div>
                 </div>
                 
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform">
@@ -354,65 +445,61 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5">
             <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
-                  <Layers className="h-6 w-6 text-white" />
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-md shadow-violet-500/30">
+                  <Layers className="h-4 w-4 text-white" />
                 </div>
-                <TrendingUp className="h-5 w-5 text-emerald-500" />
               </div>
-              <div className="text-3xl font-bold text-slate-900 mb-1">{totalProjects}</div>
-              <div className="text-sm text-slate-600 font-medium">Total Projects</div>
+              <div className="text-2xl font-bold text-slate-900 mb-0.5">{totalProjects}</div>
+              <div className="text-xs text-slate-600 font-medium">Total Projects</div>
             </div>
           </div>
 
-          <div className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+          <div className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5">
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                  <FileText className="h-6 w-6 text-white" />
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shadow-md shadow-cyan-500/30">
+                  <FileText className="h-4 w-4 text-white" />
                 </div>
-                <Zap className="h-5 w-5 text-amber-500" />
               </div>
-              <div className="text-3xl font-bold text-slate-900 mb-1">{totalDecks}</div>
-              <div className="text-sm text-slate-600 font-medium">Decks Generated</div>
+              <div className="text-2xl font-bold text-slate-900 mb-0.5">{totalDecks}</div>
+              <div className="text-xs text-slate-600 font-medium">Decks Generated</div>
             </div>
           </div>
 
-          <div className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+          <div className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                  <Award className="h-6 w-6 text-white" />
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-500/30">
+                  <Award className="h-4 w-4 text-white" />
                 </div>
-                <Target className="h-5 w-5 text-violet-500" />
               </div>
-              <div className="text-3xl font-bold text-slate-900 mb-1">
+              <div className="text-2xl font-bold text-slate-900 mb-0.5">
                 {avgScore !== null ? `${avgScore}%` : 'N/A'}
               </div>
-              <div className="text-sm text-slate-600 font-medium">Average Quality Score</div>
+              <div className="text-xs text-slate-600 font-medium">Average Quality Score</div>
               {avgScore === null && (
-                <div className="text-xs text-slate-500 mt-1">Generate a project to see scores</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">Generate a project to see scores</div>
               )}
             </div>
           </div>
 
-          <div className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+          <div className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5">
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
-                  <Download className="h-6 w-6 text-white" />
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md shadow-orange-500/30">
+                  <Download className="h-4 w-4 text-white" />
                 </div>
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
               </div>
-              <div className="text-3xl font-bold text-slate-900 mb-1">{totalExports}</div>
-              <div className="text-sm text-slate-600 font-medium">Exports</div>
+              <div className="text-2xl font-bold text-slate-900 mb-0.5">{totalExports}</div>
+              <div className="text-xs text-slate-600 font-medium">Exports</div>
             </div>
           </div>
         </div>
@@ -449,147 +536,147 @@ export default function DashboardPage() {
 
             <button
               onClick={() => handleCreateProject('business_plan')}
-              className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left"
+              className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5 text-left"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
-                  <Briefcase className="h-7 w-7 text-white" />
+              <div className="relative space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-md shadow-purple-500/30 group-hover:scale-110 transition-transform">
+                  <Briefcase className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">Business Plan</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <h4 className="font-semibold text-sm text-slate-900 mb-1">Business Plan</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Comprehensive business strategy documents
                   </p>
                 </div>
-                <div className="flex items-center text-purple-600 font-medium text-sm">
-                  Create now <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center text-purple-600 font-medium text-xs">
+                  Create now <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </button>
 
             <button
               onClick={() => handleCreateProject('proposal')}
-              className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left"
+              className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5 text-left"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform">
-                  <FileCheck className="h-7 w-7 text-white" />
+              <div className="relative space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-md shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+                  <FileCheck className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">Proposal</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <h4 className="font-semibold text-sm text-slate-900 mb-1">Proposal</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Professional project and service proposals
                   </p>
                 </div>
-                <div className="flex items-center text-emerald-600 font-medium text-sm">
-                  Create now <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center text-emerald-600 font-medium text-xs">
+                  Create now <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </button>
 
             <button
               onClick={() => handleCreateProject('sales_deck')}
-              className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left"
+              className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5 text-left"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform">
-                  <TrendingUp className="h-7 w-7 text-white" />
+              <div className="relative space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-md shadow-orange-500/30 group-hover:scale-110 transition-transform">
+                  <TrendingUp className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">Sales Deck</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <h4 className="font-semibold text-sm text-slate-900 mb-1">Sales Deck</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Persuasive sales and marketing presentations
                   </p>
                 </div>
-                <div className="flex items-center text-orange-600 font-medium text-sm">
-                  Create now <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center text-orange-600 font-medium text-xs">
+                  Create now <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </button>
 
             <button
               onClick={() => handleCreateProject('case_study')}
-              className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left"
+              className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5 text-left"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-teal-500/30 group-hover:scale-110 transition-transform">
-                  <FileText className="h-7 w-7 text-white" />
+              <div className="relative space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-md shadow-teal-500/30 group-hover:scale-110 transition-transform">
+                  <FileText className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">Case Study</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <h4 className="font-semibold text-sm text-slate-900 mb-1">Case Study</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Customer success stories
                   </p>
                 </div>
-                <div className="flex items-center text-teal-600 font-medium text-sm">
-                  Create now <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center text-teal-600 font-medium text-xs">
+                  Create now <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </button>
 
             <button
               onClick={() => handleCreateProject('company_profile')}
-              className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left"
+              className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5 text-left"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-gray-600/10 to-gray-800/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center shadow-lg shadow-gray-500/30 group-hover:scale-110 transition-transform">
-                  <Target className="h-7 w-7 text-white" />
+              <div className="relative space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center shadow-md shadow-gray-500/30 group-hover:scale-110 transition-transform">
+                  <Target className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">Company Profile</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <h4 className="font-semibold text-sm text-slate-900 mb-1">Company Profile</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Showcase capabilities
                   </p>
                 </div>
-                <div className="flex items-center text-gray-700 font-medium text-sm">
-                  Create now <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center text-gray-700 font-medium text-xs">
+                  Create now <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </button>
 
             <button
               onClick={() => handleCreateProject('one_pager')}
-              className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left"
+              className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5 text-left"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform">
-                  <Star className="h-7 w-7 text-white" />
+              <div className="relative space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/30 group-hover:scale-110 transition-transform">
+                  <Star className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">One Pager</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <h4 className="font-semibold text-sm text-slate-900 mb-1">One Pager</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Single-page overview
                   </p>
                 </div>
-                <div className="flex items-center text-indigo-600 font-medium text-sm">
-                  Create now <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center text-indigo-600 font-medium text-xs">
+                  Create now <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </button>
 
             <button
               onClick={() => handleCreateProject('marketing_plan')}
-              className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left"
+              className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5 text-left"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 to-rose-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shadow-lg shadow-pink-500/30 group-hover:scale-110 transition-transform">
-                  <BarChart3 className="h-7 w-7 text-white" />
+              <div className="relative space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shadow-md shadow-pink-500/30 group-hover:scale-110 transition-transform">
+                  <BarChart3 className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-1">Marketing Plan</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <h4 className="font-semibold text-sm text-slate-900 mb-1">Marketing Plan</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Strategic marketing roadmap
                   </p>
                 </div>
-                <div className="flex items-center text-pink-600 font-medium text-sm">
-                  Create now <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center text-pink-600 font-medium text-xs">
+                  Create now <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </button>
@@ -650,6 +737,17 @@ export default function DashboardPage() {
             >
               Exported
             </button>
+            <button
+              onClick={() => { setShowArchived(v => !v); setStatusFilter('all'); }}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                showArchived
+                  ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/30'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-amber-300'
+              }`}
+            >
+              <Archive className="h-3.5 w-3.5" />
+              Archived
+            </button>
           </div>
         </div>
 
@@ -679,36 +777,91 @@ export default function DashboardPage() {
           className="space-y-6"
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-bold tracking-tight text-slate-900">Your Projects</h3>
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-bold tracking-tight text-slate-900">
+                {showArchived ? 'Archived Projects' : 'Your Projects'}
+              </h3>
+              {Array.isArray(projects) && projects.length > 0 && (
+                <span className="text-sm text-slate-600 font-medium">{projects.length} project{projects.length !== 1 ? 's' : ''}</span>
+              )}
+            </div>
             {Array.isArray(projects) && projects.length > 0 && (
-              <span className="text-sm text-slate-600 font-medium">{projects.length} project{projects.length !== 1 ? 's' : ''}</span>
+              <button
+                onClick={toggleSelectAll}
+                className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-violet-600 transition-colors"
+              >
+                {selectedIds.size === projects.length ? (
+                  <CheckSquare className="h-4 w-4" />
+                ) : (
+                  <Square className="h-4 w-4" />
+                )}
+                {selectedIds.size === projects.length ? 'Deselect all' : 'Select all'}
+              </button>
             )}
           </div>
+
+          {/* Bulk action toolbar */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-3 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3">
+              <span className="text-sm font-medium text-violet-700">{selectedIds.size} selected</span>
+              <div className="flex-1" />
+              {!showArchived && (
+                <button
+                  onClick={handleBulkArchive}
+                  disabled={bulkLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 text-sm font-medium hover:bg-amber-200 transition-colors disabled:opacity-50"
+                >
+                  <Archive className="h-3.5 w-3.5" />
+                  Archive
+                </button>
+              )}
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-sm font-medium hover:bg-red-200 transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-sm text-slate-500 hover:text-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
 
           {loading ? (
             <DashboardSkeleton />
           ) : !Array.isArray(projects) || projects.length === 0 ? (
             <EmptyState
-              icon={FileText}
+              icon={showArchived ? Archive : FileText}
               title={
-                searchQuery || documentTypeFilter !== 'all' || statusFilter !== 'all'
+                showArchived
+                  ? 'No archived projects'
+                  : searchQuery || documentTypeFilter !== 'all' || statusFilter !== 'all'
                   ? 'No projects found'
                   : 'No projects yet'
               }
               description={
-                searchQuery || documentTypeFilter !== 'all' || statusFilter !== 'all'
+                showArchived
+                  ? 'Projects you archive will appear here. You can restore them at any time.'
+                  : searchQuery || documentTypeFilter !== 'all' || statusFilter !== 'all'
                   ? "Try adjusting your search or filters to find what you're looking for"
                   : 'Create your first investor-ready deck and start building beautiful presentations'
               }
               action={
-                <Button 
-                  onClick={() => handleCreateProject('pitch_deck')}
-                  size="lg"
-                  className="bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 shadow-lg shadow-violet-500/30"
-                >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Create Your First Project
-                </Button>
+                !showArchived ? (
+                  <Button
+                    onClick={() => handleCreateProject('pitch_deck')}
+                    size="lg"
+                    className="bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 shadow-lg shadow-violet-500/30"
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    Create Your First Project
+                  </Button>
+                ) : undefined
               }
             />
           ) : (
@@ -736,6 +889,7 @@ export default function DashboardPage() {
                   sales_deck: 'from-orange-500 to-amber-600',
                 };
 
+                const isSelected = selectedIds.has(project.id);
                 return (
                   <motion.div
                     key={project.id}
@@ -743,10 +897,24 @@ export default function DashboardPage() {
                       hidden: { opacity: 0, y: 20 },
                       show: { opacity: 1, y: 0 }
                     }}
-                    className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1"
+                    className={`group relative overflow-hidden rounded-2xl bg-white border shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1 ${
+                      isSelected ? 'border-violet-400 ring-2 ring-violet-200' : 'border-slate-200'
+                    }`}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    
+
+                    {/* Checkbox — always visible when selected, appears on hover otherwise */}
+                    <button
+                      onClick={() => toggleSelect(project.id)}
+                      className={`absolute top-3 left-3 z-10 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="h-5 w-5 text-violet-600" />
+                      ) : (
+                        <Square className="h-5 w-5 text-slate-400" />
+                      )}
+                    </button>
+
                     <div className="relative p-6 space-y-4">
                       <div className="flex items-start justify-between">
                         <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${gradientColors[project.documentType] || 'from-slate-500 to-slate-600'} flex items-center justify-center shadow-lg`}>
@@ -759,14 +927,28 @@ export default function DashboardPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="rounded-xl">
-                            <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}`)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicate(project.id)}>
-                              <Copy className="h-4 w-4 mr-2" />
-                              Duplicate
-                            </DropdownMenuItem>
+                            {!showArchived && (
+                              <>
+                                <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}`)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDuplicate(project.id)}>
+                                  <Copy className="h-4 w-4 mr-2" />
+                                  Duplicate
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleArchive(project.id)}>
+                                  <Archive className="h-4 w-4 mr-2" />
+                                  Archive
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {showArchived && (
+                              <DropdownMenuItem onClick={() => handleRestore(project.id)}>
+                                <ArchiveRestore className="h-4 w-4 mr-2" />
+                                Restore
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               onClick={() => handleDelete(project.id)}
                               className="text-red-600"
@@ -842,7 +1024,40 @@ export default function DashboardPage() {
             </motion.div>
           )}
         </motion.div>
+
+        {/* Activity Feed */}
+        {activities.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+          >
+            <h2 className="text-lg font-bold text-slate-900 mb-3">Recent Activity</h2>
+            <div className="bg-white rounded-2xl border border-slate-200/60 divide-y divide-slate-100 overflow-hidden">
+              {activities.map((activity: any) => (
+                <div key={activity.id} className="flex items-start gap-3 px-5 py-3.5">
+                  <div className="w-2 h-2 rounded-full bg-violet-400 mt-2 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-800">{activity.title}</p>
+                    {activity.description && (
+                      <p className="text-xs text-slate-500 mt-0.5">{activity.description}</p>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 flex-shrink-0 mt-0.5">
+                    {new Date(activity.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
+
+      <KeyboardShortcutsHelp
+        shortcuts={shortcuts}
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+      />
     </div>
   );
 }

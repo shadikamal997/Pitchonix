@@ -24,6 +24,16 @@ import { UploadModule } from './upload/upload.module';
 import { DocumentParserModule } from './document-parser/document-parser.module';
 import { IntelligenceModule } from './intelligence/intelligence.module';
 import { PdfStudioModule } from './pdf-studio/pdf-studio.module';
+import { EmailModule } from './email/email.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ActivityModule } from './activity/activity.module';
+import { TemplateFavouritesModule } from './template-favourites/template-favourites.module';
+import { DocumentVersionsModule } from './document-versions/document-versions.module';
+import { ProjectSharingModule } from './project-sharing/project-sharing.module';
+import { CommentsModule } from './comments/comments.module';
+import { PresenceModule } from './presence/presence.module';
+import { UnsplashModule } from './integrations/unsplash/unsplash.module';
+import { TemplatesModule } from './templates/templates.module';
 
 @Module({
   imports: [
@@ -59,9 +69,19 @@ import { PdfStudioModule } from './pdf-studio/pdf-studio.module';
     BullModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT) || 6379,
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        enableOfflineQueue: true,
+        maxRetriesPerRequest: 3,
+        retryStrategy: (times: number) => {
+          if (times > 3) {
+            console.warn('Redis connection failed after 3 attempts. Job queue disabled.');
+            return null;
+          }
+          return Math.min(times * 200, 2000);
+        },
       },
     }),
+    EmailModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -80,6 +100,15 @@ import { PdfStudioModule } from './pdf-studio/pdf-studio.module';
     DocumentParserModule,
     IntelligenceModule,
     PdfStudioModule,
+    NotificationsModule,
+    ActivityModule,
+    TemplateFavouritesModule,
+    DocumentVersionsModule,
+    ProjectSharingModule,
+    CommentsModule,
+    PresenceModule,
+    UnsplashModule,
+    TemplatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

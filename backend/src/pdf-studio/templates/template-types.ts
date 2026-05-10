@@ -10,6 +10,8 @@ export enum TemplateCategory {
   STRATEGY = 'strategy',
   PRODUCT_TECH = 'product_tech',
   BRAND_CONTENT = 'brand_content',
+  HR_OPERATIONS = 'hr_operations',
+  MARKETING = 'marketing',
 }
 
 export enum TemplateType {
@@ -44,6 +46,22 @@ export enum TemplateType {
 
   // Brand & Content (1)
   BRAND_GUIDELINES = 'brand_guidelines',
+
+  // HR & Operations (3)
+  EMPLOYEE_HANDBOOK = 'employee_handbook',
+  QUARTERLY_BUSINESS_REVIEW = 'quarterly_business_review',
+  BOARD_MEETING_REPORT = 'board_meeting_report',
+
+  // Marketing (4)
+  INVESTOR_PITCH_DECK = 'investor_pitch_deck',
+  WHITEPAPER = 'whitepaper',
+  CASE_STUDY_DOCUMENT = 'case_study_document',
+  PRODUCT_LAUNCH_PLAN = 'product_launch_plan',
+
+  // Extended Sales & Strategy (3)
+  MARKET_RESEARCH_REPORT = 'market_research_report',
+  PROJECT_PROPOSAL = 'project_proposal',
+  SALES_PLAYBOOK = 'sales_playbook',
 
   // Special (not user-selectable)
   SMART_PDF_BUILDER = 'smart_pdf_builder',
@@ -89,7 +107,7 @@ export interface TemplateConfig {
   layouts: LayoutComponentType[];
   defaultSections: string[];
   style: {
-    colorScheme: 'blue' | 'navy' | 'gray' | 'purple' | 'green' | 'red';
+    colorScheme: 'blue' | 'navy' | 'gray' | 'purple' | 'green' | 'red' | 'teal' | 'indigo' | 'emerald' | 'amber' | 'orange' | 'rose' | 'slate' | 'dark' | string;
     headerStyle: 'gradient' | 'solid' | 'minimal';
     cardStyle: 'rounded' | 'sharp' | 'soft';
     spacing: 'compact' | 'normal' | 'spacious';

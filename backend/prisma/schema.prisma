@@ -17,10 +17,36 @@ model User {
   name            String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+
+  // Email verification
+  isVerified              Boolean   @default(false)
+  verificationToken       String?   @unique
+  verificationTokenExpiry DateTime?
+
+  // Password reset
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+
+  // Magic link login
+  magicLinkToken       String?   @unique
+  magicLinkTokenExpiry DateTime?
+
+  // Onboarding
+  onboardingCompleted Boolean @default(false)
+
+  // Two-factor authentication
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean @default(false)
+
   projects        Project[]
   brandKits       BrandKit[]
   exportTemplates ExportTemplate[]
   exportJobs      ExportJob[]
+  notifications   Notification[]
+  activities      Activity[]
+  templateFavourites TemplateFavourite[]
+  projectShares   ProjectShare[]
+  comments        Comment[]
 
   @@map("users")
 }
@@ -47,10 +73,23 @@ model Project {
   lastEditedAt   DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // Archiving (soft-delete)
+  archivedAt     DateTime?
+
+  // Public share link
+  publicToken    String?  @unique
+
+  // Analytics counters
+  viewCount      Int      @default(0)
+  exportCount    Int      @default(0)
+
   decks          Deck[]
   pdfDocuments   PdfDocument[] // PDF Studio documents
   generationJobs GenerationJob[]
   qualityReports QualityReport[]
+  shares         ProjectShare[]
+  comments       Comment[]
 
   @@map("projects")
 }
@@ -321,7 +360,8 @@ model PdfDocument {
   contentAnalysis ContentAnalysis?
   smartBuilderConfig SmartBuilderConfig?
   contentEnhancements ContentEnhancement[]
-  
+  versions       DocumentVersion[]
+
   @@map("pdf_documents")
   @@index([projectId])
   @@index([documentType])
@@ -577,5 +617,131 @@ model ContentEnhancement {
   @@map("content_enhancements")
   @@index([documentId])
   @@index([enhancementType])
+  @@index([createdAt])
+}
+
+// ===== NEW FEATURE MODELS =====
+
+// In-app notifications
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // generation_complete, quality_report, share_invite, system, export_ready
+  title     String
+  message   String
+  link      String?  // optional deep-link URL
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+// Activity feed events
+model Activity {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // project_created, document_generated, export_completed, quality_checked, share_accepted
+  title       String
+  description String?
+  metadata    Json?    // entity id, name, etc.
+  createdAt   DateTime @default(now())
+
+  @@map("activities")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Template favourites
+model TemplateFavourite {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateId String   // references Template.id
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, templateId])
+  @@map("template_favourites")
+  @@index([userId])
+}
+
+// Project sharing / team access
+model ProjectShare {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("viewer") // owner, editor, viewer
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, userId])
+  @@map("project_shares")
+  @@index([projectId])
+  @@index([userId])
+}
+
+// Comment threads on projects/slides
+model Comment {
+  id        String    @id @default(uuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  parentId  String?
+  parent    Comment?  @relation("replies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("replies")
+  resolved  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("comments")
+  @@index([projectId])
+  @@index([userId])
+}
+
+// Document version snapshots
+model DocumentVersion {
+  id         String   @id @default(uuid())
+  documentId String
+  document   PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version    Int
+  title      String
+  pagesSnapshot Json   // full snapshot of all pages at this point
+  createdAt  DateTime @default(now())
+
+  @@map("document_versions")
+  @@index([documentId])
+}
+
+// Uploaded Images (for visual documents and PDFs)
+model UploadedImage {
+  id            String   @id @default(uuid())
+  
+  // File information
+  filename      String
+  originalName  String
+  mimetype      String
+  size          Int
+  path          String
+  url           String
+  
+  // Optional user association
+  userId        String?
+  
+  // Metadata
+  width         Int?
+  height        Int?
+  tags          String[] @default([])
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("uploaded_images")
+  @@index([userId])
   @@index([createdAt])
 }

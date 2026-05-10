@@ -389,6 +389,7 @@ function CreateWizardPage() {
     setLoading(true);
     setGenerateError('');
     try {
+      console.log('[Wizard] Starting generation...');
       const savedProjectId = await saveDraft();
 
       if (!savedProjectId) {
@@ -397,35 +398,45 @@ function CreateWizardPage() {
         return;
       }
 
+      console.log('[Wizard] Project saved:', savedProjectId);
+
       // Determine document format
       const { DOCUMENT_TYPES } = await import('@/components/wizard/Step1DocumentType');
       const selectedType = DOCUMENT_TYPES.find(t => t.id === wizardData.documentType);
       const format = selectedType?.format || 'slides';
+
+      console.log('[Wizard] Document type:', wizardData.documentType, 'Format:', format);
 
       // Strip non-serializable File object from input
       const { logo: _logo, ...serializableInput } = wizardData;
 
       if (format === 'pdf') {
         // Generate PDF document
+        console.log('[Wizard] Calling PDF generation...');
         const response = await api.post('/pdf-documents/generate', {
           projectId: savedProjectId,
           documentType: wizardData.documentType,
           input: serializableInput,
         });
 
+        console.log('[Wizard] PDF generation started:', response.data);
         // Navigate to PDF Studio (once created)
         // For now, redirect to project page
         router.push(`/projects/${savedProjectId}`);
       } else {
         // Generate slide presentation
-        await api.post('/generate', {
+        console.log('[Wizard] Calling slide generation...');
+        const response = await api.post('/generate', {
           projectId: savedProjectId,
           input: serializableInput,
         });
 
+        console.log('[Wizard] Slide generation started:', response.data);
         router.push(`/projects/${savedProjectId}`);
       }
     } catch (error: any) {
+      console.error('[Wizard] Generation failed:', error);
+      console.error('[Wizard] Error details:', error.response?.data);
       setGenerateError(
         error.response?.data?.message || 'Failed to start generation. Please try again.'
       );

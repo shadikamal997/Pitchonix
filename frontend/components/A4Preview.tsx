@@ -1,6 +1,12 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import type DOMPurifyType from 'dompurify';
+// DOMPurify requires a browser DOM — lazy-load to avoid SSR crash
+let DOMPurify: typeof DOMPurifyType | null = null;
+if (typeof window !== 'undefined') {
+  DOMPurify = require('dompurify');
+}
 import { Maximize2, Minimize2, ZoomIn, ZoomOut, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
@@ -58,8 +64,8 @@ export function A4Preview({
     };
   }, []);
 
-  // Parse content into sections
-  const sections = content.split('\n\n').filter((s) => s.trim());
+  // Word count from raw text (strip HTML tags)
+  const wordCount = content.replace(/<[^>]*>/g, ' ').trim().split(/\s+/).filter(Boolean).length;
 
   return (
     <SectionErrorBoundary sectionName="A4 Preview">
@@ -150,7 +156,7 @@ export function A4Preview({
           >
             {/* Page Content */}
             <div className="p-16">
-              {/* Header */}
+              {/* Logo */}
               {brandKit?.logo && (
                 <div className="mb-8">
                   <img
@@ -164,76 +170,16 @@ export function A4Preview({
               {/* Title */}
               <h1
                 className="text-4xl font-bold mb-8"
-                style={{
-                  color: brandKit?.colors?.primary || '#1E40AF',
-                }}
+                style={{ color: brandKit?.colors?.primary || '#1E40AF' }}
               >
                 {title}
               </h1>
 
-              {/* Content Sections */}
-              <div className="space-y-6">
-                {sections.map((section, index) => {
-                  const lines = section.split('\n');
-                  const isHeading =
-                    section.startsWith('#') ||
-                    /^[A-Z][^.!?]*:$/.test(lines[0]);
-
-                  if (isHeading) {
-                    const headingText = lines[0]
-                      .replace(/^#+\s*/, '')
-                      .replace(/:$/, '');
-                    const bodyText = lines.slice(1).join('\n');
-
-                    return (
-                      <div key={index}>
-                        <h2
-                          className="text-2xl font-semibold mb-3"
-                          style={{
-                            color: brandKit?.colors?.primary || '#1E40AF',
-                          }}
-                        >
-                          {headingText}
-                        </h2>
-                        {bodyText && (
-                          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                            {bodyText}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  // Regular paragraph or bullet points
-                  const isBulletList = lines.some((line) =>
-                    /^[-•*]\s/.test(line)
-                  );
-
-                  if (isBulletList) {
-                    return (
-                      <ul key={index} className="list-disc list-inside space-y-2">
-                        {lines.map((line, lineIdx) => {
-                          const bulletText = line.replace(/^[-•*]\s*/, '');
-                          return bulletText ? (
-                            <li key={lineIdx} className="text-gray-700">
-                              {bulletText}
-                            </li>
-                          ) : null;
-                        })}
-                      </ul>
-                    );
-                  }
-
-                  return (
-                    <p
-                      key={index}
-                      className="text-gray-700 leading-relaxed whitespace-pre-wrap"
-                    >
-                      {section}
-                    </p>
-                  );
-                })}
-              </div>
+              {/* Render HTML content from RichTextEditor */}
+              <div
+                className="prose max-w-none text-gray-700"
+                dangerouslySetInnerHTML={{ __html: DOMPurify ? DOMPurify.sanitize(content || '') : (content || '') }}
+              />
 
               {/* Footer */}
               {brandKit?.contact && (
@@ -254,7 +200,7 @@ export function A4Preview({
 
         {/* Page Info */}
         <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 text-center text-xs text-gray-500 dark:text-gray-400">
-          Page 1 of 1 • {Math.round((content.length / 2500) * 100)}% filled
+          Live Preview · {wordCount} {wordCount === 1 ? 'word' : 'words'}
         </div>
       </div>
     </SectionErrorBoundary>

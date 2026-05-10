@@ -5,6 +5,7 @@ import { Search, Sparkles, TrendingUp, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import api from '@/lib/api';
 import TemplateCard from './TemplateCard';
 import TemplatePreviewModal from './TemplatePreviewModal';
 
@@ -72,27 +73,13 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      
-      let url = `${apiUrl}/templates`;
+      let endpoint = '/templates';
       if (selectedCategory === 'popular') {
-        url = `${apiUrl}/templates/popular`;
+        endpoint = '/templates/popular';
       } else if (selectedCategory !== 'all') {
-        url = `${apiUrl}/templates/category/${selectedCategory}`;
+        endpoint = `/templates/category/${selectedCategory}`;
       }
-
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch templates');
-      }
-
-      const data = await response.json();
+      const { data } = await api.get(endpoint);
       setTemplates(data);
       setError(null);
     } catch (err) {
@@ -127,21 +114,8 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
     // If there's a search query, use the search API
     if (query.trim()) {
       try {
-        const token = localStorage.getItem('token');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(
-          `${apiUrl}/templates/search?q=${encodeURIComponent(query)}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setFilteredTemplates(data);
-        }
+        const { data } = await api.get('/templates/search', { params: { q: query } });
+        setFilteredTemplates(data);
       } catch (err) {
         console.error('Search error:', err);
       }
@@ -164,11 +138,15 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading templates...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-12 px-6">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="text-center py-32">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-600 flex items-center justify-center animate-pulse">
+              <Sparkles className="w-10 h-10 text-white" />
+            </div>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-violet-600 mx-auto mb-6"></div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">Loading Premium Templates</h3>
+            <p className="text-lg text-slate-600">Preparing your creative workspace...</p>
           </div>
         </div>
       </div>
@@ -177,12 +155,20 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-20">
-            <div className="text-red-600 text-lg">{error}</div>
-            <Button onClick={fetchTemplates} className="mt-4">
-              Retry
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-12 px-6">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="text-center py-32">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+              <X className="w-10 h-10 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-3">Unable to Load Templates</h3>
+            <p className="text-lg text-red-600 mb-8">{error}</p>
+            <Button 
+              onClick={fetchTemplates} 
+              size="lg"
+              className="bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-700 hover:to-cyan-700 text-white px-8"
+            >
+              Try Again
             </Button>
           </div>
         </div>
@@ -191,52 +177,62 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Choose a Template
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-8 px-4">
+      <div className="max-w-[1400px] mx-auto">
+        {/* Premium Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/10 to-cyan-500/10 border border-violet-200/50 mb-2">
+              <Sparkles className="w-3 h-3 text-violet-600" />
+              <span className="text-xs font-semibold text-violet-700">Premium Templates</span>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              Choose Your Template
             </h1>
-            <p className="text-gray-600">
-              Start with pre-filled industry-specific templates or create from scratch
+            <p className="text-sm text-slate-600 max-w-2xl">
+              Professional, industry-specific templates crafted for success. Start creating in minutes.
             </p>
           </div>
           <Button
             variant="outline"
             onClick={onCancel}
-            className="flex items-center gap-2"
+            size="sm"
+            className="flex items-center gap-1.5 border-slate-300 hover:bg-slate-50 px-4"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3" />
             Create from Scratch
           </Button>
         </div>
 
-        {/* Search Bar */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        {/* Premium Search Bar */}
+        <div className="bg-white/80 backdrop-blur-xl rounded-xl shadow-md shadow-slate-200/50 p-3 mb-5 border border-slate-200/60">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
             <Input
               type="text"
               placeholder="Search templates by name, industry, or tag..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-12 pr-4 py-6 text-lg"
+              className="pl-10 pr-4 py-2 text-sm rounded-lg border-slate-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-200 bg-white"
             />
           </div>
         </div>
 
-        {/* Category Filter */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+        {/* Premium Category Filter */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           {CATEGORIES.map((category) => (
             <Button
               key={category.id}
               variant={selectedCategory === category.id ? 'default' : 'outline'}
               onClick={() => handleCategoryChange(category.id)}
-              className="flex items-center gap-2 whitespace-nowrap"
+              size="sm"
+              className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 font-semibold text-xs transition-all ${
+                selectedCategory === category.id
+                  ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-md shadow-violet-500/30 border-0'
+                  : 'bg-white border-slate-200 text-slate-700 hover:border-violet-300 hover:bg-violet-50/50'
+              }`}
             >
-              <category.icon className="w-4 h-4" />
+              <category.icon className="w-3 h-3" />
               {category.name}
             </Button>
           ))}
@@ -244,21 +240,27 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
 
         {/* Templates Grid */}
         {filteredTemplates.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-xl">
-            <Sparkles className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <div className="text-center py-32 bg-white/60 backdrop-blur-xl rounded-3xl border border-slate-200/60">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500/10 to-cyan-500/10 flex items-center justify-center">
+              <Sparkles className="w-10 h-10 text-slate-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-3">
               No templates found
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-slate-600 mb-8 text-lg">
               Try adjusting your search or filters
             </p>
-            <Button onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}>
+            <Button 
+              onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
+              size="lg"
+              className="bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-700 hover:to-cyan-700 text-white px-8"
+            >
               Clear Filters
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates.map((template) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredTemplates.map((template, index) => (
               <TemplateCard
                 key={template.id}
                 template={template}
@@ -269,10 +271,14 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
           </div>
         )}
 
-        {/* Results Count */}
+        {/* Premium Results Count */}
         {filteredTemplates.length > 0 && (
-          <div className="mt-8 text-center text-gray-600">
-            Showing {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''}
+          <div className="mt-6 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 border border-slate-200">
+              <span className="text-xs font-semibold text-slate-700">
+                {filteredTemplates.length} Premium Template{filteredTemplates.length !== 1 ? 's' : ''} Available
+              </span>
+            </div>
           </div>
         )}
       </div>

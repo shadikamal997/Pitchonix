@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { ArrowLeft, Sparkles, Loader2, Wand2, FileEdit, FileCheck, AlertCircle, RefreshCw, FileText } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2, Wand2, FileEdit, FileCheck, AlertCircle, RefreshCw, FileText, List, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { ContentAnalysisPreview } from '@/components/pdf-studio/ContentAnalysisPreview';
 import { IssuesDisplay } from '@/components/pdf-studio/IssuesDisplay';
@@ -149,6 +149,7 @@ export default function SmartBuilderPage() {
 
       const response = await api.post('/pdf-studio/smart-builder/generate', {
         rawContent: contentToUse,
+        documentType: analysis?.detectedType || 'document',
         config: {
           ...config,
           title: title || analysis?.suggestedTitle || 'Untitled Document',
@@ -268,6 +269,20 @@ export default function SmartBuilderPage() {
                       Paste any content - business notes, school notes, articles, or mixed content. We'll transform it into a professional PDF.
                     </p>
               
+                    {/* Title input */}
+                    <div className="mb-4">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">
+                        Document Title <span className="text-gray-400 font-normal">(optional — AI will suggest one if left blank)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        placeholder="e.g. Q3 Business Report, Marketing Strategy 2025…"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      />
+                    </div>
+
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Your Content</label>
@@ -364,6 +379,40 @@ Key Features:
                       <IssuesDisplay issues={analysis.issues} />
                     </div>
                   </SectionErrorBoundary>
+                </StaggerItem>
+              )}
+
+              {/* Outline Preview */}
+              {analysis.suggestedSections && analysis.suggestedSections.length > 0 && (
+                <StaggerItem>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <List className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white">Document Outline Preview</h3>
+                      <span className="ml-auto text-xs text-gray-400 font-medium">{analysis.suggestedSections.length} sections</span>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      The document will be structured into these sections based on your content:
+                    </p>
+                    <ol className="space-y-2">
+                      {analysis.suggestedSections.map((section: any, i: number) => (
+                        <li key={i} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center justify-center mt-0.5">
+                            {i + 1}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                              {typeof section === 'string' ? section : section.title || section.name || `Section ${i + 1}`}
+                            </p>
+                            {typeof section === 'object' && section.type && (
+                              <span className="text-[10px] text-gray-400 capitalize">{section.type}</span>
+                            )}
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
                 </StaggerItem>
               )}
 
