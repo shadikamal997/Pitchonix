@@ -59,7 +59,7 @@ export class PDFExportService {
 
       // Load HTML content
       await page.setContent(html, {
-        waitUntil: 'networkidle0',
+        waitUntil: 'load',
       });
 
       // Generate PDF
@@ -155,7 +155,7 @@ export class PDFExportService {
       });
 
       await page.setContent(html, {
-        waitUntil: 'networkidle0',
+        waitUntil: 'load',
       });
 
       const pdfBuffer = await page.pdf({

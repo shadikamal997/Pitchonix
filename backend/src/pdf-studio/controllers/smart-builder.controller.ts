@@ -511,6 +511,10 @@ export class SmartBuilderController {
           title:        docTitle,
           documentType: documentType || this.mapDetectedTypeToDocumentType(analysisResult.detectedType),
           brandKitId:   config.brandKitId,
+          // TODO: Uncomment after schema migration is applied
+          // proTemplateId: config.proTemplateId || null,
+          // templateType:  config.templateType || 'clean_business_report',
+          // layoutType:    config.layoutType || null,
           status:       'draft',
           outline: {
             detectedType:         analysisResult.detectedType,
@@ -528,6 +532,7 @@ export class SmartBuilderController {
             generatedSections: finalCompositions.length,
             estimatedPages:   outline.estimatedTotalPages,
             templateType:     config.templateType || 'clean_business_report',
+            proTemplateId:    (config as any).proTemplateId, // Store in metadata for now (TODO: add to schema)
             visualStyle:      config.visualStyle,
             layoutType:       config.layoutType,
             hasImages:        config.hasImages || false,
@@ -582,8 +587,15 @@ export class SmartBuilderController {
             data: {
               documentId: pdfDocument.id,
               order:      index + 1,
+              // TODO: Uncomment after schema migration is applied
+              // pageNumber: index + 1, // Actual page number
               pageType,
               title:      pageTitle,
+              // semanticSectionId: meta?.sectionId || null,
+              // densityScore: composition.metrics?.densityScore || null,
+              // layoutType: composition.layout || null,
+              // blocks: composition.sections || null, // Structured blocks
+              // styles: { visualStyle: config.visualStyle } || null, // Page-level styles
               content: {
                 text:           pageText,
                 template:       meta?.pageTemplate || 'clean_business_report',
@@ -591,6 +603,12 @@ export class SmartBuilderController {
                 sectionId:      meta?.sectionId,
                 layoutType:     composition.layout,
                 visualStyle:    config.visualStyle,
+                // Store these in content for now until schema migration is applied
+                pageNumber:     index + 1,
+                semanticSectionId: meta?.sectionId,
+                densityScore:   composition.metrics?.densityScore,
+                blocks:         composition.sections,
+                styles:         { visualStyle: config.visualStyle },
                 images:         [],
                 charts:         [],
                 composition: {

@@ -18,9 +18,12 @@ import { Public } from '../../auth/public.decorator';
 import { PdfExportService } from '../services/pdf-export.service';
 import { DocxExportService } from '../services/docx-export.service';
 import { PptxExportService } from '../services/pptx-export.service';
+import { PngExportService } from '../services/png-export.service';
+import { JpegExportService } from '../services/jpeg-export.service';
 import { PreviewService } from '../services/preview.service';
 import { TemplateType } from '../templates/template-types';
 import { TEMPLATE_CONFIGS } from '../templates/template-configs';
+import { PRO_TEMPLATE_REGISTRY } from '../pro-templates/registry/pro-template.registry';
 
 @Controller('pdf-studio/export')
 @UseGuards(JwtAuthGuard)
@@ -31,6 +34,8 @@ export class PdfExportController {
     private pdfExportService: PdfExportService,
     private docxExportService: DocxExportService,
     private pptxExportService: PptxExportService,
+    private pngExportService: PngExportService,
+    private jpegExportService: JpegExportService,
     private previewService: PreviewService,
   ) {}
 
@@ -79,9 +84,48 @@ export class PdfExportController {
           contentType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
           break;
 
+        case 'png':
+          const pngResult = await this.pngExportService.exportDocument(documentId, {
+            resolution: 'medium', // Default to medium quality
+            pages: 'all',
+          });
+
+          if (pngResult.isZip) {
+            // Multiple pages - return ZIP
+            buffer = await this.pngExportService.createZipArchive(pngResult.pngBuffers, pngResult.filename);
+            filename = `${pngResult.filename}.zip`;
+            contentType = 'application/zip';
+          } else {
+            // Single page - return PNG directly
+            buffer = pngResult.pngBuffers[0];
+            filename = `${pngResult.filename}.png`;
+            contentType = 'image/png';
+          }
+          break;
+
+        case 'jpeg':
+        case 'jpg':
+          const jpegResult = await this.jpegExportService.exportDocument(documentId, {
+            quality: 85, // Default quality
+            pages: 'all',
+          });
+
+          if (jpegResult.isZip) {
+            // Multiple pages - return ZIP
+            buffer = await this.jpegExportService.createZipArchive(jpegResult.jpegBuffers, jpegResult.filename);
+            filename = `${jpegResult.filename}.zip`;
+            contentType = 'application/zip';
+          } else {
+            // Single page - return JPEG directly
+            buffer = jpegResult.jpegBuffers[0];
+            filename = `${jpegResult.filename}.jpg`;
+            contentType = 'image/jpeg';
+          }
+          break;
+
         default:
           throw new HttpException(
-            `Unsupported export format: ${format}. Supported formats: pdf, docx, pptx`,
+            `Unsupported export format: ${format}. Supported formats: pdf, docx, pptx, png, jpeg`,
             HttpStatus.BAD_REQUEST,
           );
       }
@@ -102,6 +146,30 @@ export class PdfExportController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  /**
+   * Get all available Pro Templates.
+   * GET /api/pdf-studio/export/pro-templates
+   */
+  @Public()
+  @Get('pro-templates')
+  async getProTemplates() {
+    return {
+      success: true,
+      data: {
+        templates: PRO_TEMPLATE_REGISTRY.map(template => ({
+          id: template.id,
+          name: template.name,
+          family: template.family,
+          category: template.category,
+          description: template.description,
+          tags: template.tags,
+          archetypes: template.archetypes,
+          tokens: template.tokens,
+        })),
+      },
+    };
   }
 
   /**

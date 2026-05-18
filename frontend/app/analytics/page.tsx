@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
             <>
               {/* KPI Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <StatCard icon={<Eye className="h-5 w-5 text-violet-600" />} label="Total Views" value={totalViews} />
+                <StatCard icon={<Eye className="h-5 w-5 text-green-600" />} label="Total Views" value={totalViews} />
                 <StatCard icon={<Download className="h-5 w-5 text-blue-600" />} label="Total Exports" value={totalExports} />
                 <StatCard icon={<Share2 className="h-5 w-5 text-emerald-600" />} label="Public Share Links" value={sharedCount} />
               </div>
@@ -84,7 +84,7 @@ export default function AnalyticsPage() {
               {/* Bar chart — views per project */}
               <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
                 <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-violet-600" />
+                  <TrendingUp className="h-4 w-4 text-green-600" />
                   Views &amp; Exports by Project (top 10)
                 </h2>
                 {trendData.length === 0 ? (
@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
                       <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                       <Tooltip />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
-                      <Bar dataKey="Views" fill="#7C3AED" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="Views" fill="#16a34a" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="Exports" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>

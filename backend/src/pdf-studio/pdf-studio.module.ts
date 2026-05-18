@@ -11,6 +11,8 @@ import { RuleBasedPagePlannerService } from './services/rule-based-page-planner.
 import { PdfExportService } from './services/pdf-export.service';
 import { DocxExportService } from './services/docx-export.service';
 import { PptxExportService } from './services/pptx-export.service';
+import { PngExportService } from './services/png-export.service';
+import { JpegExportService } from './services/jpeg-export.service';
 import { ChartRenderingService } from './services/chart-rendering.service';
 import { ChartGenerationService } from './services/chart-generation.service';
 import { TemplatePreviewGeneratorService } from './services/template-preview-generator.service';
@@ -51,6 +53,8 @@ import { ImageUploadController } from './controllers/image-upload.controller';
     PdfExportService,
     DocxExportService,
     PptxExportService,
+    PngExportService,
+    JpegExportService,
     ChartRenderingService,
     ChartGenerationService,
     TemplatePreviewGeneratorService,
@@ -86,6 +90,8 @@ import { ImageUploadController } from './controllers/image-upload.controller';
     PdfExportService,
     DocxExportService,
     PptxExportService,
+    PngExportService,
+    JpegExportService,
     ChartRenderingService,
     ChartGenerationService,
     TemplatePreviewGeneratorService,

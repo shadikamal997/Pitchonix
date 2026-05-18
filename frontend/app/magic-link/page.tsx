@@ -43,7 +43,7 @@ function MagicLinkContent() {
         <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] p-10 text-center">
           {status === 'loading' && (
             <>
-              <Loader2 className="w-12 h-12 text-violet-500 animate-spin mx-auto mb-4" />
+              <Loader2 className="w-12 h-12 text-green-500 animate-spin mx-auto mb-4" />
               <h1 className="text-xl font-bold text-black mb-2">Signing you in…</h1>
               <p className="text-gray-500 text-sm">Just a moment.</p>
             </>

@@ -9,7 +9,8 @@ import {
   Eye, EyeOff, Palette, ChevronDown, ChevronUp, Undo2, Redo2, History,
   Plus, Trash2, Copy, Image as ImageIcon, BarChart2, Star,
   Type, AlignLeft, AlignCenter, AlignRight, Highlighter, Bold, Italic,
-  Underline, List, ListOrdered, FileText, Layers, AlertTriangle,
+  Underline, Strikethrough, AlignJustify, List, ListOrdered, FileText, Layers,
+  AlertTriangle, Table2, LayoutTemplate, Blocks,
 } from 'lucide-react';
 import Link from 'next/link';
 import ExportDropdown from '@/components/pdf-studio/ExportDropdown';
@@ -23,6 +24,9 @@ import OnboardingTour from '@/components/OnboardingTour';
 import { useToast } from '@/components/ToastProvider';
 import { PresenceIndicator } from '@/components/PresenceIndicator';
 import { ProTemplatesDropdown } from '@/features/pdf-studio/pro-templates/components/ProTemplatesDropdown';
+import { FontPicker } from '@/components/FontPicker';
+import { getFontKeyFromStack, getFontStack } from '@/lib/fonts';
+import { BlockPicker, BlockType } from '@/components/pdf-editor/BlockPicker';
 
 const THEME_STORAGE_KEY = 'pitchonix_pdf_theme';
 
@@ -58,6 +62,39 @@ function escapeHtml(text: string): string {
 
 function textToEditableHtml(text: string): string {
   return escapeHtml(text).replace(/\n/g, '<br>');
+}
+
+function blockHtml(block: BlockType): string {
+  const common = 'margin:24px 0;padding:22px;border:1px solid #D9E7E3;border-radius:18px;background:#F8FCFA;color:#173D39;';
+  const title = `<h3 style="margin:0 0 12px;font-size:20px;line-height:1.15;color:#12312E;">${escapeHtml(block.name)}</h3>`;
+  if (block.id === 'timeline') {
+    return `<section data-pitchonix-block="timeline" style="${common}">${title}<div style="display:grid;gap:12px;">${['Discovery','Build','Launch'].map((item, index) => `<div style="display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;"><b style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:#1E4240;color:white;">${index + 1}</b><div><strong>${item}</strong><p style="margin:4px 0 0;color:#55736D;">Add milestone details here.</p></div></div>`).join('')}</div></section>`;
+  }
+  if (block.id === 'swot') {
+    return `<section data-pitchonix-block="swot" style="${common}">${title}<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">${['Strengths','Weaknesses','Opportunities','Threats'].map(item => `<div style="padding:14px;border-radius:14px;background:white;border:1px solid #E2ECE9;"><strong>${item}</strong><p style="margin:6px 0 0;color:#55736D;">Add strategic notes.</p></div>`).join('')}</div></section>`;
+  }
+  if (block.id === 'kpi-cards') {
+    return `<section data-pitchonix-block="kpi-cards" style="${common}">${title}<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">${['78%','3.4x','12k'].map((metric, index) => `<div style="padding:16px;border-radius:16px;background:${index === 1 ? '#1E4240' : 'white'};color:${index === 1 ? 'white' : '#173D39'};border:1px solid #E2ECE9;"><strong style="display:block;font-size:24px;">${metric}</strong><span style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;">Metric label</span></div>`).join('')}</div></section>`;
+  }
+  if (block.id === 'chart') {
+    return `<section data-pitchonix-block="chart" style="${common}">${title}<div style="display:flex;align-items:end;gap:10px;height:120px;">${[62, 86, 48, 74, 92].map(value => `<span style="flex:1;height:${value}%;border-radius:10px 10px 3px 3px;background:#1E4240;"></span>`).join('')}</div></section>`;
+  }
+  if (block.id === 'table' || block.id === 'comparison') {
+    return `<section data-pitchonix-block="${block.id}" style="${common}">${title}<table style="width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;"><thead><tr>${['Item','Status','Notes'].map(h => `<th style="padding:10px;text-align:left;background:#1E4240;color:white;">${h}</th>`).join('')}</tr></thead><tbody>${['First','Second','Third'].map(row => `<tr><td style="padding:10px;border-bottom:1px solid #E2ECE9;">${row}</td><td style="padding:10px;border-bottom:1px solid #E2ECE9;">Ready</td><td style="padding:10px;border-bottom:1px solid #E2ECE9;">Add details</td></tr>`).join('')}</tbody></table></section>`;
+  }
+  if (block.id === 'image') {
+    return `<section data-pitchonix-block="image" style="${common}">${title}<div style="height:180px;border-radius:16px;background:linear-gradient(135deg,#DDF8E6,#1E4240);display:flex;align-items:center;justify-content:center;color:#1E4240;font-weight:800;">Image placeholder</div><p style="margin:10px 0 0;color:#55736D;">Use the Image tab to upload or replace the page image.</p></section>`;
+  }
+  if (block.id === 'feature-grid') {
+    return `<section data-pitchonix-block="feature-grid" style="${common}">${title}<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">${['Fast workflow','Brand-ready','Export-safe','Editable'].map(item => `<div style="padding:14px;border-radius:14px;background:white;border:1px solid #E2ECE9;"><strong>${item}</strong><p style="margin:6px 0 0;color:#55736D;">Add supporting detail.</p></div>`).join('')}</div></section>`;
+  }
+  if (block.id === 'testimonial') {
+    return `<section data-pitchonix-block="testimonial" style="${common}"><blockquote style="margin:0;font-size:22px;line-height:1.3;color:#12312E;">“Add a customer quote or stakeholder endorsement here.”</blockquote><p style="margin:14px 0 0;color:#55736D;font-weight:700;">Name, role, company</p></section>`;
+  }
+  if (block.id === 'cta') {
+    return `<section data-pitchonix-block="cta" style="margin:24px 0;padding:24px;border-radius:20px;background:#1E4240;color:white;"><h3 style="margin:0 0 8px;font-size:24px;">Next action</h3><p style="margin:0 0 16px;color:#D6EEE9;">Describe the primary call to action.</p><span style="display:inline-block;padding:10px 14px;border-radius:999px;background:#9FE89F;color:#173D39;font-weight:800;">Call to action</span></section>`;
+  }
+  return `<section data-pitchonix-block="${escapeHtml(block.id)}" style="${common}">${title}<p style="margin:0;color:#55736D;">${escapeHtml(block.description)}</p></section>`;
 }
 
 function editableHtmlForPage(page: any): string {
@@ -96,9 +133,21 @@ function proArchetypeForPage(page: any, index: number, total: number): string {
 
 function sectionLabel(page: any): string {
   const content = page?.content || {};
-  const title = String(page?.title || content.sectionTitle || '').replace(/\s*\(continued\)\s*$/i, '').trim();
-  if (!title) return page?.pageType === 'cover' ? 'Cover' : page?.pageType === 'toc' ? 'Table of Contents' : 'Document';
-  return title;
+  // Group by the semantic section (sectionId or sectionTitle), not by the per-page title.
+  // This keeps continuation pages in one group even when they have unique per-page titles.
+  const sectionTitle = String(content.sectionTitle || page?.title || '').replace(/\s*\(continued\)\s*$/i, '').trim();
+  if (!sectionTitle) return page?.pageType === 'cover' ? 'Cover' : page?.pageType === 'toc' ? 'Table of Contents' : 'Document';
+  return sectionTitle;
+}
+
+function pageDisplayTitle(page: any, indexInSection: number): string {
+  // Use the per-page title if it differs from the section title; otherwise use section title.
+  const content = page?.content || {};
+  const pageTitle = String(page?.title || '').replace(/\s*\(continued\)\s*$/i, '').trim();
+  const sectionTitle = String(content.sectionTitle || '').replace(/\s*\(continued\)\s*$/i, '').trim();
+  if (pageTitle && pageTitle !== sectionTitle) return pageTitle;
+  if (indexInSection > 0) return sectionTitle || `Page ${indexInSection + 1}`;
+  return pageTitle || sectionTitle || 'Untitled';
 }
 
 function templateStyleLabel(template?: PdfTemplateOption): string {
@@ -160,8 +209,8 @@ export default function PdfEditorPage() {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showVersionPanel, setShowVersionPanel] = useState(false);
   const [versions, setVersions] = useState<any[]>([]);
-  // Right panel tab: 'content' | 'images' | 'charts'
   const [rightTab, setRightTab] = useState<'content' | 'images' | 'charts'>('content');
+  const [showBlockPicker, setShowBlockPicker] = useState(false);
   const [addingPage, setAddingPage] = useState(false);
   const [deletingPageId, setDeletingPageId] = useState<string | null>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -360,6 +409,76 @@ export default function PdfEditorPage() {
     window.document.execCommand(command, false, value);
     rememberSelection();
     handlePageHtmlInput(currentPage.id);
+  };
+
+  const hasEditorSelection = () => {
+    const editor = bodyEditorRef.current;
+    const selection = window.getSelection();
+    if (!editor || !selection || selection.rangeCount === 0 || selection.isCollapsed) return false;
+    return editor.contains(selection.getRangeAt(0).commonAncestorContainer);
+  };
+
+  const applyTextStyle = (styles: Record<string, string | number>) => {
+    const currentPage = pages[currentPageIndex];
+    if (!currentPage) return;
+    if (hasEditorSelection() || restoreSelection()) {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+        applySelectionStyle(styles);
+        return;
+      }
+    }
+    handlePageStyleChange(currentPage.id, styles);
+  };
+
+  const applyFontFamily = (fontFamily: string) => {
+    applyTextStyle({ fontFamily });
+  };
+
+  const applyHeading = (tag: 'p' | 'h1' | 'h2' | 'h3' | 'blockquote') => {
+    const currentPage = pages[currentPageIndex];
+    if (!currentPage) return;
+    if (restoreSelection()) {
+      window.document.execCommand('formatBlock', false, tag);
+      rememberSelection();
+      handlePageHtmlInput(currentPage.id);
+    } else {
+      toast.warning('Place the cursor inside the page first');
+    }
+  };
+
+  const insertHtmlAtCursor = (html: string) => {
+    const currentPage = pages[currentPageIndex];
+    const editor = bodyEditorRef.current;
+    if (!currentPage || !editor) return;
+    const selectionRestored = restoreSelection();
+    const selection = window.getSelection();
+    if (selectionRestored && selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      const fragment = range.createContextualFragment(html);
+      range.insertNode(fragment);
+      selection.removeAllRanges();
+    } else {
+      editor.insertAdjacentHTML('beforeend', html);
+    }
+    handlePageHtmlInput(currentPage.id);
+  };
+
+  const handleInsertBlock = (block: BlockType) => {
+    insertHtmlAtCursor(blockHtml(block));
+    toast.success(`${block.name} block inserted`);
+  };
+
+  const handleInsertTable = () => {
+    insertHtmlAtCursor(blockHtml({
+      id: 'table',
+      name: 'Table',
+      description: 'Data table',
+      icon: Table2,
+      category: 'data',
+      component: 'TableBlock',
+    }));
   };
 
   const handlePageStyleChange = (pageId: string, styles: Record<string, any>) => {
@@ -640,7 +759,7 @@ export default function PdfEditorPage() {
       const url = window.URL.createObjectURL(blob);
       const link = window.document.createElement('a');
       link.href = url;
-      const ext = format === 'pdf' ? 'pdf' : format === 'docx' ? 'docx' : 'pptx';
+      const ext = format === 'pdf' ? 'pdf' : format === 'docx' ? 'docx' : format === 'png' ? 'png' : format === 'jpeg' || format === 'jpg' ? 'jpg' : 'pptx';
       link.download = `${document.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${ext}`;
       window.document.body.appendChild(link);
       link.click();
@@ -677,7 +796,7 @@ export default function PdfEditorPage() {
   const currentText = safePageText(currentPage?.content?.text);
   const currentWords = wordCount(currentText);
   const currentDensity = pageDensity(currentWords, currentPage?.pageType);
-  const pageGroups = pages.reduce((groups: Array<{ label: string; pages: any[] }>, page) => {
+  const pageGroups = pages.reduce((groups: Array<{ label: string; pages: any[]; }>, page) => {
     const label = sectionLabel(page);
     const previous = groups[groups.length - 1];
     if (previous && previous.label === label) {
@@ -691,6 +810,11 @@ export default function PdfEditorPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <OnboardingTour />
+      <BlockPicker
+        isOpen={showBlockPicker}
+        onClose={() => setShowBlockPicker(false)}
+        onSelectBlock={handleInsertBlock}
+      />
 
       {/* ── Header ── */}
       <div className="bg-white border-b shadow-sm sticky top-0 z-20">
@@ -722,78 +846,86 @@ export default function PdfEditorPage() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <PresenceIndicator documentId={documentId} />
+
+              {/* Auto-saved pill */}
               {saveSuccess && (
-                <div className="flex h-9 items-center gap-1.5 text-green-600 bg-green-50 px-2.5 rounded-lg text-xs font-medium">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  Auto-saved
+                <div className="flex h-7 items-center gap-1 rounded-md bg-green-50 px-2 text-[10px] font-medium text-green-600">
+                  <CheckCircle className="w-3 h-3" />
+                  Saved
                 </div>
               )}
 
-              {/* Undo / Redo */}
-              <button
-                onClick={handleUndo}
-                disabled={historyIndex <= 0}
-                title="Undo (Ctrl+Z)"
-                className="h-9 w-9 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors flex items-center justify-center"
-              >
-                <Undo2 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={handleRedo}
-                disabled={historyIndex >= history.length - 1}
-                title="Redo (Ctrl+Shift+Z)"
-                className="h-9 w-9 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors flex items-center justify-center"
-              >
-                <Redo2 className="w-4 h-4" />
-              </button>
+              {/* Divider */}
+              <div className="h-5 w-px bg-gray-200" />
 
-              {/* Version history */}
-              <button
-                onClick={() => { setShowVersionPanel(!showVersionPanel); if (!showVersionPanel) fetchVersions(); }}
-                title="Version history"
-                className={`h-9 w-9 rounded-lg border transition-colors flex items-center justify-center ${showVersionPanel ? 'border-violet-400 bg-violet-50 text-violet-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-              >
-                <History className="w-4 h-4" />
-              </button>
+              {/* Undo / Redo */}
+              <div className="flex items-center gap-0.5">
+                <button
+                  onClick={handleUndo}
+                  disabled={historyIndex <= 0}
+                  title="Undo (Ctrl+Z)"
+                  className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 transition-colors"
+                >
+                  <Undo2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={handleRedo}
+                  disabled={historyIndex >= history.length - 1}
+                  title="Redo (Ctrl+Shift+Z)"
+                  className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 transition-colors"
+                >
+                  <Redo2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => { setShowVersionPanel(!showVersionPanel); if (!showVersionPanel) fetchVersions(); }}
+                  title="Version history"
+                  className={`flex h-7 w-7 items-center justify-center rounded-md border transition-colors ${showVersionPanel ? 'border-green-400 bg-green-50 text-green-600' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                >
+                  <History className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="h-5 w-px bg-gray-200" />
 
               {/* Save */}
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex h-8 items-center gap-1.5 px-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-xs font-semibold"
+                className="flex h-7 items-center gap-1 px-2.5 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors text-[11px] font-semibold"
               >
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                 Save
               </button>
 
               {/* Preview */}
               <button
                 onClick={() => setShowPreviewModal(true)}
-                className="flex h-8 items-center gap-1.5 px-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs font-semibold"
+                className="flex h-7 items-center gap-1 px-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-700 transition-colors text-[11px] font-semibold"
               >
-                <Eye className="w-3.5 h-3.5" />
+                <Eye className="w-3 h-3" />
                 Preview
               </button>
+
+              {/* Divider */}
+              <div className="h-5 w-px bg-gray-200" />
 
               {/* Template picker */}
               <div ref={templatePickerRef} className="relative">
                 <button
                   onClick={() => setShowTemplatePicker(!showTemplatePicker)}
-                  className={`flex h-8 items-center gap-1.5 px-2.5 rounded-lg border transition-all text-xs font-semibold ${
+                  className={`flex h-7 items-center gap-1 px-2 rounded-md border transition-all text-[11px] font-semibold ${
                     showTemplatePicker
                       ? 'border-gray-900 bg-gray-900 text-white'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                   title={`${templates.length || 30} PDF Studio templates`}
                 >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Templates</span>
-                  <span className="hidden xl:inline max-w-[140px] truncate text-[11px] opacity-70">
-                    {activeTemplate?.name || 'Choose design'}
-                  </span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showTemplatePicker ? 'rotate-180' : ''}`} />
+                  <FileText className="w-3 h-3" />
+                  <span>Templates</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showTemplatePicker ? 'rotate-180' : ''}`} />
                 </button>
                 <AnimatePresence>
                   {showTemplatePicker && (
@@ -802,9 +934,10 @@ export default function PdfEditorPage() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -8, scale: 0.97 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-[420px] max-h-[620px] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl z-50"
+                      className="absolute right-0 top-full mt-2 flex flex-col w-[420px] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl z-50"
+                      style={{ maxHeight: '580px' }}
                     >
-                      <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+                      <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-3 py-2">
                         <div>
                           <div className="text-xs font-semibold text-gray-900">Templates</div>
                           <div className="text-[11px] text-gray-500">{templates.length || 30} designs</div>
@@ -815,7 +948,7 @@ export default function PdfEditorPage() {
                           </div>
                         )}
                       </div>
-                      <div className="grid max-h-[530px] grid-cols-2 gap-2 overflow-y-auto p-2.5">
+                      <div className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto p-2.5">
                         {templates.map(template => (
                           <button
                             key={template.type}
@@ -880,24 +1013,26 @@ export default function PdfEditorPage() {
                 />
               </div>
 
+              {/* Divider */}
+              <div className="h-5 w-px bg-gray-200" />
+
               {/* Theme Picker Button */}
               <div ref={themePickerRef} className="relative">
                 <button
                   onClick={() => setShowThemePicker(!showThemePicker)}
-                  className={`group flex h-8 items-center gap-1.5 rounded-lg border px-2 pr-1.5 transition-all text-xs font-semibold shadow-sm ${
+                  className={`group flex h-7 items-center gap-1 rounded-md border px-2 transition-all text-[11px] font-semibold ${
                     showThemePicker
-                      ? 'border-gray-900 bg-gray-900 text-white shadow-md'
-                      : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md'
+                      ? 'border-gray-900 bg-gray-900 text-white'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                   title={`Theme: ${activeTheme.name}`}
                 >
                   <div
-                    className="h-5 w-5 rounded-md ring-1 ring-black/10 shadow-inner"
+                    className="h-3.5 w-3.5 rounded-sm ring-1 ring-black/10"
                     style={{ background: `linear-gradient(135deg, ${activeTheme.primary}, ${activeTheme.secondary})` }}
                   />
-                  <span className="hidden max-w-[88px] truncate sm:inline">{activeTheme.name}</span>
-                  <Palette className={`w-3.5 h-3.5 ${showThemePicker ? 'text-white/80' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                  {showThemePicker ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  <span className="hidden max-w-[72px] truncate sm:inline">{activeTheme.name}</span>
+                  {showThemePicker ? <ChevronUp className="w-3 h-3 opacity-60" /> : <ChevronDown className="w-3 h-3 opacity-60" />}
                 </button>
 
                 {/* Theme picker dropdown */}
@@ -927,13 +1062,13 @@ export default function PdfEditorPage() {
               <button
                 onClick={() => setShowPreview(!showPreview)}
                 title={showPreview ? 'Hide preview panel' : 'Show preview panel'}
-                className={`h-9 w-9 rounded-lg transition-colors text-sm flex items-center justify-center ${
+                className={`flex h-7 w-7 items-center justify-center rounded-md border transition-colors ${
                   showPreview
-                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                    ? 'border-gray-300 bg-gray-100 text-gray-700'
+                    : 'border-gray-200 bg-white text-gray-400 hover:bg-gray-50'
                 }`}
               >
-                {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
 
               <ExportDropdown onExport={handleExport} loading={saving} />
@@ -966,11 +1101,12 @@ export default function PdfEditorPage() {
                       {group.label}
                     </div>
                     <div className="space-y-1">
-                      {group.pages.map((page) => {
+                      {group.pages.map((page, indexInSection) => {
                         const index = pages.findIndex(p => p.id === page.id);
                         const text = safePageText(page.content?.text);
                         const density = pageDensity(wordCount(text), page.pageType);
                         const proArchetype = proArchetypeForPage(page, index, pages.length);
+                        const displayTitle = pageDisplayTitle(page, indexInSection);
                         return (
                           <div
                             key={page.id}
@@ -1005,7 +1141,7 @@ export default function PdfEditorPage() {
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <div className="text-[11px] font-medium text-gray-900 truncate">{page.title || `Page ${index + 1}`}</div>
+                              <div className="text-[11px] font-medium text-gray-900 truncate">{displayTitle || `Page ${index + 1}`}</div>
                               <div className="flex items-center gap-1 text-[9px] text-gray-400 capitalize">
                                 <span>{page.pageType}</span>
                                 {selectedProTemplateId && <span className="rounded bg-teal-50 px-1 font-bold text-teal-700">{proArchetype}</span>}
@@ -1057,7 +1193,7 @@ export default function PdfEditorPage() {
                     <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Version History</p>
                     <button
                       onClick={saveVersion}
-                      className="text-[10px] text-violet-600 font-medium hover:text-violet-800 transition-colors"
+                      className="text-[10px] text-green-600 font-medium hover:text-green-800 transition-colors"
                     >
                       + Save now
                     </button>
@@ -1074,7 +1210,7 @@ export default function PdfEditorPage() {
                           </div>
                           <button
                             onClick={() => restoreVersion(v.id)}
-                            className="text-[9px] text-violet-600 hover:text-violet-800 font-medium ml-1"
+                            className="text-[9px] text-green-600 hover:text-green-800 font-medium ml-1"
                           >
                             Restore
                           </button>
@@ -1115,17 +1251,51 @@ export default function PdfEditorPage() {
                 {currentPage && (
                   <>
                     <>
-                    <div className="mb-4 flex flex-wrap items-center gap-1.5 rounded-xl border border-gray-200 bg-white p-2">
+                    <div className="mb-4 rounded-xl border border-gray-200 bg-white p-2 shadow-sm">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <FontPicker
+                          value={getFontKeyFromStack(currentPage.content?.styles?.fontFamily)}
+                          returnValue="stack"
+                          onChange={applyFontFamily}
+                          className="h-8 w-[190px] rounded-lg border-gray-200 text-xs"
+                        />
+                        <select
+                          title="Text style"
+                          onMouseDown={rememberSelection}
+                          onChange={e => applyHeading(e.target.value as 'p' | 'h1' | 'h2' | 'h3' | 'blockquote')}
+                          defaultValue="p"
+                          className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs font-semibold text-gray-700 outline-none"
+                        >
+                          <option value="p">Paragraph</option>
+                          <option value="h1">Heading 1</option>
+                          <option value="h2">Heading 2</option>
+                          <option value="h3">Heading 3</option>
+                          <option value="blockquote">Quote</option>
+                        </select>
+                        <label className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-2 text-xs text-gray-500">
+                          <Type className="w-3.5 h-3.5" />
+                          <input
+                            type="number"
+                            min="10"
+                            max="72"
+                            defaultValue={currentPage.content?.styles?.fontSize || 16}
+                            onMouseDown={rememberSelection}
+                            onChange={e => applyTextStyle({ fontSize: `${Number(e.target.value)}px` })}
+                            className="h-7 w-12 border-0 px-0 text-xs outline-none"
+                          />
+                        </label>
+                        <div className="mx-1 h-6 w-px bg-gray-200" />
                       {([
                         { icon: Bold, style: { fontWeight: 700 }, title: 'Bold' },
                         { icon: Italic, style: { fontStyle: 'italic' }, title: 'Italic' },
                         { icon: Underline, style: { textDecoration: 'underline' }, title: 'Underline' },
+                        { icon: Strikethrough, style: { textDecoration: 'line-through' }, title: 'Strikethrough' },
                       ] as Array<{ icon: any; style: Record<string, string | number>; title: string }>).map(({ icon: Icon, style, title }) => (
                         <button
                           key={title}
                           title={title}
                           onMouseDown={e => e.preventDefault()}
-                          onClick={() => applySelectionStyle(style)}
+                          onClick={() => applyTextStyle(style)}
                           className="h-8 w-8 rounded-lg flex items-center justify-center transition-colors text-gray-600 hover:bg-gray-100"
                         >
                           <Icon className="w-4 h-4" />
@@ -1136,37 +1306,39 @@ export default function PdfEditorPage() {
                         { icon: AlignLeft, value: 'left', title: 'Align left' },
                         { icon: AlignCenter, value: 'center', title: 'Align center' },
                         { icon: AlignRight, value: 'right', title: 'Align right' },
+                        { icon: AlignJustify, value: 'full', title: 'Justify' },
                       ].map(({ icon: Icon, value, title }) => (
                         <button
                           key={value}
                           title={title}
                           onMouseDown={e => e.preventDefault()}
-                          onClick={() => applySelectionCommand(`justify${value[0].toUpperCase()}${value.slice(1)}`)}
+                          onClick={() => {
+                            applySelectionCommand(value === 'full' ? 'justifyFull' : `justify${value[0].toUpperCase()}${value.slice(1)}`);
+                            if (currentPage) handlePageStyleChange(currentPage.id, { textAlign: value === 'full' ? 'justify' : value });
+                          }}
                           className="h-8 w-8 rounded-lg flex items-center justify-center transition-colors text-gray-600 hover:bg-gray-100"
                         >
                           <Icon className="w-4 h-4" />
                         </button>
                       ))}
                       <div className="mx-1 h-6 w-px bg-gray-200" />
-                      <label className="flex items-center gap-1.5 rounded-lg px-2 text-xs text-gray-500">
-                        <Type className="w-3.5 h-3.5" />
-                        <input
-                          type="number"
-                          min="12"
-                          max="28"
-                          defaultValue={currentPage.content?.styles?.fontSize || 16}
-                          onMouseDown={rememberSelection}
-                          onChange={e => applySelectionStyle({ fontSize: `${Number(e.target.value)}px` })}
-                          className="h-8 w-14 rounded-md border border-gray-200 px-2 text-xs"
-                        />
-                      </label>
                       <label title="Text color" className="h-8 w-8 overflow-hidden rounded-lg border border-gray-200">
                         <input
                           type="color"
                           value={currentPage.content?.styles?.color || '#374151'}
                           onMouseDown={rememberSelection}
-                          onChange={e => applySelectionStyle({ color: e.target.value })}
+                          onChange={e => applyTextStyle({ color: e.target.value })}
                           className="h-10 w-10 -m-1 cursor-pointer"
+                        />
+                      </label>
+                      <label title="Highlight color" className="relative h-8 w-8 overflow-hidden rounded-lg border border-gray-200">
+                        <Highlighter className="pointer-events-none absolute left-2 top-2 h-4 w-4 text-gray-700" />
+                        <input
+                          type="color"
+                          defaultValue="#FEF3C7"
+                          onMouseDown={rememberSelection}
+                          onChange={e => applyTextStyle({ backgroundColor: e.target.value })}
+                          className="h-10 w-10 -m-1 cursor-pointer opacity-0"
                         />
                       </label>
                       <button
@@ -1185,6 +1357,49 @@ export default function PdfEditorPage() {
                       >
                         <ListOrdered className="w-4 h-4" />
                       </button>
+                      <div className="mx-1 h-6 w-px bg-gray-200" />
+                      <button
+                        title="Insert image"
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => setRightTab('images')}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                      >
+                        <ImageIcon className="w-4 h-4" />
+                      </button>
+                      <button
+                        title="Insert chart"
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => setRightTab('charts')}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                      >
+                        <BarChart2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        title="Insert table"
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={handleInsertTable}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                      >
+                        <Table2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        title="Insert block"
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => setShowBlockPicker(true)}
+                        className="h-8 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100"
+                      >
+                        <Blocks className="w-4 h-4" />
+                        Blocks
+                      </button>
+                      <button
+                        title="Two-column starter"
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => insertHtmlAtCursor('<section data-pitchonix-block="columns" style="margin:24px 0;display:grid;grid-template-columns:1fr 1fr;gap:16px;"><div style="padding:18px;border-radius:16px;background:#F8FCFA;border:1px solid #D9E7E3;"><h3 style="margin:0 0 8px;">Column one</h3><p>Add content here.</p></div><div style="padding:18px;border-radius:16px;background:#F8FCFA;border:1px solid #D9E7E3;"><h3 style="margin:0 0 8px;">Column two</h3><p>Add content here.</p></div></section>')}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                      >
+                        <LayoutTemplate className="w-4 h-4" />
+                      </button>
+                      </div>
                     </div>
 
                     <div className="mx-auto bg-[#d8dbe0] p-5 rounded-xl overflow-auto">
@@ -1215,7 +1430,7 @@ export default function PdfEditorPage() {
                             className="mt-8 w-full border-0 bg-transparent text-gray-700 outline-none whitespace-pre-wrap"
                             style={{
                               minHeight: 610,
-                              fontFamily: currentPage.content?.styles?.fontFamily || 'Inter, system-ui, sans-serif',
+                              fontFamily: currentPage.content?.styles?.fontFamily || getFontStack('inter'),
                               fontSize: currentPage.content?.styles?.fontSize || 16,
                               lineHeight: currentPage.content?.styles?.lineHeight || 1.65,
                               color: currentPage.content?.styles?.color || '#374151',
@@ -1232,10 +1447,10 @@ export default function PdfEditorPage() {
                       </div>
                     )}
 
-                    {/* AI Enhance bar */}
+                    {/* Editorial tools */}
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <p className="text-xs font-semibold text-gray-500 mb-2.5 uppercase tracking-wide">
-                        AI Enhance
+                        Editorial Tools
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {[

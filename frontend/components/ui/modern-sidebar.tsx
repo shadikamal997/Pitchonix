@@ -156,7 +156,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
         <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-slate-50/60">
           {!isCollapsed && (
             <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-cyan-600 rounded-lg flex items-center justify-center shadow-sm">
+              <div className="w-9 h-9 bg-gradient-to-br from-green-600 to-emerald-500 rounded-lg flex items-center justify-center shadow-sm">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
               <div className="flex flex-col">
@@ -167,7 +167,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
           )}
 
           {isCollapsed && (
-            <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-cyan-600 rounded-lg flex items-center justify-center mx-auto shadow-sm">
+            <div className="w-9 h-9 bg-gradient-to-br from-green-600 to-emerald-500 rounded-lg flex items-center justify-center mx-auto shadow-sm">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
           )}
@@ -196,7 +196,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
               />
             </div>
           </div>
@@ -216,7 +216,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
                     className={`
                       w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-md text-left transition-all duration-200 group relative
                       ${isActive
-                        ? "bg-violet-50 text-violet-700"
+                        ? "bg-green-50 text-green-700"
                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                       }
                       ${isCollapsed ? "justify-center px-2" : ""}
@@ -228,7 +228,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
                         className={`
                           h-4.5 w-4.5 flex-shrink-0
                           ${isActive 
-                            ? "text-violet-600" 
+                            ? "text-green-600" 
                             : "text-slate-500 group-hover:text-slate-700"
                           }
                         `}
@@ -242,7 +242,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
                           <span className={`
                             px-1.5 py-0.5 text-xs font-medium rounded-full
                             ${isActive
-                              ? "bg-violet-100 text-violet-700"
+                              ? "bg-green-100 text-green-700"
                               : "bg-slate-100 text-slate-600"
                             }
                           `}>
@@ -254,8 +254,8 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
 
                     {/* Badge for collapsed state */}
                     {isCollapsed && item.badge && (
-                      <div className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-full bg-violet-100 border border-white">
-                        <span className="text-[10px] font-medium text-violet-700">
+                      <div className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-full bg-green-100 border border-white">
+                        <span className="text-[10px] font-medium text-green-700">
                           {parseInt(item.badge) > 9 ? '9+' : item.badge}
                         </span>
                       </div>
@@ -290,7 +290,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
                 className="w-full flex items-center px-3 py-2 rounded-md bg-white hover:bg-slate-50 transition-colors duration-200 text-left"
                 title="Go to Settings"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-medium text-sm">{getUserInitials()}</span>
                 </div>
                 <div className="flex-1 min-w-0 ml-2.5">
@@ -306,7 +306,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
                 title="Go to Settings"
               >
                 <div className="relative">
-                  <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-cyan-500 rounded-full flex items-center justify-center">
+                  <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-cyan-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">{getUserInitials()}</span>
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />

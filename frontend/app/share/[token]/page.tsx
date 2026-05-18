@@ -46,7 +46,7 @@ export default function SharedProjectPage() {
         </div>
         <h1 className="text-xl font-semibold text-gray-900">Link not found</h1>
         <p className="text-sm text-gray-500">This share link may have been revoked or never existed.</p>
-        <a href="/" className="mt-2 text-sm text-violet-600 hover:underline">Go to Pitchonix</a>
+        <a href="/" className="mt-2 text-sm text-green-600 hover:underline">Go to Pitchonix</a>
       </div>
     );
   }
@@ -73,8 +73,8 @@ export default function SharedProjectPage() {
           {/* Project header */}
           <div className="p-8 border-b border-gray-100">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <FileText className="w-6 h-6 text-violet-600" />
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <FileText className="w-6 h-6 text-green-600" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
@@ -90,8 +90,8 @@ export default function SharedProjectPage() {
 
           {/* Placeholder — actual slides/pages would render here based on project.type */}
           <div className="p-12 flex flex-col items-center justify-center text-center bg-gray-50">
-            <div className="w-20 h-20 bg-violet-50 rounded-2xl flex items-center justify-center mb-4">
-              <FileText className="w-10 h-10 text-violet-400" />
+            <div className="w-20 h-20 bg-green-50 rounded-2xl flex items-center justify-center mb-4">
+              <FileText className="w-10 h-10 text-green-400" />
             </div>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               {project.type === 'pdf' ? 'PDF Document' : 'Presentation'}

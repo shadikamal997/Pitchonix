@@ -1,0 +1,19 @@
+packages:
+  - 'frontend'
+  - 'backend'
+
+allowBuilds:
+  '@carbon/icon-helpers': true
+  '@carbon/icons-react': true
+  '@nestjs/core': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@sentry-internal/node-cpu-profiler': true
+  bcrypt: true
+  canvas: true
+  msgpackr-extract: true
+  msw: true
+  prisma: true
+  puppeteer: true
+  sharp: true
+  unrs-resolver: true

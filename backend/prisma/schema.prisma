@@ -331,7 +331,12 @@ model PdfDocument {
   title          String
   description    String?
   documentType   String        // business_plan, proposal, company_profile, executive_summary, marketing_plan, etc.
-  
+
+  // Template & Layout
+  proTemplateId  String?       // Pro template identifier
+  templateType   String?       // Standard template type
+  layoutType     String?       // Document layout style
+
   // Design
   brandKitId     String?
   brandKit       BrandKit?     @relation(fields: [brandKitId], references: [id])
@@ -377,16 +382,22 @@ model PdfPage {
   
   // Page info
   order          Int
+  pageNumber     Int?         // Actual page number in document (may differ from order)
   pageType       String       // cover, toc, executive_summary, section_divider, content, metrics, chart, financial_table, timeline, case_study, conclusion
   title          String?
-  
-  // Content
+
+  // Content & Structure
   content        Json         // Page-specific content based on template
-  
+  blocks         Json?        // Structured block content
+  semanticSectionId String?   // Semantic grouping identifier
+
   // Template & Design
   templateId     String?
   template       PdfTemplate? @relation(fields: [templateId], references: [id])
   customStyles   Json?        // Custom styling overrides
+  styles         Json?        // Page-level styles (separate from customStyles)
+  layoutType     String?      // Page layout type (single-column, two-column, etc.)
+  densityScore   Float?       // Page density metric (0-100)
   
   // Quality & Status
   qualityScore   Float?       // Individual page quality score

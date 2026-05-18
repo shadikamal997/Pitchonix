@@ -174,7 +174,7 @@ export default function LoginPage() {
           {/* Magic Link */}
           <div className="mt-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
             <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5 text-violet-500" />
+              <Zap className="w-3.5 h-3.5 text-green-500" />
               Sign in without a password
             </p>
             {magicSent ? (
@@ -186,12 +186,12 @@ export default function LoginPage() {
                   placeholder="your@email.com"
                   value={magicEmail}
                   onChange={(e) => setMagicEmail(e.target.value)}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400"
+                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
                 <button
                   onClick={sendMagicLink}
                   disabled={magicLoading || !magicEmail}
-                  className="px-4 py-2 text-sm bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-sm bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
                   {magicLoading ? '…' : 'Send'}
                 </button>

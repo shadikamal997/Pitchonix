@@ -174,4 +174,55 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
     return user;
   }
+
+  async validateGoogleUser(googleUser: { googleId: string; email: string; name: string; picture?: string }) {
+    // Check if user exists by Google ID
+    let user = await this.prisma.user.findUnique({
+      where: { googleId: googleUser.googleId },
+    });
+
+    // If not, check by email (for existing users linking Google)
+    if (!user) {
+      user = await this.prisma.user.findUnique({
+        where: { email: googleUser.email },
+      });
+
+      // Link Google ID to existing user
+      if (user) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { googleId: googleUser.googleId, picture: googleUser.picture, isVerified: true },
+        });
+      }
+    }
+
+    // Create new user if doesn't exist
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email: googleUser.email,
+          name: googleUser.name,
+          googleId: googleUser.googleId,
+          picture: googleUser.picture,
+          isVerified: true,
+          password: '', // No password for OAuth users
+        },
+      });
+    }
+
+    const token = this.generateToken(user.id, user.email);
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt,
+        isVerified: user.isVerified,
+        onboardingCompleted: user.onboardingCompleted,
+        twoFactorEnabled: user.twoFactorEnabled,
+        picture: user.picture,
+      },
+      token,
+    };
+  }
 }

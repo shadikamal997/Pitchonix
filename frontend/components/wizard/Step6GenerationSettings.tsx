@@ -63,7 +63,7 @@ export default function Step6GenerationSettings({ data, onUpdate, documentType =
       {!isOnePager && (
         <div className="rounded-2xl border-2 border-gray-100 bg-white p-6 shadow-sm">
           <Label className="text-lg font-bold tracking-tight text-gray-900 mb-4 block">
-            Number of Slides: <span className="text-violet-600">{effectiveSlideCount}</span>
+            Number of Slides: <span className="text-green-600">{effectiveSlideCount}</span>
           </Label>
           
           {/* Quick Select Buttons */}
@@ -75,7 +75,7 @@ export default function Step6GenerationSettings({ data, onUpdate, documentType =
                 onClick={() => onUpdate({ slideCount: num })}
                 className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
                   effectiveSlideCount === num
-                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
+                    ? 'bg-green-600 text-white shadow-lg shadow-green-500/30'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                 }`}
               >
@@ -98,15 +98,15 @@ export default function Step6GenerationSettings({ data, onUpdate, documentType =
             <span>{Math.floor((slideRec.min + slideRec.max) / 2)}</span>
             <span>{slideRec.max}</span>
           </div>
-          <p className="text-sm text-slate-600 mt-4 p-3 bg-violet-50 rounded-lg border border-violet-100">
+          <p className="text-sm text-slate-600 mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
             💡 {slideRec.text}
           </p>
         </div>
       )}
       
       {isOnePager && (
-        <div className="p-4 rounded-xl bg-violet-50 border border-violet-100">
-          <p className="text-sm text-violet-900">
+        <div className="p-4 rounded-xl bg-green-50 border border-green-100">
+          <p className="text-sm text-green-900">
             <strong>One-Pager Format:</strong> Fixed at 1 slide with all essential information on a single page.
           </p>
         </div>
@@ -115,7 +115,7 @@ export default function Step6GenerationSettings({ data, onUpdate, documentType =
       {/* Content Depth */}
       <div className="rounded-2xl border-2 border-gray-100 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-md">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-green-600 flex items-center justify-center shadow-md">
             <span className="text-white text-xl font-bold">📝</span>
           </div>
           <div className="flex-1">
@@ -132,8 +132,8 @@ export default function Step6GenerationSettings({ data, onUpdate, documentType =
                 key={option.value}
                 className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md ${
                   data.contentDepth === option.value
-                    ? 'border-violet-500 bg-violet-50 shadow-lg shadow-violet-500/20'
-                    : 'border-gray-200 hover:border-violet-300'
+                    ? 'border-green-500 bg-green-50 shadow-lg shadow-green-500/20'
+                    : 'border-gray-200 hover:border-green-300'
                 }`}
               >
                 <RadioGroupItem value={option.value} id={option.value} className="mt-1 mr-4" />

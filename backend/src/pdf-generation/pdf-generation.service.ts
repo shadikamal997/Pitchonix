@@ -83,7 +83,7 @@ export class PdfGenerationService {
 
       // Set HTML content
       await page.setContent(htmlContent, {
-        waitUntil: 'networkidle0',
+        waitUntil: 'load',
       });
 
       // Update progress

@@ -1,65 +1,62 @@
 import React from 'react';
-import { CheckCircle, Sparkles } from 'lucide-react';
+import { Check, Layout } from 'lucide-react';
 import { ProTemplateDefinition } from '../types';
 
-function BusinessFlyerMarketplacePreview() {
-  return (
-    <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-[#EEF4F3] p-3.5">
-      <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-[#2CB6A3]/20" />
-      <div className="absolute -bottom-14 left-16 h-36 w-36 rounded-full bg-[#1F2933]/10" />
-      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white/70 to-transparent" />
+function ColorPalettePreview({ template }: { template: ProTemplateDefinition }) {
+  const c = template.tokens.colors;
+  const display = template.tokens.typography?.display || 'Inter';
+  const dark = c.paper === '#11100E' || c.paper === '#070707' || c.paper === '#0A0A0A';
 
-      <div className="relative grid h-full grid-cols-[1fr_0.72fr] gap-3">
-        <div className="relative overflow-hidden rounded-xl border border-white/80 bg-white p-3.5 shadow-lg">
-          <div className="absolute right-0 top-0 h-14 w-14 rounded-bl-[2rem] bg-[#E7F7F4]" />
-          <div className="flex items-center justify-between">
-            <div className="h-2 w-14 rounded-full bg-[#2CB6A3]" />
-            <div className="h-2 w-8 rounded-full bg-[#D7E3E0]" />
+  return (
+    <div
+      className="relative flex h-[88px] w-full flex-col overflow-hidden"
+      style={{ background: c.paper }}
+    >
+      {/* Accent top bar */}
+      <div className="h-1 w-full shrink-0" style={{ background: c.accent }} />
+
+      {/* Main content area */}
+      <div className="flex flex-1 items-center gap-3 px-3 py-2">
+        {/* Template name preview */}
+        <div className="min-w-0 flex-1">
+          <div
+            className="truncate text-[13px] font-black leading-tight"
+            style={{ color: dark ? '#ffffff' : c.charcoal, fontFamily: `"${display}", Inter, sans-serif` }}
+          >
+            {template.name}
           </div>
-          <div className="mt-6 text-[24px] font-black leading-[0.9] text-[#1F2933]">
-            Modern<br />Business<br />Flyer
-          </div>
-          <div className="mt-4 h-1.5 w-20 rounded-full bg-[#2CB6A3]" />
-          <div className="mt-3 space-y-1.5">
-            <div className="h-1.5 w-28 rounded-full bg-[#CBD8D5]" />
-            <div className="h-1.5 w-20 rounded-full bg-[#CBD8D5]" />
-          </div>
-          <div className="absolute bottom-3 left-3 text-[8px] font-bold uppercase tracking-[0.18em] text-[#6B7F7A]">
-            Editorial PDF
+          <div
+            className="mt-1 text-[10px] font-medium"
+            style={{ color: dark ? 'rgba(255,255,255,0.5)' : c.muted }}
+          >
+            {template.category}
           </div>
         </div>
 
-        <div className="grid grid-rows-[0.78fr_1fr] gap-3">
-          <div className="overflow-hidden rounded-[1.25rem] bg-[#1F2933] p-3 text-white shadow-lg">
-            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#2CB6A3]">01</div>
-            <div className="mt-4 h-1.5 w-16 rounded-full bg-white/80" />
-            <div className="mt-2 h-1.5 w-12 rounded-full bg-white/45" />
-            <div className="mt-4 grid grid-cols-3 gap-1">
-              <div className="h-5 rounded bg-white/10" />
-              <div className="h-5 rounded bg-white/10" />
-              <div className="h-5 rounded bg-[#2CB6A3]" />
-            </div>
+        {/* Color swatches */}
+        <div className="flex shrink-0 flex-col gap-1">
+          <div className="flex gap-1">
+            <div className="h-4 w-4 rounded-full border border-white/20 shadow-sm" style={{ background: c.accent }} />
+            <div className="h-4 w-4 rounded-full border border-white/20 shadow-sm" style={{ background: c.charcoal }} />
+            <div className="h-4 w-4 rounded-full border border-white/20 shadow-sm" style={{ background: c.accentSoft }} />
           </div>
-          <div className="overflow-hidden rounded-xl border border-white/80 bg-white p-3 shadow-lg">
-            <div className="mb-3 flex items-center gap-1.5">
-              <div className="h-5 w-5 rounded-full bg-[#2CB6A3]" />
-              <div className="h-1.5 w-16 rounded-full bg-[#1F2933]" />
-            </div>
-            <div className="space-y-1.5">
-              <div className="h-1.5 w-full rounded-full bg-[#D7E3E0]" />
-              <div className="h-1.5 w-10/12 rounded-full bg-[#D7E3E0]" />
-              <div className="h-1.5 w-8/12 rounded-full bg-[#D7E3E0]" />
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <div className="h-8 rounded-lg bg-[#E7F7F4]" />
-              <div className="h-8 rounded-lg bg-[#1F2933]" />
-            </div>
+          {/* Mini page lines */}
+          <div
+            className="rounded p-1.5"
+            style={{ background: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)' }}
+          >
+            <div className="mb-0.5 h-1 w-10 rounded-full" style={{ background: dark ? 'rgba(255,255,255,0.3)' : c.line }} />
+            <div className="h-1 w-7 rounded-full" style={{ background: dark ? 'rgba(255,255,255,0.15)' : c.line }} />
           </div>
         </div>
       </div>
 
-      <div className="absolute left-5 top-5 rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-bold text-[#1F2933] shadow-sm backdrop-blur">
-        Cover + inner pages
+      {/* Bottom color strip */}
+      <div className="flex h-1.5 w-full shrink-0">
+        <div className="flex-1" style={{ background: c.accent }} />
+        <div className="flex-1" style={{ background: c.charcoal }} />
+        <div className="flex-1" style={{ background: c.accentSoft }} />
+        <div className="flex-1" style={{ background: c.line }} />
       </div>
     </div>
   );
@@ -77,50 +74,57 @@ export function ProTemplatePreviewCard({
   return (
     <button
       onClick={onSelect}
-      className={`group w-full overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition-all duration-200 ${
+      className={`group w-full overflow-hidden rounded-lg border bg-white text-left transition-all duration-150 ${
         selected
-          ? 'border-teal-500 shadow-teal-100 ring-4 ring-teal-100'
-          : 'border-gray-200 hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-xl'
+          ? 'border-teal-500 ring-2 ring-teal-100'
+          : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
       }`}
     >
-      <div className="relative p-2.5 pb-0">
-        <BusinessFlyerMarketplacePreview />
+      {/* Color preview */}
+      <div className="relative overflow-hidden">
+        <ColorPalettePreview template={template} />
         {selected && (
-          <span className="absolute right-6 top-6 rounded-full bg-teal-600 p-1.5 text-white shadow-lg">
-            <CheckCircle className="h-4 w-4" />
-          </span>
+          <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-teal-600 text-white shadow-sm">
+            <Check className="h-3 w-3 stroke-[3]" />
+          </div>
         )}
       </div>
 
-      <div className="p-3.5">
-        <div className="flex items-start justify-between gap-3">
+      {/* Card info */}
+      <div className="px-2.5 py-2">
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-sm font-black leading-tight text-gray-950">{template.name}</div>
-            <div className="mt-1 line-clamp-2 text-xs leading-relaxed text-gray-500">{template.description}</div>
+            <div className="truncate text-[12px] font-semibold leading-tight text-gray-900">
+              {template.name}
+            </div>
+            <div className="mt-0.5 line-clamp-1 text-[10px] leading-snug text-gray-500">
+              {template.description}
+            </div>
           </div>
-          <span className="shrink-0 rounded-full bg-gray-950 px-2.5 py-1 text-[10px] font-bold text-white">
-            {template.category}
+          <span
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold transition-colors ${
+              selected ? 'bg-teal-600 text-white' : 'bg-gray-900 text-white group-hover:bg-teal-600'
+            }`}
+          >
+            {selected ? 'Applied' : 'Apply'}
           </span>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {template.tags.map(tag => (
-            <span key={tag} className="rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-[10px] font-semibold text-gray-600">
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
-            <Sparkles className="h-3.5 w-3.5 text-teal-600" />
-            {template.archetypes.length} page layouts
-          </span>
-          <span className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
-            selected ? 'bg-teal-600 text-white' : 'bg-gray-950 text-white group-hover:bg-teal-600'
-          }`}>
-            {selected ? 'Applied' : 'Apply Template'}
-          </span>
+        <div className="mt-1.5 flex items-center justify-between">
+          <div className="flex flex-wrap gap-1">
+            {template.tags.slice(0, 2).map(tag => (
+              <span
+                key={tag}
+                className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-medium text-gray-500"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <div className="flex items-center gap-1 text-[9px] text-gray-400">
+            <Layout className="h-2.5 w-2.5" />
+            {template.archetypes.length}
+          </div>
         </div>
       </div>
     </button>

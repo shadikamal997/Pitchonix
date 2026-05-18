@@ -502,10 +502,17 @@ export class RuleBasedPagePlannerService {
     const contentText = this.renderBlocks(blocks);
     const wordCount   = this.countWords(contentText);
 
+    // Derive a per-page title from the first heading block on this page.
+    // This prevents all continuation pages from sharing the same section label.
+    const headingBlock = blocks.find(
+      b => b.type === 'title' || b.type === 'heading' || b.type === 'subheading',
+    );
+    const pageTitle = headingBlock?.cleanText?.trim() || section.title;
+
     return {
       sectionId:          section.id,
       sectionTitle:       section.title,
-      pageTitle:          section.title,
+      pageTitle,
       sectionType:        section.sectionType,
       pageTemplate:       this.selectTemplate(section.sectionType, blocks),
       blocks,

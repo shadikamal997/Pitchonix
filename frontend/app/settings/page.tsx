@@ -184,7 +184,7 @@ export default function SettingsPage() {
           {/* Profile */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <User className="h-5 w-5 text-violet-600" />
+              <User className="h-5 w-5 text-green-600" />
               <h2 className="text-xl font-semibold text-gray-900">Profile</h2>
             </div>
             <div className="space-y-4">
@@ -192,7 +192,7 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium mb-2 text-gray-700">Name</label>
                 <input
                   type="text"
-                  className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
@@ -217,7 +217,7 @@ export default function SettingsPage() {
           {/* Security */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <Shield className="h-5 w-5 text-violet-600" />
+              <Shield className="h-5 w-5 text-green-600" />
               <h2 className="text-xl font-semibold text-gray-900">Security</h2>
             </div>
             <div className="space-y-4">
@@ -226,7 +226,7 @@ export default function SettingsPage() {
                 <div className="relative">
                   <input
                     type={showCurrent ? 'text' : 'password'}
-                    className="w-full border border-gray-200 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full border border-gray-200 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-green-500"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Enter current password"
@@ -245,7 +245,7 @@ export default function SettingsPage() {
                 <div className="relative">
                   <input
                     type={showNew ? 'text' : 'password'}
-                    className="w-full border border-gray-200 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full border border-gray-200 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-green-500"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="At least 8 characters"
@@ -263,7 +263,7 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium mb-2 text-gray-700">Confirm New Password</label>
                 <input
                   type="password"
-                  className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repeat new password"
@@ -278,7 +278,7 @@ export default function SettingsPage() {
           {/* Two-Factor Authentication */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <Smartphone className="h-5 w-5 text-violet-600" />
+              <Smartphone className="h-5 w-5 text-green-600" />
               <h2 className="text-xl font-semibold text-gray-900">Two-Factor Authentication</h2>
               {twoFaEnabled && (
                 <span className="ml-auto flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
@@ -300,7 +300,7 @@ export default function SettingsPage() {
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
-                    className="w-48 border border-gray-200 rounded-lg px-4 py-2 text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-48 border border-gray-200 rounded-lg px-4 py-2 text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-green-500"
                     value={twoFaCode}
                     onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="000000"
@@ -331,7 +331,7 @@ export default function SettingsPage() {
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
-                    className="w-48 border border-gray-200 rounded-lg px-4 py-2 text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-48 border border-gray-200 rounded-lg px-4 py-2 text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-green-500"
                     value={twoFaCode}
                     onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="000000"
@@ -361,7 +361,7 @@ export default function SettingsPage() {
           {/* Notifications */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <Bell className="h-5 w-5 text-violet-600" />
+              <Bell className="h-5 w-5 text-green-600" />
               <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
             </div>
             <p className="text-sm text-gray-600 mb-4">
@@ -371,7 +371,7 @@ export default function SettingsPage() {
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="rounded accent-violet-600"
+                  className="rounded accent-green-600"
                   checked={notifGeneration}
                   onChange={(e) => setNotifGeneration(e.target.checked)}
                 />
@@ -380,7 +380,7 @@ export default function SettingsPage() {
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="rounded accent-violet-600"
+                  className="rounded accent-green-600"
                   checked={notifQuality}
                   onChange={(e) => setNotifQuality(e.target.checked)}
                 />
@@ -389,7 +389,7 @@ export default function SettingsPage() {
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="rounded accent-violet-600"
+                  className="rounded accent-green-600"
                   checked={notifUpdates}
                   onChange={(e) => setNotifUpdates(e.target.checked)}
                 />

@@ -54,8 +54,8 @@ function ResetPasswordForm() {
     <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] p-10">
-          <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center mb-6">
-            <Lock className="w-6 h-6 text-violet-600" />
+          <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-6">
+            <Lock className="w-6 h-6 text-green-600" />
           </div>
 
           {done ? (
@@ -81,7 +81,7 @@ function ResetPasswordForm() {
                     {...register('newPassword')}
                     type="password"
                     placeholder="Minimum 8 characters"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
                   />
                   <PasswordStrengthMeter password={newPasswordValue} />
                   {errors.newPassword && <p className="mt-1 text-xs text-red-500">{errors.newPassword.message}</p>}
@@ -93,7 +93,7 @@ function ResetPasswordForm() {
                     {...register('confirmPassword')}
                     type="password"
                     placeholder="Repeat your password"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
                   />
                   {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>}
                 </div>

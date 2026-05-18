@@ -68,7 +68,7 @@ export default function OnboardingPage() {
   const Icon = current.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
@@ -76,18 +76,18 @@ export default function OnboardingPage() {
             <div
               key={s.id}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                i <= step ? 'bg-violet-600 w-10' : 'bg-gray-200 w-6'
+                i <= step ? 'bg-green-600 w-10' : 'bg-gray-200 w-6'
               }`}
             />
           ))}
         </div>
 
         <div className="bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.08)] p-10 text-center">
-          <div className="w-16 h-16 bg-violet-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Icon className="w-8 h-8 text-violet-600" />
+          <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Icon className="w-8 h-8 text-green-600" />
           </div>
 
-          <p className="text-sm font-medium text-violet-600 mb-2">Step {step + 1} of {STEPS.length}</p>
+          <p className="text-sm font-medium text-green-600 mb-2">Step {step + 1} of {STEPS.length}</p>
           <h1 className="text-2xl font-bold text-black mb-3">{current.title}</h1>
           <p className="text-gray-500 text-sm leading-relaxed mb-8">{current.description}</p>
 

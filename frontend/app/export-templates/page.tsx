@@ -35,14 +35,14 @@ export default function ExportTemplatesPage() {
           </div>
 
           {/* Coming soon banner */}
-          <div className="bg-violet-600 rounded-2xl p-8 text-white mb-8 flex items-center gap-6">
+          <div className="bg-green-600 rounded-2xl p-8 text-white mb-8 flex items-center gap-6">
             <div className="flex-shrink-0">
-              <Clock className="h-12 w-12 text-violet-200" />
+              <Clock className="h-12 w-12 text-green-200" />
             </div>
             <div>
-              <span className="text-xs font-semibold uppercase tracking-widest text-violet-200 mb-1 block">Coming Soon</span>
+              <span className="text-xs font-semibold uppercase tracking-widest text-green-200 mb-1 block">Coming Soon</span>
               <h2 className="text-2xl font-bold mb-2">Export Templates are in development</h2>
-              <p className="text-violet-100 text-sm leading-relaxed max-w-xl">
+              <p className="text-green-100 text-sm leading-relaxed max-w-xl">
                 We're building a powerful template system so you can create, save, and reuse custom layouts across all your exports. Stay tuned!
               </p>
             </div>
@@ -52,8 +52,8 @@ export default function ExportTemplatesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {COMING_SOON_FEATURES.map(({ icon: Icon, title, description }) => (
               <div key={title} className="bg-white border border-gray-200 rounded-xl p-6 flex gap-4 items-start">
-                <div className="w-10 h-10 bg-violet-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon className="h-5 w-5 text-violet-600" />
+                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Icon className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>

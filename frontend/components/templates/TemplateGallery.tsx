@@ -141,10 +141,10 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-12 px-6">
         <div className="max-w-[1600px] mx-auto">
           <div className="text-center py-32">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-600 flex items-center justify-center animate-pulse">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center animate-pulse">
               <Sparkles className="w-10 h-10 text-white" />
             </div>
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-violet-600 mx-auto mb-6"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-green-600 mx-auto mb-6"></div>
             <h3 className="text-2xl font-bold text-slate-900 mb-2">Loading Premium Templates</h3>
             <p className="text-lg text-slate-600">Preparing your creative workspace...</p>
           </div>
@@ -166,7 +166,7 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
             <Button 
               onClick={fetchTemplates} 
               size="lg"
-              className="bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-700 hover:to-cyan-700 text-white px-8"
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8"
             >
               Try Again
             </Button>
@@ -182,9 +182,9 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
         {/* Premium Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/10 to-cyan-500/10 border border-violet-200/50 mb-2">
-              <Sparkles className="w-3 h-3 text-violet-600" />
-              <span className="text-xs font-semibold text-violet-700">Premium Templates</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-200/50 mb-2">
+              <Sparkles className="w-3 h-3 text-green-600" />
+              <span className="text-xs font-semibold text-green-700">Premium Templates</span>
             </div>
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
               Choose Your Template
@@ -213,7 +213,7 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
               placeholder="Search templates by name, industry, or tag..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 text-sm rounded-lg border-slate-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-200 bg-white"
+              className="pl-10 pr-4 py-2 text-sm rounded-lg border-slate-200 focus:border-green-400 focus:ring-2 focus:ring-green-200 bg-white"
             />
           </div>
         </div>
@@ -228,8 +228,8 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
               size="sm"
               className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 font-semibold text-xs transition-all ${
                 selectedCategory === category.id
-                  ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-md shadow-violet-500/30 border-0'
-                  : 'bg-white border-slate-200 text-slate-700 hover:border-violet-300 hover:bg-violet-50/50'
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md shadow-green-500/30 border-0'
+                  : 'bg-white border-slate-200 text-slate-700 hover:border-green-300 hover:bg-green-50/50'
               }`}
             >
               <category.icon className="w-3 h-3" />
@@ -241,7 +241,7 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
         {/* Templates Grid */}
         {filteredTemplates.length === 0 ? (
           <div className="text-center py-32 bg-white/60 backdrop-blur-xl rounded-3xl border border-slate-200/60">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500/10 to-cyan-500/10 flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 flex items-center justify-center">
               <Sparkles className="w-10 h-10 text-slate-400" />
             </div>
             <h3 className="text-2xl font-bold text-slate-900 mb-3">
@@ -253,7 +253,7 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
             <Button 
               onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
               size="lg"
-              className="bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-700 hover:to-cyan-700 text-white px-8"
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8"
             >
               Clear Filters
             </Button>

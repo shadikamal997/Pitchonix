@@ -177,10 +177,10 @@ export class OutlineBuilderService {
   // ── Content-driven outline (no user headings) ──────────────────────────────
 
   private buildFromContent(blocks: ContentBlock[], analysis: ContentAnalysisResult): OutlineSection[] {
-    const template = this.getTemplate(analysis.detectedType, blocks.length);
+    const totalWords = blocks.reduce((s, b) => s + b.wordCount, 0);
+    const template = this.getTemplate(analysis.detectedType, blocks.length, totalWords);
     if (!template.length) return this.singleSection(blocks, analysis);
 
-    const totalWords = blocks.reduce((s, b) => s + b.wordCount, 0);
     const targetPerSection = Math.max(120, Math.ceil(totalWords / template.length));
 
     const sections: OutlineSection[] = [];
@@ -328,9 +328,9 @@ export class OutlineBuilderService {
     // Push last
     aggregated.push(current);
     
-    // Generate better titles for aggregated sections
+    // Generate descriptive titles, preferring the original semantic section title
     return aggregated.map((agg, idx) => ({
-      title: this.generateAggregatedTitle(agg.sectionType, idx, aggregated.length),
+      title: this.generateAggregatedTitle(agg.sectionType, idx, aggregated.length, agg.title),
       sectionType: agg.sectionType,
       startParagraphId: agg.startParagraphId,
       endParagraphId: agg.endParagraphId,
@@ -338,24 +338,38 @@ export class OutlineBuilderService {
   }
 
   /**
-   * Generate a descriptive title for an aggregated section
+   * Generate a descriptive title for an aggregated section.
+   * Prefers the original semantic title when it's meaningful (not a generic type label).
    */
-  private generateAggregatedTitle(sectionType: string, index: number, total: number): string {
+  private generateAggregatedTitle(
+    sectionType: string,
+    index: number,
+    total: number,
+    originalTitle?: string,
+  ): string {
+    // Use the original semantic title if it's actually descriptive
+    const generic = new Set(['body', 'content', 'section', 'paragraph', 'text', 'unknown', '']);
+    if (originalTitle && !generic.has(originalTitle.toLowerCase()) && originalTitle.length > 3) {
+      return originalTitle;
+    }
+
     if (index === 0) return 'Introduction';
     if (index === total - 1) return 'Conclusion';
-    
-    const titles: Record<string, string[]> = {
-      introduction: ['Introduction', 'Overview', 'Background'],
-      body: ['Analysis', 'Discussion', 'Key Findings', 'Details', 'Content'],
-      conclusion: ['Conclusion', 'Summary', 'Final Thoughts'],
-      methodology: ['Methodology', 'Approach', 'Methods'],
-      analysis: ['Analysis', 'Findings', 'Results'],
-      discussion: ['Discussion', 'Implications', 'Insights'],
-      summary: ['Summary', 'Overview', 'Key Points'],
+
+    // Vary titles by both type AND index so adjacent sections never repeat
+    const titlesByType: Record<string, string[]> = {
+      introduction: ['Introduction', 'Overview', 'Background', 'Context'],
+      body:         ['Discussion', 'Analysis', 'Key Insights', 'Details', 'Exploration', 'Review', 'Deep Dive', 'Examination'],
+      conclusion:   ['Conclusion', 'Summary', 'Final Thoughts', 'Takeaways'],
+      methodology:  ['Methodology', 'Approach', 'Methods', 'Process'],
+      analysis:     ['Analysis', 'Findings', 'Results', 'Assessment'],
+      discussion:   ['Discussion', 'Implications', 'Insights', 'Commentary'],
+      summary:      ['Summary', 'Key Points', 'Overview', 'Highlights'],
     };
-    
-    const options = titles[sectionType] || titles.body;
-    return options[index % options.length];
+
+    const options = titlesByType[sectionType] || titlesByType.body;
+    // Use index to select different titles; skip index 0 (already handled above)
+    return options[(index - 1) % options.length];
   }
 
   /**
@@ -376,73 +390,102 @@ export class OutlineBuilderService {
 
   // ── Templates ─────────────────────────────────────────────────────────────
 
-  private getTemplate(docType: string, blockCount: number): Array<{ title: string; type: string }> {
-    const small = blockCount < 8;
+  private getTemplate(docType: string, blockCount: number, totalWords = 0): Array<{ title: string; type: string }> {
+    const small  = blockCount < 8;
+    // Long documents need more sections so continuation pages get diverse titles.
+    const long   = totalWords > 2500;
+    const vlong  = totalWords > 5000;
 
     const map: Record<string, Array<{ title: string; type: string }>> = {
       startup: small ? [
-        { title: 'Overview',        type: 'summary'    },
-        { title: 'Problem & Solution', type: 'content' },
-        { title: 'Next Steps',      type: 'conclusion' },
+        { title: 'Overview',           type: 'summary'    },
+        { title: 'Problem & Solution', type: 'content'    },
+        { title: 'Next Steps',         type: 'conclusion' },
       ] : [
-        { title: 'Executive Summary',    type: 'summary'    },
-        { title: 'Problem Statement',    type: 'content'    },
-        { title: 'Our Solution',         type: 'content'    },
-        { title: 'Market Opportunity',   type: 'content'    },
-        { title: 'Business Model',       type: 'content'    },
-        { title: 'Go-To-Market',         type: 'content'    },
-        { title: 'Team',                 type: 'content'    },
-        { title: 'Financial Overview',   type: 'financial'  },
-        { title: 'Call to Action',       type: 'conclusion' },
+        { title: 'Executive Summary',  type: 'summary'    },
+        { title: 'Problem Statement',  type: 'content'    },
+        { title: 'Our Solution',       type: 'content'    },
+        { title: 'Market Opportunity', type: 'content'    },
+        { title: 'Business Model',     type: 'content'    },
+        { title: 'Go-To-Market',       type: 'content'    },
+        { title: 'Team',               type: 'content'    },
+        { title: 'Financial Overview', type: 'financial'  },
+        { title: 'Call to Action',     type: 'conclusion' },
       ],
       business: small ? [
         { title: 'Overview',    type: 'summary'    },
         { title: 'Details',     type: 'content'    },
         { title: 'Conclusion',  type: 'conclusion' },
       ] : [
-        { title: 'Executive Summary',  type: 'summary'    },
-        { title: 'Company Overview',   type: 'content'    },
-        { title: 'Products & Services',type: 'content'    },
-        { title: 'Market Analysis',    type: 'content'    },
-        { title: 'Strategy',           type: 'content'    },
-        { title: 'Financial Highlights',type: 'financial' },
-        { title: 'Conclusion',         type: 'conclusion' },
+        { title: 'Executive Summary',   type: 'summary'    },
+        { title: 'Company Overview',    type: 'content'    },
+        { title: 'Products & Services', type: 'content'    },
+        { title: 'Market Analysis',     type: 'content'    },
+        { title: 'Strategy',            type: 'content'    },
+        { title: 'Financial Highlights',type: 'financial'  },
+        { title: 'Conclusion',          type: 'conclusion' },
       ],
-      academic: [
-        { title: 'Abstract',          type: 'summary'    },
-        { title: 'Introduction',      type: 'intro'      },
-        { title: 'Background',        type: 'content'    },
-        { title: 'Methodology',       type: 'content'    },
-        { title: 'Results & Analysis',type: 'content'    },
-        { title: 'Discussion',        type: 'content'    },
-        { title: 'Conclusion',        type: 'conclusion' },
+      academic: vlong ? [
+        { title: 'Abstract',            type: 'summary'    },
+        { title: 'Introduction',        type: 'intro'      },
+        { title: 'Background',          type: 'content'    },
+        { title: 'Literature Review',   type: 'content'    },
+        { title: 'Methodology',         type: 'content'    },
+        { title: 'Results',             type: 'content'    },
+        { title: 'Analysis',            type: 'content'    },
+        { title: 'Discussion',          type: 'content'    },
+        { title: 'Implications',        type: 'content'    },
+        { title: 'Conclusion',          type: 'conclusion' },
+      ] : [
+        { title: 'Abstract',            type: 'summary'    },
+        { title: 'Introduction',        type: 'intro'      },
+        { title: 'Background',          type: 'content'    },
+        { title: 'Methodology',         type: 'content'    },
+        { title: 'Results & Analysis',  type: 'content'    },
+        { title: 'Discussion',          type: 'content'    },
+        { title: 'Conclusion',          type: 'conclusion' },
       ],
-      report: [
-        { title: 'Executive Summary', type: 'summary'    },
-        { title: 'Key Findings',      type: 'content'    },
-        { title: 'Analysis',          type: 'content'    },
-        { title: 'Recommendations',   type: 'conclusion' },
+      report: long ? [
+        { title: 'Executive Summary',   type: 'summary'    },
+        { title: 'Background & Context',type: 'content'    },
+        { title: 'Key Findings',        type: 'content'    },
+        { title: 'Analysis',            type: 'content'    },
+        { title: 'Implications',        type: 'content'    },
+        { title: 'Recommendations',     type: 'content'    },
+        { title: 'Conclusion',          type: 'conclusion' },
+      ] : [
+        { title: 'Executive Summary',   type: 'summary'    },
+        { title: 'Key Findings',        type: 'content'    },
+        { title: 'Analysis',            type: 'content'    },
+        { title: 'Recommendations',     type: 'conclusion' },
       ],
       technical: [
-        { title: 'Overview',       type: 'summary' },
-        { title: 'Requirements',   type: 'content' },
-        { title: 'Implementation', type: 'content' },
-        { title: 'Configuration',  type: 'content' },
-        { title: 'Usage & Examples',type: 'content'},
+        { title: 'Overview',            type: 'summary' },
+        { title: 'Requirements',        type: 'content' },
+        { title: 'Implementation',      type: 'content' },
+        { title: 'Configuration',       type: 'content' },
+        { title: 'Usage & Examples',    type: 'content' },
       ],
       notes: [
-        { title: 'Key Points',   type: 'content'    },
-        { title: 'Details',      type: 'content'    },
-        { title: 'Action Items', type: 'conclusion' },
+        { title: 'Key Points',          type: 'content'    },
+        { title: 'Details',             type: 'content'    },
+        { title: 'Action Items',        type: 'conclusion' },
       ],
     };
 
-    return map[docType] || [
-      { title: 'Introduction',     type: 'intro'      },
-      { title: 'Main Content',     type: 'content'    },
-      { title: 'Additional Details',type: 'content'   },
-      { title: 'Summary',          type: 'conclusion' },
-    ];
+    return map[docType] || (long ? [
+      { title: 'Introduction',         type: 'intro'      },
+      { title: 'Background',           type: 'content'    },
+      { title: 'Main Discussion',      type: 'content'    },
+      { title: 'Key Insights',         type: 'content'    },
+      { title: 'Analysis',             type: 'content'    },
+      { title: 'Conclusions',          type: 'conclusion' },
+    ] : [
+      { title: 'Introduction',         type: 'intro'      },
+      { title: 'Main Content',         type: 'content'    },
+      { title: 'Additional Details',   type: 'content'    },
+      { title: 'Summary',              type: 'conclusion' },
+    ]);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

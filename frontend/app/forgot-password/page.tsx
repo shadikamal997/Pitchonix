@@ -45,8 +45,8 @@ export default function ForgotPasswordPage() {
         </Link>
 
         <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] p-10">
-          <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center mb-6">
-            <Mail className="w-6 h-6 text-violet-600" />
+          <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-6">
+            <Mail className="w-6 h-6 text-green-600" />
           </div>
 
           {sent ? (
@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
                     {...register('email')}
                     type="email"
                     placeholder="you@example.com"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
                   />
                   {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
                 </div>

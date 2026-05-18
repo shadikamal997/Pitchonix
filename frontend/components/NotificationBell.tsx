@@ -112,7 +112,7 @@ export default function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-xs text-violet-600 hover:text-violet-800 font-medium flex items-center gap-1"
+                className="text-xs text-green-600 hover:text-green-800 font-medium flex items-center gap-1"
               >
                 <CheckCheck className="w-3 h-3" /> Mark all read
               </button>
@@ -131,17 +131,17 @@ export default function NotificationBell() {
               notifications.map((n) => (
                 <div
                   key={n.id}
-                  className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!n.read ? 'bg-violet-50/40' : ''}`}
+                  className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!n.read ? 'bg-green-50/40' : ''}`}
                 >
                   {!n.read && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2 flex-shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2 flex-shrink-0" />
                   )}
                   <div className={`flex-1 min-w-0 ${n.read ? 'ml-3.5' : ''}`}>
                     <p className="text-xs font-semibold text-gray-800 leading-snug">{n.title}</p>
                     <p className="text-xs text-gray-500 mt-0.5 leading-snug">{n.message}</p>
                     <p className="text-[10px] text-gray-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
                     {n.link && (
-                      <Link href={n.link} className="text-[10px] text-violet-600 hover:underline mt-0.5 inline-block">
+                      <Link href={n.link} className="text-[10px] text-green-600 hover:underline mt-0.5 inline-block">
                         View →
                       </Link>
                     )}

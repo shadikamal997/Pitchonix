@@ -54,8 +54,8 @@ export default function HelpPage() {
             {/* Getting Started */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <div className="flex items-start gap-4">
-                <div className="bg-violet-100 rounded-lg p-3 flex-shrink-0">
-                  <Zap className="h-6 w-6 text-violet-600" />
+                <div className="bg-green-100 rounded-lg p-3 flex-shrink-0">
+                  <Zap className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold mb-2 text-gray-900">Getting Started</h2>
@@ -85,7 +85,7 @@ export default function HelpPage() {
                   <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-700">
                     {['Pitch Decks', 'Business Plans', 'Sales Decks', 'Business Proposals', 'Marketing Plans', 'Case Studies', 'Executive Summaries', 'Company Profiles', 'Financial Projections', 'Partnership Proposals', 'Visual One-Pagers', 'Product Flyers'].map((t) => (
                       <div key={t} className="flex items-center gap-1.5">
-                        <span className="text-violet-500">•</span> {t}
+                        <span className="text-green-500">•</span> {t}
                       </div>
                     ))}
                   </div>
@@ -139,7 +139,7 @@ export default function HelpPage() {
             {/* FAQ */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <div className="flex items-center gap-3 mb-5">
-                <HelpCircle className="h-6 w-6 text-violet-600" />
+                <HelpCircle className="h-6 w-6 text-green-600" />
                 <h2 className="text-xl font-semibold text-gray-900">Frequently Asked Questions</h2>
               </div>
               <div className="space-y-5">

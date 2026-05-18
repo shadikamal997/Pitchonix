@@ -20,6 +20,16 @@ export interface ProTemplateTokens {
     accentSoft: string;
     line: string;
   };
+  radius?: {
+    sm: number;
+    md: number;
+    lg: number;
+    xl: number;
+  };
+  typography?: {
+    display: string;
+    body: string;
+  };
 }
 
 export interface ProTemplateDefinition {

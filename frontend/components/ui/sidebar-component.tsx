@@ -80,7 +80,7 @@ function BrandBadge() {
 
 function AvatarCircle({ initial }: { initial?: string }) {
   return (
-    <div className="relative rounded-full shrink-0 size-8 bg-gradient-to-br from-violet-500 to-cyan-500">
+    <div className="relative rounded-full shrink-0 size-8 bg-gradient-to-br from-green-500 to-emerald-500">
       <div className="flex items-center justify-center size-8 text-white font-semibold text-sm">
         {initial || <UserIcon size={16} />}
       </div>
@@ -500,7 +500,7 @@ function MenuItem({
     >
       <div
         className={`rounded-lg cursor-pointer transition-all duration-500 flex items-center relative ${
-          item.isActive ? "bg-violet-50 text-violet-700" : "hover:bg-neutral-100"
+          item.isActive ? "bg-green-50 text-green-700" : "hover:bg-neutral-100"
         } ${isCollapsed ? "w-10 min-w-10 h-10 justify-center p-4" : "w-full h-10 px-4 py-2"}`}
         style={{ transitionTimingFunction: softSpringEasing }}
         onClick={handleClick}
@@ -514,7 +514,7 @@ function MenuItem({
           }`}
           style={{ transitionTimingFunction: softSpringEasing }}
         >
-          <div className={`text-[14px] leading-[20px] truncate ${item.isActive ? "font-medium text-violet-700" : "text-neutral-900"}`}>
+          <div className={`text-[14px] leading-[20px] truncate ${item.isActive ? "font-medium text-green-700" : "text-neutral-900"}`}>
             {item.label}
           </div>
         </div>

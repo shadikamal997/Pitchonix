@@ -84,8 +84,8 @@ const DOCUMENT_TYPES = {
   executive_summary: { label: 'Executive Summary', icon: FileText, color: 'text-indigo-600 bg-indigo-100' },
   financial_projection: { label: 'Financial Projection', icon: BarChart3, color: 'text-emerald-600 bg-emerald-100' },
   product_launch: { label: 'Product Launch', icon: Rocket, color: 'text-blue-600 bg-blue-100' },
-  strategy_presentation: { label: 'Strategy', icon: Target, color: 'text-violet-600 bg-violet-100' },
-  partnership_proposal: { label: 'Partnership', icon: Layers, color: 'text-violet-600 bg-violet-100' },
+  strategy_presentation: { label: 'Strategy', icon: Target, color: 'text-green-600 bg-green-100' },
+  partnership_proposal: { label: 'Partnership', icon: Layers, color: 'text-green-600 bg-green-100' },
   internal_report: { label: 'Internal Report', icon: FileText, color: 'text-slate-600 bg-slate-100' },
   board_meeting_deck: { label: 'Board Meeting', icon: Briefcase, color: 'text-red-600 bg-red-100' },
 };
@@ -304,8 +304,8 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="relative">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600" />
-          <div className="absolute inset-0 rounded-full border-2 border-violet-200 animate-pulse" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600" />
+          <div className="absolute inset-0 rounded-full border-2 border-green-200 animate-pulse" />
         </div>
       </div>
     );
@@ -318,11 +318,11 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent">
+              <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
                 Pitchonix
               </div>
-              <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-100">
-                <span className="text-xs font-medium text-violet-700">AI-Powered</span>
+              <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
+                <span className="text-xs font-medium text-green-700">AI-Powered</span>
               </div>
             </div>
             
@@ -330,7 +330,7 @@ export default function DashboardPage() {
               <Link href="/templates">
                 <Button
                   variant="outline"
-                  className="hidden sm:flex border-violet-200 text-violet-700 hover:bg-violet-50"
+                  className="hidden sm:flex border-green-200 text-green-700 hover:bg-green-50"
                 >
                   Browse Templates
                 </Button>
@@ -338,7 +338,7 @@ export default function DashboardPage() {
               
               <Button
                 onClick={() => handleCreateProject('pitch_deck')}
-                className="hidden sm:flex bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 shadow-lg shadow-violet-500/30 transition-all hover:-translate-y-0.5"
+                className="hidden sm:flex bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/30 transition-all hover:-translate-y-0.5"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create New
@@ -347,7 +347,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3">
                 <NotificationBell />
                 <span className="hidden md:block text-sm text-slate-600">{user?.email}</span>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm shadow-lg">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm shadow-lg">
                   {user?.email?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-600 hover:text-slate-900">
@@ -368,7 +368,7 @@ export default function DashboardPage() {
           className="space-y-3"
         >
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-            Welcome back, <span className="bg-gradient-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent">
+            Welcome back, <span className="bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
               {user?.email?.split('@')[0] || 'Creator'}
             </span>
           </h1>
@@ -376,7 +376,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-violet-700 to-cyan-600 p-5 sm:p-6 shadow-lg shadow-violet-500/20">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-600 via-green-700 to-emerald-600 p-5 sm:p-6 shadow-lg shadow-green-500/20">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
           
           <div className="relative grid md:grid-cols-2 gap-6 items-center">
@@ -389,7 +389,7 @@ export default function DashboardPage() {
                 Create investor-ready business documents
               </h2>
               
-              <p className="text-violet-100 text-sm leading-relaxed">
+              <p className="text-green-100 text-sm leading-relaxed">
                 Generate pitch decks, business plans, proposals, and sales decks with structured workflows and beautiful templates.
               </p>
               
@@ -397,7 +397,7 @@ export default function DashboardPage() {
                 <Button 
                   onClick={() => handleCreateProject('pitch_deck')}
                   size="sm"
-                  className="bg-white text-violet-700 hover:bg-violet-50 shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5"
+                  className="bg-white text-green-700 hover:bg-green-50 shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5"
                 >
                   <Rocket className="h-4 w-4 mr-2" />
                   Create Pitch Deck
@@ -415,7 +415,7 @@ export default function DashboardPage() {
             </div>
             
             <div className="hidden md:block relative">
-              <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400/20 to-violet-400/20 blur-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/20 to-green-400/20 blur-3xl" />
               <div className="relative space-y-4">
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl transform rotate-2 hover:rotate-0 transition-transform">
                   <div className="flex items-center gap-3 mb-3">
@@ -424,7 +424,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <div className="text-white font-semibold">Quality Score</div>
-                      <div className="text-violet-200 text-sm">AI-Powered Analysis</div>
+                      <div className="text-green-200 text-sm">AI-Powered Analysis</div>
                     </div>
                   </div>
                   <div className="text-4xl font-bold text-white">
@@ -437,7 +437,7 @@ export default function DashboardPage() {
                     <Layers className="h-5 w-5 text-cyan-200" />
                     <span className="text-white font-semibold">12 Slides</span>
                   </div>
-                  <div className="text-violet-200 text-sm">Ready to present</div>
+                  <div className="text-green-200 text-sm">Ready to present</div>
                 </div>
               </div>
             </div>
@@ -447,10 +447,10 @@ export default function DashboardPage() {
         {/* Stats Section */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="group relative overflow-hidden rounded-xl bg-white border border-slate-200 p-4 shadow hover:shadow-lg transition-all hover:-translate-y-0.5">
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative">
               <div className="flex items-center justify-between mb-2">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-md shadow-violet-500/30">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md shadow-green-500/30">
                   <Layers className="h-4 w-4 text-white" />
                 </div>
               </div>
@@ -508,7 +508,7 @@ export default function DashboardPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-slate-900">Quick Create</h3>
-            <Link href="/create" className="text-sm text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1">
+            <Link href="/create" className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1">
               View All 16 Types <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -517,9 +517,9 @@ export default function DashboardPage() {
               onClick={() => handleCreateProject('pitch_deck')}
               className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-left"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-violet-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-green-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
                   <Rocket className="h-7 w-7 text-white" />
                 </div>
                 <div>
@@ -528,7 +528,7 @@ export default function DashboardPage() {
                     Investor-ready presentations with structured slides
                   </p>
                 </div>
-                <div className="flex items-center text-violet-600 font-medium text-sm">
+                <div className="flex items-center text-green-600 font-medium text-sm">
                   Create now <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -692,7 +692,7 @@ export default function DashboardPage() {
               placeholder="Search projects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 rounded-xl border-slate-200 bg-white focus:ring-2 focus:ring-violet-500/20 transition-all"
+              className="pl-12 h-12 rounded-xl border-slate-200 bg-white focus:ring-2 focus:ring-green-500/20 transition-all"
             />
           </div>
           
@@ -701,8 +701,8 @@ export default function DashboardPage() {
               onClick={() => setStatusFilter('all')}
               className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
                 statusFilter === 'all'
-                  ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:border-violet-300'
+                  ? 'bg-green-600 text-white shadow-lg shadow-green-500/30'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-green-300'
               }`}
             >
               All
@@ -711,8 +711,8 @@ export default function DashboardPage() {
               onClick={() => setStatusFilter('draft')}
               className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
                 statusFilter === 'draft'
-                  ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:border-violet-300'
+                  ? 'bg-green-600 text-white shadow-lg shadow-green-500/30'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-green-300'
               }`}
             >
               Draft
@@ -721,8 +721,8 @@ export default function DashboardPage() {
               onClick={() => setStatusFilter('generated')}
               className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
                 statusFilter === 'generated'
-                  ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:border-violet-300'
+                  ? 'bg-green-600 text-white shadow-lg shadow-green-500/30'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-green-300'
               }`}
             >
               Generated
@@ -731,8 +731,8 @@ export default function DashboardPage() {
               onClick={() => setStatusFilter('exported')}
               className={`hidden sm:block px-4 py-2 rounded-xl font-medium text-sm transition-all ${
                 statusFilter === 'exported'
-                  ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:border-violet-300'
+                  ? 'bg-green-600 text-white shadow-lg shadow-green-500/30'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-green-300'
               }`}
             >
               Exported
@@ -788,7 +788,7 @@ export default function DashboardPage() {
             {Array.isArray(projects) && projects.length > 0 && (
               <button
                 onClick={toggleSelectAll}
-                className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-violet-600 transition-colors"
+                className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-green-600 transition-colors"
               >
                 {selectedIds.size === projects.length ? (
                   <CheckSquare className="h-4 w-4" />
@@ -802,8 +802,8 @@ export default function DashboardPage() {
 
           {/* Bulk action toolbar */}
           {selectedIds.size > 0 && (
-            <div className="flex items-center gap-3 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3">
-              <span className="text-sm font-medium text-violet-700">{selectedIds.size} selected</span>
+            <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+              <span className="text-sm font-medium text-green-700">{selectedIds.size} selected</span>
               <div className="flex-1" />
               {!showArchived && (
                 <button
@@ -856,7 +856,7 @@ export default function DashboardPage() {
                   <Button
                     onClick={() => handleCreateProject('pitch_deck')}
                     size="lg"
-                    className="bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 shadow-lg shadow-violet-500/30"
+                    className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/30"
                   >
                     <Plus className="h-5 w-5 mr-2" />
                     Create Your First Project
@@ -883,7 +883,7 @@ export default function DashboardPage() {
                 const docType = DOCUMENT_TYPES[project.documentType as keyof typeof DOCUMENT_TYPES];
                 const Icon = docType?.icon || FileText;
                 const gradientColors: Record<string, string> = {
-                  pitch_deck: 'from-blue-500 to-violet-600',
+                  pitch_deck: 'from-blue-500 to-green-600',
                   business_plan: 'from-purple-500 to-pink-600',
                   proposal: 'from-emerald-500 to-cyan-600',
                   sales_deck: 'from-orange-500 to-amber-600',
@@ -898,10 +898,10 @@ export default function DashboardPage() {
                       show: { opacity: 1, y: 0 }
                     }}
                     className={`group relative overflow-hidden rounded-2xl bg-white border shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1 ${
-                      isSelected ? 'border-violet-400 ring-2 ring-violet-200' : 'border-slate-200'
+                      isSelected ? 'border-green-400 ring-2 ring-green-200' : 'border-slate-200'
                     }`}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 
                     {/* Checkbox — always visible when selected, appears on hover otherwise */}
                     <button
@@ -909,7 +909,7 @@ export default function DashboardPage() {
                       className={`absolute top-3 left-3 z-10 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                     >
                       {isSelected ? (
-                        <CheckSquare className="h-5 w-5 text-violet-600" />
+                        <CheckSquare className="h-5 w-5 text-green-600" />
                       ) : (
                         <Square className="h-5 w-5 text-slate-400" />
                       )}
@@ -999,7 +999,7 @@ export default function DashboardPage() {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="w-full rounded-xl border-slate-200/60 hover:border-violet-300 hover:bg-violet-50"
+                            className="w-full rounded-xl border-slate-200/60 hover:border-green-300 hover:bg-green-50"
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             View
@@ -1009,7 +1009,7 @@ export default function DashboardPage() {
                           <Link href={`/editor/${project.decks[0].id}`} className="flex-1">
                             <Button 
                               size="sm" 
-                              className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 shadow-lg shadow-violet-500/20"
+                              className="w-full rounded-xl bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/20"
                             >
                               <Edit className="h-4 w-4 mr-2" />
                               Edit
@@ -1036,7 +1036,7 @@ export default function DashboardPage() {
             <div className="bg-white rounded-2xl border border-slate-200/60 divide-y divide-slate-100 overflow-hidden">
               {activities.map((activity: any) => (
                 <div key={activity.id} className="flex items-start gap-3 px-5 py-3.5">
-                  <div className="w-2 h-2 rounded-full bg-violet-400 mt-2 flex-shrink-0" />
+                  <div className="w-2 h-2 rounded-full bg-green-400 mt-2 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-800">{activity.title}</p>
                     {activity.description && (

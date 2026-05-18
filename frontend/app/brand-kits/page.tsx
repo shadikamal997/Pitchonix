@@ -205,7 +205,7 @@ function BrandKitDialog({ mode, kit, onClose, onSuccess, toast }: any) {
             <label className="block text-sm font-medium mb-2 text-gray-700">Name</label>
             <input
               type="text"
-              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My Brand"

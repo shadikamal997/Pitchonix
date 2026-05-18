@@ -92,7 +92,7 @@ export class TemplatePreviewGeneratorService {
       // Generate HTML with template
       const html = this.generateTemplateHTML(templateName, sampleContent);
 
-      await page.setContent(html, { waitUntil: 'networkidle0' });
+      await page.setContent(html, { waitUntil: 'load' });
 
       // Take screenshot
       const screenshotPath = path.join(this.PREVIEW_DIR, `${templateName}.png`);

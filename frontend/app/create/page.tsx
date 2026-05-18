@@ -224,8 +224,8 @@ export default function CreateWizardPageWrapper() {
       fallback={
         <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="relative">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600" />
-            <div className="absolute inset-0 rounded-full border-2 border-violet-200 animate-pulse" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600" />
+            <div className="absolute inset-0 rounded-full border-2 border-green-200 animate-pulse" />
           </div>
         </div>
       }
@@ -527,9 +527,9 @@ function CreateWizardPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-100">
-                <div className="w-2 h-2 rounded-full bg-violet-600 animate-pulse" />
-                <span className="text-xs font-medium text-violet-700">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-100">
+                <div className="w-2 h-2 rounded-full bg-green-600 animate-pulse" />
+                <span className="text-xs font-medium text-green-700">
                   Step {currentStep} of {STEPS.length}
                 </span>
               </div>
@@ -537,7 +537,7 @@ function CreateWizardPage() {
           </div>
           <div className="h-1 bg-slate-100">
             <div 
-              className="h-full bg-gradient-to-r from-violet-600 to-cyan-600 transition-all duration-500 ease-out"
+              className="h-full bg-gradient-to-r from-green-600 to-emerald-500 transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -557,7 +557,7 @@ function CreateWizardPage() {
                         currentStep > step.id
                           ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-emerald-500/30'
                           : currentStep === step.id
-                          ? 'bg-gradient-to-br from-violet-600 to-violet-700 text-white shadow-violet-500/30 scale-110'
+                          ? 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-green-500/30 scale-110'
                           : 'bg-white border-2 border-slate-200 text-slate-400'
                       }`}
                     >
@@ -604,7 +604,7 @@ function CreateWizardPage() {
               onClick={handleBack}
               disabled={currentStep === 1}
               size="lg"
-              className="rounded-xl border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+              className="rounded-xl border-slate-200 hover:border-green-300 hover:bg-green-50"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -615,7 +615,7 @@ function CreateWizardPage() {
                 onClick={handleNext}
                 disabled={!isStepValid()}
                 size="lg"
-                className="rounded-xl bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 shadow-lg shadow-violet-500/30 transition-all hover:-translate-y-0.5"
+                className="rounded-xl bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/30 transition-all hover:-translate-y-0.5"
               >
                 Next
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -634,7 +634,7 @@ function CreateWizardPage() {
                   onClick={handleFinish}
                   disabled={!isStepValid() || loading}
                   size="lg"
-                  className="rounded-xl bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 shadow-lg shadow-violet-500/30 transition-all hover:-translate-y-0.5"
+                  className="rounded-xl bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/30 transition-all hover:-translate-y-0.5"
                 >
                   {loading ? (
                     <>
