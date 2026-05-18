@@ -32,6 +32,7 @@ interface TemplateSelectorProps {
   onSelectTemplate: (templateType: string) => void;
   onClear?: () => void;
   autoSelectedTemplate?: string;
+  mode?: 'dropdown' | 'inline'; // NEW: Allow explicit mode selection
 }
 
 const CATEGORY_INFO = {
@@ -118,13 +119,17 @@ const CATEGORIES = ['All', 'Business', 'Analytics', 'Sales', 'Strategy', 'Produc
 export default function TemplateSelector({
   open = false,
   selectedTemplate,
-  onToggle = () => {},
+  onToggle,
   onSelectTemplate,
-  onClear = () => {},
+  onClear,
   autoSelectedTemplate,
+  mode,
 }: TemplateSelectorProps) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [query, setQuery] = useState('');
+
+  // Determine mode: if onToggle is provided, it's dropdown mode; otherwise inline
+  const isDropdownMode = mode === 'dropdown' || (onToggle !== undefined);
 
   const selectedTemplateData = DEFAULT_TEMPLATES.find(t => t.type === selectedTemplate);
 
@@ -151,7 +156,7 @@ export default function TemplateSelector({
     });
   }, [activeCategory, query]);
 
-  const TemplateCard = ({ template }: { template: Template }) => {
+  const TemplateCard = ({ template, compact = false }: { template: Template; compact?: boolean }) => {
     const categoryInfo = CATEGORY_INFO[template.category as keyof typeof CATEGORY_INFO];
     const isSelected = selectedTemplate === template.type;
     const isAutoSuggested = autoSelectedTemplate === template.type;
@@ -161,7 +166,7 @@ export default function TemplateSelector({
       <button
         onClick={() => {
           onSelectTemplate(template.type);
-          onToggle();
+          if (isDropdownMode && onToggle) onToggle();
         }}
         className={`group w-full overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition-all duration-200 ${
           isSelected
@@ -238,6 +243,85 @@ export default function TemplateSelector({
     );
   };
 
+  // INLINE MODE - Render full component inline
+  if (!isDropdownMode) {
+    return (
+      <div className="space-y-4">
+        {/* Header */}
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <FileText className="h-5 w-5 text-gray-700" />
+            Choose Template
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Select a professional design • 20 templates available
+            {autoSelectedTemplate && (
+              <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                <Sparkles className="w-3 h-3 mr-0.5" />
+                AI Suggested
+              </span>
+            )}
+          </p>
+        </div>
+
+        {/* Search */}
+        <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+          <Search className="h-4 w-4 shrink-0 text-gray-400" />
+          <input
+            value={query}
+            onChange={event => setQuery(event.target.value)}
+            placeholder="Search templates by name, category, or feature..."
+            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400"
+          />
+        </div>
+
+        {/* Categories */}
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map(category => (
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                activeCategory === category
+                  ? 'bg-gray-950 text-white shadow-sm'
+                  : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
+        {/* Results Counter */}
+        <div className="flex items-center justify-between px-1">
+          <div className="text-xs font-bold text-gray-500">
+            {visibleTemplates.length} professional {visibleTemplates.length === 1 ? 'template' : 'templates'}
+          </div>
+          <div className="flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-bold text-teal-700">
+            <Sparkles className="h-3.5 w-3.5" />
+            Premium designs
+          </div>
+        </div>
+
+        {/* Templates Grid */}
+        <div className="grid grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-2">
+          {visibleTemplates.map(template => (
+            <TemplateCard key={template.type} template={template} />
+          ))}
+        </div>
+
+        {/* Empty State */}
+        {visibleTemplates.length === 0 && (
+          <div className="rounded-3xl border border-dashed border-gray-300 bg-white p-8 text-center">
+            <div className="text-sm font-bold text-gray-900">No matching templates</div>
+            <div className="mt-1 text-xs text-gray-500">Try another category or search term.</div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // DROPDOWN MODE - Render as dropdown button + modal
   return (
     <div className="relative">
       <button
@@ -278,12 +362,12 @@ export default function TemplateSelector({
                     </span>
                     <div>
                       <div className="text-sm font-black leading-tight text-gray-950">Templates</div>
-                      <div className="text-xs font-medium text-gray-500">30 professional designs</div>
+                      <div className="text-xs font-medium text-gray-500">20 professional designs</div>
                     </div>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {selectedTemplate && (
+                  {selectedTemplate && onClear && (
                     <button
                       onClick={onClear}
                       className="rounded-full border border-gray-200 px-3 py-1.5 text-[11px] font-bold text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50"
