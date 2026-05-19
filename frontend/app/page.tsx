@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Navbar } from '@/components/ui/mini-navbar';
 import { motion } from 'framer-motion';
 import {
   Sparkles,
@@ -33,79 +33,12 @@ import {
 } from 'lucide-react';
 
 export default function HomePage() {
-  // Scroll-to-section helper
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  // Header background on scroll — registered once, cleaned up on unmount
-  useEffect(() => {
-    const handleScroll = () => {
-      const header = document.querySelector('header');
-      if (!header) return;
-      if (window.scrollY > 100) {
-        header.classList.add('bg-black/80', 'backdrop-blur-md');
-        header.classList.remove('bg-transparent');
-      } else {
-        header.classList.remove('bg-black/80', 'backdrop-blur-md');
-        header.classList.add('bg-transparent');
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
     <div className="min-h-screen bg-white scroll-smooth">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-transparent transition-all duration-300">
-        <div className="container mx-auto px-6 py-6 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-black font-bold text-xl">P</span>
-            </div>
-            <span className="text-2xl font-bold text-white drop-shadow-lg">Pitchonix</span>
-          </div>
+      <Navbar />
 
-          <nav className="hidden md:flex items-center space-x-8">
-            <button
-              onClick={() => scrollToSection('features')}
-              className="text-black hover:text-gray-700 font-medium transition-colors"
-            >
-              Features
-            </button>
-            <button
-              onClick={() => scrollToSection('about')}
-              className="text-black hover:text-gray-700 font-medium transition-colors"
-            >
-              About
-            </button>
-            <button
-              onClick={() => scrollToSection('pricing')}
-              className="text-black hover:text-gray-700 font-medium transition-colors"
-            >
-              Pricing
-            </button>
-          </nav>
-
-          <div className="flex items-center space-x-4">
-            <Link href="/login">
-              <Button className="bg-white text-black hover:bg-gray-100">
-                Login
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button className="bg-white text-black hover:bg-gray-100">Get Started</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section with Video Background */}
-      <section className="relative overflow-hidden h-[90vh]">
+      {/* Hero Section with Video Background - Added top padding for navbar */}
+      <section className="relative overflow-hidden h-[90vh] pt-20">
         <div className="absolute inset-0 w-full h-full">
           <video
             autoPlay
@@ -1322,20 +1255,14 @@ export default function HomePage() {
               <h4 className="text-white font-semibold mb-4">Product</h4>
               <ul className="space-y-3">
                 <li>
-                  <button
-                    onClick={() => scrollToSection('features')}
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
+                  <Link href="#features" className="text-gray-400 hover:text-white transition-colors">
                     Features
-                  </button>
+                  </Link>
                 </li>
                 <li>
-                  <button
-                    onClick={() => scrollToSection('pricing')}
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
+                  <Link href="#pricing" className="text-gray-400 hover:text-white transition-colors">
                     Pricing
-                  </button>
+                  </Link>
                 </li>
                 <li>
                   <Link href="/register" className="text-gray-400 hover:text-white transition-colors">
@@ -1349,12 +1276,9 @@ export default function HomePage() {
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-3">
                 <li>
-                  <button
-                    onClick={() => scrollToSection('about')}
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
+                  <Link href="#about" className="text-gray-400 hover:text-white transition-colors">
                     About
-                  </button>
+                  </Link>
                 </li>
                 <li>
                   <Link href="/login" className="text-gray-400 hover:text-white transition-colors">

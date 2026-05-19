@@ -14,7 +14,7 @@ export class ContactService {
   constructor(private prisma: PrismaService) {}
 
   async createContactMessage(dto: CreateContactMessageDto) {
-    const contactMessage = await this.prisma.contactMessage.create({
+    const contactMessage = await (this.prisma as any).contactMessage.create({
       data: {
         name: dto.name,
         email: dto.email,
@@ -29,19 +29,19 @@ export class ContactService {
   }
 
   async getAllContactMessages() {
-    return this.prisma.contactMessage.findMany({
+    return (this.prisma as any).contactMessage.findMany({
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async getContactMessageById(id: string) {
-    return this.prisma.contactMessage.findUnique({
+    return (this.prisma as any).contactMessage.findUnique({
       where: { id },
     });
   }
 
   async updateContactStatus(id: string, status: string) {
-    return this.prisma.contactMessage.update({
+    return (this.prisma as any).contactMessage.update({
       where: { id },
       data: { status },
     });

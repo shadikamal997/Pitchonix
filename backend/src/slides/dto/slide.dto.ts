@@ -79,4 +79,20 @@ export class UpdateSlideDto {
   @IsOptional()
   @IsString()
   themeKey?: string;
+
+  // Slide-level extras (Phase 1 of editor rebuild)
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsObject()
+  background?: any;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsObject()
+  themeTokens?: any;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsObject()
+  metadata?: any;
 }

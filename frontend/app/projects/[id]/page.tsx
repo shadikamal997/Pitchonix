@@ -257,15 +257,18 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                     <CardContent>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {deck.slides.slice(0, 8).map((slide, index) => (
-                          <div
+                          <Link
                             key={slide.id}
-                            className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => router.push(`/editor/${deck.id}#slide-${index}`)}
+                            href={`/projects/${params.id}/edit/${slide.id}`}
+                            className="group block border rounded-lg p-4 bg-white hover:shadow-md hover:border-green-400 transition-all cursor-pointer"
                           >
-                            <div className="text-xs text-gray-500 mb-1">Slide {slide.order}</div>
+                            <div className="text-xs text-gray-500 mb-1 flex items-center justify-between">
+                              <span>Slide {slide.order}</span>
+                              <span className="text-green-700 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-semibold uppercase tracking-wider">Edit →</span>
+                            </div>
                             <div className="font-medium text-sm line-clamp-2">{slide.title}</div>
                             <div className="text-xs text-gray-500 mt-1 capitalize">{slide.type}</div>
-                          </div>
+                          </Link>
                         ))}
                       </div>
                       {deck.slides.length > 8 && (

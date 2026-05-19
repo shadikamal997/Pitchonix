@@ -312,53 +312,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Modern Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
-                Pitchonix
-              </div>
-              <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
-                <span className="text-xs font-medium text-green-700">AI-Powered</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <Link href="/templates">
-                <Button
-                  variant="outline"
-                  className="hidden sm:flex border-green-200 text-green-700 hover:bg-green-50"
-                >
-                  Browse Templates
-                </Button>
-              </Link>
-              
-              <Button
-                onClick={() => handleCreateProject('pitch_deck')}
-                className="hidden sm:flex bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/30 transition-all hover:-translate-y-0.5"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create New
-              </Button>
-              
-              <div className="flex items-center gap-3">
-                <NotificationBell />
-                <span className="hidden md:block text-sm text-slate-600">{user?.email}</span>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm shadow-lg">
-                  {user?.email?.[0]?.toUpperCase() || 'U'}
-                </div>
-                <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-600 hover:text-slate-900">
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-full bg-slate-50">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Welcome Section */}
         <motion.div 

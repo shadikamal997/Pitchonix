@@ -134,16 +134,75 @@ model Slide {
   order        Int
   title        String
   subtitle     String?
-  content      Json     // Flexible JSON structure for slide content (bullets, metrics, charts, etc.)
+  content      Json     // Legacy flexible JSON. Kept for back-compat after element-migration; not authoritative once `elementsVersion >= 1`.
   layoutKey    String?  // Which template layout to use
   themeKey     String?  // Which theme to apply
   speakerNotes String?  // Speaker notes
   qualityScore Int?     // Individual slide quality score
+
+  // Element-based editing system (Phase 1 of slide editor rebuild)
+  elementsVersion Int           @default(0)  // 0 = not migrated, 1+ = element rows are authoritative
+  background      Json?         // {type, color/gradient/image, opacity}
+  themeTokens     Json?         // per-slide theme override
+  metadata        Json?         // free-form (e.g. groupId, sectionId, animationDuration)
+  elements        SlideElement[]
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@map("slides")
   @@index([deckId, order])
+}
+
+// =============================================================================
+//  SlideElement — atomic editable unit on a slide
+//
+//  Every visible thing on a slide is one row here: heading, paragraph, each
+//  bullet item, chart, table cell group, image, shape, icon, etc.
+//
+//  Polymorphic content via three JSON columns:
+//    content  — primary user-facing content for this element type
+//               (e.g. {text} for heading, {items: [...]} for bulletList,
+//                     {type:'bar',title,datasets:[...]} for chart)
+//    data     — supplementary structured data (e.g. table cells, chart
+//               categories/axes, KPI value+delta)
+//    style    — typography / fill / stroke / shadow / opacity / radius
+//               (always per-element; theme tokens are merged at render time)
+// =============================================================================
+model SlideElement {
+  id            String   @id @default(uuid())
+  slideId       String
+  slide         Slide    @relation(fields: [slideId], references: [id], onDelete: Cascade)
+
+  type          String   // heading|subheading|paragraph|bulletList|numberedList|quote|testimonial|metric|kpi|chart|table|image|icon|logo|shape|line|divider|timeline|roadmap|teamCard|pricingCard|comparison|swot|featureGrid|processSteps|cta|footer|pageNumber|videoPlaceholder|embeddedMediaPlaceholder
+  name          String?  // user-editable label ("Hero Title", "Market Stat #2")
+  order         Int      // stable iteration order; canvas z-stack uses zIndex
+
+  // Geometry (in slide-local coordinates, 0..100 as % of slide W/H so layouts are resolution-independent)
+  x             Float    @default(0)
+  y             Float    @default(0)
+  width         Float    @default(50)
+  height        Float    @default(10)
+  rotation      Float    @default(0)   // degrees
+  zIndex        Int      @default(0)
+
+  // Display flags
+  locked        Boolean  @default(false)
+  visible       Boolean  @default(true)
+
+  // Polymorphic payload — see comment block above
+  content       Json?
+  data          Json?
+  style         Json?
+  animations    Json?
+  accessibility Json?    // {altText, role, ariaLabel}
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("slide_elements")
+  @@index([slideId, order])
+  @@index([slideId, type])
 }
 
 model Template {

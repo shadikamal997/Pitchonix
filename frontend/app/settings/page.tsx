@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ModernSidebar } from '@/components/ui/modern-sidebar';
 import { useAuthStore } from '@/lib/store';
 import { useToast } from '@/components/ToastProvider';
 import { Button } from '@/components/ui/button';
@@ -175,10 +174,8 @@ export default function SettingsPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <ModernSidebar />
-      <main className="flex-1 ml-64 p-8">
-        <div className="max-w-3xl mx-auto">
+    <div className="min-h-full bg-slate-50 p-8">
+      <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-gray-900">Settings</h1>
 
           {/* Profile */}
@@ -414,8 +411,7 @@ export default function SettingsPage() {
               {deletingAccount ? 'Deleting...' : 'Delete Account'}
             </Button>
           </div>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

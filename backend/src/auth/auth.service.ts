@@ -177,7 +177,7 @@ export class AuthService {
 
   async validateGoogleUser(googleUser: { googleId: string; email: string; name: string; picture?: string }) {
     // Check if user exists by Google ID
-    let user = await this.prisma.user.findUnique({
+    let user = await (this.prisma.user as any).findFirst({
       where: { googleId: googleUser.googleId },
     });
 
@@ -191,7 +191,7 @@ export class AuthService {
       if (user) {
         user = await this.prisma.user.update({
           where: { id: user.id },
-          data: { googleId: googleUser.googleId, picture: googleUser.picture, isVerified: true },
+          data: { googleId: googleUser.googleId, picture: googleUser.picture, isVerified: true } as any,
         });
       }
     }
@@ -206,7 +206,7 @@ export class AuthService {
           picture: googleUser.picture,
           isVerified: true,
           password: '', // No password for OAuth users
-        },
+        } as any,
       });
     }
 
@@ -220,7 +220,7 @@ export class AuthService {
         isVerified: user.isVerified,
         onboardingCompleted: user.onboardingCompleted,
         twoFactorEnabled: user.twoFactorEnabled,
-        picture: user.picture,
+        picture: (user as any).picture,
       },
       token,
     };

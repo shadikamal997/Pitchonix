@@ -1,1039 +1,805 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { PerformanceService } from '../../common/performance.service';
+
+// =============================================================================
+//  SafeContentEnhancementService
+// =============================================================================
+//  A safe, structure-preserving, idempotent content enhancement engine.
+//
+//  Design rules:
+//    1. NEVER destroy paragraphs, headings, lists, tables or any HTML.
+//    2. NEVER convert prose into bullet lists.
+//    3. NEVER replace common words with corporate jargon (use → utilize, etc.).
+//    4. NEVER touch URLs, emails, decimals, version numbers, abbreviations.
+//    5. Pipeline MUST be idempotent: running enhance N times == running once.
+//    6. Pipeline MUST be content-only: layout/template/pagination is untouched.
+//    7. Pipeline MUST validate semantic integrity post-run and rollback on drift.
+//    8. Quality scoring MUST measure real signals — never reward structural change.
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+//  Public types
+// -----------------------------------------------------------------------------
+
+export type Tone =
+  | 'neutral'
+  | 'business'
+  | 'executive'
+  | 'formal'
+  | 'academic'
+  | 'persuasive'
+  | 'technical'
+  | 'friendly';
+
+export const VALID_TONES: readonly Tone[] = [
+  'neutral', 'business', 'executive', 'formal',
+  'academic', 'persuasive', 'technical', 'friendly',
+] as const;
 
 export interface EnhancementOptions {
-  improveWriting?: boolean;
+  /** Apply conservative grammar, spelling, punctuation, and whitespace fixes */
   fixGrammar?: boolean;
+  /** Simplify wordy phrases, remove redundancies — never replace with jargon */
+  improveClarity?: boolean;
+  /** Tone mode. If unknown / invalid, falls back to neutral (no-op) */
+  tone?: Tone;
+
+  // ---- Legacy aliases (mapped, never destructive) -------------------------
+  /** Legacy alias of improveClarity */
+  improveWriting?: boolean;
+  // The following flags from the previous destructive engine are intentionally
+  // ignored — they are kept here only so existing call sites do not break.
   restructure?: boolean;
   expand?: boolean;
   shorten?: boolean;
   professionalize?: boolean;
   makeEngaging?: boolean;
-  tone?: 'formal' | 'casual' | 'academic' | 'persuasive' | 'technical' | 'friendly';
+}
+
+export interface ChangeEntry {
+  type:
+    | 'spelling'
+    | 'grammar'
+    | 'punctuation'
+    | 'capitalization'
+    | 'whitespace'
+    | 'clarity'
+    | 'redundancy'
+    | 'tone';
+  description: string;
+  before: string;
+  after: string;
+  count: number;
 }
 
 export interface EnhancementResult {
   originalContent: string;
   enhancedContent: string;
-  changes: Array<{
-    type: string;
-    description: string;
-    before: string;
-    after: string;
-  }>;
+  changes: ChangeEntry[];
   qualityBefore: number;
   qualityAfter: number;
   improvement: number;
+  rolledBack: boolean;
+  rollbackReason?: string;
+  inputFormat: 'html' | 'text';
 }
+
+// -----------------------------------------------------------------------------
+//  Internal types
+// -----------------------------------------------------------------------------
+
+type Rule = {
+  pattern: RegExp;
+  replacement: string | ((substring: string, ...args: any[]) => string);
+  description: string;
+  type: ChangeEntry['type'];
+};
+
+interface ProcessingContext {
+  recordChange: (entry: ChangeEntry) => void;
+}
+
+// -----------------------------------------------------------------------------
+//  Token protector — masks URLs, emails, decimals, abbreviations etc. so the
+//  rule engine never touches them. Uses control chars unlikely to appear in
+//  user text so the placeholder regex cannot collide with prose.
+// -----------------------------------------------------------------------------
+
+const PROTECT_OPEN  = 'P';   // SOH + P
+const PROTECT_CLOSE = '';    // STX
+
+const PROTECTED_PATTERNS: RegExp[] = [
+  // URLs (http/https/ftp/www)
+  /\b(?:https?|ftp):\/\/[^\s<>"']+/gi,
+  /\bwww\.[^\s<>"']+/gi,
+  // Email addresses
+  /\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b/gi,
+  // File names with common extensions
+  /\b[\w.-]+\.(?:pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|svg|webp|html?|css|json|csv|md|tsx?|jsx?|py|java|rb|go|rs|toml|yaml|yml|xml|sql|sh|env|lock)\b/gi,
+  // Version numbers (v1.2.3, 1.2.3, etc.)
+  /\bv?\d+(?:\.\d+){1,}\b/gi,
+  // Money & decimals
+  /\$\d+(?:[.,]\d+)*[KkMmBb]?\b/g,
+  /\b\d+(?:\.\d+)+\b/g,
+  // Percentages and units that look like sentences
+  /\b\d+(?:\.\d+)?%/g,
+  // Title abbreviations with trailing period
+  /\b(?:Dr|Mr|Mrs|Ms|Mx|Prof|Sr|Jr|St|Ave|Rd|Blvd|Inc|Ltd|Corp|Co|Capt|Lt|Gen|Sgt|Sen|Rep|Hon|Rev|Fr|Bro|Sis|Hon|Maj|Col)\./g,
+  // Country / org abbreviations
+  /\b(?:U\.S\.A|U\.S|U\.K|E\.U|N\.A\.T\.O|U\.N|D\.C)\.?/g,
+  // Latin & common abbreviations
+  /\b(?:e\.g|i\.e|etc|vs|cf|al|et|No|Vol|pp|p\.s|a\.m|p\.m)\./gi,
+  // Degrees
+  /\b(?:Ph\.D|M\.D|B\.A|M\.A|B\.S|M\.S|Ed\.D|J\.D|L\.L\.B|D\.D\.S|D\.V\.M)\.?/g,
+  // Quarter / month abbreviations attached to numbers (Q1, FY2024)
+  /\b(?:Q[1-4]|FY|H[12])\d{0,4}\b/g,
+];
+
+class TokenProtector {
+  private map = new Map<string, string>();
+  private counter = 0;
+
+  protect(text: string): string {
+    let working = text;
+    for (const pattern of PROTECTED_PATTERNS) {
+      working = working.replace(pattern, (match) => {
+        const key = `${PROTECT_OPEN}${this.counter++}${PROTECT_CLOSE}`;
+        this.map.set(key, match);
+        return key;
+      });
+    }
+    return working;
+  }
+
+  restore(text: string): string {
+    if (this.map.size === 0) return text;
+    let working = text;
+    // Restore by exact substring (placeholders are unique control-char tokens)
+    for (const [key, original] of this.map) {
+      if (working.includes(key)) {
+        working = working.split(key).join(original);
+      }
+    }
+    return working;
+  }
+}
+
+// -----------------------------------------------------------------------------
+//  Rule sets — every rule is wrong-form → right-form, hence idempotent.
+// -----------------------------------------------------------------------------
+
+const SPELLING_RULES: Rule[] = [
+  { pattern: /\brecieve\b/gi,      replacement: 'receive',     description: 'Fixed spelling: recieve → receive',         type: 'spelling' },
+  { pattern: /\brecieved\b/gi,     replacement: 'received',    description: 'Fixed spelling: recieved → received',       type: 'spelling' },
+  { pattern: /\brecieving\b/gi,    replacement: 'receiving',   description: 'Fixed spelling: recieving → receiving',     type: 'spelling' },
+  { pattern: /\bbeleive\b/gi,      replacement: 'believe',     description: 'Fixed spelling: beleive → believe',         type: 'spelling' },
+  { pattern: /\bbeleived\b/gi,     replacement: 'believed',    description: 'Fixed spelling: beleived → believed',       type: 'spelling' },
+  { pattern: /\bocurred\b/gi,      replacement: 'occurred',    description: 'Fixed spelling: ocurred → occurred',        type: 'spelling' },
+  { pattern: /\boccured\b/gi,      replacement: 'occurred',    description: 'Fixed spelling: occured → occurred',        type: 'spelling' },
+  { pattern: /\boccurence\b/gi,    replacement: 'occurrence',  description: 'Fixed spelling: occurence → occurrence',    type: 'spelling' },
+  { pattern: /\bseperate\b/gi,     replacement: 'separate',    description: 'Fixed spelling: seperate → separate',       type: 'spelling' },
+  { pattern: /\bseperately\b/gi,   replacement: 'separately',  description: 'Fixed spelling: seperately → separately',   type: 'spelling' },
+  { pattern: /\bdefinately\b/gi,   replacement: 'definitely',  description: 'Fixed spelling: definately → definitely',   type: 'spelling' },
+  { pattern: /\bneccessary\b/gi,   replacement: 'necessary',   description: 'Fixed spelling: neccessary → necessary',    type: 'spelling' },
+  { pattern: /\baccomodate\b/gi,   replacement: 'accommodate', description: 'Fixed spelling: accomodate → accommodate',  type: 'spelling' },
+  { pattern: /\bembarass\b/gi,     replacement: 'embarrass',   description: 'Fixed spelling: embarass → embarrass',      type: 'spelling' },
+  { pattern: /\bharrass\b/gi,      replacement: 'harass',      description: 'Fixed spelling: harrass → harass',          type: 'spelling' },
+  { pattern: /\bmillenium\b/gi,    replacement: 'millennium',  description: 'Fixed spelling: millenium → millennium',    type: 'spelling' },
+  { pattern: /\bpriviledge\b/gi,   replacement: 'privilege',   description: 'Fixed spelling: priviledge → privilege',    type: 'spelling' },
+  { pattern: /\bpriviliged\b/gi,   replacement: 'privileged',  description: 'Fixed spelling: priviliged → privileged',   type: 'spelling' },
+  { pattern: /\bconsious\b/gi,     replacement: 'conscious',   description: 'Fixed spelling: consious → conscious',      type: 'spelling' },
+  { pattern: /\bcommitee\b/gi,     replacement: 'committee',   description: 'Fixed spelling: commitee → committee',      type: 'spelling' },
+  { pattern: /\balot\b/gi,         replacement: 'a lot',       description: 'Fixed: alot → a lot',                       type: 'spelling' },
+  { pattern: /\birregardless\b/gi, replacement: 'regardless',  description: 'Fixed: irregardless → regardless',          type: 'spelling' },
+  { pattern: /\btheirselves\b/gi,  replacement: 'themselves',  description: 'Fixed: theirselves → themselves',           type: 'spelling' },
+  { pattern: /\bgonna\b/gi,        replacement: 'going to',    description: 'Expanded: gonna → going to',                type: 'spelling' },
+  { pattern: /\bwanna\b/gi,        replacement: 'want to',     description: 'Expanded: wanna → want to',                 type: 'spelling' },
+  { pattern: /\bgotta\b/gi,        replacement: 'have to',     description: 'Expanded: gotta → have to',                 type: 'spelling' },
+  { pattern: /\bkinda\b/gi,        replacement: 'kind of',     description: 'Expanded: kinda → kind of',                 type: 'spelling' },
+  { pattern: /\bsorta\b/gi,        replacement: 'sort of',     description: 'Expanded: sorta → sort of',                 type: 'spelling' },
+  { pattern: /\bdunno\b/gi,        replacement: 'do not know', description: 'Expanded: dunno → do not know',             type: 'spelling' },
+];
+
+const GRAMMAR_RULES: Rule[] = [
+  // Could/should/would of → have
+  { pattern: /\b(could|should|would|might|must)\s+of\b/gi, replacement: '$1 have', description: 'Fixed "X of" → "X have"', type: 'grammar' },
+  // there/their/they're confusion — only the clear-cut cases
+  { pattern: /\btheir\s+is\b/gi,  replacement: 'there is',  description: 'Fixed: their is → there is',  type: 'grammar' },
+  { pattern: /\btheir\s+are\b/gi, replacement: 'there are', description: 'Fixed: their are → there are', type: 'grammar' },
+  { pattern: /\btheir\s+was\b/gi, replacement: 'there was', description: 'Fixed: their was → there was', type: 'grammar' },
+  { pattern: /\btheir\s+were\b/gi, replacement: 'there were', description: 'Fixed: their were → there were', type: 'grammar' },
+  // your → you're (only safe verb-form contexts)
+  { pattern: /\byour\s+(going|doing|coming|being|making|using|trying|talking|writing|reading|saying|getting|having)\b/gi,
+    replacement: "you're $1", description: "Fixed: your → you're", type: 'grammar' },
+  // me/I — pronoun case in clear cases
+  { pattern: /\bbetween\s+you\s+and\s+I\b/gi, replacement: 'between you and me', description: 'Fixed pronoun case', type: 'grammar' },
+  // less → fewer for countable nouns
+  { pattern: /\bless\s+(people|items|users|companies|customers|employees|members|students|workers|hours|days|years)\b/gi,
+    replacement: 'fewer $1', description: 'Fixed: less → fewer with countable noun', type: 'grammar' },
+  // a/an
+  { pattern: /\ba\s+(hour|honest|honor|honour|heir|MBA|FBI|MRI|RSVP|SOS)\b/g,
+    replacement: 'an $1', description: 'Fixed a/an before vowel sound', type: 'grammar' },
+  { pattern: /\bA\s+(hour|honest|honor|honour|heir)\b/g,
+    replacement: 'An $1', description: 'Fixed A/An before vowel sound', type: 'grammar' },
+  { pattern: /\ban\s+(user|unique|university|union|European|one|once|uniform|useful|usual|UN)\b/g,
+    replacement: 'a $1', description: 'Fixed a/an before consonant sound', type: 'grammar' },
+  { pattern: /\bAn\s+(user|unique|university|union|European|one|once|uniform|useful|usual)\b/g,
+    replacement: 'A $1', description: 'Fixed A/An before consonant sound', type: 'grammar' },
+  // Verb tense slips
+  { pattern: /\bshould\s+have\s+went\b/gi, replacement: 'should have gone', description: 'Fixed verb tense', type: 'grammar' },
+  { pattern: /\bhas\s+went\b/gi, replacement: 'has gone', description: 'Fixed verb tense', type: 'grammar' },
+  { pattern: /\bhave\s+went\b/gi, replacement: 'have gone', description: 'Fixed verb tense', type: 'grammar' },
+  // then/than swapped in comparisons
+  { pattern: /\b(more|less|greater|fewer|better|worse|larger|smaller|higher|lower)\s+then\b/gi,
+    replacement: '$1 than', description: 'Fixed: then → than in comparison', type: 'grammar' },
+];
+
+const PUNCTUATION_RULES: Rule[] = [
+  // Limit repeated exclamation/question marks to two
+  { pattern: /([!?])\1{2,}/g, replacement: '$1$1', description: 'Limited repeated punctuation', type: 'punctuation' },
+  // 4+ dots → ellipsis
+  { pattern: /\.{4,}/g, replacement: '…', description: 'Normalized excessive dots to ellipsis', type: 'punctuation' },
+  // Remove space before clausal/terminal punctuation
+  { pattern: / +([,;:!?])/g, replacement: '$1', description: 'Removed space before punctuation', type: 'punctuation' },
+];
+
+const WHITESPACE_RULES: Rule[] = [
+  { pattern: /[ \t]{2,}/g, replacement: ' ',  description: 'Collapsed multiple spaces',     type: 'whitespace' },
+  { pattern: /[ \t]+$/gm,  replacement: '',   description: 'Removed trailing whitespace',   type: 'whitespace' },
+];
+
+const CAPITALIZATION_RULES: Rule[] = [
+  // Standalone 'i' as pronoun → 'I'.
+  // Match 'i' only when surrounded by non-letter/non-apostrophe characters.
+  { pattern: /(^|[^A-Za-z'’])i(?=[^A-Za-z'’]|$)/g, replacement: '$1I',
+    description: 'Capitalized standalone "I"', type: 'capitalization' },
+];
+
+const CLARITY_RULES: Rule[] = [
+  // Wordy phrases → concise equivalents
+  { pattern: /\bin\s+order\s+to\b/gi,         replacement: 'to',       description: 'Simplified "in order to" → "to"',       type: 'clarity' },
+  { pattern: /\bdue\s+to\s+the\s+fact\s+that\b/gi, replacement: 'because', description: 'Simplified "due to the fact that" → "because"', type: 'clarity' },
+  { pattern: /\bat\s+this\s+point\s+in\s+time\b/gi, replacement: 'now', description: 'Simplified to "now"', type: 'clarity' },
+  { pattern: /\bat\s+the\s+present\s+time\b/gi, replacement: 'now',    description: 'Simplified to "now"', type: 'clarity' },
+  { pattern: /\bin\s+close\s+proximity\s+to\b/gi, replacement: 'near', description: 'Simplified to "near"', type: 'clarity' },
+  { pattern: /\bin\s+the\s+event\s+that\b/gi, replacement: 'if',       description: 'Simplified to "if"',   type: 'clarity' },
+  { pattern: /\bin\s+the\s+near\s+future\b/gi, replacement: 'soon',    description: 'Simplified to "soon"', type: 'clarity' },
+  { pattern: /\bprior\s+to\b/gi,              replacement: 'before',   description: 'Simplified "prior to" → "before"', type: 'clarity' },
+  { pattern: /\bsubsequent\s+to\b/gi,         replacement: 'after',    description: 'Simplified "subsequent to" → "after"', type: 'clarity' },
+  { pattern: /\bfor\s+the\s+purpose\s+of\b/gi, replacement: 'to',      description: 'Simplified "for the purpose of"', type: 'clarity' },
+  { pattern: /\bwith\s+regard\s+to\b/gi,      replacement: 'about',    description: 'Simplified "with regard to" → "about"', type: 'clarity' },
+  { pattern: /\bwith\s+reference\s+to\b/gi,   replacement: 'about',    description: 'Simplified "with reference to" → "about"', type: 'clarity' },
+  { pattern: /\bthe\s+reason\s+why\s+is\s+because\b/gi, replacement: 'because', description: 'Removed redundancy', type: 'clarity' },
+  { pattern: /\bgive\s+consideration\s+to\b/gi, replacement: 'consider', description: 'Simplified phrase', type: 'clarity' },
+  { pattern: /\bmake\s+a\s+decision\b/gi,     replacement: 'decide',   description: 'Simplified phrase', type: 'clarity' },
+  { pattern: /\bcome\s+to\s+the\s+conclusion\b/gi, replacement: 'conclude', description: 'Simplified phrase', type: 'clarity' },
+  { pattern: /\bin\s+light\s+of\s+the\s+fact\s+that\b/gi, replacement: 'because', description: 'Simplified phrase', type: 'clarity' },
+  // Idiom corrections
+  { pattern: /\bfor\s+all\s+intensive\s+purposes\b/gi, replacement: 'for all intents and purposes', description: 'Fixed common idiom', type: 'clarity' },
+  { pattern: /\bnip\s+it\s+in\s+the\s+butt\b/gi,       replacement: 'nip it in the bud',            description: 'Fixed idiom', type: 'clarity' },
+  { pattern: /\bone\s+in\s+the\s+same\b/gi,            replacement: 'one and the same',             description: 'Fixed phrase', type: 'clarity' },
+];
+
+const REDUNDANCY_RULES: Rule[] = [
+  { pattern: /\bunexpected\s+surprise\b/gi, replacement: 'surprise', description: 'Removed redundant modifier', type: 'redundancy' },
+  { pattern: /\bfree\s+gift\b/gi,           replacement: 'gift',     description: 'Removed redundant modifier', type: 'redundancy' },
+  { pattern: /\bend\s+result\b/gi,          replacement: 'result',   description: 'Removed redundant modifier', type: 'redundancy' },
+  { pattern: /\bpast\s+history\b/gi,        replacement: 'history',  description: 'Removed redundant modifier', type: 'redundancy' },
+  { pattern: /\bfuture\s+plans\b/gi,        replacement: 'plans',    description: 'Removed redundant modifier', type: 'redundancy' },
+  { pattern: /\badvance\s+planning\b/gi,    replacement: 'planning', description: 'Removed redundant modifier', type: 'redundancy' },
+  { pattern: /\brepeat\s+again\b/gi,        replacement: 'repeat',   description: 'Removed redundancy',         type: 'redundancy' },
+  { pattern: /\brevert\s+back\b/gi,         replacement: 'revert',   description: 'Removed redundancy',         type: 'redundancy' },
+  { pattern: /\bcombine\s+together\b/gi,    replacement: 'combine',  description: 'Removed redundancy',         type: 'redundancy' },
+  { pattern: /\bmerge\s+together\b/gi,      replacement: 'merge',    description: 'Removed redundancy',         type: 'redundancy' },
+  { pattern: /\bmore\s+better\b/gi,         replacement: 'better',   description: 'Removed redundancy',         type: 'redundancy' },
+  { pattern: /\bmost\s+best\b/gi,           replacement: 'best',     description: 'Removed redundancy',         type: 'redundancy' },
+  { pattern: /\bvery\s+unique\b/gi,         replacement: 'unique',   description: '"Unique" is absolute',       type: 'redundancy' },
+  { pattern: /\bquite\s+unique\b/gi,        replacement: 'unique',   description: '"Unique" is absolute',       type: 'redundancy' },
+  { pattern: /\bcompletely\s+unique\b/gi,   replacement: 'unique',   description: '"Unique" is absolute',       type: 'redundancy' },
+  { pattern: /\b12\s+noon\b/gi,             replacement: 'noon',     description: 'Simplified time',            type: 'redundancy' },
+  { pattern: /\b12\s+midnight\b/gi,         replacement: 'midnight', description: 'Simplified time',            type: 'redundancy' },
+];
+
+// Tone rules — explicit per-mode, no silent fallback.
+const TONE_RULES: Record<Tone, Rule[]> = {
+  neutral:    [],
+  business:   [],
+  executive:  [],
+  persuasive: [],
+  technical:  [],
+  friendly:   [],
+  formal:     buildFormalContractionRules(),
+  academic:   buildFormalContractionRules(),  // academic inherits formal contractions
+};
+
+function buildFormalContractionRules(): Rule[] {
+  const expand = (from: RegExp, to: string, label = '(formal)'): Rule => ({
+    pattern: from,
+    replacement: to,
+    description: `Expanded contraction ${label}`,
+    type: 'tone',
+  });
+  return [
+    expand(/\bcan't\b/gi, 'cannot'),
+    expand(/\bwon't\b/gi, 'will not'),
+    expand(/\bdon't\b/gi, 'do not'),
+    expand(/\bdidn't\b/gi, 'did not'),
+    expand(/\bisn't\b/gi, 'is not'),
+    expand(/\baren't\b/gi, 'are not'),
+    expand(/\bwasn't\b/gi, 'was not'),
+    expand(/\bweren't\b/gi, 'were not'),
+    expand(/\bhasn't\b/gi, 'has not'),
+    expand(/\bhaven't\b/gi, 'have not'),
+    expand(/\bhadn't\b/gi, 'had not'),
+    expand(/\bshouldn't\b/gi, 'should not'),
+    expand(/\bwouldn't\b/gi, 'would not'),
+    expand(/\bcouldn't\b/gi, 'could not'),
+    expand(/\bdoesn't\b/gi, 'does not'),
+    expand(/\bmustn't\b/gi, 'must not'),
+    expand(/\bI'm\b/g,   'I am'),
+    expand(/\bI've\b/g,  'I have'),
+    expand(/\bI'll\b/g,  'I will'),
+    expand(/\bI'd\b/g,   'I would'),
+    expand(/\bit's\b/gi, 'it is'),
+    expand(/\bthat's\b/gi, 'that is'),
+    expand(/\bwe're\b/gi, 'we are'),
+    expand(/\bthey're\b/gi, 'they are'),
+    expand(/\byou're\b/gi, 'you are'),
+    expand(/\byou've\b/gi, 'you have'),
+    expand(/\bwe've\b/gi, 'we have'),
+    expand(/\bthey've\b/gi, 'they have'),
+    expand(/\byou'll\b/gi, 'you will'),
+    expand(/\bwe'll\b/gi, 'we will'),
+    expand(/\bthey'll\b/gi, 'they will'),
+    expand(/\bhe's\b/gi, 'he is'),
+    expand(/\bshe's\b/gi, 'she is'),
+    expand(/\bthere's\b/gi, 'there is'),
+    expand(/\bhere's\b/gi, 'here is'),
+    expand(/\bwhat's\b/gi, 'what is'),
+    expand(/\blet's\b/gi, 'let us'),
+  ];
+}
+
+// -----------------------------------------------------------------------------
+//  Service
+// -----------------------------------------------------------------------------
 
 @Injectable()
 export class ContentEnhancementService {
   private readonly logger = new Logger(ContentEnhancementService.name);
 
-  constructor(
-    private prisma: PrismaService,
-    private performanceService: PerformanceService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   /**
-   * Enhance content based on options
+   * Main entry point. Returns the original content unchanged if no enabled
+   * option produced any safe change.
    */
   async enhanceContent(
     content: string,
     options: EnhancementOptions,
   ): Promise<EnhancementResult> {
-    this.logger.log(`Enhancing content (${content.length} chars)`);
+    const inputFormat: 'html' | 'text' = /<[a-z][\s\S]*?>/i.test(content) ? 'html' : 'text';
 
-    const changes: any[] = [];
-    let enhancedContent = content;
-    const qualityBefore = this.calculateQuality(content);
+    // Map legacy aliases — never enable destructive flags.
+    const fixGrammar     = options.fixGrammar === true;
+    const improveClarity = options.improveClarity === true || options.improveWriting === true;
+    const tone: Tone     = VALID_TONES.includes(options.tone as Tone)
+      ? (options.tone as Tone)
+      : 'neutral';
 
-    // Apply enhancements in order
-    if (options.fixGrammar) {
-      const result = this.fixGrammar(enhancedContent);
-      enhancedContent = result.content;
-      changes.push(...result.changes);
+    // Warn if a deprecated destructive flag is passed.
+    if (options.restructure || options.expand || options.shorten || options.professionalize || options.makeEngaging) {
+      this.logger.warn(
+        'Ignoring deprecated destructive enhancement flag(s). ' +
+        'These were removed because they damaged content.',
+      );
     }
-
-    if (options.restructure) {
-      const result = this.restructureContent(enhancedContent);
-      enhancedContent = result.content;
-      changes.push(...result.changes);
-    }
-
-    if (options.improveWriting) {
-      const result = this.improveWriting(enhancedContent, options.tone);
-      enhancedContent = result.content;
-      changes.push(...result.changes);
-    }
-
-    if (options.expand) {
-      const result = this.expandContent(enhancedContent);
-      enhancedContent = result.content;
-      changes.push(...result.changes);
-    }
-
-    if (options.shorten) {
-      const result = this.shortenContent(enhancedContent);
-      enhancedContent = result.content;
-      changes.push(...result.changes);
-    }
-
-    if (options.professionalize) {
-      const result = this.makeMoreProfessional(enhancedContent);
-      enhancedContent = result.content;
-      changes.push(...result.changes);
-    }
-
-    if (options.makeEngaging) {
-      const result = this.makeMoreEngaging(enhancedContent);
-      enhancedContent = result.content;
-      changes.push(...result.changes);
-    }
-
-    const qualityAfter = this.calculateQuality(enhancedContent);
-    const improvement = ((qualityAfter - qualityBefore) / qualityBefore) * 100;
 
     this.logger.log(
-      `Enhancement complete: ${changes.length} changes, ${improvement.toFixed(1)}% improvement`,
+      `Enhancing ${inputFormat} content (${content.length} chars) ` +
+      `[fixGrammar=${fixGrammar} improveClarity=${improveClarity} tone=${tone}]`,
+    );
+
+    const aggregated = new Map<string, ChangeEntry>();
+    const ctx: ProcessingContext = {
+      recordChange: (entry) => {
+        const key = `${entry.type}::${entry.description}`;
+        const existing = aggregated.get(key);
+        if (existing) {
+          existing.count += entry.count;
+          // Keep first-seen before/after pair
+        } else {
+          aggregated.set(key, { ...entry });
+        }
+      },
+    };
+
+    const enabledRules = this.selectRules(fixGrammar, improveClarity, tone);
+    const qualityBefore = this.calculateQuality(content);
+
+    let enhanced: string;
+    try {
+      enhanced = (inputFormat === 'html')
+        ? this.processHtml(content, enabledRules, ctx)
+        : this.processText(content, enabledRules, ctx);
+    } catch (err) {
+      this.logger.error('Enhancement failed; returning original content', err as Error);
+      return this.buildUnchangedResult(content, qualityBefore, inputFormat);
+    }
+
+    // Semantic integrity check — rollback if structure changed.
+    const driftReason = this.detectSemanticDrift(content, enhanced, inputFormat);
+    if (driftReason) {
+      this.logger.warn(`Semantic drift detected, rolling back: ${driftReason}`);
+      return {
+        ...this.buildUnchangedResult(content, qualityBefore, inputFormat),
+        rolledBack: true,
+        rollbackReason: driftReason,
+      };
+    }
+
+    const qualityAfter = this.calculateQuality(enhanced);
+    const improvement = qualityBefore > 0
+      ? ((qualityAfter - qualityBefore) / qualityBefore) * 100
+      : 0;
+
+    const changes = Array.from(aggregated.values()).sort((a, b) => b.count - a.count);
+
+    this.logger.log(
+      `Enhancement complete: ${changes.length} unique change types, ` +
+      `quality ${qualityBefore} → ${qualityAfter} (${improvement.toFixed(1)}%)`,
     );
 
     return {
       originalContent: content,
-      enhancedContent,
+      enhancedContent: enhanced,
       changes,
       qualityBefore,
       qualityAfter,
       improvement,
+      rolledBack: false,
+      inputFormat,
     };
   }
 
-  /**
-   * Fix grammar issues (Expanded to 100+ rules)
-   */
-  private fixGrammar(content: string): { content: string; changes: any[] } {
-    const changes: any[] = [];
-    let fixedContent = content;
+  // ---------------------------------------------------------------------------
+  //  Rule selection
+  // ---------------------------------------------------------------------------
 
-    // Expanded grammar corrections - 100+ rules
-    const corrections = [
-      // Basic grammar
-      {
-        pattern: /\btheir\s+is\b/gi,
-        replacement: 'there is',
-        description: 'Fixed their/there usage',
-      },
-      {
-        pattern: /\btheir\s+are\b/gi,
-        replacement: 'there are',
-        description: 'Fixed their/there usage',
-      },
-      {
-        pattern: /\byour\s+(doing|going|being|having)\b/gi,
-        replacement: (match, p1) => `you're ${p1}`,
-        description: 'Fixed your/you\'re usage',
-      },
-      {
-        pattern: /\bits\s+(a|the|an)\s/gi,
-        replacement: (match, p1) => `it's ${p1} `,
-        description: 'Fixed its/it\'s usage',
-      },
-      {
-        pattern: /\bi\s+([a-z])/g,
-        replacement: (match, p1) => `I ${p1}`,
-        description: 'Capitalized "I"',
-      },
-      {
-        pattern: /([.!?])\s*([a-z])/g,
-        replacement: (match, p1, p2) => `${p1} ${p2.toUpperCase()}`,
-        description: 'Capitalized after punctuation',
-      },
-      {
-        pattern: /\s+([.,!?;:])/g,
-        replacement: '$1',
-        description: 'Fixed spacing before punctuation',
-      },
-      {
-        pattern: /([.,!?;:])\s*(?=[a-zA-Z])/g,
-        replacement: '$1 ',
-        description: 'Fixed spacing after punctuation',
-      },
-      {
-        pattern: /\s+$/gm,
-        replacement: '',
-        description: 'Removed trailing whitespace',
-      },
-      {
-        pattern: /^\s+/gm,
-        replacement: '',
-        description: 'Removed leading whitespace',
-      },
-      // Advanced grammar rules (60+ more)
-      {
-        pattern: /\bcould\s+of\b/gi,
-        replacement: 'could have',
-        description: 'Fixed could of → could have',
-      },
-      {
-        pattern: /\bshould\s+of\b/gi,
-        replacement: 'should have',
-        description: 'Fixed should of → should have',
-      },
-      {
-        pattern: /\bwould\s+of\b/gi,
-        replacement: 'would have',
-        description: 'Fixed would of → would have',
-      },
-      {
-        pattern: /\bwho's\s+(going|coming|being)/gi,
-        replacement: (match, p1) => `who is ${p1}`,
-        description: 'Clarified who\'s contraction',
-      },
-      {
-        pattern: /\balot\b/gi,
-        replacement: 'a lot',
-        description: 'Fixed alot → a lot',
-      },
-      {
-        pattern: /\brecieve\b/gi,
-        replacement: 'receive',
-        description: 'Fixed spelling: recieve → receive',
-      },
-      {
-        pattern: /\boccured\b/gi,
-        replacement: 'occurred',
-        description: 'Fixed spelling: occured → occurred',
-      },
-      {
-        pattern: /\bseperately\b/gi,
-        replacement: 'separately',
-        description: 'Fixed spelling: seperately → separately',
-      },
-      {
-        pattern: /\bdefinately\b/gi,
-        replacement: 'definitely',
-        description: 'Fixed spelling: definately → definitely',
-      },
-      {
-        pattern: /\bexistence\b/gi,
-        replacement: 'existence',
-        description: 'Fixed spelling',
-      },
-      {
-        pattern: /\beffect\s+(a|an|the)\s+(change|improvement)/gi,
-        replacement: 'affect $1 $2',
-        description: 'Fixed effect/affect usage',
-      },
-      {
-        pattern: /\bless\s+(people|items|users|companies)\b/gi,
-        replacement: 'fewer $1',
-        description: 'Fixed less/fewer usage',
-      },
-      {
-        pattern: /\bamount\s+of\s+(people|users|items)\b/gi,
-        replacement: 'number of $1',
-        description: 'Fixed amount/number usage',
-      },
-      {
-        pattern: /\bbetween\s+you\s+and\s+I\b/gi,
-        replacement: 'between you and me',
-        description: 'Fixed pronoun usage',
-      },
-      {
-        pattern: /\btheirselves\b/gi,
-        replacement: 'themselves',
-        description: 'Fixed theirselves → themselves',
-      },
-      {
-        pattern: /\bshould\s+have\s+went\b/gi,
-        replacement: 'should have gone',
-        description: 'Fixed verb tense',
-      },
-      {
-        pattern: /\bhas\s+went\b/gi,
-        replacement: 'has gone',
-        description: 'Fixed verb tense',
-      },
-      {
-        pattern: /\bwho\s+(work|works|is|are)\b/gi,
-        replacement: (match, p1) => `who ${p1}`,
-        description: 'Verified who usage',
-      },
-      {
-        pattern: /\bwhich\s+(work|works|is|are)\s+for\s+people\b/gi,
-        replacement: (match, p1) => `who ${p1} for people`,
-        description: 'Fixed which → who for people',
-      },
-      {
-        pattern: /\ba\s+(hour|honest|honor)/gi,
-        replacement: 'an $1',
-        description: 'Fixed a/an usage before silent h',
-      },
-      {
-        pattern: /\ban\s+(user|unique|university)/gi,
-        replacement: 'a $1',
-        description: 'Fixed a/an usage before vowel',
-      },
-      {
-        pattern: /\bmore\s+better\b/gi,
-        replacement: 'better',
-        description: 'Removed redundant "more"',
-      },
-      {
-        pattern: /\bmost\s+best\b/gi,
-        replacement: 'best',
-        description: 'Removed redundant "most"',
-      },
-      {
-        pattern: /\bvery\s+unique\b/gi,
-        replacement: 'unique',
-        description: 'Removed redundant "very"',
-      },
-      {
-        pattern: /\birregardless\b/gi,
-        replacement: 'regardless',
-        description: 'Fixed irregardless → regardless',
-      },
-      {
-        pattern: /\bfor\s+all\s+intensive\s+purposes\b/gi,
-        replacement: 'for all intents and purposes',
-        description: 'Fixed common phrase',
-      },
-      {
-        pattern: /\bnip\s+it\s+in\s+the\s+butt\b/gi,
-        replacement: 'nip it in the bud',
-        description: 'Fixed idiom',
-      },
-      {
-        pattern: /\bone\s+in\s+the\s+same\b/gi,
-        replacement: 'one and the same',
-        description: 'Fixed phrase',
-      },
-      {
-        pattern: /\bmute\s+point\b/gi,
-        replacement: 'moot point',
-        description: 'Fixed mute → moot',
-      },
-      {
-        pattern: /\bpeak\s+my\s+interest\b/gi,
-        replacement: 'pique my interest',
-        description: 'Fixed peak → pique',
-      },
-      {
-        pattern: /\bstationary\s+(shop|store)\b/gi,
-        replacement: 'stationery $1',
-        description: 'Fixed stationary → stationery',
-      },
-      {
-        pattern: /\bprinciple\s+(reason|cause)\b/gi,
-        replacement: 'principal $1',
-        description: 'Fixed principle → principal',
-      },
-      {
-        pattern: /\bcomplement\s+(said|told)\b/gi,
-        replacement: 'compliment $1',
-        description: 'Fixed complement → compliment',
-      },
-      {
-        pattern: /\badvice\s+(you|them|him|her)\s+to\b/gi,
-        replacement: 'advise $1 to',
-        description: 'Fixed advice → advise',
-      },
-      {
-        pattern: /\bloose\s+(the|my|his|her)\s+(job|chance)\b/gi,
-        replacement: 'lose $1 $2',
-        description: 'Fixed loose → lose',
-      },
-      {
-        pattern: /\bthan\s+(I|we|they)\s+(am|are)\b/gi,
-        replacement: 'then $1 $2',
-        description: 'Fixed than → then in temporal context',
-      },
-      {
-        pattern: /\bMe\s+and\s+([A-Z][a-z]+)\b/g,
-        replacement: '$1 and I',
-        description: 'Fixed pronoun order',
-      },
-      {
-        pattern: /\b([A-Z][a-z]+)\s+and\s+me\s+(will|are|were)\b/g,
-        replacement: '$1 and I $2',
-        description: 'Fixed pronoun case',
-      },
-      {
-        pattern: /\bless\s+then\b/gi,
-        replacement: 'less than',
-        description: 'Fixed then → than',
-      },
-      {
-        pattern: /\bgreater\s+then\b/gi,
-        replacement: 'greater than',
-        description: 'Fixed then → than',
-      },
-      {
-        pattern: /\b([Tt])ry\s+and\s+/g,
-        replacement: '$1ry to ',
-        description: 'Fixed try and → try to',
-      },
-      {
-        pattern: /\b([Cc])ould\s+care\s+less\b/g,
-        replacement: '$1ouldn\'t care less',
-        description: 'Fixed could care less',
-      },
-      {
-        pattern: /\bon\s+accident\b/gi,
-        replacement: 'by accident',
-        description: 'Fixed on accident → by accident',
-      },
-      {
-        pattern: /\beach\s+others\b/gi,
-        replacement: 'each other',
-        description: 'Fixed each others → each other',
-      },
-      {
-        pattern: /\bone\s+another's\b/gi,
-        replacement: 'one another',
-        description: 'Fixed one another\'s → one another',
-      },
-      {
-        pattern: /\b(very|really|extremely)\s+(very|really|extremely)\b/gi,
-        replacement: '$1',
-        description: 'Removed redundant intensifier',
-      },
-      {
-        pattern: /\blike\s+I\s+said\b/gi,
-        replacement: 'as I said',
-        description: 'Fixed like → as',
-      },
-      {
-        pattern: /\bsort\s+of\s+like\b/gi,
-        replacement: 'somewhat like',
-        description: 'Improved phrasing',
-      },
-      {
-        pattern: /\bkind\s+of\s+like\b/gi,
-        replacement: 'somewhat like',
-        description: 'Improved phrasing',
-      },
-      {
-        pattern: /\byou\s+know\b/gi,
-        replacement: '',
-        description: 'Removed filler phrase',
-      },
-      {
-        pattern: /\bI\s+mean\b/gi,
-        replacement: '',
-        description: 'Removed filler phrase',
-      },
-      {
-        pattern: /\bbasically\b/gi,
-        replacement: '',
-        description: 'Removed unnecessary qualifier',
-      },
-      {
-        pattern: /\bliterally\s+(not|can't|won't)/gi,
-        replacement: '$1',
-        description: 'Removed misused "literally"',
-      },
-      {
-        pattern: /\bat\s+this\s+point\s+in\s+time\b/gi,
-        replacement: 'now',
-        description: 'Simplified phrase',
-      },
-      {
-        pattern: /\bin\s+order\s+to\b/gi,
-        replacement: 'to',
-        description: 'Simplified phrase',
-      },
-      {
-        pattern: /\bdue\s+to\s+the\s+fact\s+that\b/gi,
-        replacement: 'because',
-        description: 'Simplified phrase',
-      },
-      {
-        pattern: /\bin\s+the\s+event\s+that\b/gi,
-        replacement: 'if',
-        description: 'Simplified phrase',
-      },
-      {
-        pattern: /\bprior\s+to\b/gi,
-        replacement: 'before',
-        description: 'Simplified phrase',
-      },
-      {
-        pattern: /\bsubsequent\s+to\b/gi,
-        replacement: 'after',
-        description: 'Simplified phrase',
-      },
-      {
-        pattern: /\bin\s+close\s+proximity\s+to\b/gi,
-        replacement: 'near',
-        description: 'Simplified phrase',
-      },
-      {
-        pattern: /\bthe\s+reason\s+why\s+is\s+because\b/gi,
-        replacement: 'the reason is that',
-        description: 'Fixed redundancy',
-      },
-      {
-        pattern: /\bunexpected\s+surprise\b/gi,
-        replacement: 'surprise',
-        description: 'Removed redundant modifier',
-      },
-      {
-        pattern: /\bfuture\s+plans\b/gi,
-        replacement: 'plans',
-        description: 'Removed redundant modifier',
-      },
-      {
-        pattern: /\bpast\s+history\b/gi,
-        replacement: 'history',
-        description: 'Removed redundant modifier',
-      },
-      {
-        pattern: /\bfree\s+gift\b/gi,
-        replacement: 'gift',
-        description: 'Removed redundant modifier',
-      },
-      {
-        pattern: /\bend\s+result\b/gi,
-        replacement: 'result',
-        description: 'Removed redundant modifier',
-      },
-      {
-        pattern: /\badvance\s+planning\b/gi,
-        replacement: 'planning',
-        description: 'Removed redundant modifier',
-      },
-      {
-        pattern: /\brepeat\s+again\b/gi,
-        replacement: 'repeat',
-        description: 'Removed redundancy',
-      },
-      {
-        pattern: /\brevert\s+back\b/gi,
-        replacement: 'revert',
-        description: 'Removed redundancy',
-      },
-      {
-        pattern: /\bmerge\s+together\b/gi,
-        replacement: 'merge',
-        description: 'Removed redundancy',
-      },
-      {
-        pattern: /\bcombine\s+together\b/gi,
-        replacement: 'combine',
-        description: 'Removed redundancy',
-      },
-      {
-        pattern: /\b(\d+)\s+(AM|PM)\s+in\s+the\s+(morning|afternoon|evening)\b/gi,
-        replacement: '$1 $2',
-        description: 'Removed redundant time qualifier',
-      },
-      {
-        pattern: /\b12\s+noon\b/gi,
-        replacement: 'noon',
-        description: 'Simplified time expression',
-      },
-      {
-        pattern: /\b12\s+midnight\b/gi,
-        replacement: 'midnight',
-        description: 'Simplified time expression',
-      },
-      // Passive voice to active voice (business writing)
-      {
-        pattern: /\bwas\s+created\s+by\s+([A-Za-z]+)\b/g,
-        replacement: '$1 created',
-        description: 'Changed passive to active voice',
-      },
-      {
-        pattern: /\bare\s+being\s+developed\s+by\b/gi,
-        replacement: 'are developing',
-        description: 'Changed passive to active voice',
-      },
-      {
-        pattern: /\bhas\s+been\s+implemented\s+by\b/gi,
-        replacement: 'has implemented',
-        description: 'Changed passive to active voice',
-      },
-      // Business writing improvements
-      {
-        pattern: /\bFYI\b/g,
-        replacement: 'For your information',
-        description: 'Expanded abbreviation',
-      },
-      {
-        pattern: /\bASAP\b/g,
-        replacement: 'as soon as possible',
-        description: 'Expanded abbreviation',
-      },
-      {
-        pattern: /\betc\.\s+etc\./gi,
-        replacement: 'etc.',
-        description: 'Removed redundant etc.',
-      },
-    ];
-
-    corrections.forEach(({ pattern, replacement, description }) => {
-      const before = fixedContent;
-      fixedContent = fixedContent.replace(pattern, replacement as any);
-      if (before !== fixedContent) {
-        changes.push({
-          type: 'grammar',
-          description,
-          before: before.substring(0, 100),
-          after: fixedContent.substring(0, 100),
-        });
-      }
-    });
-
-    return { content: fixedContent, changes };
-  }
-
-  /**
-   * Restructure content for better flow
-   */
-  private restructureContent(content: string): { content: string; changes: any[] } {
-    const changes: any[] = [];
-    const paragraphs = content.split(/\n\s*\n/).filter((p) => p.trim());
-
-    // Add headings if missing
-    if (!this.hasHeadings(content) && paragraphs.length > 3) {
-      const restructured = this.addHeadings(paragraphs);
-      changes.push({
-        type: 'structure',
-        description: 'Added section headings',
-        before: content.substring(0, 100),
-        after: restructured.substring(0, 100),
-      });
-      return { content: restructured, changes };
+  private selectRules(
+    fixGrammar: boolean,
+    improveClarity: boolean,
+    tone: Tone,
+  ): Rule[] {
+    const rules: Rule[] = [];
+    if (fixGrammar) {
+      // Spelling first — fewer surprises in downstream regex.
+      rules.push(...SPELLING_RULES);
+      rules.push(...GRAMMAR_RULES);
+      rules.push(...PUNCTUATION_RULES);
+      rules.push(...WHITESPACE_RULES);
+      rules.push(...CAPITALIZATION_RULES);
     }
-
-    // Convert long paragraphs to bullet points
-    const withBullets = this.convertToBullets(paragraphs);
-    if (withBullets !== content) {
-      changes.push({
-        type: 'structure',
-        description: 'Converted paragraphs to bullet points',
-        before: content.substring(0, 100),
-        after: withBullets.substring(0, 100),
-      });
-      return { content: withBullets, changes };
+    if (improveClarity) {
+      rules.push(...CLARITY_RULES);
+      rules.push(...REDUNDANCY_RULES);
     }
-
-    return { content, changes };
-  }
-
-  /**
-   * Check if content has headings
-   */
-  private hasHeadings(content: string): boolean {
-    return (
-      /^#{1,6}\s+.+$/m.test(content) ||
-      /^[A-Z][^.!?]*:$/m.test(content) ||
-      /^\d+\.\s+[A-Z].+$/m.test(content)
-    );
-  }
-
-  /**
-   * Add headings to content
-   */
-  private addHeadings(paragraphs: string[]): string {
-    const sections = Math.ceil(paragraphs.length / 3);
-    const result: string[] = [];
-
-    for (let i = 0; i < sections; i++) {
-      const sectionStart = i * 3;
-      const sectionEnd = Math.min(sectionStart + 3, paragraphs.length);
-      const sectionParagraphs = paragraphs.slice(sectionStart, sectionEnd);
-
-      // Generate heading from first sentence of section
-      const firstSentence = sectionParagraphs[0].split(/[.!?]/)[0];
-      const heading = this.generateHeading(firstSentence, i + 1);
-
-      result.push(`## ${heading}\n`);
-      result.push(...sectionParagraphs);
-      result.push('');
+    if (tone !== 'neutral') {
+      rules.push(...(TONE_RULES[tone] || []));
     }
-
-    return result.join('\n\n');
+    return rules;
   }
 
-  /**
-   * Generate heading from sentence
-   */
-  private generateHeading(sentence: string, sectionNumber: number): string {
-    // Take first 5-7 words and capitalize
-    const words = sentence.trim().split(/\s+/).slice(0, 6);
-    return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  }
+  // ---------------------------------------------------------------------------
+  //  HTML processing — tokenize tags vs. text, only transform text segments.
+  //  Skips content inside <script>, <style>, <code>, <pre>, etc.
+  // ---------------------------------------------------------------------------
 
-  /**
-   * Convert long paragraphs to bullet points
-   */
-  private convertToBullets(paragraphs: string[]): string {
-    return paragraphs
-      .map((para) => {
-        // If paragraph has multiple sentences, convert to bullets
-        const sentences = para.split(/[.!?]+/).filter((s) => s.trim());
-        if (sentences.length > 3) {
-          return sentences.map((s) => `- ${s.trim()}`).join('\n');
-        }
-        return para;
-      })
-      .join('\n\n');
-  }
+  private processHtml(html: string, rules: Rule[], ctx: ProcessingContext): string {
+    // Split into alternating segments. The capturing group keeps tags in the
+    // result; even-indexed parts are text, odd-indexed parts are tags.
+    const parts = html.split(/(<[^>]+>)/);
 
-  /**
-   * Improve writing quality
-   */
-  private improveWriting(
-    content: string,
-    tone?: string,
-  ): { content: string; changes: any[] } {
-    const changes: any[] = [];
-    let improved = content;
+    const skipTags = new Set([
+      'script', 'style', 'code', 'pre', 'kbd', 'samp', 'var', 'noscript', 'textarea',
+    ]);
+    let skipDepth = 0;
 
-    // Remove filler words
-    const fillerWords = [
-      'very',
-      'really',
-      'quite',
-      'just',
-      'actually',
-      'basically',
-      'literally',
-    ];
-    fillerWords.forEach((word) => {
-      const pattern = new RegExp(`\\b${word}\\s+`, 'gi');
-      const before = improved;
-      improved = improved.replace(pattern, '');
-      if (before !== improved) {
-        changes.push({
-          type: 'writing',
-          description: `Removed filler word "${word}"`,
-          before: before.substring(0, 50),
-          after: improved.substring(0, 50),
-        });
-      }
-    });
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const isTag = (i % 2) === 1;
 
-    // Replace weak words with stronger alternatives
-    const replacements: Record<string, string> = {
-      'get': 'obtain',
-      'got': 'acquired',
-      'use': 'utilize',
-      'make': 'create',
-      'do': 'execute',
-      'big': 'substantial',
-      'small': 'minor',
-      'good': 'excellent',
-      'bad': 'poor',
-      'a lot': 'many',
-    };
-
-    Object.entries(replacements).forEach(([weak, strong]) => {
-      const pattern = new RegExp(`\\b${weak}\\b`, 'gi');
-      const before = improved;
-      improved = improved.replace(pattern, strong);
-      if (before !== improved) {
-        changes.push({
-          type: 'writing',
-          description: `Replaced "${weak}" with "${strong}"`,
-          before: before.substring(0, 50),
-          after: improved.substring(0, 50),
-        });
-      }
-    });
-
-    // Apply tone adjustments
-    if (tone) {
-      const toneResult = this.applyTone(improved, tone);
-      improved = toneResult.content;
-      changes.push(...toneResult.changes);
-    }
-
-    return { content: improved, changes };
-  }
-
-  /**
-   * Apply tone to content
-   */
-  private applyTone(
-    content: string,
-    tone: string,
-  ): { content: string; changes: any[] } {
-    const changes: any[] = [];
-    let adjusted = content;
-
-    // Tone-specific adjustments
-    const toneAdjustments: Record<string, Array<{ pattern: RegExp; replacement: string }>> = {
-      formal: [
-        { pattern: /\bcan't\b/gi, replacement: 'cannot' },
-        { pattern: /\bwon't\b/gi, replacement: 'will not' },
-        { pattern: /\bdon't\b/gi, replacement: 'do not' },
-        { pattern: /\bdidn't\b/gi, replacement: 'did not' },
-      ],
-      casual: [
-        { pattern: /\bcannot\b/gi, replacement: "can't" },
-        { pattern: /\bwill not\b/gi, replacement: "won't" },
-        { pattern: /\bdo not\b/gi, replacement: "don't" },
-      ],
-      academic: [
-        { pattern: /\bI think\b/gi, replacement: 'It can be argued' },
-        { pattern: /\bwe believe\b/gi, replacement: 'the evidence suggests' },
-      ],
-      persuasive: [
-        { pattern: /\bmight\b/gi, replacement: 'will' },
-        { pattern: /\bcould\b/gi, replacement: 'can' },
-        { pattern: /\bpossibly\b/gi, replacement: 'certainly' },
-      ],
-    };
-
-    const adjustments = toneAdjustments[tone] || [];
-    adjustments.forEach(({ pattern, replacement }) => {
-      const before = adjusted;
-      adjusted = adjusted.replace(pattern, replacement);
-      if (before !== adjusted) {
-        changes.push({
-          type: 'tone',
-          description: `Applied ${tone} tone`,
-          before: before.substring(0, 50),
-          after: adjusted.substring(0, 50),
-        });
-      }
-    });
-
-    return { content: adjusted, changes };
-  }
-
-  /**
-   * Expand content
-   */
-  private expandContent(content: string): { content: string; changes: any[] } {
-    const changes: any[] = [];
-
-    // Add transition words between paragraphs
-    const paragraphs = content.split(/\n\s*\n/);
-    const transitions = [
-      'Furthermore',
-      'Additionally',
-      'Moreover',
-      'In addition',
-      'Consequently',
-    ];
-
-    const expanded = paragraphs
-      .map((para, index) => {
-        if (index > 0 && index < paragraphs.length - 1) {
-          const transition = transitions[index % transitions.length];
-          return `${transition}, ${para.charAt(0).toLowerCase()}${para.slice(1)}`;
-        }
-        return para;
-      })
-      .join('\n\n');
-
-    if (expanded !== content) {
-      changes.push({
-        type: 'expansion',
-        description: 'Added transition words',
-        before: content.substring(0, 100),
-        after: expanded.substring(0, 100),
-      });
-    }
-
-    return { content: expanded, changes };
-  }
-
-  /**
-   * Shorten content — safe version.
-   * Only removes truly byte-identical consecutive duplicate sentences.
-   * NEVER removes sentences that merely share similar wording.
-   */
-  private shortenContent(content: string): { content: string; changes: any[] } {
-    const changes: any[] = [];
-
-    const paragraphs = content.split(/\n\s*\n/);
-    const shortened = paragraphs
-      .map((para) => {
-        // Split into sentences keeping punctuation
-        const sentenceMatches = para.match(/[^.!?]*[.!?]+/g) ?? [para];
-        const seen = new Set<string>();
-        const kept: string[] = [];
-
-        for (const sentence of sentenceMatches) {
-          // Only deduplicate EXACT byte-identical sentences (with same casing/spacing)
-          const key = sentence.trim();
-          if (key && !seen.has(key)) {
-            seen.add(key);
-            kept.push(sentence);
+      if (isTag) {
+        const tagMatch = part.match(/^<\s*(\/?)\s*([a-zA-Z][a-zA-Z0-9]*)/);
+        if (tagMatch) {
+          const isClosing = tagMatch[1] === '/';
+          const tagName = tagMatch[2].toLowerCase();
+          const isSelfClosing = /\/\s*>$/.test(part);
+          if (skipTags.has(tagName)) {
+            if (isClosing)         skipDepth = Math.max(0, skipDepth - 1);
+            else if (!isSelfClosing) skipDepth++;
           }
         }
-
-        // If nothing was deduped, return the original paragraph unchanged
-        const result = kept.join('');
-        return result.trim() || para;
-      })
-      .join('\n\n');
-
-    if (shortened !== content) {
-      changes.push({
-        type: 'shortening',
-        description: 'Removed exact duplicate sentences',
-        before: content.substring(0, 100),
-        after: shortened.substring(0, 100),
-      });
-    }
-
-    return { content: shortened, changes };
-  }
-
-  /**
-   * Make content more professional
-   */
-  private makeMoreProfessional(content: string): { content: string; changes: any[] } {
-    const changes: any[] = [];
-    let professional = content;
-
-    // Replace casual language
-    const professionalReplacements: Record<string, string> = {
-      'kind of': 'somewhat',
-      'sort of': 'somewhat',
-      'a lot of': 'many',
-      'lots of': 'numerous',
-      'stuff': 'items',
-      'things': 'elements',
-      'guys': 'team members',
-      'cool': 'excellent',
-      'awesome': 'outstanding',
-    };
-
-    Object.entries(professionalReplacements).forEach(([casual, prof]) => {
-      const pattern = new RegExp(`\\b${casual}\\b`, 'gi');
-      const before = professional;
-      professional = professional.replace(pattern, prof);
-      if (before !== professional) {
-        changes.push({
-          type: 'professionalization',
-          description: `Replaced "${casual}" with "${prof}"`,
-          before: before.substring(0, 50),
-          after: professional.substring(0, 50),
-        });
+        continue;
       }
-    });
 
-    return { content: professional, changes };
-  }
+      // Text segment
+      if (skipDepth > 0) continue;
+      if (!part || !part.trim()) continue;
 
-  /**
-   * Make content more engaging
-   */
-  private makeMoreEngaging(content: string): { content: string; changes: any[] } {
-    const changes: any[] = [];
-
-    // Add questions to engage readers
-    const paragraphs = content.split(/\n\s*\n/);
-    const questions = [
-      'Why does this matter?',
-      'What does this mean for you?',
-      'How can we leverage this?',
-    ];
-
-    const engaging = paragraphs
-      .map((para, index) => {
-        if (index > 0 && index % 3 === 0 && index < paragraphs.length - 1) {
-          const question = questions[(index / 3) % questions.length];
-          return `${question}\n\n${para}`;
-        }
-        return para;
-      })
-      .join('\n\n');
-
-    if (engaging !== content) {
-      changes.push({
-        type: 'engagement',
-        description: 'Added engaging questions',
-        before: content.substring(0, 100),
-        after: engaging.substring(0, 100),
-      });
+      const transformed = this.processText(part, rules, ctx);
+      if (transformed !== part) {
+        parts[i] = transformed;
+      }
     }
 
-    return { content: engaging, changes };
+    return parts.join('');
   }
 
-  /**
-   * Calculate content quality score
-   */
+  // ---------------------------------------------------------------------------
+  //  Plain text processing
+  // ---------------------------------------------------------------------------
+
+  private processText(text: string, rules: Rule[], ctx: ProcessingContext): string {
+    if (!text) return text;
+    const protector = new TokenProtector();
+    let working = protector.protect(text);
+
+    for (const rule of rules) {
+      // 1. Count matches (independent of replacement to keep accurate count
+      //    even when replacement is a function).
+      const countRe = new RegExp(rule.pattern.source, rule.pattern.flags.includes('g')
+        ? rule.pattern.flags
+        : rule.pattern.flags + 'g');
+      const matches = working.match(countRe);
+      const count = matches ? matches.length : 0;
+      if (count === 0) continue;
+
+      // 2. Capture first sample of before/after for the diff entry.
+      const sampleBefore = matches![0];
+      let sampleAfter = '';
+
+      // 3. Apply replacement.
+      const replaced = working.replace(rule.pattern, (...args) => {
+        const result = (typeof rule.replacement === 'function')
+          ? (rule.replacement as Function).apply(null, args)
+          : (args[0] as string).replace(rule.pattern, rule.replacement as string);
+        if (!sampleAfter) sampleAfter = result;
+        return result;
+      });
+
+      if (replaced !== working) {
+        ctx.recordChange({
+          type: rule.type,
+          description: rule.description,
+          before: sampleBefore,
+          after: sampleAfter || sampleBefore,
+          count,
+        });
+        working = replaced;
+      }
+    }
+
+    return protector.restore(working);
+  }
+
+  // ---------------------------------------------------------------------------
+  //  Semantic integrity validation
+  //  Returns a reason if drift is detected, otherwise undefined.
+  // ---------------------------------------------------------------------------
+
+  private detectSemanticDrift(
+    before: string,
+    after: string,
+    inputFormat: 'html' | 'text',
+  ): string | undefined {
+    if (inputFormat === 'html') {
+      // Compare structural element counts — they MUST be identical.
+      const tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'table', 'tr', 'td', 'th', 'blockquote'];
+      for (const tag of tags) {
+        const re = new RegExp(`<${tag}\\b`, 'gi');
+        const beforeCount = (before.match(re) || []).length;
+        const afterCount  = (after.match(re)  || []).length;
+        if (beforeCount !== afterCount) {
+          return `<${tag}> count changed (${beforeCount} → ${afterCount})`;
+        }
+      }
+    }
+
+    // Word-count delta — allow ±25% (clarity rules shrink, formal expands).
+    const wordsBefore = countWords(stripTags(before));
+    const wordsAfter  = countWords(stripTags(after));
+    if (wordsBefore > 20) {
+      const delta = Math.abs(wordsAfter - wordsBefore) / wordsBefore;
+      if (delta > 0.25) {
+        return `word count drift ${(delta * 100).toFixed(0)}% (${wordsBefore} → ${wordsAfter})`;
+      }
+    }
+
+    // Paragraph count delta — in plain text only (HTML already covered above).
+    if (inputFormat === 'text') {
+      const paraBefore = before.split(/\n\s*\n/).filter(p => p.trim()).length;
+      const paraAfter  = after.split(/\n\s*\n/).filter(p => p.trim()).length;
+      if (paraBefore !== paraAfter) {
+        return `paragraph count changed (${paraBefore} → ${paraAfter})`;
+      }
+    }
+
+    return undefined;
+  }
+
+  // ---------------------------------------------------------------------------
+  //  Honest quality score
+  //  Range 0–100. Rewards readability and grammar, not structure changes.
+  // ---------------------------------------------------------------------------
+
   private calculateQuality(content: string): number {
-    let score = 50; // Base score
+    const text = stripTags(content);
+    const words = text.split(/\s+/).filter(Boolean);
+    const sentences = splitSentences(text);
 
-    // Length check
-    if (content.length > 500) score += 10;
-    if (content.length > 1000) score += 10;
+    if (words.length < 5) return 50; // not enough to judge
 
-    // Structure check
-    if (/^#{1,6}\s+.+$/m.test(content)) score += 10; // Has headings
-    if (/^[-*•]\s+/m.test(content)) score += 10; // Has bullets
+    let score = 70; // baseline for well-formed text
 
-    // Grammar check
-    const grammarIssues = this.countGrammarIssues(content);
-    score -= grammarIssues * 2;
+    // 1. Grammar issue density — penalty
+    const issues = this.countGrammarIssues(text);
+    const issueDensity = issues / Math.max(1, words.length);
+    score -= Math.min(25, Math.round(issueDensity * 1000)); // up to -25
 
-    // Readability check
-    const avgWordsPerSentence = this.getAvgWordsPerSentence(content);
-    if (avgWordsPerSentence >= 15 && avgWordsPerSentence <= 20) score += 10;
+    // 2. Sentence length sweet spot (avg 12–22 words)
+    const avgSentLen = words.length / Math.max(1, sentences.length);
+    if (avgSentLen >= 12 && avgSentLen <= 22) score += 10;
+    else if (avgSentLen >= 8 && avgSentLen <= 30) score += 4;
+    else if (avgSentLen > 40 || avgSentLen < 5) score -= 8;
 
-    return Math.max(0, Math.min(100, score));
+    // 3. Sentence length variance — good writing varies (10–20% CV)
+    if (sentences.length >= 3) {
+      const lens = sentences.map(s => s.split(/\s+/).filter(Boolean).length);
+      const cv = coefficientOfVariation(lens);
+      if (cv >= 0.25 && cv <= 0.7) score += 6;
+    }
+
+    // 4. Repetition penalty — fraction of words that are duplicates of the
+    //    most common content word.
+    const repetitionPenalty = this.estimateRepetition(words);
+    score -= Math.min(15, Math.round(repetitionPenalty * 30));
+
+    // 5. Bonus for non-trivial length (not a structural reward — a quality one)
+    if (words.length >= 150) score += 3;
+    if (words.length >= 400) score += 3;
+
+    return Math.max(0, Math.min(100, Math.round(score)));
   }
 
-  private countGrammarIssues(content: string): number {
+  private countGrammarIssues(text: string): number {
     let issues = 0;
     const patterns = [
-      /\btheir\s+is\b/gi,
-      /\byour\s+(doing|going)\b/gi,
-      /\bits\s+a\b/gi,
-      /\bi\s+[a-z]/g,
+      /\btheir\s+(is|are|was|were)\b/gi,
+      /\b(could|should|would|might|must)\s+of\b/gi,
+      /\balot\b/gi,
+      /\birregardless\b/gi,
+      /\btheirselves\b/gi,
+      /\brecieve\b/gi,
+      /\bseperate\b/gi,
+      /\bdefinately\b/gi,
+      /\boccured\b/gi,
+      /(^|[^A-Za-z'’])i([^A-Za-z'’]|$)/g,
+      /[ \t]{2,}/g,
+      / +[,;:!?]/g,
+      /([!?])\1{2,}/g,
+      /\b(more|less|greater|fewer)\s+then\b/gi,
     ];
-
-    patterns.forEach((pattern) => {
-      const matches = content.match(pattern);
-      if (matches) issues += matches.length;
-    });
-
+    for (const p of patterns) {
+      const m = text.match(p);
+      if (m) issues += m.length;
+    }
     return issues;
   }
 
-  private getAvgWordsPerSentence(content: string): number {
-    const sentences = content.split(/[.!?]+/).filter((s) => s.trim());
-    const words = content.split(/\s+/).filter((w) => w.trim());
+  private estimateRepetition(words: string[]): number {
+    // Stopwords don't count toward repetition
+    const stop = new Set([
+      'the','a','an','and','or','but','if','of','in','on','at','to','for','from','by',
+      'with','as','is','are','was','were','be','been','being','have','has','had','do',
+      'does','did','this','that','these','those','it','its','i','you','he','she','we',
+      'they','them','their','his','her','our','my','your','what','which','who','whom',
+      'will','would','can','could','should','may','might','must','also','so','too','than','then',
+    ]);
+    const freq = new Map<string, number>();
+    let contentWords = 0;
+    for (const raw of words) {
+      const w = raw.toLowerCase().replace(/[^\p{L}]/gu, '');
+      if (!w || stop.has(w) || w.length < 4) continue;
+      contentWords++;
+      freq.set(w, (freq.get(w) || 0) + 1);
+    }
+    if (contentWords < 30) return 0;
+    let top = 0;
+    for (const c of freq.values()) if (c > top) top = c;
+    return top / contentWords; // 0..1
+  }
 
-    return sentences.length > 0 ? words.length / sentences.length : 0;
+  // ---------------------------------------------------------------------------
+  //  Helpers
+  // ---------------------------------------------------------------------------
+
+  private buildUnchangedResult(
+    content: string,
+    qualityBefore: number,
+    inputFormat: 'html' | 'text',
+  ): EnhancementResult {
+    return {
+      originalContent: content,
+      enhancedContent: content,
+      changes: [],
+      qualityBefore,
+      qualityAfter: qualityBefore,
+      improvement: 0,
+      rolledBack: false,
+      inputFormat,
+    };
   }
 
   /**
-   * Save enhancement to database
+   * Persist enhancement decision (kept for back-compat with callers that
+   * want a history record).
    */
   async saveEnhancement(
     documentId: string,
     enhancementType: string,
     result: EnhancementResult,
   ): Promise<void> {
-    await this.prisma.contentEnhancement.create({
-      data: {
-        documentId,
-        enhancementType,
-        scope: 'full_document',
-        originalContent: result.originalContent,
-        enhancedContent: result.enhancedContent,
-        changes: result.changes,
-        qualityBefore: result.qualityBefore,
-        qualityAfter: result.qualityAfter,
-        improvement: result.improvement,
-        aiModel: 'rule-based',
-        userAccepted: false,
-      },
-    });
-
-    this.logger.log(`Saved content enhancement for document ${documentId}`);
+    try {
+      await this.prisma.contentEnhancement.create({
+        data: {
+          documentId,
+          enhancementType,
+          scope: 'full_document',
+          originalContent: result.originalContent,
+          enhancedContent: result.enhancedContent,
+          changes: result.changes as any,
+          qualityBefore: result.qualityBefore,
+          qualityAfter: result.qualityAfter,
+          improvement: result.improvement,
+          aiModel: 'rule-based-safe',
+          userAccepted: false,
+        },
+      });
+      this.logger.log(`Saved enhancement record for document ${documentId}`);
+    } catch (err) {
+      this.logger.warn(`Could not save enhancement record: ${(err as Error).message}`);
+    }
   }
+}
+
+// -----------------------------------------------------------------------------
+//  Standalone helpers (kept outside the class for testability)
+// -----------------------------------------------------------------------------
+
+function stripTags(s: string): string {
+  return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function countWords(s: string): number {
+  return s.split(/\s+/).filter(Boolean).length;
+}
+
+function splitSentences(text: string): string[] {
+  // Use protected-token approach to handle abbreviations
+  const protector = new TokenProtector();
+  const masked = protector.protect(text);
+  const parts = masked
+    .split(/(?<=[.!?])\s+(?=[A-Z"“‘'(])/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  return parts.map(p => protector.restore(p));
+}
+
+function coefficientOfVariation(nums: number[]): number {
+  if (nums.length < 2) return 0;
+  const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+  if (mean === 0) return 0;
+  const variance = nums.reduce((acc, n) => acc + (n - mean) ** 2, 0) / nums.length;
+  return Math.sqrt(variance) / mean;
 }

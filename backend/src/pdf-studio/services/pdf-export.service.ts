@@ -10,6 +10,17 @@ import { ChartRenderingService } from './chart-rendering.service';
 import { BrowserPoolService } from './browser-pool.service';
 import { ProTemplateRendererService } from '../pro-templates/renderers/pro-template-renderer.service';
 
+export interface PdfExportOptions {
+  paperSize?: 'A4' | 'Letter' | 'A3' | 'Legal';
+  quality?: 'standard' | 'high' | 'compressed';
+  watermark?: {
+    text: string;
+    opacity?: number;   // 0-1, default 0.12
+    position?: 'center' | 'diagonal';
+  };
+  pageRange?: { from: number; to: number } | null;
+}
+
 @Injectable()
 export class PdfExportService {
   private readonly logger = new Logger(PdfExportService.name);
@@ -30,6 +41,7 @@ export class PdfExportService {
     templateType: TemplateType,
     colorScheme?: string,
     proTemplateId?: string | null,
+    exportOptions?: PdfExportOptions,
   ): Promise<{ pdfBuffer: Buffer; filename: string }> {
     this.logger.log(`Exporting document ${documentId} with template ${templateType}`);
 
@@ -57,11 +69,20 @@ export class PdfExportService {
       },
     };
 
+    // Apply page range filter if specified
+    if (exportOptions?.pageRange) {
+      const { from, to } = exportOptions.pageRange;
+      document.pages = document.pages.filter((_: any, i: number) => {
+        const n = i + 1;
+        return n >= from && n <= to;
+      });
+    }
+
     // Generate HTML
-    const html = await this.generateHTML(document, templateConfig, proTemplateId);
+    const html = await this.generateHTML(document, templateConfig, proTemplateId, exportOptions);
 
     // Convert to PDF using Puppeteer
-    const pdfBuffer = await this.htmlToPDF(html);
+    const pdfBuffer = await this.htmlToPDF(html, exportOptions?.paperSize || 'A4', exportOptions?.quality || 'standard');
 
     const filename = `${document.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
 
@@ -73,7 +94,7 @@ export class PdfExportService {
   /**
    * Generate HTML from document and template
    */
-  private async generateHTML(document: any, templateConfig: any, proTemplateId?: string | null): Promise<string> {
+  private async generateHTML(document: any, templateConfig: any, proTemplateId?: string | null, exportOptions?: PdfExportOptions): Promise<string> {
     const { pages } = document;
     const { style } = templateConfig;
 
@@ -231,11 +252,21 @@ export class PdfExportService {
         <div class="page-container">
           ${pageContent}
         </div>
+        ${exportOptions?.watermark ? this.buildWatermarkHtml(exportOptions.watermark) : ''}
       </body>
       </html>
     `;
 
     return html;
+  }
+
+  private buildWatermarkHtml(wm: NonNullable<PdfExportOptions['watermark']>): string {
+    const text = String(wm.text || 'DRAFT').replace(/[<>"'&]/g, c => ({ '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;' }[c] || c));
+    const op = Math.max(0.03, Math.min(0.6, wm.opacity ?? 0.12));
+    const isDiag = (wm.position || 'diagonal') === 'diagonal';
+    return `<div style="position:fixed;inset:0;pointer-events:none;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+      <span style="font-size:72px;font-weight:900;color:#111;opacity:${op};white-space:nowrap;${isDiag ? 'transform:rotate(-35deg);' : ''}letter-spacing:4px;user-select:none;">${text}</span>
+    </div>`;
   }
 
   /**
@@ -374,7 +405,9 @@ export class PdfExportService {
           },
           style,
         );
-        parts.push(pageIndex++ === 0 ? coverHtml : `<div class="page-break"></div>${coverHtml}`);
+        const placedImagesHtml = this.renderPlacedImages(page.content?.placedImages || [], purify);
+        const coverPageHtml = `<div style="position:relative;">${coverHtml}${placedImagesHtml}</div>`;
+        parts.push(pageIndex++ === 0 ? coverPageHtml : `<div class="page-break"></div>${coverPageHtml}`);
         continue;
       }
 
@@ -417,13 +450,35 @@ export class PdfExportService {
         { title, content: `<div style="${textStyles}">${content}</div>` + imageHtml + chartsHtml },
         style,
       );
-      const pageHtml = `${headerHTML}${card}${footerHTML}`;
+      const placedImagesHtml = this.renderPlacedImages(page.content?.placedImages || [], purify);
+      const pageHtml = `<div style="position:relative;">${headerHTML}${card}${footerHTML}${placedImagesHtml}</div>`;
 
       parts.push(pageIndex++ === 0 ? pageHtml : `<div class="page-break"></div>${pageHtml}`);
       firstContentPage = false;
     }
 
     return parts.join('');
+  }
+
+  private renderPlacedImages(images: any[], purify: any): string {
+    if (!Array.isArray(images) || images.length === 0) return '';
+    return images
+      .filter((img: any) => img?.url)
+      .map((img: any) => {
+        const x = Math.max(0, Math.min(100, Number(img.x) || 0));
+        const y = Math.max(0, Math.min(100, Number(img.y) || 0));
+        const w = Math.max(5, Math.min(100, Number(img.width) || 50));
+        const h = Math.max(5, Math.min(100, Number(img.height) || 30));
+        const z = Math.max(1, Math.min(50, Number(img.zIndex) || 2));
+        const op = Math.max(0.05, Math.min(1, Number(img.opacity) || 1));
+        const fit = ['cover', 'contain', 'fill'].includes(img.fit) ? img.fit : 'cover';
+        const safeUrl = purify.sanitize(String(img.url));
+        const alt = purify.sanitize(String(img.alt || ''));
+        return `<div style="position:absolute;left:${x}%;top:${y}%;width:${w}%;height:${h}%;z-index:${z};pointer-events:none;overflow:hidden;border-radius:3px;">
+          <img src="${safeUrl}" alt="${alt}" style="width:100%;height:100%;object-fit:${fit};opacity:${op};display:block;" />
+        </div>`;
+      })
+      .join('');
   }
 
   private buildTextStyle(styles: Record<string, any>): string {
@@ -513,19 +568,36 @@ export class PdfExportService {
   /**
    * Convert HTML to PDF using Puppeteer with optimized settings
    */
-  private async htmlToPDF(html: string): Promise<Buffer> {
+  private async htmlToPDF(html: string, paperSize: string = 'A4', quality: string = 'standard'): Promise<Buffer> {
+    const scaleFactor = quality === 'high' ? 3 : quality === 'compressed' ? 1 : 2;
+
+    // Map paper size to Puppeteer-accepted format string
+    const formatMap: Record<string, string> = {
+      A4: 'A4', Letter: 'Letter', A3: 'A3', Legal: 'Legal',
+    };
+    const puppeteerFormat = formatMap[paperSize] || 'A4';
+
+    // Viewport dimensions per paper size at 96 DPI
+    const viewportMap: Record<string, { w: number; h: number }> = {
+      A4:     { w: 794,  h: 1123 },
+      Letter: { w: 816,  h: 1056 },
+      A3:     { w: 1123, h: 1587 },
+      Legal:  { w: 816,  h: 1344 },
+    };
+    const vp = viewportMap[paperSize] || viewportMap.A4;
+
     // Use browser pool for better performance
     return this.browserPoolService.executeWithBrowser(async (browser) => {
       const page = await browser.newPage();
-      
+
       try {
         // Set viewport for consistent rendering
         await page.setViewport({
-          width: 794, // A4 width in pixels at 96 DPI
-          height: 1123, // A4 height in pixels at 96 DPI
-          deviceScaleFactor: 2, // Higher quality rendering
+          width: vp.w,
+          height: vp.h,
+          deviceScaleFactor: scaleFactor,
         });
-        
+
         await page.setContent(html, {
           waitUntil: ['domcontentloaded', 'load'],
           timeout: 60000,
@@ -549,7 +621,7 @@ export class PdfExportService {
         });
 
         const pdfBuffer = await page.pdf({
-          format: 'A4',
+          format: puppeteerFormat as any,
           printBackground: true,
           margin: {
             top: '15mm',

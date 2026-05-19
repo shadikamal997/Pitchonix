@@ -10,7 +10,6 @@ import { IssuesDisplay } from '@/components/pdf-studio/IssuesDisplay';
 import { EnhancementPreview } from '@/components/pdf-studio/EnhancementPreview';
 import TemplateSelector from '@/components/pdf-studio/TemplateSelector';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { A4Preview } from '@/components/A4Preview';
 import { FadeIn, SlideUp, StaggerContainer, StaggerItem } from '@/components/Animations';
@@ -203,55 +202,65 @@ export default function SmartBuilderPage() {
   const wordCount = rawContent.trim().split(/\s+/).filter(w => w).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="container mx-auto px-4 py-4">
+      <div className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/pdf-studio" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                <ArrowLeft className="w-6 h-6" />
+            <div className="flex items-center gap-3">
+              <Link href="/pdf-studio" className="text-slate-500 hover:text-slate-900 transition-colors">
+                <ArrowLeft className="w-5 h-5" />
               </Link>
+              <div className="h-6 w-px bg-slate-200" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <Sparkles className="w-6 h-6 text-blue-500" />
+                <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-green-600" />
                   Smart PDF Builder
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Analyze → Review → Enhance → Generate</p>
+                <p className="text-[11px] text-slate-500">Analyze → Review → Enhance → Generate</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              
-              {/* Progress Steps */}
-              <div className="hidden md:flex items-center gap-4">
-                <div className={`flex items-center gap-2 ${step === 'input' ? 'text-blue-600' : step === 'review' || step === 'enhanced' ? 'text-green-600' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step === 'input' ? 'border-blue-600 bg-blue-50' : step === 'review' || step === 'enhanced' ? 'border-green-600 bg-green-50' : 'border-gray-300'}`}>
-                  {step === 'review' || step === 'enhanced' ? '✓' : '1'}
+
+            {/* Progress Steps */}
+            <div className="hidden md:flex items-center gap-3">
+              {[
+                { id: 'input',    label: 'Input',    done: step === 'review' || step === 'template' || step === 'enhanced', active: step === 'input' },
+                { id: 'review',   label: 'Review',   done: step === 'enhanced',                                              active: step === 'review' || step === 'template' },
+                { id: 'enhanced', label: 'Generate', done: false,                                                            active: step === 'enhanced' },
+              ].map((s, i, arr) => (
+                <div key={s.id} className="flex items-center gap-3">
+                  <div className={`flex items-center gap-2 ${
+                    s.done ? 'text-green-600' : s.active ? 'text-green-700' : 'text-slate-400'
+                  }`}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors ${
+                      s.done
+                        ? 'border-green-600 bg-green-600 text-white'
+                        : s.active
+                        ? 'border-green-600 bg-green-50 text-green-700'
+                        : 'border-slate-300 text-slate-400'
+                    }`}>
+                      {s.done ? '✓' : i + 1}
+                    </div>
+                    <span className="text-xs font-semibold">{s.label}</span>
+                  </div>
+                  {i < arr.length - 1 && (
+                    <div className={`w-6 h-0.5 rounded-full ${s.done ? 'bg-green-500' : 'bg-slate-200'}`} />
+                  )}
                 </div>
-                <span className="text-sm font-medium">Input</span>
-              </div>
-              <div className="w-8 h-0.5 bg-gray-300"></div>
-              <div className={`flex items-center gap-2 ${step === 'review' || step === 'enhanced' ? 'text-blue-600' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${step === 'review' || step === 'enhanced' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}>
-                  {step === 'enhanced' ? '✓' : '2'}
-                </div>
-                <span className="text-sm font-medium">Review</span>
-              </div>
-            </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-start gap-3">
-            <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="max-w-7xl mx-auto mb-5 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="font-semibold text-red-900 mb-1">Error</h4>
-              <p className="text-sm text-red-700">{error}</p>
+              <h4 className="font-semibold text-sm text-red-900">Error</h4>
+              <p className="text-xs text-red-700">{error}</p>
             </div>
           </div>
         )}
@@ -260,33 +269,38 @@ export default function SmartBuilderPage() {
         {step === 'input' && (
           <FadeIn>
             <div className="max-w-7xl mx-auto">
-              <div className="grid lg:grid-cols-2 gap-6">
+              <div className="grid lg:grid-cols-2 gap-5">
                 {/* Input Section */}
                 <SectionErrorBoundary sectionName="Content Input">
-                  <SlideUp className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Paste Your Content</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                      Paste any content - business notes, school notes, articles, or mixed content. We'll transform it into a professional PDF.
-                    </p>
-              
+                  <SlideUp className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-green-600 to-emerald-500">
+                        <FileEdit className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-slate-900">Paste Your Content</h2>
+                        <p className="text-xs text-slate-500">Notes, articles, drafts — we'll turn it into a professional PDF</p>
+                      </div>
+                    </div>
+
                     {/* Title input */}
                     <div className="mb-4">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">
-                        Document Title <span className="text-gray-400 font-normal">(optional — AI will suggest one if left blank)</span>
+                      <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                        Document Title <span className="text-slate-400 font-normal">(optional — AI suggests one)</span>
                       </label>
                       <input
                         type="text"
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         placeholder="e.g. Q3 Business Report, Marketing Strategy 2025…"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors"
                       />
                     </div>
 
                     <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Your Content</label>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{wordCount} words · {charCount} characters</div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-slate-700">Your Content</label>
+                        <div className="text-[11px] text-slate-500">{wordCount} words · {charCount} chars</div>
                       </div>
                       <RichTextEditor
                         content={rawContent}
@@ -304,26 +318,26 @@ Solution: Our platform analyzes your content, suggests structure, and generates 
 
 Key Features:
 - Smart content analysis
-- Automatic structure generation  
+- Automatic structure generation
 - Professional templates
 - Export to PDF/PowerPoint"
-                        className="min-h-[400px]"
+                        className="min-h-[380px]"
                       />
                     </div>
 
                     <button
                       onClick={handleAnalyze}
                       disabled={!rawContent.trim() || analyzing}
-                      className="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-lg"
+                      className="w-full py-3 px-5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 hover:-translate-y-0.5"
                     >
                       {analyzing ? (
                         <>
-                          <Loader2 className="w-6 h-6 animate-spin" />
-                          Analyzing Content...
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Analyzing Content…
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-6 h-6" />
+                          <Sparkles className="w-4 h-4" />
                           Analyze Content
                         </>
                       )}
@@ -333,8 +347,13 @@ Key Features:
 
                 {/* Preview Section */}
                 <SectionErrorBoundary sectionName="Document Preview">
-                  <SlideUp delay={0.1} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Live Preview</h2>
+                  <SlideUp delay={0.1} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
+                        <FileText className="w-4 h-4 text-white" />
+                      </div>
+                      <h2 className="text-lg font-bold text-slate-900">Live Preview</h2>
+                    </div>
                     <A4Preview
                       content={rawContent}
                       title={title || 'Untitled Document'}
@@ -350,15 +369,18 @@ Key Features:
         {/* STEP 2: REVIEW */}
         {step === 'review' && analysis && (
           <FadeIn>
-            <StaggerContainer className="max-w-6xl mx-auto space-y-6">
+            <StaggerContainer className="max-w-6xl mx-auto space-y-5">
               <StaggerItem>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Content Analysis Results</h2>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">Content Analysis Results</h2>
+                    <p className="text-xs text-slate-500 mt-0.5">Review the detected type, structure, and issues before generating</p>
+                  </div>
                   <button
                     onClick={handleStartOver}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                   >
-                    <RefreshCw className="w-4 h-4" />
+                    <RefreshCw className="w-3.5 h-3.5" />
                     Start Over
                   </button>
                 </div>
@@ -375,7 +397,7 @@ Key Features:
               {analysis.issues && (
                 <StaggerItem>
                   <SectionErrorBoundary sectionName="Issues Display">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
                       <IssuesDisplay issues={analysis.issues} />
                     </div>
                   </SectionErrorBoundary>
@@ -385,30 +407,32 @@ Key Features:
               {/* Outline Preview */}
               {analysis.suggestedSections && analysis.suggestedSections.length > 0 && (
                 <StaggerItem>
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <List className="w-5 h-5 text-blue-600" />
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white">Document Outline Preview</h3>
-                      <span className="ml-auto text-xs text-gray-400 font-medium">{analysis.suggestedSections.length} sections</span>
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="p-1.5 rounded-md bg-green-50">
+                        <List className="w-4 h-4 text-green-600" />
+                      </div>
+                      <h3 className="text-sm font-bold text-slate-900">Document Outline Preview</h3>
+                      <span className="ml-auto text-[11px] text-slate-400 font-semibold">{analysis.suggestedSections.length} sections</span>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    <p className="text-xs text-slate-500 mb-3">
                       The document will be structured into these sections based on your content:
                     </p>
-                    <ol className="space-y-2">
+                    <ol className="space-y-1.5">
                       {analysis.suggestedSections.map((section: any, i: number) => (
-                        <li key={i} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center justify-center mt-0.5">
+                        <li key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-50 hover:bg-green-50/50 transition-colors">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold flex items-center justify-center mt-0.5">
                             {i + 1}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                            <p className="text-xs font-semibold text-slate-800 truncate">
                               {typeof section === 'string' ? section : section.title || section.name || `Section ${i + 1}`}
                             </p>
                             {typeof section === 'object' && section.type && (
-                              <span className="text-[10px] text-gray-400 capitalize">{section.type}</span>
+                              <span className="text-[10px] text-slate-400 capitalize">{section.type}</span>
                             )}
                           </div>
-                          <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-300 flex-shrink-0 mt-0.5" />
                         </li>
                       ))}
                     </ol>
@@ -418,80 +442,81 @@ Key Features:
 
               {/* Action Buttons */}
               <StaggerItem>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">What would you like to do?</h3>
-                  <div className="grid md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                  <h3 className="text-base font-bold text-slate-900 mb-1">What would you like to do?</h3>
+                  <p className="text-xs text-slate-500 mb-4">Choose your next step — enhance, pick a template, or generate now</p>
+                  <div className="grid md:grid-cols-3 gap-3">
                     <button
                       onClick={handleApplyEnhancements}
                       disabled={enhancing}
-                      className="p-6 border-2 border-blue-300 dark:border-blue-700 rounded-xl hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all flex flex-col items-center gap-3 group"
+                      className="p-4 border border-slate-200 bg-white rounded-xl hover:border-green-400 hover:bg-green-50/30 hover:shadow-sm transition-all flex flex-col items-center gap-2.5 group disabled:opacity-60"
                     >
-                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Wand2 className="w-8 h-8 text-blue-600" />
+                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-md shadow-green-500/20 group-hover:shadow-green-500/40 transition-shadow">
+                        <Wand2 className="w-5 h-5 text-white" />
                       </div>
                       <div className="text-center">
-                        <h4 className="font-bold text-gray-900 dark:text-white mb-1">Apply Enhancements</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Fix all issues automatically</p>
+                        <h4 className="font-bold text-sm text-slate-900 mb-0.5">Apply Enhancements</h4>
+                        <p className="text-[11px] text-slate-500">Fix all issues automatically</p>
                       </div>
-                      {enhancing && <Loader2 className="w-5 h-5 animate-spin text-blue-600" />}
+                      {enhancing && <Loader2 className="w-4 h-4 animate-spin text-green-600" />}
                     </button>
 
-                <button
-                  onClick={() => setStep('template')}
-                  className="p-6 border-2 border-green-300 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all flex flex-col items-center gap-3 group"
-                >
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FileText className="w-8 h-8 text-green-600" />
-                  </div>
-                  <div className="text-center">
-                    <h4 className="font-bold text-gray-900 mb-1">Choose Template</h4>
-                    <p className="text-sm text-gray-600">Select from 20 templates</p>
-                  </div>
-                </button>
+                    <button
+                      onClick={() => setStep('template')}
+                      className="p-4 border border-slate-200 bg-white rounded-xl hover:border-green-400 hover:bg-green-50/30 hover:shadow-sm transition-all flex flex-col items-center gap-2.5 group"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-md shadow-green-500/20 group-hover:shadow-green-500/40 transition-shadow">
+                        <FileText className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <h4 className="font-bold text-sm text-slate-900 mb-0.5">Choose Template</h4>
+                        <p className="text-[11px] text-slate-500">Select from 20 templates</p>
+                      </div>
+                    </button>
 
-                <button
-                  onClick={() => handleGeneratePDF(false)}
-                  disabled={generating}
-                  className="p-6 border-2 border-purple-300 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all flex flex-col items-center gap-3 group"
-                >
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FileCheck className="w-8 h-8 text-purple-600" />
+                    <button
+                      onClick={() => handleGeneratePDF(false)}
+                      disabled={generating}
+                      className="p-4 border border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl hover:border-green-500 hover:shadow-md transition-all flex flex-col items-center gap-2.5 group disabled:opacity-60"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-700 to-emerald-600 rounded-xl flex items-center justify-center shadow-md shadow-green-500/30 group-hover:shadow-green-500/50 transition-shadow">
+                        <FileCheck className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <h4 className="font-bold text-sm text-green-800 mb-0.5">Quick Generate</h4>
+                        <p className="text-[11px] text-green-700">Use suggested template</p>
+                      </div>
+                      {generating && <Loader2 className="w-4 h-4 animate-spin text-green-700" />}
+                    </button>
                   </div>
-                  <div className="text-center">
-                    <h4 className="font-bold text-gray-900 mb-1">Quick Generate</h4>
-                    <p className="text-sm text-gray-600">Use suggested template</p>
-                  </div>
-                  {generating && <Loader2 className="w-5 h-5 animate-spin text-purple-600" />}
-                </button>
-              </div>
-            </div>
-          </StaggerItem>
-        </StaggerContainer>
-      </FadeIn>
+                </div>
+              </StaggerItem>
+            </StaggerContainer>
+          </FadeIn>
         )}
 
         {/* STEP 2.5: TEMPLATE SELECTION */}
         {step === 'template' && analysis && (
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="max-w-7xl mx-auto space-y-5">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setStep('review')}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-3.5 h-3.5" />
                 Back to Analysis
               </button>
               <button
                 onClick={handleStartOver}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-3.5 h-3.5" />
                 Start Over
               </button>
             </div>
 
             {/* Template Selector */}
-            <div className="bg-white rounded-xl shadow-lg p-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <TemplateSelector
                 selectedTemplate={selectedTemplate}
                 onSelectTemplate={setSelectedTemplate}
@@ -500,28 +525,28 @@ Key Features:
             </div>
 
             {/* Generate Button */}
-            <div className="bg-white rounded-xl shadow-lg p-8 text-center sticky bottom-4 z-10">
-              <div className="flex items-center justify-center gap-4">
-                <div className="text-left">
-                  <p className="text-sm text-gray-600">Selected Template:</p>
-                  <p className="font-semibold text-gray-900">
+            <div className="bg-white rounded-2xl shadow-lg border border-green-200 p-5 sticky bottom-4 z-10">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Selected Template</p>
+                  <p className="text-sm font-bold text-slate-900">
                     {selectedTemplate.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                   </p>
                 </div>
                 <button
                   onClick={() => handleGeneratePDF(false)}
                   disabled={generating || !selectedTemplate}
-                  className="px-8 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white font-bold text-lg rounded-lg hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-lg"
+                  className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 hover:-translate-y-0.5"
                 >
                   {generating ? (
                     <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      Generating PDF...
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating PDF…
                     </>
                   ) : (
                     <>
-                      <FileCheck className="w-6 h-6" />
-                      Generate PDF with This Template
+                      <FileCheck className="w-4 h-4" />
+                      Generate PDF
                     </>
                   )}
                 </button>
@@ -532,14 +557,17 @@ Key Features:
 
         {/* STEP 3: ENHANCED */}
         {step === 'enhanced' && enhancement && (
-          <div className="max-w-6xl mx-auto space-y-6">
+          <div className="max-w-6xl mx-auto space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Enhanced Content Preview</h2>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Enhanced Content Preview</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Review the enhanced version before generating your PDF</p>
+              </div>
               <button
                 onClick={handleStartOver}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-3.5 h-3.5" />
                 Start Over
               </button>
             </div>
@@ -554,36 +582,37 @@ Key Features:
             />
 
             {/* Generate Button */}
-            <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Ready to Generate Your PDF?</h3>
-              <p className="text-gray-600 mb-2">
-                Your content has been enhanced and structured.
-              </p>
-              <p className="text-sm text-gray-500 mb-6">
-                Using template: <span className="font-semibold text-gray-900">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-green-600 to-emerald-500 mb-3 shadow-md shadow-green-500/30">
+                <FileCheck className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">Ready to Generate Your PDF?</h3>
+              <p className="text-sm text-slate-500 mb-1">Your content has been enhanced and structured.</p>
+              <p className="text-xs text-slate-500 mb-5">
+                Using template: <span className="font-semibold text-green-700">
                   {selectedTemplate.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                 </span>
               </p>
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center justify-center gap-3">
                 <button
                   onClick={() => setStep('template')}
-                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all"
+                  className="px-4 py-2.5 border border-slate-200 text-slate-700 font-semibold text-sm rounded-xl hover:bg-slate-50 transition-colors"
                 >
                   Change Template
                 </button>
                 <button
                   onClick={() => handleGeneratePDF(true)}
                   disabled={generating}
-                  className="px-8 py-4 bg-gradient-to-r from-green-600 to-blue-600 text-white font-bold text-lg rounded-lg hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-lg"
+                  className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 hover:-translate-y-0.5"
                 >
                   {generating ? (
                     <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      Generating PDF...
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating PDF…
                     </>
                   ) : (
                     <>
-                      <FileCheck className="w-6 h-6" />
+                      <FileCheck className="w-4 h-4" />
                       Confirm & Generate PDF
                     </>
                   )}

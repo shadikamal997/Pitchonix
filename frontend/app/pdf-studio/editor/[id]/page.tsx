@@ -15,7 +15,6 @@ import {
 import Link from 'next/link';
 import ExportDropdown from '@/components/pdf-studio/ExportDropdown';
 import ThemePicker, { PDF_THEMES } from '@/components/pdf-studio/ThemePicker';
-import { ImageUploadPanel } from '@/components/pdf-studio/ImageUploadPanel';
 import { ChartPanel, ChartConfig } from '@/components/pdf-studio/ChartPanel';
 import LivePreview from '@/components/LivePreview';
 import PreviewModal from '@/components/PreviewModal';
@@ -24,9 +23,13 @@ import OnboardingTour from '@/components/OnboardingTour';
 import { useToast } from '@/components/ToastProvider';
 import { PresenceIndicator } from '@/components/PresenceIndicator';
 import { ProTemplatesDropdown } from '@/features/pdf-studio/pro-templates/components/ProTemplatesDropdown';
+import { TemplatesDropdown } from '@/features/pdf-studio/templates/components/TemplatesDropdown';
 import { FontPicker } from '@/components/FontPicker';
 import { getFontKeyFromStack, getFontStack } from '@/lib/fonts';
 import { BlockPicker, BlockType } from '@/components/pdf-editor/BlockPicker';
+import { PageImageOverlay } from '@/features/pdf-studio/image-placement/PageImageOverlay';
+import { ImagePlacementTab } from '@/features/pdf-studio/image-placement/ImagePlacementTab';
+import type { PlacedImage } from '@/features/pdf-studio/image-placement/types';
 
 const THEME_STORAGE_KEY = 'pitchonix_pdf_theme';
 
@@ -64,6 +67,12 @@ function textToEditableHtml(text: string): string {
   return escapeHtml(text).replace(/\n/g, '<br>');
 }
 
+function stripLegacyImagePlaceholders(html: string): string {
+  return html
+    .replace(/<section\b[^>]*data-pitchonix-block=["']image["'][\s\S]*?<\/section>/gi, '')
+    .replace(/<div\b[^>]*>\s*Image placeholder\s*<\/div>\s*<p\b[^>]*>\s*Use the Image tab to upload or replace the page image\.\s*<\/p>/gi, '');
+}
+
 function blockHtml(block: BlockType): string {
   const common = 'margin:24px 0;padding:22px;border:1px solid #D9E7E3;border-radius:18px;background:#F8FCFA;color:#173D39;';
   const title = `<h3 style="margin:0 0 12px;font-size:20px;line-height:1.15;color:#12312E;">${escapeHtml(block.name)}</h3>`;
@@ -82,9 +91,6 @@ function blockHtml(block: BlockType): string {
   if (block.id === 'table' || block.id === 'comparison') {
     return `<section data-pitchonix-block="${block.id}" style="${common}">${title}<table style="width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;"><thead><tr>${['Item','Status','Notes'].map(h => `<th style="padding:10px;text-align:left;background:#1E4240;color:white;">${h}</th>`).join('')}</tr></thead><tbody>${['First','Second','Third'].map(row => `<tr><td style="padding:10px;border-bottom:1px solid #E2ECE9;">${row}</td><td style="padding:10px;border-bottom:1px solid #E2ECE9;">Ready</td><td style="padding:10px;border-bottom:1px solid #E2ECE9;">Add details</td></tr>`).join('')}</tbody></table></section>`;
   }
-  if (block.id === 'image') {
-    return `<section data-pitchonix-block="image" style="${common}">${title}<div style="height:180px;border-radius:16px;background:linear-gradient(135deg,#DDF8E6,#1E4240);display:flex;align-items:center;justify-content:center;color:#1E4240;font-weight:800;">Image placeholder</div><p style="margin:10px 0 0;color:#55736D;">Use the Image tab to upload or replace the page image.</p></section>`;
-  }
   if (block.id === 'feature-grid') {
     return `<section data-pitchonix-block="feature-grid" style="${common}">${title}<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">${['Fast workflow','Brand-ready','Export-safe','Editable'].map(item => `<div style="padding:14px;border-radius:14px;background:white;border:1px solid #E2ECE9;"><strong>${item}</strong><p style="margin:6px 0 0;color:#55736D;">Add supporting detail.</p></div>`).join('')}</div></section>`;
   }
@@ -99,7 +105,7 @@ function blockHtml(block: BlockType): string {
 
 function editableHtmlForPage(page: any): string {
   const html = page?.content?.html;
-  if (typeof html === 'string' && html.trim()) return html;
+  if (typeof html === 'string' && html.trim()) return stripLegacyImagePlaceholders(html);
   return textToEditableHtml(safePageText(page?.content?.text));
 }
 
@@ -150,13 +156,6 @@ function pageDisplayTitle(page: any, indexInSection: number): string {
   return pageTitle || sectionTitle || 'Untitled';
 }
 
-function templateStyleLabel(template?: PdfTemplateOption): string {
-  if (!template?.style) return 'Template';
-  return [template.style.headerStyle, template.style.cardStyle, template.style.spacing]
-    .filter(Boolean)
-    .map(value => String(value).replace(/_/g, ' '))
-    .join(' / ');
-}
 
 interface PdfTemplateOption {
   type: string;
@@ -211,6 +210,9 @@ export default function PdfEditorPage() {
   const [versions, setVersions] = useState<any[]>([]);
   const [rightTab, setRightTab] = useState<'content' | 'images' | 'charts'>('content');
   const [showBlockPicker, setShowBlockPicker] = useState(false);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+  const [preflightResult, setPreflightResult] = useState<any>(null);
+  const [runningPreflight, setRunningPreflight] = useState(false);
   const [addingPage, setAddingPage] = useState(false);
   const [deletingPageId, setDeletingPageId] = useState<string | null>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -221,6 +223,7 @@ export default function PdfEditorPage() {
   const proTemplatePickerRef = useRef<HTMLDivElement>(null);
   const bodyEditorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const toolbarImageInputRef = useRef<HTMLInputElement>(null);
   const currentPageForEditor = pages[currentPageIndex];
 
   useEffect(() => {
@@ -235,6 +238,7 @@ export default function PdfEditorPage() {
     if (!bodyEditorRef.current || !currentPageForEditor) return;
     bodyEditorRef.current.innerHTML = editableHtmlForPage(currentPageForEditor);
     savedRangeRef.current = null;
+    setSelectedImageId(null); // clear selection when switching pages
   }, [currentPageForEditor?.id]);
 
   // Auto-save: debounce 3s after any page edit
@@ -466,6 +470,12 @@ export default function PdfEditorPage() {
   };
 
   const handleInsertBlock = (block: BlockType) => {
+    if (block.id === 'image') {
+      setRightTab('images');
+      toolbarImageInputRef.current?.click();
+      toast.success('Choose an image to place on the page');
+      return;
+    }
     insertHtmlAtCursor(blockHtml(block));
     toast.success(`${block.name} block inserted`);
   };
@@ -735,6 +745,78 @@ export default function PdfEditorPage() {
     setPreviewRefreshTrigger(t => t + 1);
   };
 
+  const resolveImageUrl = (url: string) => {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url) || url.startsWith('data:')) return url;
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
+    return `${apiBase}${url.startsWith('/') ? url : `/${url}`}`;
+  };
+
+  const uploadAndPlaceImage = async (file: File) => {
+    const currentPage = pages[currentPageIndex];
+    if (!currentPage || !file.type.startsWith('image/')) return;
+    setRightTab('images');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const { data } = await api.post('/pdf-studio/images/upload', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const url = resolveImageUrl(data.data?.url || data.url || '');
+      if (!url) throw new Error('Upload response did not include an image URL');
+      handleAddPlacedImage(currentPage.id, url);
+      toast.success('Image added. Drag it on the page to position it.');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || 'Image upload failed');
+    }
+  };
+
+  // ── Placed-image handlers ──────────────────────────────────────────────────
+  const handleAddPlacedImage = (pageId: string, url: string) => {
+    const newImage: PlacedImage = {
+      id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      url,
+      x: 5,
+      y: 10,
+      width: 90,
+      height: 38,
+      zIndex: 2,
+      opacity: 1,
+      fit: 'cover',
+    };
+    const newPages = pages.map(p =>
+      p.id === pageId
+        ? { ...p, content: { ...p.content, placedImages: [...(p.content?.placedImages || []), newImage] } }
+        : p
+    );
+    updatePagesAfterEdit(newPages);
+    setSelectedImageId(newImage.id);
+    setRightTab('images');
+  };
+
+  const handleUpdatePlacedImage = (pageId: string, imageId: string, updates: Partial<PlacedImage>) => {
+    const newPages = pages.map(p => {
+      if (p.id !== pageId) return p;
+      const imgs: PlacedImage[] = (p.content?.placedImages || []).map((img: PlacedImage) =>
+        img.id === imageId ? { ...img, ...updates } : img
+      );
+      return { ...p, content: { ...p.content, placedImages: imgs } };
+    });
+    setPages(newPages);
+    isDirtyRef.current = true;
+    setPreviewRefreshTrigger(t => t + 1);
+  };
+
+  const handleDeletePlacedImage = (pageId: string, imageId: string) => {
+    const newPages = pages.map(p => {
+      if (p.id !== pageId) return p;
+      const imgs = (p.content?.placedImages || []).filter((img: PlacedImage) => img.id !== imageId);
+      return { ...p, content: { ...p.content, placedImages: imgs } };
+    });
+    updatePagesAfterEdit(newPages);
+    setSelectedImageId(null);
+  };
+
   const handlePageChartsChange = (pageId: string, charts: ChartConfig[]) => {
     const newPages = pages.map(p =>
       p.id === pageId ? { ...p, content: { ...p.content, charts } } : p
@@ -744,7 +826,20 @@ export default function PdfEditorPage() {
     setPreviewRefreshTrigger(t => t + 1);
   };
 
-  const handleExport = async (format: string = 'pdf') => {
+  const runPreflight = async () => {
+    if (!document) return;
+    setRunningPreflight(true);
+    try {
+      const res = await api.get(`/pdf-studio/export/preflight/${document.id}`);
+      setPreflightResult(res.data.data);
+    } catch (_) {
+      setPreflightResult({ errors: [{ message: 'Preflight check failed' }], warnings: [], suggestions: [], exportReady: false, qualityScore: 0 });
+    } finally {
+      setRunningPreflight(false);
+    }
+  };
+
+  const handleExport = async (format: string = 'pdf', exportOptions?: Record<string, any>) => {
     if (!document) return;
     try {
       setSaving(true);
@@ -753,6 +848,7 @@ export default function PdfEditorPage() {
         templateType: selectedTemplate,
         proTemplateId: selectedProTemplateId,
         colorScheme: selectedTheme,
+        ...(exportOptions ? { exportOptions } : {}),
       }, { responseType: 'blob' });
 
       const blob = response.data;
@@ -769,7 +865,19 @@ export default function PdfEditorPage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Export failed';
+      let msg = err.response?.data?.message || err.message || 'Export failed';
+      const responseData = err.response?.data || err.details;
+      if (responseData instanceof Blob) {
+        try {
+          const text = await responseData.text();
+          const parsed = JSON.parse(text);
+          msg = parsed?.message || parsed?.preflight?.errors?.[0]?.message || msg;
+          if (parsed?.preflight) setPreflightResult(parsed.preflight);
+        } catch (_) {}
+      } else if (responseData?.preflight) {
+        msg = responseData.message || responseData.preflight?.errors?.[0]?.message || msg;
+        setPreflightResult(responseData.preflight);
+      }
       setError(msg);
       toast.error(msg);
     } finally {
@@ -792,7 +900,6 @@ export default function PdfEditorPage() {
 
   const currentPage = currentPageForEditor;
   const activeTheme = PDF_THEMES.find(t => t.id === selectedTheme) || PDF_THEMES[0];
-  const activeTemplate = templates.find(template => template.type === selectedTemplate);
   const currentText = safePageText(currentPage?.content?.text);
   const currentWords = wordCount(currentText);
   const currentDensity = pageDensity(currentWords, currentPage?.pageType);
@@ -814,6 +921,17 @@ export default function PdfEditorPage() {
         isOpen={showBlockPicker}
         onClose={() => setShowBlockPicker(false)}
         onSelectBlock={handleInsertBlock}
+      />
+      <input
+        ref={toolbarImageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={e => {
+          const file = e.target.files?.[0];
+          if (file) uploadAndPlaceImage(file);
+          e.currentTarget.value = '';
+        }}
       />
 
       {/* ── Header ── */}
@@ -913,94 +1031,13 @@ export default function PdfEditorPage() {
               <div className="h-5 w-px bg-gray-200" />
 
               {/* Template picker */}
-              <div ref={templatePickerRef} className="relative">
-                <button
-                  onClick={() => setShowTemplatePicker(!showTemplatePicker)}
-                  className={`flex h-7 items-center gap-1 px-2 rounded-md border transition-all text-[11px] font-semibold ${
-                    showTemplatePicker
-                      ? 'border-gray-900 bg-gray-900 text-white'
-                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                  title={`${templates.length || 30} PDF Studio templates`}
-                >
-                  <FileText className="w-3 h-3" />
-                  <span>Templates</span>
-                  <ChevronDown className={`w-3 h-3 transition-transform ${showTemplatePicker ? 'rotate-180' : ''}`} />
-                </button>
-                <AnimatePresence>
-                  {showTemplatePicker && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 flex flex-col w-[420px] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl z-50"
-                      style={{ maxHeight: '580px' }}
-                    >
-                      <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-3 py-2">
-                        <div>
-                          <div className="text-xs font-semibold text-gray-900">Templates</div>
-                          <div className="text-[11px] text-gray-500">{templates.length || 30} designs</div>
-                        </div>
-                        {activeTemplate && (
-                          <div className="max-w-[190px] truncate text-right text-[11px] font-medium text-gray-500">
-                            {activeTemplate.name}
-                          </div>
-                        )}
-                      </div>
-                      <div className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto p-2.5">
-                        {templates.map(template => (
-                          <button
-                            key={template.type}
-                            onClick={() => handleTemplateChange(template.type)}
-                            className={`group overflow-hidden rounded-lg border bg-white text-left transition-all ${
-                              selectedTemplate === template.type
-                                ? 'border-blue-500 ring-2 ring-blue-100'
-                                : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
-                            }`}
-                            title={`${template.name} - ${templateStyleLabel(template)}`}
-                          >
-                            <div className="relative bg-gray-50">
-                              {template.thumbnail ? (
-                                <img
-                                  src={template.thumbnail}
-                                  alt=""
-                                  className="h-28 w-full object-cover"
-                                />
-                              ) : (
-                                <div className="h-28 w-full bg-gradient-to-br from-gray-100 to-gray-200" />
-                              )}
-                              {selectedTemplate === template.type && (
-                                <div className="absolute right-2 top-2 rounded-full bg-blue-600 p-1 text-white shadow-sm">
-                                  <CheckCircle className="h-3.5 w-3.5" />
-                                </div>
-                              )}
-                              <div className="absolute bottom-2 left-2 flex gap-1">
-                                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-semibold capitalize text-gray-700 shadow-sm">
-                                  {template.style?.headerStyle || 'style'}
-                                </span>
-                                <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-semibold capitalize text-gray-700 shadow-sm">
-                                  {template.style?.cardStyle || 'cards'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="px-2.5 py-2">
-                              <div className="truncate text-xs font-semibold text-gray-900">{template.name}</div>
-                              <div className="mt-0.5 flex items-center justify-between gap-2">
-                                <span className="truncate text-[10px] capitalize text-gray-500">
-                                  {String(template.category || '').replace(/_/g, ' ')}
-                                </span>
-                                <span className="text-[10px] capitalize text-gray-400">
-                                  {template.style?.spacing || 'normal'}
-                                </span>
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              <div ref={templatePickerRef}>
+                <TemplatesDropdown
+                  open={showTemplatePicker}
+                  selectedId={selectedTemplate}
+                  onToggle={() => setShowTemplatePicker(!showTemplatePicker)}
+                  onSelect={(id) => { handleTemplateChange(id); setShowTemplatePicker(false); }}
+                />
               </div>
 
               <div ref={proTemplatePickerRef}>
@@ -1089,9 +1126,10 @@ export default function PdfEditorPage() {
                   onClick={handleAddPage}
                   disabled={addingPage}
                   title="Add page"
+                  aria-label="Add new page"
                   className="w-6 h-6 flex items-center justify-center rounded-md bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-40"
                 >
-                  {addingPage ? <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-500" /> : <Plus className="w-3.5 h-3.5 text-gray-600" />}
+                  {addingPage ? <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-500" aria-hidden="true" /> : <Plus className="w-3.5 h-3.5 text-gray-600" aria-hidden="true" />}
                 </button>
               </div>
               <div className="space-y-3">
@@ -1359,9 +1397,12 @@ export default function PdfEditorPage() {
                       </button>
                       <div className="mx-1 h-6 w-px bg-gray-200" />
                       <button
-                        title="Insert image"
+                        title="Upload and place image"
                         onMouseDown={e => e.preventDefault()}
-                        onClick={() => setRightTab('images')}
+                        onClick={() => {
+                          setRightTab('images');
+                          toolbarImageInputRef.current?.click();
+                        }}
                         className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100"
                       >
                         <ImageIcon className="w-4 h-4" />
@@ -1403,8 +1444,12 @@ export default function PdfEditorPage() {
                     </div>
 
                     <div className="mx-auto bg-[#d8dbe0] p-5 rounded-xl overflow-auto">
-                      <div className="mx-auto bg-white shadow-xl border border-gray-200" style={{ width: 595, minHeight: 842 }}>
-                        <div className="p-12">
+                      <div
+                        className="mx-auto bg-white shadow-xl border border-gray-200"
+                        style={{ width: 595, minHeight: 842, position: 'relative' }}
+                        onClick={() => setSelectedImageId(null)}
+                      >
+                        <div className="p-12" style={{ position: 'relative', zIndex: 1 }}>
                           <input
                             type="text"
                             value={currentPage.title || ''}
@@ -1438,6 +1483,18 @@ export default function PdfEditorPage() {
                             }}
                           />
                         </div>
+
+                        {/* Placed-image drag/resize overlay */}
+                        <PageImageOverlay
+                          images={currentPage.content?.placedImages || []}
+                          onUpdate={(id, updates) => handleUpdatePlacedImage(currentPage.id, id, updates)}
+                          onDelete={(id) => handleDeletePlacedImage(currentPage.id, id)}
+                          selectedId={selectedImageId}
+                          onSelect={(id) => {
+                            setSelectedImageId(id);
+                            if (id) setRightTab('images');
+                          }}
+                        />
                       </div>
                     </div>
 
@@ -1519,7 +1576,7 @@ export default function PdfEditorPage() {
             <div className="lg:col-span-1">
               <div className="sticky top-20 space-y-4">
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                  <div className="flex border-b border-gray-100 bg-gray-50">
+                  <div className="flex border-b border-gray-100 bg-gray-50" role="tablist" aria-label="Inspector tabs">
                     {([
                       { id: 'content', label: 'Content', icon: <Layers className="w-3.5 h-3.5" /> },
                       { id: 'images', label: 'Image', icon: <ImageIcon className="w-3.5 h-3.5" /> },
@@ -1527,7 +1584,17 @@ export default function PdfEditorPage() {
                     ] as const).map(tab => (
                       <button
                         key={tab.id}
+                        role="tab"
+                        aria-selected={rightTab === tab.id}
+                        aria-controls={`tabpanel-${tab.id}`}
+                        id={`tab-${tab.id}`}
                         onClick={() => setRightTab(tab.id)}
+                        onKeyDown={e => {
+                          const tabs = ['content', 'images', 'charts'] as const;
+                          const idx = tabs.indexOf(tab.id);
+                          if (e.key === 'ArrowRight') setRightTab(tabs[(idx + 1) % tabs.length]);
+                          if (e.key === 'ArrowLeft') setRightTab(tabs[(idx + tabs.length - 1) % tabs.length]);
+                        }}
                         className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 transition-all ${
                           rightTab === tab.id
                             ? 'border-current text-blue-600 bg-white'
@@ -1541,7 +1608,7 @@ export default function PdfEditorPage() {
                   </div>
                   <div className="p-4">
                     {rightTab === 'content' && (
-                      <div className="space-y-4">
+                      <div role="tabpanel" id="tabpanel-content" aria-labelledby="tab-content" className="space-y-4">
                         <div>
                           <div className="flex items-center justify-between text-xs font-semibold text-gray-500">
                             <span>Page Density</span>
@@ -1585,17 +1652,29 @@ export default function PdfEditorPage() {
                       </div>
                     )}
                     {rightTab === 'images' && currentPage && (
-                      <ImageUploadPanel
-                        onImageSelect={url => handlePageImageChange(currentPage.id, url)}
-                        currentImageUrl={currentPage.content?.heroImage || currentPage.content?.image || ''}
-                        label="Hero / Page Image"
-                      />
+                      <div role="tabpanel" id="tabpanel-images" aria-labelledby="tab-images">
+                        <ImagePlacementTab
+                          onAddImage={url => handleAddPlacedImage(currentPage.id, url)}
+                          selectedImage={
+                            selectedImageId
+                              ? ((currentPage.content?.placedImages || []) as PlacedImage[]).find(
+                                  (img: PlacedImage) => img.id === selectedImageId
+                                ) ?? null
+                              : null
+                          }
+                          onUpdateSelected={updates => selectedImageId && handleUpdatePlacedImage(currentPage.id, selectedImageId, updates)}
+                          onDeleteSelected={() => selectedImageId && handleDeletePlacedImage(currentPage.id, selectedImageId)}
+                          onDeselect={() => setSelectedImageId(null)}
+                        />
+                      </div>
                     )}
                     {rightTab === 'charts' && currentPage && (
-                      <ChartPanel
-                        charts={currentPage.content?.charts || []}
-                        onChange={charts => handlePageChartsChange(currentPage.id, charts)}
-                      />
+                      <div role="tabpanel" id="tabpanel-charts" aria-labelledby="tab-charts">
+                        <ChartPanel
+                          charts={currentPage.content?.charts || []}
+                          onChange={charts => handlePageChartsChange(currentPage.id, charts)}
+                        />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1625,12 +1704,76 @@ export default function PdfEditorPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Preflight Quality Check */}
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+                    <span>Preflight Check</span>
+                    {preflightResult && (
+                      <span className={`ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${preflightResult.exportReady ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {preflightResult.exportReady ? 'Ready' : 'Issues'}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={runPreflight}
+                    disabled={runningPreflight}
+                    aria-label="Run preflight quality check"
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-50 flex items-center gap-1"
+                  >
+                    {runningPreflight ? <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" /> : null}
+                    {runningPreflight ? 'Checking…' : 'Run Check'}
+                  </button>
+                </div>
+                {preflightResult && (
+                  <div className="p-3 space-y-2 text-xs max-h-60 overflow-y-auto">
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-500">Score</span>
+                      <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${preflightResult.qualityScore >= 80 ? 'bg-emerald-500' : preflightResult.qualityScore >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                          style={{ width: `${preflightResult.qualityScore}%` }}
+                        />
+                      </div>
+                      <span className="font-bold text-gray-700">{preflightResult.qualityScore}</span>
+                    </div>
+                    {preflightResult.errors.map((e: any, i: number) => (
+                      <div key={i} className="flex items-start gap-1.5 rounded-lg bg-red-50 px-2 py-1.5 text-red-700">
+                        <span className="font-bold mt-0.5">✗</span>
+                        <span>{e.message}</span>
+                      </div>
+                    ))}
+                    {preflightResult.warnings.map((w: any, i: number) => (
+                      <div key={i} className="flex items-start gap-1.5 rounded-lg bg-amber-50 px-2 py-1.5 text-amber-700">
+                        <span className="font-bold mt-0.5">!</span>
+                        <span>{w.message}</span>
+                      </div>
+                    ))}
+                    {preflightResult.suggestions.slice(0, 3).map((s: any, i: number) => (
+                      <div key={i} className="flex items-start gap-1.5 rounded-lg bg-blue-50 px-2 py-1.5 text-blue-700">
+                        <span className="font-bold mt-0.5">→</span>
+                        <span>{s.message}</span>
+                      </div>
+                    ))}
+                    {preflightResult.errors.length === 0 && preflightResult.warnings.length === 0 && (
+                      <p className="text-emerald-600 font-semibold text-center py-1">Document is export-ready!</p>
+                    )}
+                  </div>
+                )}
+                {!preflightResult && (
+                  <div className="px-3 py-4 text-center text-xs text-gray-400">
+                    Run a quality check before exporting to catch issues early.
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
       </div>
 
       {/* Fullscreen preview modal */}
+
       {showPreviewModal && (
         <PreviewModal
           documentId={documentId}

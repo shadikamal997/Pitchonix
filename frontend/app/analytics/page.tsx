@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ModernSidebar } from '@/components/ui/modern-sidebar';
 import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import {
@@ -63,10 +62,8 @@ export default function AnalyticsPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <ModernSidebar />
-      <main className="flex-1 ml-64 p-8">
-        <div className="max-w-5xl mx-auto">
+    <div className="min-h-full bg-slate-50 p-8">
+      <div className="max-w-5xl mx-auto">
           <h1 className="text-3xl font-bold mb-2 text-gray-900">Analytics</h1>
           <p className="text-gray-500 mb-8 text-sm">Document views, exports, and share link activity across all your projects.</p>
 
@@ -142,8 +139,7 @@ export default function AnalyticsPage() {
               </div>
             </>
           )}
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

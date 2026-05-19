@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ModernSidebar } from '@/components/ui/modern-sidebar';
 import { useAuthStore } from '@/lib/store';
 import { FileType, Layers, Palette, ShoppingBag, Clock } from 'lucide-react';
 
@@ -25,10 +24,8 @@ export default function ExportTemplatesPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <ModernSidebar />
-      <main className="flex-1 ml-64 p-8">
-        <div className="max-w-4xl mx-auto">
+    <div className="min-h-full bg-slate-50 p-8">
+      <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Export Templates</h1>
             <p className="text-gray-500 mt-1">Customisable layouts for PowerPoint and PDF exports</p>
@@ -61,9 +58,8 @@ export default function ExportTemplatesPage() {
                 </div>
               </div>
             ))}
-          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

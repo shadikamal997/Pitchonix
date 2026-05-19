@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ContentBlock } from './content-block-extractor.service';
 import { DocumentOutline, OutlineSection } from './outline-builder.service';
+import { AutoLayoutEngineService, LayoutMetadata } from './auto-layout-engine.service';
 
 export interface PlannedPage {
   sectionId: string;
@@ -14,6 +15,7 @@ export interface PlannedPage {
   isContinuation: boolean;
   pageIndexInSection: number;
   globalOrder: number;
+  layout?: LayoutMetadata;
 }
 
 /**
@@ -33,21 +35,23 @@ export interface PlannedPage {
 export class RuleBasedPagePlannerService {
   private readonly logger = new Logger(RuleBasedPagePlannerService.name);
 
+  constructor(private readonly autoLayoutEngine: AutoLayoutEngineService) {}
+
   // Ideal words-per-page by section type
   private readonly TARGETS: Record<string, number> = {
     cover:      0,
     toc:        0,
-    summary:    320,
-    intro:      360,
-    content:    380,
-    financial:  300,
-    chart:      200,
-    timeline:   300,
-    conclusion: 320,
-    references: 380,
+    summary:    420,
+    intro:      440,
+    content:    460,
+    financial:  380,
+    chart:      280,
+    timeline:   380,
+    conclusion: 420,
+    references: 460,
   };
-  private readonly MIN_WORDS = 120;
-  private readonly MAX_WORDS = 500;
+  private readonly MIN_WORDS = 250;
+  private readonly MAX_WORDS = 650;
 
   planPages(
     outline: DocumentOutline,
@@ -192,46 +196,52 @@ export class RuleBasedPagePlannerService {
         continue;
       }
 
-      const last = result[result.length - 1];
-
       if (this.isSpecialPage(page)) {
         result.push(page);
         continue;
       }
 
+      const last = result[result.length - 1];
       const shouldMerge =
         this.isHeadingOnly(page) ||
         this.isMetadataOnly(page) ||
         page.wordCount < this.MIN_WORDS;
 
-      if (
-        shouldMerge &&
-        last &&
-        !this.isSpecialPage(last) &&
-        last.sectionId === page.sectionId &&
-        last.wordCount + page.wordCount <= this.MAX_WORDS
-      ) {
-        result[result.length - 1] = this.mergePlannedPages(last, page);
-        continue;
+      if (shouldMerge && last && !this.isSpecialPage(last)) {
+        // Same-section merge — always allowed when under MAX_WORDS
+        if (last.sectionId === page.sectionId && last.wordCount + page.wordCount <= this.MAX_WORDS) {
+          result[result.length - 1] = this.mergePlannedPages(last, page);
+          continue;
+        }
+        // Cross-section merge — allowed for very sparse pages (under half MIN_WORDS)
+        if (page.wordCount < this.MIN_WORDS / 2 && last.wordCount + page.wordCount <= this.MAX_WORDS) {
+          result[result.length - 1] = this.mergePlannedPages(last, page);
+          continue;
+        }
       }
 
       result.push(page);
     }
 
-    // Pull from the next compatible content page when the beginning is weak.
-    for (let i = 0; i < Math.min(4, result.length - 1); i++) {
-      const page = result[i];
-      const next = result[i + 1];
-      if (
-        !this.isSpecialPage(page) &&
-        !this.isSpecialPage(next) &&
-        (page.wordCount < this.MIN_WORDS || this.isHeadingOnly(page)) &&
-        page.sectionId === next.sectionId &&
-        page.wordCount + next.wordCount <= this.MAX_WORDS
-      ) {
-        result[i] = this.mergePlannedPages(page, next);
-        result.splice(i + 1, 1);
-        i--;
+    // Forward-merge pass: pull content from the NEXT page into any underfilled page.
+    // Run over ALL pages (not just the first few) until stable.
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let i = 0; i < result.length - 1; i++) {
+        const page = result[i];
+        const next = result[i + 1];
+        if (
+          !this.isSpecialPage(page) &&
+          !this.isSpecialPage(next) &&
+          (page.wordCount < this.MIN_WORDS || this.isHeadingOnly(page)) &&
+          page.wordCount + next.wordCount <= this.MAX_WORDS
+        ) {
+          result[i] = this.mergePlannedPages(page, next);
+          result.splice(i + 1, 1);
+          changed = true;
+          break;
+        }
       }
     }
 
@@ -502,12 +512,18 @@ export class RuleBasedPagePlannerService {
     const contentText = this.renderBlocks(blocks);
     const wordCount   = this.countWords(contentText);
 
-    // Derive a per-page title from the first heading block on this page.
-    // This prevents all continuation pages from sharing the same section label.
     const headingBlock = blocks.find(
       b => b.type === 'title' || b.type === 'heading' || b.type === 'subheading',
     );
     const pageTitle = headingBlock?.cleanText?.trim() || section.title;
+
+    // Auto-select layout based on content analysis
+    const layout = this.autoLayoutEngine.selectLayout(
+      blocks,
+      wordCount,
+      section.sectionType,
+      pageIdx,
+    );
 
     return {
       sectionId:          section.id,
@@ -521,6 +537,7 @@ export class RuleBasedPagePlannerService {
       isContinuation:     pageIdx > 0,
       pageIndexInSection: pageIdx,
       globalOrder:        order,
+      layout,
     };
   }
 

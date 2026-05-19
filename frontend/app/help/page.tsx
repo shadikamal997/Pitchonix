@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ModernSidebar } from '@/components/ui/modern-sidebar';
 import { useAuthStore } from '@/lib/store';
 import { HelpCircle, BookOpen, MessageCircle, FileText, Zap, ExternalLink } from 'lucide-react';
 
@@ -41,10 +40,8 @@ export default function HelpPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <ModernSidebar />
-      <main className="flex-1 ml-64 p-8">
-        <div className="max-w-4xl mx-auto">
+    <div className="min-h-full bg-slate-50 p-8">
+      <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Help & Support</h1>
             <p className="text-gray-600">Guides, FAQs, and contact options for the Pitchonix platform</p>
@@ -152,8 +149,7 @@ export default function HelpPage() {
               </div>
             </div>
           </div>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -15,12 +15,13 @@ import { Response } from 'express';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { GetUser } from '../../auth/get-user.decorator';
 import { Public } from '../../auth/public.decorator';
-import { PdfExportService } from '../services/pdf-export.service';
+import { PdfExportService, PdfExportOptions } from '../services/pdf-export.service';
 import { DocxExportService } from '../services/docx-export.service';
 import { PptxExportService } from '../services/pptx-export.service';
 import { PngExportService } from '../services/png-export.service';
 import { JpegExportService } from '../services/jpeg-export.service';
 import { PreviewService } from '../services/preview.service';
+import { PreflightService } from '../services/preflight.service';
 import { TemplateType } from '../templates/template-types';
 import { TEMPLATE_CONFIGS } from '../templates/template-configs';
 import { PRO_TEMPLATE_REGISTRY } from '../pro-templates/registry/pro-template.registry';
@@ -37,6 +38,7 @@ export class PdfExportController {
     private pngExportService: PngExportService,
     private jpegExportService: JpegExportService,
     private previewService: PreviewService,
+    private preflightService: PreflightService,
   ) {}
 
   /**
@@ -50,10 +52,25 @@ export class PdfExportController {
     @Body('templateType') templateType?: string,
     @Body('colorScheme') colorScheme?: string,
     @Body('proTemplateId') proTemplateId?: string | null,
+    @Body('exportOptions') exportOptions?: PdfExportOptions,
+    @Body('skipPreflight') skipPreflight?: boolean,
     @Res() res?: Response,
   ) {
     try {
       this.logger.log(`Export request for document ${documentId} in format ${format}`);
+
+      if (!skipPreflight) {
+        const preflight = await this.preflightService.runPreflight(documentId);
+        if (!preflight.exportReady) {
+          throw new HttpException(
+            {
+              message: 'Export blocked by preflight validation',
+              preflight,
+            },
+            HttpStatus.UNPROCESSABLE_ENTITY,
+          );
+        }
+      }
 
       let buffer: Buffer;
       let filename: string;
@@ -62,7 +79,7 @@ export class PdfExportController {
       switch (format?.toLowerCase()) {
         case 'pdf':
           const template = (templateType as TemplateType) || TemplateType.CLEAN_BUSINESS_REPORT;
-          const pdfResult = await this.pdfExportService.exportDocument(documentId, template, colorScheme, proTemplateId);
+          const pdfResult = await this.pdfExportService.exportDocument(documentId, template, colorScheme, proTemplateId, exportOptions);
           buffer = pdfResult.pdfBuffer;
           filename = pdfResult.filename;
           contentType = 'application/pdf';
@@ -140,6 +157,10 @@ export class PdfExportController {
 
       this.logger.log(`Export successful: ${filename} (${format})`);
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       this.logger.error(`Export failed: ${error.message}`, error.stack);
       throw new HttpException(
         error.message || 'Export failed',
@@ -363,5 +384,22 @@ export class PdfExportController {
 
     const encoded = Buffer.from(svg).toString('base64');
     return `data:image/svg+xml;base64,${encoded}`;
+  }
+
+  /**
+   * Run publishing preflight checks on a document
+   * GET /api/pdf-studio/export/preflight/:id
+   */
+  @Get('preflight/:id')
+  async runPreflight(@Param('id') documentId: string) {
+    try {
+      const result = await this.preflightService.runPreflight(documentId);
+      return { success: true, data: result };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Preflight check failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

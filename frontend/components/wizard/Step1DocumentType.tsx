@@ -265,21 +265,27 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
       <button
         key={type.id}
         onClick={() => onUpdate({ documentType: type.id })}
-        className={`p-5 rounded-xl border-2 transition-all text-left group ${
+        className={`p-3 rounded-lg border text-left transition-all bg-white ${
           isSelected
-            ? `bg-gradient-to-br ${type.color} text-white border-transparent shadow-lg transform scale-105`
-            : `border-slate-200 ${type.bgColor} hover:shadow-md hover:-translate-y-1`
+            ? 'border-green-600 ring-1 ring-green-600 shadow-md shadow-green-500/10'
+            : 'border-slate-200 hover:border-green-400 hover:shadow-sm'
         }`}
       >
-        <div className="flex flex-col space-y-3">
-          <div className={`p-3 rounded-lg self-start ${isSelected ? 'bg-white/20' : 'bg-white'}`}>
-            <Icon className={`h-5 w-5 ${isSelected ? 'text-white' : type.textColor}`} />
+        <div className="flex items-start gap-2.5">
+          <div className={`shrink-0 w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+            isSelected
+              ? 'bg-gradient-to-br from-green-600 to-emerald-500'
+              : 'bg-slate-50 group-hover:bg-green-50'
+          }`}>
+            <Icon className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-slate-600'}`} />
           </div>
-          <div>
-            <h4 className={`font-semibold mb-1 ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+          <div className="min-w-0 flex-1">
+            <h4 className={`font-semibold text-sm leading-tight mb-0.5 ${
+              isSelected ? 'text-green-700' : 'text-slate-900'
+            }`}>
               {type.name}
             </h4>
-            <p className={`text-xs ${isSelected ? 'text-white/90' : 'text-slate-600'}`}>
+            <p className="text-[11px] leading-snug text-slate-500 line-clamp-2">
               {type.description}
             </p>
           </div>
@@ -289,58 +295,58 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
   };
 
   return (
-    <div className="space-y-10">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold mb-2">What would you like to create?</h2>
-        <p className="text-slate-600">Choose from 16 professional document types</p>
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold mb-1 text-slate-900">What would you like to create?</h2>
+        <p className="text-sm text-slate-500">Choose from 16 professional document types</p>
       </div>
 
       {/* Presentations Category */}
       <div>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600">
-            <Layers className="h-6 w-6 text-white" />
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-green-600 to-emerald-500">
+            <Layers className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-900">Presentations</h3>
-            <p className="text-sm text-slate-600">Slide decks for pitches, sales, and meetings</p>
+            <h3 className="text-base font-bold text-slate-900">Presentations</h3>
+            <p className="text-xs text-slate-500">Slide decks for pitches, sales, and meetings</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {presentationTypes.map(renderDocumentCard)}
         </div>
       </div>
 
       {/* PDF Documents Category */}
       <div>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600">
-            <FileType className="h-6 w-6 text-white" />
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
+            <FileType className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-900">PDF Studio</h3>
-            <p className="text-sm text-slate-600">Professional PDF documents and reports</p>
+            <h3 className="text-base font-bold text-slate-900">PDF Studio</h3>
+            <p className="text-xs text-slate-500">Professional PDF documents and reports</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {pdfDocumentTypes.map(renderDocumentCard)}
         </div>
       </div>
 
       {/* Selected Confirmation */}
       {selectedType && (
-        <div className="mt-8 p-4 rounded-xl bg-gradient-to-r from-violet-50 to-cyan-50 border border-violet-200">
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-violet-600 to-cyan-600 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        <div className="mt-6 p-3 rounded-lg bg-green-50 border border-green-200">
+          <div className="flex items-center gap-2.5">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-emerald-500 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <div>
-              <p className="text-sm font-medium text-slate-900">
-                <span className="text-slate-600">Selected:</span> <strong>{selectedType.name}</strong>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-green-900">
+                {selectedType.name}
               </p>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-green-700">
                 {selectedType.format === 'pdf' ? 'PDF Document' : 'Slide Presentation'} • {selectedType.description}
               </p>
             </div>

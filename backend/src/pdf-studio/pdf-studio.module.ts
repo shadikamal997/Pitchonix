@@ -8,6 +8,8 @@ import { ContentNormalizerService } from './services/content-normalizer.service'
 import { ContentBlockExtractorService } from './services/content-block-extractor.service';
 import { OutlineBuilderService } from './services/outline-builder.service';
 import { RuleBasedPagePlannerService } from './services/rule-based-page-planner.service';
+import { AutoLayoutEngineService } from './services/auto-layout-engine.service';
+import { LayoutCompositionService } from './services/layout-composition.service';
 import { PdfExportService } from './services/pdf-export.service';
 import { DocxExportService } from './services/docx-export.service';
 import { PptxExportService } from './services/pptx-export.service';
@@ -33,6 +35,12 @@ import { SectionInferenceService } from './services/section-inference.service';
 import { SemanticStructureEngine } from './services/semantic-structure-engine.service';
 import { SemanticTOCBuilder } from './services/semantic-toc-builder.service';
 import { ProTemplateRendererService } from './pro-templates/renderers/pro-template-renderer.service';
+import { PreflightService } from './services/preflight.service';
+import { PaginationIntelligenceService } from './services/pagination-intelligence.service';
+import { EditorialGridEngineService } from './services/editorial-grid-engine.service';
+import { MagazineLayoutEngineService } from './services/magazine-layout-engine.service';
+import { SmartAutoFlowEngineService } from './services/smart-auto-flow-engine.service';
+import { PublishingIntelligenceService } from './services/publishing-intelligence.service';
 import { SmartBuilderController } from './controllers/smart-builder.controller';
 import { PdfExportController } from './controllers/pdf-export.controller';
 import { AdminController } from './controllers/admin.controller';
@@ -49,6 +57,7 @@ import { ImageUploadController } from './controllers/image-upload.controller';
     ContentNormalizerService,
     ContentBlockExtractorService,
     OutlineBuilderService,
+    AutoLayoutEngineService,
     RuleBasedPagePlannerService,
     PdfExportService,
     DocxExportService,
@@ -65,18 +74,22 @@ import { ImageUploadController } from './controllers/image-upload.controller';
     PreviewService,
     BrowserPoolService,
     PerformanceService,
-    // NEW: Production-quality composition services
     DocumentCompositionService,
     PageDensityBalancerService,
     SemanticContinuationService,
     DynamicCoverComposerService,
-    // NEW: Semantic Structure Intelligence Engine
     ParagraphSemanticAnalyzer,
     TopicSegmentationService,
     SectionInferenceService,
     SemanticStructureEngine,
     SemanticTOCBuilder,
     ProTemplateRendererService,
+    PreflightService,
+    PaginationIntelligenceService,
+    EditorialGridEngineService,
+    MagazineLayoutEngineService,
+    SmartAutoFlowEngineService,
+    PublishingIntelligenceService,
   ],
   exports: [
     ContentAnalysisService,
@@ -86,6 +99,7 @@ import { ImageUploadController } from './controllers/image-upload.controller';
     ContentNormalizerService,
     ContentBlockExtractorService,
     OutlineBuilderService,
+    AutoLayoutEngineService,
     RuleBasedPagePlannerService,
     PdfExportService,
     DocxExportService,
@@ -102,12 +116,16 @@ import { ImageUploadController } from './controllers/image-upload.controller';
     PreviewService,
     BrowserPoolService,
     PerformanceService,
-    // NEW: Production-quality composition services
     DocumentCompositionService,
     PageDensityBalancerService,
     SemanticContinuationService,
     DynamicCoverComposerService,
     ProTemplateRendererService,
+    PaginationIntelligenceService,
+    EditorialGridEngineService,
+    MagazineLayoutEngineService,
+    SmartAutoFlowEngineService,
+    PublishingIntelligenceService,
   ],
 })
 export class PdfStudioModule {}

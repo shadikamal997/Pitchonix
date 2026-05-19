@@ -30,6 +30,7 @@ import { PageDensityBalancerService } from '../services/page-density-balancer.se
 import { SemanticContinuationService } from '../services/semantic-continuation.service';
 import { DynamicCoverComposerService } from '../services/dynamic-cover-composer.service';
 import { AdaptiveLayoutEngineService } from '../services/adaptive-layout-engine.service';
+import { PublishingIntelligenceService } from '../services/publishing-intelligence.service';
 import { AnalyzeContentDto, EnhanceContentDto, GenerateDocumentDto } from '../dto/smart-builder.dto';
 
 @Controller('pdf-studio/smart-builder')
@@ -53,6 +54,7 @@ export class SmartBuilderController {
     private semanticContinuationService: SemanticContinuationService,
     private dynamicCoverComposerService: DynamicCoverComposerService,
     private adaptiveLayoutEngineService: AdaptiveLayoutEngineService,
+    private publishingIntelligenceService: PublishingIntelligenceService,
   ) {}
 
   /**
@@ -129,41 +131,42 @@ export class SmartBuilderController {
     try {
       this.logger.log(`Enhancing content (${rawContent.length} chars)`);
 
+      // Analysis still needs plain text — but enhancement gets the ORIGINAL HTML
+      // so it can preserve paragraphs, headings, lists, tables, etc.
       const plainContent = this.htmlToPlainText(rawContent);
-
-      // First analyze to detect issues
       const analysisResult = await this.contentAnalysisService.analyzeContent(
         plainContent,
       );
 
-      // Build enhancement options
+      // Map UI tone string to a valid enhancement tone. Anything unknown
+      // falls back to 'business' (no destructive transformations).
+      const validTones = ['neutral', 'business', 'executive', 'formal', 'academic', 'persuasive', 'technical', 'friendly'];
+      const requestedTone = (options?.tone || '').toLowerCase();
+      const tone = validTones.includes(requestedTone)
+        ? requestedTone
+        : (requestedTone === 'professional' ? 'business' : 'business');
+
+      // Build enhancement options. Destructive flags (restructure / expand /
+      // shorten / professionalize / makeEngaging) are NEVER enabled here.
       let enhancementOptions: EnhancementOptions;
       if (fixAll) {
-        // Apply all fixes
         enhancementOptions = {
-          improveWriting: true,
           fixGrammar: true,
-          restructure: true,
-          expand: false,
-          shorten: false,
-          tone: options?.tone as any || 'professional',
+          improveClarity: true,
+          tone: tone as any,
         };
       } else {
-        // Apply selected fixes
         enhancementOptions = {
-          improveWriting: options?.improveWriting || false,
           fixGrammar: options?.fixGrammar || false,
-          restructure: options?.addStructure || false,
-          expand: false,
-          shorten: false,
-          tone: options?.tone as any || 'professional',
+          improveClarity: options?.improveWriting || false,
+          tone: tone as any,
         };
       }
 
-      // Enhance content
+      // Enhance — pass HTML so structure is preserved.
       const enhancementResult =
         await this.contentEnhancementService.enhanceContent(
-          plainContent,
+          rawContent,
           enhancementOptions,
         );
 
@@ -196,8 +199,8 @@ export class SmartBuilderController {
                 enhancementResult.enhancedContent,
               );
               // Only surface issues that weren't addressed by the enhancement
-              const fixedTypes = new Set(enhancementResult.changes.map(c => c.type));
-              return reAnalysis.issues.filter(i => !fixedTypes.has(i.type));
+              const fixedTypes = new Set<string>(enhancementResult.changes.map(c => c.type as string));
+              return reAnalysis.issues.filter((i: any) => !fixedTypes.has(i.type));
             } catch (_) {
               return [];
             }
@@ -278,18 +281,19 @@ export class SmartBuilderController {
       let finalContent = normalizedContent;
       let finalBlocks  = blocks;
       if (config.improveWriting || config.fixGrammar) {
+        // Safe enhancement only — destructive flags are not even sent.
+        const validTones = ['neutral', 'business', 'executive', 'formal', 'academic', 'persuasive', 'technical', 'friendly'];
+        const requestedTone = (config.tone || '').toLowerCase();
+        const safeTone = validTones.includes(requestedTone) ? requestedTone : 'business';
         const enhancementOptions: EnhancementOptions = {
-          improveWriting: config.improveWriting,
           fixGrammar: config.fixGrammar,
-          restructure: false,   // Never restructure — outline builder handles that
-          expand: false,        // Expansion without AI is filler; skip
-          shorten: false,       // Shortening without AI destroys content; skip
-          tone: config.tone as any,
+          improveClarity: config.improveWriting,
+          tone: safeTone as any,
         };
         const enhResult = await this.contentEnhancementService.enhanceContent(normalizedContent, enhancementOptions);
         finalContent = enhResult.enhancedContent;
         finalBlocks  = this.contentBlockExtractorService.extract(finalContent);
-        this.logger.log(`Enhancement: ${enhResult.changes.length} changes, ${enhResult.improvement.toFixed(1)}% improvement`);
+        this.logger.log(`Enhancement: ${enhResult.changes.length} change types, quality ${enhResult.qualityBefore} → ${enhResult.qualityAfter}${enhResult.rolledBack ? ' (rolled back)' : ''}`);
       }
 
       // ── Step 4: Build outline ──────────────────────────────────────────────
@@ -398,48 +402,23 @@ export class SmartBuilderController {
 
       this.logger.log(`✓ Composed ${composedPages.length} pages with adaptive layout intelligence`);
 
-      // Step 6B: Balance page density
-      // Cover and TOC pages are intentionally sparse — isolate them so the
-      // balancer never merges them with content pages (which destroys structure
-      // and leaves content pages without their correct planned-page metadata).
-      const specialPages: Array<{ comp: PageComposition; planned: PlannedPage }> = [];
-      const contentForBalance: PageComposition[] = [];
-
-      composedPages.forEach(cp => {
-        const st = cp.plannedPage.sectionType;
-        if (st === 'cover' || st === 'toc') {
-          specialPages.push({ comp: cp.composition, planned: cp.plannedPage });
-        } else {
-          contentForBalance.push(cp.composition);
-        }
+      // Step 6B: Unified publishing intelligence pass.
+      // This is the foundation layer: grid planning, magazine composition,
+      // smart auto-flow, pagination intelligence, density scoring, and
+      // preflight-ready issue reporting all run as one pipeline.
+      const publishingResult = this.publishingIntelligenceService.optimize(composedPages, {
+        documentType,
+        visualStyle: config.visualStyle,
+        templateType: config.templateType,
       });
 
-      // The RuleBasedPagePlannerService already handles page density correctly
-      // using word-count targets (MIN_WORDS=100, MAX_WORDS=500, TARGET=300-320).
-      // Running the density balancer on top causes massive over-splitting because
-      // its fill% formula (based on pixel height) dramatically overestimates how
-      // much space content takes (~40-60% too high). A normal 320-word page
-      // calculates to ~103% fill and gets split — doubling the page count while
-      // halving words per page. Skip the balancer for content pages entirely.
-      const balancedContent = contentForBalance; // keep planner's output as-is
-      this.logger.log(`✓ Content pages: ${balancedContent.length} (density balancer skipped — planner already handles page density)`);
+      const balancedCompositions: PageComposition[] = publishingResult.pages;
+      const pageMetadata: Array<PlannedPage | null> = publishingResult.metadata;
 
-      // Reassemble: cover/TOC first (planPages always puts them before content),
-      // then content pages.
-      const balancedCompositions: PageComposition[] = [
-        ...specialPages.map(x => x.comp),
-        ...balancedContent,
-      ];
-      // Parallel metadata array: special pages carry their full PlannedPage so
-      // we can use correct pageType/title/template; content pages align 1-to-1
-      // with the original composedPages (since no balancing changed the count).
-      const contentComposedPages = composedPages.filter(
-        cp => cp.plannedPage.sectionType !== 'cover' && cp.plannedPage.sectionType !== 'toc',
+      this.logger.log(
+        `✓ Publishing intelligence: ${publishingResult.report.pagesBefore} → ${publishingResult.report.pagesAfter} pages, ` +
+        `occupancy=${publishingResult.report.averageOccupancy}%, readiness=${publishingResult.report.exportReadinessScore}/100`,
       );
-      const pageMetadata: Array<PlannedPage | null> = [
-        ...specialPages.map(x => x.planned),
-        ...contentComposedPages.map(cp => cp.plannedPage),
-      ];
 
       // Step 6C: Add semantic continuations
       const sections = this.semanticContinuationService.identifySemanticSections(balancedCompositions);
@@ -546,6 +525,8 @@ export class SmartBuilderController {
               pageRange: `${s.pageRange.start}-${s.pageRange.end}`,
             })) as any,
             tableOfContents: toc as any,
+            publishingIntelligence: publishingResult.report,
+            publishingIssues: publishingResult.issues,
           } as any,
         },
       });
@@ -587,15 +568,14 @@ export class SmartBuilderController {
             data: {
               documentId: pdfDocument.id,
               order:      index + 1,
-              // TODO: Uncomment after schema migration is applied
-              // pageNumber: index + 1, // Actual page number
+              pageNumber: index + 1,
               pageType,
               title:      pageTitle,
-              // semanticSectionId: meta?.sectionId || null,
-              // densityScore: composition.metrics?.densityScore || null,
-              // layoutType: composition.layout || null,
-              // blocks: composition.sections || null, // Structured blocks
-              // styles: { visualStyle: config.visualStyle } || null, // Page-level styles
+              semanticSectionId: meta?.sectionId || null,
+              densityScore: composition.metrics?.densityScore || null,
+              layoutType: composition.layout || null,
+              blocks: composition.sections as any,
+              styles: { visualStyle: config.visualStyle } as any,
               content: {
                 text:           pageText,
                 template:       meta?.pageTemplate || 'clean_business_report',
@@ -615,6 +595,7 @@ export class SmartBuilderController {
                   density:  composition.density,
                   sections: composition.sections as any,
                   metrics:  composition.metrics,
+                  intelligence: (composition as any).contentIntelligence,
                 },
               } as any,
             },
@@ -836,9 +817,9 @@ export class SmartBuilderController {
 
       const content = (page.content as any).text || '';
       const enhancementOptions: EnhancementOptions = {
-        improveWriting: true,
+        improveClarity: true,
         fixGrammar: true,
-        restructure: true,
+        tone: 'business',
       };
 
       const result = await this.contentEnhancementService.enhanceContent(
@@ -1013,45 +994,21 @@ export class SmartBuilderController {
    * Get enhancement options from type
    */
   private getEnhancementOptions(enhancementType: string): EnhancementOptions {
+    // All enhancement types map to combinations of SAFE flags only.
+    // Destructive operations (paragraph→bullets, expansion, jargon swaps)
+    // were intentionally removed.
     const optionsMap: Record<string, EnhancementOptions> = {
-      improve_writing: {
-        improveWriting: true,
-        fixGrammar: false,
-        restructure: false,
-      },
-      fix_grammar: {
-        improveWriting: false,
-        fixGrammar: true,
-        restructure: false,
-      },
-      restructure: {
-        improveWriting: false,
-        fixGrammar: false,
-        restructure: true,
-      },
-      expand: {
-        improveWriting: false,
-        fixGrammar: false,
-        expand: true,
-      },
-      shorten: {
-        improveWriting: false,
-        fixGrammar: false,
-        shorten: true,
-      },
-      professionalize: {
-        improveWriting: false,
-        fixGrammar: false,
-        professionalize: true,
-      },
-      engage: {
-        improveWriting: false,
-        fixGrammar: false,
-        makeEngaging: true,
-      },
+      improve_writing:  { improveClarity: true,  fixGrammar: false, tone: 'business' },
+      fix_grammar:      { improveClarity: false, fixGrammar: true,  tone: 'neutral' },
+      // Legacy types now map to the safe combination — never destructive.
+      restructure:      { improveClarity: true,  fixGrammar: true,  tone: 'business' },
+      expand:           { improveClarity: true,  fixGrammar: true,  tone: 'business' },
+      shorten:          { improveClarity: true,  fixGrammar: false, tone: 'business' },
+      professionalize:  { improveClarity: true,  fixGrammar: true,  tone: 'formal' },
+      engage:           { improveClarity: true,  fixGrammar: true,  tone: 'business' },
     };
 
-    return optionsMap[enhancementType] || { improveWriting: true };
+    return optionsMap[enhancementType] || { improveClarity: true, fixGrammar: true, tone: 'business' };
   }
 
   // ── Page management ──────────────────────────────────────────────────────────

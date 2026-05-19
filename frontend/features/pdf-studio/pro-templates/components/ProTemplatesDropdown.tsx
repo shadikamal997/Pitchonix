@@ -5,11 +5,18 @@ import { PRO_TEMPLATE_REGISTRY, getProTemplate } from '../registry/proTemplateRe
 import { ProTemplatePreviewCard } from './ProTemplatePreviewCard';
 
 const CATEGORIES = [
-  'All', 'Modern Minimal', 'Executive', 'Startup', 'Fintech', 'Dark Luxury',
-  'Editorial', 'Futuristic', 'Agency', 'Analytics', 'Product Showcase',
-  'Consulting', 'Whitepaper', 'AI/Future Tech', 'Sustainability', 'Healthcare',
-  'Investor', 'Educational', 'Roadmap', 'Case Study', 'Ultra Minimal',
+  'All', 'Business', 'Creative', 'Finance', 'Startup', 'Tech', 'Research', 'Impact',
 ];
+
+const CATEGORY_MAP: Record<string, string[]> = {
+  Business:  ['Executive', 'Consulting', 'Ultra Minimal', 'Modern Minimal'],
+  Creative:  ['Dark Luxury', 'Editorial', 'Agency'],
+  Finance:   ['Fintech', 'Analytics', 'Investor'],
+  Startup:   ['Startup'],
+  Tech:      ['Futuristic', 'AI/Future Tech', 'Product Showcase'],
+  Research:  ['Whitepaper', 'Case Study', 'Educational'],
+  Impact:    ['Sustainability', 'Healthcare', 'Roadmap'],
+};
 
 export function ProTemplatesDropdown({
   open, selectedId, onToggle, onSelect, onClear,
@@ -27,7 +34,7 @@ export function ProTemplatesDropdown({
   const visibleTemplates = useMemo(() => {
     const q = query.trim().toLowerCase();
     return PRO_TEMPLATE_REGISTRY.filter(t => {
-      const catMatch = activeCategory === 'All' || t.category === activeCategory || t.tags.includes(activeCategory);
+      const catMatch = activeCategory === 'All' || (CATEGORY_MAP[activeCategory]?.includes(t.category) ?? false);
       const qMatch = !q || [t.name, t.family, t.category, t.description, ...t.tags].join(' ').toLowerCase().includes(q);
       return catMatch && qMatch;
     });

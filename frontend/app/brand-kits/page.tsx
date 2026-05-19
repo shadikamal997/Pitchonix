@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ModernSidebar } from '@/components/ui/modern-sidebar';
 import { useAuthStore } from '@/lib/store';
 import { useToast } from '@/components/ToastProvider';
 import { Button } from '@/components/ui/button';
@@ -42,10 +41,8 @@ export default function BrandKitsPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <ModernSidebar />
-      <main className="flex-1 ml-64 p-8">
-        <div className="max-w-7xl mx-auto">
+    <div className="min-h-full bg-slate-50 p-8">
+      <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Brand Kits</h1>
             <Button onClick={() => setShowCreateDialog(true)}>
@@ -111,8 +108,7 @@ export default function BrandKitsPage() {
               toast={toast}
             />
           )}
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
