@@ -4,6 +4,7 @@ import { GenerationService } from './generation.service';
 import { GenerationController } from './generation.controller';
 import { GenerationProcessor } from './generation.processor';
 import { AIEnhancementService } from './ai-enhancement.service';
+import { SlideFactory } from './slide-types/slide.factory';
 import { DecksModule } from '../decks/decks.module';
 import { SlidesModule } from '../slides/slides.module';
 import { QualityModule } from './quality/quality.module';
@@ -52,6 +53,7 @@ import {
     PDFExportService,
     HTMLPreviewService,
     ExportService,
+    SlideFactory,
   ],
   exports: [GenerationService, VisualGenerationService, ExportService, AIEnhancementService],
 })

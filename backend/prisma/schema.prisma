@@ -766,12 +766,28 @@ model Comment {
   parent    Comment?  @relation("replies", fields: [parentId], references: [id])
   replies   Comment[] @relation("replies")
   resolved  Boolean   @default(false)
+
+  // Anchors (Phase 14 — Collaboration v1) — all optional so existing
+  // project-level comments stay valid.
+  //   slideId          → pinned to a slide
+  //   slideElementId   → pinned to a single element on that slide
+  //   pageId           → pinned to a PDF Studio page (for the PDF editor)
+  //   anchorX/anchorY  → optional 0..100 % position on the slide for a "pin"
+  slideId        String?
+  slideElementId String?
+  pageId         String?
+  anchorX        Float?
+  anchorY        Float?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   @@map("comments")
   @@index([projectId])
   @@index([userId])
+  @@index([slideId])
+  @@index([slideElementId])
+  @@index([pageId])
 }
 
 // Document version snapshots

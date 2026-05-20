@@ -6,6 +6,11 @@ import {
   Type, AlignLeft, Quote, Tag, Hash, Image as ImgIcon, Triangle, Minus,
   Star, MessageSquare, BarChart3, Table as TableIcon, Sparkles,
 } from 'lucide-react';
+import { ChartRenderer } from '../charts/ChartRenderer';
+import { TableRenderer } from '../tables/TableRenderer';
+import { getLucideIcon } from '../icons/IconPicker';
+import { AutoFitText } from '../design-system/AutoFitText';
+import { DENSITY, ELEVATION, LINE_HEIGHT, RADIUS, SPACING, TYPE_STYLES, TYPOGRAPHY, WEIGHT } from '../design-system/tokens';
 
 // =============================================================================
 //  Element renderers
@@ -55,52 +60,146 @@ function styleToCSS(s?: ElementStyle | null): React.CSSProperties {
 //  Text renderers
 // =============================================================================
 
-const TextRenderer: React.FC<{ el: SlideElementDTO; defaultSize: number; defaultWeight?: number }> = ({ el, defaultSize, defaultWeight }) => {
+type TextRole = 'heading' | 'subheading' | 'paragraph' | 'caption' | 'label' | 'footer';
+
+const TEXT_ROLE_CONFIG: Record<TextRole, {
+  typeStyle: keyof typeof TYPE_STYLES;
+  minSize: number;
+  maxLines?: number;
+  fallbackAlign?: React.CSSProperties['textAlign'];
+}> = {
+  heading:    { typeStyle: 'heading',    minSize: TYPOGRAPHY.xl,   maxLines: 3 },
+  subheading: { typeStyle: 'subheading', minSize: TYPOGRAPHY.sm,   maxLines: 3 },
+  paragraph:  { typeStyle: 'paragraph',  minSize: TYPOGRAPHY.xs,   maxLines: 8 },
+  caption:    { typeStyle: 'caption',    minSize: TYPOGRAPHY.xs,   maxLines: 3 },
+  label:      { typeStyle: 'eyebrow',    minSize: TYPOGRAPHY.xs,   maxLines: 2 },
+  footer:     { typeStyle: 'caption',    minSize: TYPOGRAPHY.xs,   maxLines: 2, fallbackAlign: 'right' },
+};
+
+function stripHtml(s?: string): string {
+  if (!s) return '';
+  return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function textContent(el: SlideElementDTO): { text: string; html?: string } {
   const c = (el.content as any) || {};
-  const html: string | undefined = c.html;
-  const text: string = c.text || '';
-  const css: React.CSSProperties = {
+  const html = typeof c.html === 'string' ? c.html : undefined;
+  const text = typeof c.text === 'string' ? c.text : stripHtml(html);
+  return { text, html };
+}
+
+function mergedTextStyle(el: SlideElementDTO, role: keyof typeof TYPE_STYLES): React.CSSProperties {
+  const token = TYPE_STYLES[role];
+  return {
+    fontSize: token.size,
+    fontWeight: token.weight,
+    lineHeight: token.lineHeight,
+    letterSpacing: token.letterSpacing,
+    color: '#111827',
+    ...styleToCSS(el.style),
+  };
+}
+
+const TextRenderer: React.FC<{ el: SlideElementDTO; role: TextRole }> = ({ el, role }) => {
+  const cfg = TEXT_ROLE_CONFIG[role];
+  const { text, html } = textContent(el);
+  const css = mergedTextStyle(el, cfg.typeStyle);
+  const maxSize = Number(css.fontSize || TYPE_STYLES[cfg.typeStyle].size);
+  const fontWeight = css.fontWeight ?? TYPE_STYLES[cfg.typeStyle].weight;
+  const lineHeight = Number(css.lineHeight || TYPE_STYLES[cfg.typeStyle].lineHeight);
+
+  const outer: React.CSSProperties = {
     width: '100%',
     height: '100%',
-    fontSize: defaultSize,
-    fontWeight: defaultWeight,
     color: '#111827',
     display: 'block',
     overflow: 'hidden',
     wordBreak: 'break-word',
-    ...styleToCSS(el.style),
+    overflowWrap: 'anywhere',
+    boxSizing: 'border-box',
+    ...css,
   };
-  if (html && html.trim()) {
-    return <div className="slide-rt" style={css} dangerouslySetInnerHTML={{ __html: html }} />;
-  }
+
+  delete outer.fontSize;
+  delete outer.fontWeight;
+  delete outer.lineHeight;
+  delete outer.letterSpacing;
+  delete outer.textTransform;
+  delete outer.color;
+  delete outer.textAlign;
+
   return (
-    <div className="slide-rt" style={{ ...css, whiteSpace: 'pre-wrap' }}>
-      {text || <span style={{ color: '#9ca3af' }}>Empty</span>}
+    <div className="slide-rt" style={outer}>
+      <AutoFitText
+        text={text || 'Empty'}
+        asInnerHTML={!!html?.trim()}
+        innerHTML={html}
+        minSize={cfg.minSize}
+        maxSize={maxSize}
+        maxLines={cfg.maxLines}
+        fontWeight={fontWeight as any}
+        fontFamily={css.fontFamily as string | undefined}
+        lineHeight={lineHeight}
+        letterSpacing={typeof css.letterSpacing === 'number' ? css.letterSpacing : undefined}
+        textTransform={css.textTransform as React.CSSProperties['textTransform']}
+        color={(text ? css.color : '#9ca3af') as string}
+        textAlign={(css.textAlign || cfg.fallbackAlign) as React.CSSProperties['textAlign']}
+      />
     </div>
   );
 };
 
-const HeadingRenderer:    React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} defaultSize={32} defaultWeight={700} />;
-const SubheadingRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} defaultSize={18} defaultWeight={500} />;
-const ParagraphRenderer:  React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} defaultSize={14} defaultWeight={400} />;
-const CaptionRenderer:    React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} defaultSize={11} defaultWeight={400} />;
-const LabelRenderer:      React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} defaultSize={11} defaultWeight={600} />;
-const FooterRenderer:     React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} defaultSize={10} defaultWeight={400} />;
+const HeadingRenderer:    React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} role="heading" />;
+const SubheadingRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} role="subheading" />;
+const ParagraphRenderer:  React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} role="paragraph" />;
+const CaptionRenderer:    React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} role="caption" />;
+const LabelRenderer:      React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} role="label" />;
+const FooterRenderer:     React.FC<{ el: SlideElementDTO }> = ({ el }) => <TextRenderer el={el} role="footer" />;
 
 const PageNumberRenderer: React.FC<{ el: SlideElementDTO; pageNumber?: number; total?: number }> = ({ el, pageNumber, total }) => {
   const fmt = (el.content as any)?.format || 'numeric';
   const text = fmt === 'pageOfTotal' && total ? `${pageNumber ?? '#'} / ${total}` : `${pageNumber ?? '#'}`;
-  return <div style={{ ...styleToCSS(el.style), width: '100%', height: '100%', fontSize: 10, color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>{text}</div>;
+  return <div style={{ ...styleToCSS(el.style), width: '100%', height: '100%', fontSize: TYPOGRAPHY.xs, color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>{text}</div>;
 };
 
 const QuoteRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
   const c = el.content as any;
+  const css = mergedTextStyle(el, 'quote');
+  const outer: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: SPACING[2],
+    padding: DENSITY.comfortable.pad,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+    ...styleToCSS(el.style),
+  };
+  const maxSize = Number(css.fontSize || TYPE_STYLES.quote.size);
   return (
-    <div style={{ ...styleToCSS(el.style), width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-      <Quote className="w-5 h-5 text-green-600 mb-1.5 opacity-60" />
-      <div style={{ fontSize: 16, fontStyle: 'italic', color: '#1f2937', lineHeight: 1.5 }}>{c?.text || 'Quote text'}</div>
+    <div style={outer}>
+      <Quote style={{ width: SPACING[5], height: SPACING[5], color: '#16a34a', opacity: 0.6, flexShrink: 0 }} />
+      <div style={{ flex: '1 1 auto', minHeight: 0 }}>
+        <AutoFitText
+          text={c?.text || 'Quote text'}
+          minSize={TYPOGRAPHY.sm}
+          maxSize={maxSize}
+          maxLines={4}
+          fontWeight={css.fontWeight as any}
+          fontFamily={css.fontFamily as string | undefined}
+          lineHeight={Number(css.lineHeight || LINE_HEIGHT.normal)}
+          letterSpacing={typeof css.letterSpacing === 'number' ? css.letterSpacing : undefined}
+          color={(css.color || '#1f2937') as string}
+          style={{ fontStyle: 'italic' }}
+        />
+      </div>
       {c?.attribution && (
-        <div style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', marginTop: 8 }}>— {c.attribution}{c.role ? `, ${c.role}` : ''}</div>
+        <div style={{ fontSize: TYPOGRAPHY.sm, fontWeight: WEIGHT.semibold, color: '#6b7280', flexShrink: 0 }}>
+          - {c.attribution}{c.role ? `, ${c.role}` : ''}
+        </div>
       )}
     </div>
   );
@@ -109,14 +208,39 @@ const QuoteRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
 const CTARenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
   const c = el.content as any;
   const variant = c?.variant || 'primary';
+  const css = mergedTextStyle(el, 'cta');
   const base: React.CSSProperties = {
-    height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 14, fontWeight: 600, borderRadius: 8, padding: '0 16px',
+    height: '100%',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: RADIUS.md,
+    padding: `0 ${SPACING[4]}px`,
     background: variant === 'primary' ? '#16a34a' : variant === 'outline' ? 'transparent' : '#f3f4f6',
     color: variant === 'primary' ? 'white' : '#111827',
     border: variant === 'outline' ? '2px solid #16a34a' : 'none',
+    boxShadow: variant === 'primary' ? ELEVATION.sm : ELEVATION.none,
+    boxSizing: 'border-box',
+    overflow: 'hidden',
   };
-  return <div style={{ ...base, ...styleToCSS(el.style) }}>{c?.text || 'Call to action'}</div>;
+  return (
+    <div style={{ ...base, ...styleToCSS(el.style) }}>
+      <AutoFitText
+        text={c?.text || 'Call to action'}
+        minSize={TYPOGRAPHY.xs}
+        maxSize={Number(css.fontSize || TYPE_STYLES.cta.size)}
+        maxLines={1}
+        fontWeight={css.fontWeight as any}
+        fontFamily={css.fontFamily as string | undefined}
+        lineHeight={Number(css.lineHeight || TYPE_STYLES.cta.lineHeight)}
+        letterSpacing={typeof css.letterSpacing === 'number' ? css.letterSpacing : TYPE_STYLES.cta.letterSpacing}
+        textTransform={(css.textTransform || 'uppercase') as React.CSSProperties['textTransform']}
+        color={(base.color || css.color) as string}
+        textAlign="center"
+      />
+    </div>
+  );
 };
 
 // =============================================================================
@@ -166,15 +290,25 @@ const NumberedListRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
 
 const MetricRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
   const c = el.content as any;
+  const css = mergedTextStyle(el, 'metricBig');
   return (
-    <div style={{ ...styleToCSS(el.style), width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 8 }}>
-      <div style={{ fontSize: 32, fontWeight: 800, color: '#16a34a', lineHeight: 1 }}>
-        {c?.value || '0'}
-        {c?.unit && <span style={{ fontSize: 16, fontWeight: 600, marginLeft: 4 }}>{c.unit}</span>}
+    <div style={{ ...styleToCSS(el.style), width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: SPACING[1], padding: DENSITY.compact.pad, boxSizing: 'border-box', overflow: 'hidden' }}>
+      <div style={{ flex: '1 1 auto', minHeight: 0, color: '#16a34a' }}>
+        <AutoFitText
+          text={`${c?.value || '0'}${c?.unit ? ` ${c.unit}` : ''}`}
+          minSize={TYPOGRAPHY.lg}
+          maxSize={Number(css.fontSize || TYPE_STYLES.metricBig.size)}
+          maxLines={1}
+          fontWeight={css.fontWeight as any}
+          fontFamily={css.fontFamily as string | undefined}
+          lineHeight={Number(css.lineHeight || LINE_HEIGHT.tight)}
+          letterSpacing={typeof css.letterSpacing === 'number' ? css.letterSpacing : TYPE_STYLES.metricBig.letterSpacing}
+          color={(css.color || '#16a34a') as string}
+        />
       </div>
-      <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4 }}>{c?.label || ''}</div>
+      <div style={{ fontSize: TYPOGRAPHY.xs, fontWeight: WEIGHT.semibold, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 0 }}>{c?.label || ''}</div>
       {c?.delta && (
-        <div style={{ fontSize: 11, color: c.deltaDirection === 'up' ? '#16a34a' : c.deltaDirection === 'down' ? '#dc2626' : '#6b7280', marginTop: 2 }}>
+        <div style={{ fontSize: TYPOGRAPHY.xs, color: c.deltaDirection === 'up' ? '#16a34a' : c.deltaDirection === 'down' ? '#dc2626' : '#6b7280', flexShrink: 0 }}>
           {c.deltaDirection === 'up' ? '↑' : c.deltaDirection === 'down' ? '↓' : '•'} {c.delta}
         </div>
       )}
@@ -198,6 +332,18 @@ const ImageRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
       </div>
     );
   }
+  // Build a CSS filter() chain from the element's filters object
+  const f = c.filters || {};
+  const parts: string[] = [];
+  if (typeof f.brightness === 'number' && f.brightness !== 1) parts.push(`brightness(${f.brightness})`);
+  if (typeof f.saturate   === 'number' && f.saturate   !== 1) parts.push(`saturate(${f.saturate})`);
+  if (typeof f.blur       === 'number' && f.blur       !== 0) parts.push(`blur(${f.blur}px)`);
+  if (typeof f.grayscale  === 'number' && f.grayscale  !== 0) parts.push(`grayscale(${f.grayscale})`);
+  const filterStr = parts.length ? parts.join(' ') : undefined;
+
+  const focalX = typeof c.focalX === 'number' ? c.focalX : 0.5;
+  const focalY = typeof c.focalY === 'number' ? c.focalY : 0.5;
+
   return (
     <img
       src={c.src}
@@ -206,7 +352,9 @@ const ImageRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
       style={{
         width: '100%', height: '100%', display: 'block',
         objectFit: c.fit || 'cover',
+        objectPosition: `${(focalX * 100).toFixed(0)}% ${(focalY * 100).toFixed(0)}%`,
         borderRadius: c.borderRadius ?? (el.style as any)?.borderRadius ?? 0,
+        filter: filterStr,
         ...styleToCSS(el.style),
       }}
     />
@@ -215,20 +363,42 @@ const ImageRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
 
 const IconRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
   const c = el.content as any;
+  const IconCmp = getLucideIcon(c?.name) || Star;
+  const color = c?.color || '#16a34a';
+  const strokeWidth = typeof c?.strokeWidth === 'number' ? c.strokeWidth : 2;
   return (
-    <div style={{ ...styleToCSS(el.style), width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c?.color || '#16a34a' }}>
-      <Star style={{ width: '60%', height: '60%' }} />
-      <span style={{ position: 'absolute', bottom: -16, fontSize: 9, color: '#9ca3af' }}>{c?.name || 'icon'}</span>
+    <div style={{
+      ...styleToCSS(el.style),
+      width: '100%', height: '100%',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color,
+    }}>
+      <IconCmp style={{ width: '70%', height: '70%' }} strokeWidth={strokeWidth} />
     </div>
   );
 };
 
 const LogoRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
-  const c = el.content as any;
-  if (c?.src) return <img src={c.src} alt={c.name || 'logo'} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
+  const c = (el.content || {}) as any;
+  const heightPx = typeof c.height === 'number' ? c.height : undefined;
+  if (c.src) {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <img
+          src={c.src} alt={c.name || 'logo'} draggable={false}
+          style={{
+            maxWidth: '100%',
+            maxHeight: '100%',
+            height: heightPx ? `${heightPx}px` : 'auto',
+            objectFit: 'contain',
+          }}
+        />
+      </div>
+    );
+  }
   return (
     <div style={{ width: '100%', height: '100%', background: '#f9fafb', border: '1px dashed #d1d5db', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>
-      {c?.name || 'LOGO'}
+      {c.name || 'LOGO'}
     </div>
   );
 };
@@ -238,22 +408,91 @@ const LogoRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
 // =============================================================================
 
 const ShapeRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
-  const c = el.content as any;
-  const kind = c?.kind || 'rect';
-  const fill = c?.fill || '#16a34a';
-  const stroke = c?.stroke;
-  const strokeWidth = c?.strokeWidth ?? 0;
-  const borderRadius =
-    kind === 'circle' || kind === 'ellipse' ? '50%' :
-    kind === 'roundedRect' ? 12 : 0;
+  const c = (el.content || {}) as any;
+  const kind: string = c.kind || 'rect';
+  const fill = c.fill || '#16a34a';
+  const stroke = c.stroke;
+  const strokeWidth = c.strokeWidth ?? 0;
+  const gradient = c.gradient;
+  const gradId = useFreshId('grad');
+
+  // Build the actual SVG fill expression: gradient ref if set, else solid color.
+  const fillRef = gradient ? `url(#${gradId})` : fill;
+
+  // We use a viewBox of 100×100 so points stay simple; the SVG scales to fill.
   return (
-    <div style={{
-      width: '100%', height: '100%', background: fill, borderRadius,
-      border: stroke ? `${strokeWidth}px solid ${stroke}` : 'none',
-      ...styleToCSS(el.style),
-    }} />
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none"
+         style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible', ...styleToCSS(el.style) }}>
+      {gradient && (
+        <defs>
+          {renderGradient(gradient, gradId)}
+        </defs>
+      )}
+      {renderShape(kind, fillRef, stroke, strokeWidth)}
+    </svg>
   );
 };
+
+function useFreshId(prefix: string): string {
+  // useId would be ideal but we want a stable ID per render that doesn't
+  // collide if many shapes are on the same slide. Math.random is fine here
+  // because the SVG is self-contained per element.
+  const ref = React.useRef<string | null>(null);
+  if (ref.current === null) {
+    ref.current = `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+  return ref.current;
+}
+
+function renderGradient(g: any, id: string): React.ReactNode {
+  const stops = (g.stops || []).map((s: any, i: number) => (
+    <stop key={i} offset={`${Math.round((s.offset ?? i / Math.max(1, (g.stops || []).length - 1)) * 100)}%`} stopColor={s.color || '#16a34a'} />
+  ));
+  if (g.kind === 'radial') {
+    return <radialGradient id={id} cx="50%" cy="50%" r="50%">{stops}</radialGradient>;
+  }
+  const angle = ((g.angle ?? 180) - 90) * (Math.PI / 180); // CSS gradient angle → SVG vector
+  const x1 = 50 - Math.cos(angle) * 50;
+  const y1 = 50 - Math.sin(angle) * 50;
+  const x2 = 50 + Math.cos(angle) * 50;
+  const y2 = 50 + Math.sin(angle) * 50;
+  return <linearGradient id={id} x1={`${x1}%`} y1={`${y1}%`} x2={`${x2}%`} y2={`${y2}%`}>{stops}</linearGradient>;
+}
+
+function renderShape(kind: string, fill: string, stroke: string | undefined, sw: number): React.ReactNode {
+  const strokeProps = stroke
+    ? { stroke, strokeWidth: sw, vectorEffect: 'non-scaling-stroke' as const }
+    : {};
+  switch (kind) {
+    case 'circle':
+      return <circle cx={50} cy={50} r={50 - (sw / 2 || 0)} fill={fill} {...strokeProps} />;
+    case 'ellipse':
+      return <ellipse cx={50} cy={50} rx={50 - (sw / 2 || 0)} ry={32} fill={fill} {...strokeProps} />;
+    case 'roundedRect':
+      return <rect x={0} y={0} width={100} height={100} rx={12} ry={12} fill={fill} {...strokeProps} />;
+    case 'triangle':
+      return <polygon points="50,2 98,98 2,98" fill={fill} {...strokeProps} />;
+    case 'arrow':
+      return <polygon points="0,40 60,40 60,20 100,50 60,80 60,60 0,60" fill={fill} {...strokeProps} />;
+    case 'star':
+      return <polygon points={STAR_POINTS} fill={fill} {...strokeProps} />;
+    /* rect */
+    default:
+      return <rect x={0} y={0} width={100} height={100} fill={fill} {...strokeProps} />;
+  }
+}
+
+// 5-point star, centered in 100×100 viewBox
+const STAR_POINTS = (() => {
+  const pts: string[] = [];
+  const cx = 50, cy = 50, rOuter = 50, rInner = 22;
+  for (let i = 0; i < 10; i++) {
+    const ang = -Math.PI / 2 + (i * Math.PI) / 5;
+    const r = i % 2 === 0 ? rOuter : rInner;
+    pts.push(`${cx + r * Math.cos(ang)},${cy + r * Math.sin(ang)}`);
+  }
+  return pts.join(' ');
+})();
 
 const LineRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
   const c = el.content as any;
@@ -330,6 +569,226 @@ function summarize(el: SlideElementDTO): string {
 }
 
 // =============================================================================
+//  Composite renderers — full visual rendering on the canvas. These match the
+//  server-side HTML renderer in spirit so the editor looks identical to the
+//  exported deck.
+// =============================================================================
+
+const TestimonialRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const c: any = el.content || {};
+  return (
+    <div style={{ width: '100%', height: '100%', padding: 18, borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', ...styleToCSS(el.style) }}>
+      <Quote className="w-5 h-5 text-green-600 mb-2 opacity-60" />
+      <div style={{ fontSize: 14, fontStyle: 'italic', color: '#1f2937', lineHeight: 1.5, flex: 1, overflow: 'hidden' }}>
+        {c.quote || <span style={{ color: '#94a3b8' }}>Testimonial quote…</span>}
+      </div>
+      {(c.author || c.role || c.company) && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{c.author || 'Author'}</div>
+          {(c.role || c.company) && (
+            <div style={{ fontSize: 11, color: '#6b7280' }}>{[c.role, c.company].filter(Boolean).join(' · ')}</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const TeamCardRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const members: any[] = (el.content as any)?.members || [];
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', gap: 10, flexWrap: 'wrap', overflow: 'hidden', ...styleToCSS(el.style) }}>
+      {members.length === 0 && (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 12, border: '1px dashed #cbd5e1', borderRadius: 8 }}>
+          No team members yet — open inspector to add
+        </div>
+      )}
+      {members.map((m: any) => (
+        <div key={m.id || m.name} style={{ flex: '1 1 calc(33% - 8px)', minWidth: 110, padding: 10, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          {m.photoUrl
+            ? <img src={m.photoUrl} alt={m.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }} />
+            : <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontWeight: 700 }}>{(m.name || '?').slice(0, 1)}</div>
+          }
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#111827', textAlign: 'center' }}>{m.name || 'Name'}</div>
+          {m.role && <div style={{ fontSize: 11, color: '#16a34a' }}>{m.role}</div>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const PricingCardRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const tiers: any[] = (el.content as any)?.tiers || [];
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', gap: 10, ...styleToCSS(el.style) }}>
+      {tiers.length === 0 && (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 12, border: '1px dashed #cbd5e1', borderRadius: 8 }}>
+          No pricing tiers — open inspector to add
+        </div>
+      )}
+      {tiers.map((t: any) => (
+        <div key={t.id || t.name} style={{ flex: 1, padding: 14, borderRadius: 10, background: '#fff', border: t.highlight ? '2px solid #16a34a' : '1px solid #e2e8f0', boxShadow: t.highlight ? '0 4px 12px rgba(22,163,74,0.12)' : 'none', display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{t.name || 'Tier'}</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#16a34a' }}>
+            {t.price || '—'}{t.period && <span style={{ fontSize: 12, fontWeight: 500, color: '#6b7280' }}>/{t.period}</span>}
+          </div>
+          {Array.isArray(t.features) && (
+            <ul style={{ listStyle: 'disc', paddingLeft: 16, marginTop: 4, fontSize: 11, color: '#475569' }}>
+              {t.features.slice(0, 6).map((f: string, i: number) => <li key={i}>{f}</li>)}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const ComparisonRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const c: any = el.content || {};
+  const cols: string[] = c.columns || [];
+  const rows: any[]    = c.rows || [];
+  return (
+    <div style={{ width: '100%', height: '100%', overflow: 'auto', ...styleToCSS(el.style) }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+        <thead>
+          <tr>
+            <th style={{ background: '#f1f5f9', padding: '6px 8px', border: '1px solid #e2e8f0', textAlign: 'left' }} />
+            {cols.map((col, i) => (
+              <th key={i} style={{ background: c.highlightColumn === i ? '#dcfce7' : '#f1f5f9', color: c.highlightColumn === i ? '#14532d' : '#0f172a', padding: '6px 8px', border: '1px solid #e2e8f0', fontWeight: 700 }}>
+                {col}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, ri) => (
+            <tr key={ri}>
+              <td style={{ padding: '6px 8px', border: '1px solid #e2e8f0', fontWeight: 600, background: '#ffffff' }}>{r.feature || ''}</td>
+              {(r.values || []).map((v: string, i: number) => (
+                <td key={i} style={{ padding: '6px 8px', border: '1px solid #e2e8f0', background: c.highlightColumn === i ? '#f0fdf4' : '#ffffff' }}>{v}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const SwotRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const c: any = el.content || {};
+  const cell = (label: string, items: string[] | undefined, bg: string, fg: string) => (
+    <div style={{ background: bg, color: fg, padding: 10, borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.05, marginBottom: 4 }}>{label}</div>
+      <ul style={{ listStyle: 'disc', paddingLeft: 14, fontSize: 11 }}>
+        {(items || []).slice(0, 4).map((it, i) => <li key={i}>{it}</li>)}
+      </ul>
+    </div>
+  );
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 8, ...styleToCSS(el.style) }}>
+      {cell('Strengths',     c.strengths,    '#f0fdf4', '#14532d')}
+      {cell('Weaknesses',    c.weaknesses,   '#fef2f2', '#7f1d1d')}
+      {cell('Opportunities', c.opportunities,'#eff6ff', '#1e3a8a')}
+      {cell('Threats',       c.threats,      '#fefce8', '#713f12')}
+    </div>
+  );
+};
+
+const FeatureGridRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const c: any = el.content || {};
+  const items: any[] = c.items || [];
+  const cols = c.columns || 3;
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 10, ...styleToCSS(el.style) }}>
+      {items.map((it: any) => (
+        <div key={it.id || it.title} style={{ padding: 10, borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>{it.title || 'Feature'}</div>
+          {it.description && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{it.description}</div>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const TimelineRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const items: any[] = (el.content as any)?.items || [];
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', gap: 10, ...styleToCSS(el.style) }}>
+      {items.map((it: any) => (
+        <div key={it.id || it.title} style={{ flex: 1, padding: 10, borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          {it.date && <div style={{ fontSize: 11, color: '#16a34a', fontWeight: 700 }}>{it.date}</div>}
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginTop: 2 }}>{it.title || 'Title'}</div>
+          {it.description && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{it.description}</div>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const RoadmapRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const phases: any[] = (el.content as any)?.phases || [];
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', gap: 10, ...styleToCSS(el.style) }}>
+      {phases.map((p: any) => (
+        <div key={p.id || p.phase} style={{ flex: 1, padding: 10, borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          {p.period && <div style={{ fontSize: 11, color: '#16a34a', fontWeight: 700 }}>{p.period}</div>}
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginTop: 2 }}>{p.phase || 'Phase'}</div>
+          <ul style={{ listStyle: 'disc', paddingLeft: 14, marginTop: 4, fontSize: 11, color: '#475569' }}>
+            {(p.bullets || []).slice(0, 5).map((b: string, i: number) => <li key={i}>{b}</li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const ProcessStepsRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const steps: any[] = (el.content as any)?.steps || [];
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', gap: 10, ...styleToCSS(el.style) }}>
+      {steps.map((s: any, i: number) => (
+        <div key={s.id || s.title} style={{ flex: 1, padding: 10, borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#16a34a' }}>{i + 1}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginTop: 4 }}>{s.title || 'Step'}</div>
+          {s.description && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{s.description}</div>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const VideoPlaceholderRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const c: any = el.content || {};
+  if (c.posterUrl) {
+    return (
+      <div style={{ width: '100%', height: '100%', position: 'relative', borderRadius: 8, overflow: 'hidden', ...styleToCSS(el.style) }}>
+        <img src={c.posterUrl} alt="video poster" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>▶</div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ width: '100%', height: '100%', background: '#0f172a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, fontSize: 13, gap: 8, ...styleToCSS(el.style) }}>
+      <span style={{ fontSize: 20 }}>▶</span>
+      <span>{c.caption || 'Video placeholder'}</span>
+    </div>
+  );
+};
+
+const EmbedPlaceholderRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const c: any = el.content || {};
+  return (
+    <div style={{ width: '100%', height: '100%', background: '#f1f5f9', border: '2px dashed #cbd5e1', borderRadius: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#64748b', gap: 4, ...styleToCSS(el.style) }}>
+      <div style={{ fontSize: 13, fontWeight: 700 }}>{c.providerLabel || 'Embedded media'}</div>
+      {c.caption && <div style={{ fontSize: 11 }}>{c.caption}</div>}
+    </div>
+  );
+};
+
+// =============================================================================
 //  Registry
 // =============================================================================
 
@@ -349,24 +808,24 @@ export const ELEMENT_RENDERERS: Record<ElementType, React.FC<{ el: SlideElementD
 
   metric: MetricRenderer,
   kpi:    KpiRenderer,
-  chart:  PlaceholderRenderer,
-  table:  PlaceholderRenderer,
+  chart:  ChartRenderer,
+  table:  TableRenderer,
 
   image:                    ImageRenderer,
   icon:                     IconRenderer,
   logo:                     LogoRenderer,
-  videoPlaceholder:         PlaceholderRenderer,
-  embeddedMediaPlaceholder: PlaceholderRenderer,
+  videoPlaceholder:         VideoPlaceholderRenderer,
+  embeddedMediaPlaceholder: EmbedPlaceholderRenderer,
 
-  testimonial:  PlaceholderRenderer,
-  teamCard:     PlaceholderRenderer,
-  pricingCard:  PlaceholderRenderer,
-  comparison:   PlaceholderRenderer,
-  swot:         PlaceholderRenderer,
-  featureGrid:  PlaceholderRenderer,
-  processSteps: PlaceholderRenderer,
-  timeline:     PlaceholderRenderer,
-  roadmap:      PlaceholderRenderer,
+  testimonial:  TestimonialRenderer,
+  teamCard:     TeamCardRenderer,
+  pricingCard:  PricingCardRenderer,
+  comparison:   ComparisonRenderer,
+  swot:         SwotRenderer,
+  featureGrid:  FeatureGridRenderer,
+  processSteps: ProcessStepsRenderer,
+  timeline:     TimelineRenderer,
+  roadmap:      RoadmapRenderer,
 
   shape:   ShapeRenderer,
   line:    LineRenderer,

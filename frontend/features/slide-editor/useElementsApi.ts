@@ -49,6 +49,8 @@ export interface UseElementsApi extends ApiState {
   refresh:        () => Promise<void>;
   /** Ensure the legacy content blob has been materialized into elements. */
   ensureMigrated: () => Promise<void>;
+  /** Atomically replace every element on the slide (used by undo / redo). */
+  syncAll:        (elements: SlideElementDTO[]) => Promise<void>;
 }
 
 export function useElementsApi(slideId: string | null | undefined): UseElementsApi {
@@ -226,6 +228,21 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
     await refresh();
   }, [slideId, refresh]);
 
+  const syncAll = useCallback(async (elements: SlideElementDTO[]) => {
+    if (!slideId) return;
+    // Flush any pending edits before the snapshot replace so they don't race the sync.
+    if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); await flush(); }
+    // Optimistic local replace
+    setState((s) => ({ ...s, elements, saveStatus: 'saving' }));
+    try {
+      const { data } = await api.post<SlideElementDTO[]>(`/slides/${slideId}/elements/sync`, { elements });
+      setState((s) => ({ ...s, elements: data, saveStatus: 'saved' }));
+    } catch (err: any) {
+      setState((s) => ({ ...s, saveStatus: 'error', error: err?.message || 'Restore failed' }));
+      await refresh();
+    }
+  }, [slideId, flush, refresh]);
+
   return {
     elements:      state.elements,
     loading:       state.loading,
@@ -239,5 +256,6 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
     reorder,
     refresh,
     ensureMigrated,
+    syncAll,
   };
 }

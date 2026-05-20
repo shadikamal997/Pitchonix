@@ -56,4 +56,37 @@ export class SlidesController {
     await this.slidesService.verifyOwnership(id, user.id);
     return this.slidesService.remove(id);
   }
+
+  // ---------------------------------------------------------------------------
+  //  Phase 5 — deck-level slide operations
+  // ---------------------------------------------------------------------------
+
+  @Post('deck/:deckId/insert')
+  @ApiOperation({ summary: 'Insert a new blank slide with default elements' })
+  async insertBlank(
+    @Param('deckId') deckId: string,
+    @Body() body: { afterSlideId?: string; title?: string; type?: string },
+    @GetUser() user: any,
+  ) {
+    await this.slidesService.verifyDeckOwnership(deckId, user.id);
+    return this.slidesService.insertBlank(deckId, body || {});
+  }
+
+  @Post(':id/duplicate')
+  @ApiOperation({ summary: 'Duplicate a slide and all its elements' })
+  async duplicateSlide(@Param('id') id: string, @GetUser() user: any) {
+    await this.slidesService.verifyOwnership(id, user.id);
+    return this.slidesService.duplicate(id);
+  }
+
+  @Post('deck/:deckId/reorder')
+  @ApiOperation({ summary: 'Bulk re-order slides in a deck' })
+  async reorderSlides(
+    @Param('deckId') deckId: string,
+    @Body() body: { entries: Array<{ id: string; order: number }> },
+    @GetUser() user: any,
+  ) {
+    await this.slidesService.verifyDeckOwnership(deckId, user.id);
+    return this.slidesService.reorder(deckId, body.entries);
+  }
 }

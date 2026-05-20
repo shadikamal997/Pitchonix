@@ -3,7 +3,13 @@
 import React from 'react';
 import { Plus, X, ChevronUp, ChevronDown, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import type { SlideElementDTO } from '@/types/slide-element';
-import { PanelSection, Row, TextField, TextArea, NumberField, ColorField, SelectField, SegmentedControl } from '../Primitives';
+import { PanelSection, Row, TextField, TextArea, NumberField, ColorField, SelectField, SegmentedControl, SliderField } from '../Primitives';
+import { ChartPanel } from './ChartPanel';
+import { TablePanel } from './TablePanel';
+import { CompositeContentPanel } from './CompositeContentPanel';
+import { ImageUploader } from '../widgets/ImageUploader';
+import { FocalPointPicker } from '../widgets/FocalPointPicker';
+import { IconPicker } from '../../icons/IconPicker';
 
 interface Props {
   element: SlideElementDTO;
@@ -50,6 +56,12 @@ export const ContentPanel: React.FC<Props> = ({ element, onPatch }) => {
         <LineContentEdit element={element} onPatch={onPatch} />
       ) : t === 'pageNumber' ? (
         <PageNumberContentEdit element={element} onPatch={onPatch} />
+      ) : t === 'chart' ? (
+        <ChartPanel element={element} onPatch={onPatch} />
+      ) : t === 'table' ? (
+        <TablePanel element={element} onPatch={onPatch} />
+      ) : (t === 'testimonial' || t === 'teamCard' || t === 'pricingCard' || t === 'comparison' || t === 'swot' || t === 'featureGrid' || t === 'processSteps' || t === 'timeline' || t === 'roadmap' || t === 'videoPlaceholder' || t === 'embeddedMediaPlaceholder') ? (
+        <CompositeContentPanel element={element} onPatch={onPatch} />
       ) : (
         <JsonPreviewPanel element={element} />
       )}
@@ -223,43 +235,81 @@ const MetricContentEdit: React.FC<Props> = ({ element, onPatch }) => {
 
 const ImageContentEdit: React.FC<Props> = ({ element, onPatch }) => {
   const c = (element.content || {}) as any;
+  const filters = c.filters || {};
+  const updateFilter = (key: string, v: number | undefined) =>
+    onPatch({ content: { ...c, filters: { ...filters, [key]: v } } });
+
   return (
-    <PanelSection title="Image">
-      <Row label="URL">
-        <TextField value={c.src} onChange={(v) => onPatch({ content: { ...c, src: v } })} placeholder="https://…" />
-      </Row>
+    <>
+      <PanelSection title="Image source">
+        <ImageUploader onUploaded={(url) => onPatch({ content: { ...c, src: url } })} />
+        <Row label="Or URL">
+          <TextField value={c.src} onChange={(v) => onPatch({ content: { ...c, src: v } })} placeholder="https://…" />
+        </Row>
+        <Row label="Alt">
+          <TextField value={c.alt} onChange={(v) => onPatch({ content: { ...c, alt: v } })} placeholder="Describe for accessibility" />
+        </Row>
+      </PanelSection>
+
       {c.src && (
-        <div className="relative w-full h-24 rounded border border-slate-200 overflow-hidden bg-slate-50">
-          <img src={c.src} alt={c.alt || ''} className="w-full h-full"
-               style={{ objectFit: c.fit || 'cover', borderRadius: c.borderRadius }} />
-        </div>
+        <PanelSection title="Crop / focal">
+          <FocalPointPicker
+            src={c.src}
+            fit={c.fit || 'cover'}
+            focalX={typeof c.focalX === 'number' ? c.focalX : 0.5}
+            focalY={typeof c.focalY === 'number' ? c.focalY : 0.5}
+            onChange={({ focalX, focalY }) => onPatch({ content: { ...c, focalX, focalY } })}
+          />
+          <Row label="Fit">
+            <SegmentedControl
+              value={c.fit || 'cover'}
+              onChange={(v) => onPatch({ content: { ...c, fit: v } })}
+              options={[
+                { value: 'cover',   label: 'Cover' },
+                { value: 'contain', label: 'Contain' },
+                { value: 'fill',    label: 'Fill' },
+                { value: 'none',    label: 'None' },
+              ]}
+            />
+          </Row>
+        </PanelSection>
       )}
-      <Row label="Alt">
-        <TextField value={c.alt} onChange={(v) => onPatch({ content: { ...c, alt: v } })} placeholder="Describe for accessibility" />
-      </Row>
-      <Row label="Fit">
-        <SegmentedControl
-          value={c.fit || 'cover'}
-          onChange={(v) => onPatch({ content: { ...c, fit: v } })}
-          options={[
-            { value: 'cover',   label: 'Cover' },
-            { value: 'contain', label: 'Contain' },
-            { value: 'fill',    label: 'Fill' },
-            { value: 'none',    label: 'None' },
-          ]}
-        />
-      </Row>
-      <Row label="Focal X">
-        <NumberField value={c.focalX} onChange={(v) => onPatch({ content: { ...c, focalX: v } })} min={0} max={1} step={0.05} />
-        <NumberField value={c.focalY} onChange={(v) => onPatch({ content: { ...c, focalY: v } })} min={0} max={1} step={0.05} />
-      </Row>
-      <Row label="Radius">
-        <NumberField value={c.borderRadius ?? 0} min={0} max={500} onChange={(v) => onPatch({ content: { ...c, borderRadius: v } })} suffix="px" />
-      </Row>
-      <p className="text-[10px] text-slate-400 leading-snug">
-        Upload + crop UI lands in Phase 8. Paste an image URL for now.
-      </p>
-    </PanelSection>
+
+      <PanelSection title="Box">
+        <Row label="Radius">
+          <NumberField value={c.borderRadius ?? 0} min={0} max={500}
+                       onChange={(v) => onPatch({ content: { ...c, borderRadius: v } })} suffix="px" />
+        </Row>
+      </PanelSection>
+
+      {c.src && (
+        <PanelSection title="Filters">
+          <Row label="Bright">
+            <SliderField value={typeof filters.brightness === 'number' ? filters.brightness : 1}
+              min={0} max={2} step={0.05} onChange={(v) => updateFilter('brightness', v)} />
+          </Row>
+          <Row label="Saturate">
+            <SliderField value={typeof filters.saturate === 'number' ? filters.saturate : 1}
+              min={0} max={3} step={0.05} onChange={(v) => updateFilter('saturate', v)} />
+          </Row>
+          <Row label="Blur">
+            <SliderField value={typeof filters.blur === 'number' ? filters.blur : 0}
+              min={0} max={20} step={0.5} suffix="px" onChange={(v) => updateFilter('blur', v)} />
+          </Row>
+          <Row label="Gray">
+            <SliderField value={typeof filters.grayscale === 'number' ? filters.grayscale : 0}
+              min={0} max={1} step={0.05} onChange={(v) => updateFilter('grayscale', v)} />
+          </Row>
+          <button
+            type="button"
+            onClick={() => onPatch({ content: { ...c, filters: undefined } })}
+            className="w-full text-[10px] font-semibold text-slate-500 hover:text-slate-900 mt-1"
+          >
+            Reset filters
+          </button>
+        </PanelSection>
+      )}
+    </>
   );
 };
 
@@ -307,21 +357,20 @@ const ShapeContentEdit: React.FC<Props> = ({ element, onPatch }) => {
 const IconContentEdit: React.FC<Props> = ({ element, onPatch }) => {
   const c = (element.content || {}) as any;
   return (
-    <PanelSection title="Icon">
-      <Row label="Name">
-        <TextField value={c.name} onChange={(v) => onPatch({ content: { ...c, name: v } })} placeholder="lucide icon name" />
-      </Row>
-      <Row label="Color">
-        <ColorField value={c.color ?? '#16a34a'} onChange={(v) => onPatch({ content: { ...c, color: v } })} />
-      </Row>
-      <Row label="Stroke">
-        <NumberField value={c.strokeWidth ?? 2} min={0.5} max={4} step={0.5} suffix="px"
-                     onChange={(v) => onPatch({ content: { ...c, strokeWidth: v } })} />
-      </Row>
-      <p className="text-[10px] text-slate-400 leading-snug">
-        Icon picker UI lands in Phase 8.
-      </p>
-    </PanelSection>
+    <>
+      <PanelSection title="Icon">
+        <IconPicker value={c.name} onChange={(name) => onPatch({ content: { ...c, name, library: 'lucide' } })} />
+      </PanelSection>
+      <PanelSection title="Style">
+        <Row label="Color">
+          <ColorField value={c.color ?? '#16a34a'} onChange={(v) => onPatch({ content: { ...c, color: v } })} />
+        </Row>
+        <Row label="Stroke">
+          <NumberField value={c.strokeWidth ?? 2} min={0.5} max={4} step={0.5} suffix="px"
+                       onChange={(v) => onPatch({ content: { ...c, strokeWidth: v } })} />
+        </Row>
+      </PanelSection>
+    </>
   );
 };
 
@@ -329,11 +378,16 @@ const LogoContentEdit: React.FC<Props> = ({ element, onPatch }) => {
   const c = (element.content || {}) as any;
   return (
     <PanelSection title="Logo">
-      <Row label="URL">
+      <ImageUploader onUploaded={(url) => onPatch({ content: { ...c, src: url } })} />
+      <Row label="Or URL">
         <TextField value={c.src} onChange={(v) => onPatch({ content: { ...c, src: v } })} placeholder="https://…" />
       </Row>
       <Row label="Name">
         <TextField value={c.name} onChange={(v) => onPatch({ content: { ...c, name: v } })} placeholder="Acme Inc." />
+      </Row>
+      <Row label="Height">
+        <NumberField value={c.height ?? 40} min={8} max={200} step={1} suffix="px"
+                     onChange={(v) => onPatch({ content: { ...c, height: v } })} />
       </Row>
     </PanelSection>
   );

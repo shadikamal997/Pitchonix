@@ -97,6 +97,17 @@ export class SlideElementsController {
     return this.elements.reorder(slideId, body.entries);
   }
 
+  @Post('sync')
+  @ApiOperation({ summary: 'Atomic replace-all (used by undo/redo to restore a snapshot)' })
+  async sync(
+    @Param('slideId') slideId: string,
+    @Body() body: { elements: Array<Partial<SlideElementDTO>> },
+    @GetUser() user: any,
+  ): Promise<SlideElementDTO[]> {
+    await this.elements.assertSlideOwnership(slideId, user.id);
+    return this.elements.syncAll(slideId, body.elements || []);
+  }
+
   // ── Migration ops (per-slide; the bulk migration runs at startup) ─────────
 
   @Post('ensure-migrated')

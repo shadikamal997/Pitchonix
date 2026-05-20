@@ -231,8 +231,8 @@ export class GenerationService {
         return false;
       }
 
-      // Check order is valid
-      if (slide.order < 1 || slide.order > slides.length) {
+      // Check order is valid — 0-indexed in the rest of the codebase.
+      if (slide.order < 0 || slide.order > slides.length) {
         this.logger.error('Invalid slide order:', slide.order);
         return false;
       }

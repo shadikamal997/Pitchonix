@@ -1,17 +1,11 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
-
-const inter = Inter({ 
-  subsets: ['latin'], 
-  variable: '--font-sans',
-  display: 'swap',
-})
+import { inter, allFontClassNames } from './fonts';
 
 export const metadata: Metadata = {
   title: 'Pitchonix - AI-Powered Presentation Generator',
@@ -24,7 +18,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={cn("font-sans", inter.variable)} suppressHydrationWarning>
+    // Every template font is registered as a CSS variable here so families can
+    // reference them via the resolveFontStack() helper.
+    <html lang="en" className={cn("font-sans", allFontClassNames)} suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"

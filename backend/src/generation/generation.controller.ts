@@ -16,6 +16,10 @@ import { LayoutService } from './visual/layout.service';
 import { ThemeService } from './visual/theme.service';
 import { VisualSlideContent } from './visual/types';
 import { LayoutType } from './visual/types';
+import { SlideFactory } from './slide-types/slide.factory';
+import { SlidesService } from '../slides/slides.service';
+import { SlideElementsMigrationService } from '../slides/slide-elements-migration.service';
+import { SlideElementsService } from '../slides/slide-elements.service';
 
 @ApiTags('Generation')
 @Controller('generate')
@@ -30,7 +34,91 @@ export class GenerationController {
     private pdfDocumentGenerationService: PdfDocumentGenerationService,
     private layoutService: LayoutService,
     private themeService: ThemeService,
+    private slideFactory: SlideFactory,
+    private slidesService: SlidesService,
+    private migrationService: SlideElementsMigrationService,
+    private slideElementsService: SlideElementsService,
   ) {}
+
+  // ---------------------------------------------------------------------------
+  //  applyBrandAssets — drop user-uploaded logo + photos into the deck.
+  //
+  //  Strategy:
+  //    - Cover slide: hero photo (left half) + logo (top-right) + brand mark
+  //    - Team slide:  team photos as part of teamCard.members[].photoUrl
+  //    - Problem / Solution / Market: one supporting image each (if available)
+  //    - Every slide: small logo bottom-left as brand mark
+  // ---------------------------------------------------------------------------
+  private async applyBrandAssets(deckId: string, businessInfo: any): Promise<{ logos: number; photos: number }> {
+    const logoUrl: string | null = businessInfo?.logo?.url || null;
+    const photoUrls: string[] = Array.isArray(businessInfo?.images)
+      ? (businessInfo.images.map((x: any) => x?.url).filter(Boolean))
+      : [];
+    if (!logoUrl && photoUrls.length === 0) return { logos: 0, photos: 0 };
+
+    const slides = await this.slidesService.findAll(deckId);
+    let logos = 0, photos = 0;
+    const photoQueue = [...photoUrls];
+
+    for (const slide of slides) {
+      const isCover = slide.type === 'cover';
+      const isTeam  = slide.type === 'team';
+
+      // Cover slide: big hero photo on the right + logo top-right
+      if (isCover && photoQueue.length > 0) {
+        const url = photoQueue.shift()!;
+        await this.slideElementsService.create(slide.id, {
+          type: 'image' as any,
+          name: 'Hero photo',
+          x: 50, y: 10, width: 44, height: 70,
+          zIndex: 1,
+          content: { src: url, alt: 'Hero', fit: 'cover', focalX: 0.5, focalY: 0.5 },
+        });
+        photos++;
+      }
+
+      // Team slide: enrich existing teamCard with photo URLs
+      if (isTeam && photoQueue.length > 0) {
+        const teamEls = await this.slideElementsService.listForSlide(slide.id);
+        const teamEl = teamEls.find((e) => e.type === 'teamCard');
+        if (teamEl) {
+          const members: any[] = ((teamEl.content as any)?.members) || [];
+          for (const m of members) {
+            if (photoQueue.length === 0) break;
+            m.photoUrl = photoQueue.shift()!;
+            photos++;
+          }
+          await this.slideElementsService.update(teamEl.id, { content: { ...(teamEl.content as any), members } });
+        }
+      }
+
+      // Problem / Solution / Market: one supporting visual
+      if (['problem', 'solution', 'market_opportunity', 'market', 'traction', 'business_model'].includes(slide.type) && photoQueue.length > 0) {
+        const url = photoQueue.shift()!;
+        await this.slideElementsService.create(slide.id, {
+          type: 'image' as any,
+          name: 'Supporting visual',
+          x: 64, y: 38, width: 30, height: 44,
+          zIndex: 1,
+          content: { src: url, alt: 'Visual', fit: 'cover', focalX: 0.5, focalY: 0.5 },
+        });
+        photos++;
+      }
+
+      // Every slide: small logo bottom-left as brand mark
+      if (logoUrl) {
+        await this.slideElementsService.create(slide.id, {
+          type: 'logo' as any,
+          name: 'Brand mark',
+          x: 6, y: 92, width: 8, height: 4,
+          zIndex: 5,
+          content: { src: logoUrl, height: 28 },
+        });
+        logos++;
+      }
+    }
+    return { logos, photos };
+  }
 
   @Post()
   @ApiOperation({ summary: 'Generate a new deck or PDF document (queue job)' })
@@ -233,6 +321,146 @@ export class GenerationController {
       exportReady: deck.exportReady,
       lastQualityCheck: deck.lastQualityCheck,
     };
+  }
+
+  @Post('apply-brand-assets/:projectId')
+  @ApiOperation({ summary: 'Apply uploaded logo + photo URLs to an existing deck (re-runs the brand-asset materializer)' })
+  async applyBrandAssetsEndpoint(
+    @Param('projectId') projectId: string,
+    @Body() body: { logoUrl?: string | null; imageUrls?: string[] },
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: { decks: { include: { slides: { select: { id: true } } } } },
+    });
+    if (!project) throw new NotFoundException(`Project ${projectId} not found`);
+
+    // Find the populated deck (most recent with slides).
+    const deck = [...project.decks].reverse().find((d) => d.slides.length > 0);
+    if (!deck) throw new NotFoundException('No deck with slides to apply brand assets to. Generate first.');
+
+    // Persist the new URLs onto businessInfo so re-applies / regenerates remember them.
+    const oldBI = (project.businessInfo as any) || {};
+    const businessInfo = {
+      ...oldBI,
+      logo:   body.logoUrl ? { url: body.logoUrl } : (oldBI.logo || {}),
+      images: (body.imageUrls || []).map((url) => ({ url })),
+    };
+    await this.prisma.project.update({ where: { id: projectId }, data: { businessInfo } });
+
+    // Remove any prior image / logo elements before re-applying — keeps the
+    // count deterministic and avoids duplicates.
+    await this.prisma.slideElement.deleteMany({
+      where: {
+        slide: { deckId: deck.id },
+        type:  { in: ['image', 'logo'] },
+      },
+    });
+
+    const result = await this.applyBrandAssets(deck.id, businessInfo);
+    return {
+      success: true,
+      deckId: deck.id,
+      logos: result.logos,
+      photos: result.photos,
+      message: `Applied ${result.photos} photo${result.photos === 1 ? '' : 's'} + ${result.logos} brand mark${result.logos === 1 ? '' : 's'}`,
+    };
+  }
+
+  @Post('regenerate/:projectId')
+  @ApiOperation({ summary: 'Synchronously regenerate slides for a project (bypasses Bull queue)' })
+  async regenerate(@Param('projectId') projectId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: { decks: { include: { slides: { select: { id: true } } } } },
+    });
+    if (!project) throw new NotFoundException(`Project ${projectId} not found`);
+
+    const businessInfo = (project.businessInfo as any) || {};
+    const input: any = {
+      documentType: businessInfo.documentType || 'pitch_deck',
+      companyName:  businessInfo.companyName  || project.name || 'My Company',
+      industry:     businessInfo.industry     || 'Technology',
+      stage:        businessInfo.businessStage || businessInfo.stage || 'seed',
+      ...businessInfo,
+    };
+
+    await this.prisma.project.update({ where: { id: projectId }, data: { status: 'generating' } });
+
+    // Pick or create the target deck. Reuse any empty deck so we don't
+    // accumulate dead rows when the user retries multiple times.
+    let deck = project.decks.find((d) => d.slides.length === 0);
+    if (deck) {
+      await this.prisma.deck.update({ where: { id: deck.id }, data: { status: 'generating' } });
+    } else {
+      deck = await this.decksService.create(projectId, {
+        title: `${input.companyName} ${this.formatDocumentType(input.documentType)}`,
+        description: 'AI-generated presentation',
+      }) as any;
+    }
+    if (!deck) {
+      throw new Error('Failed to acquire a target deck');
+    }
+
+    try {
+      // Run the deterministic SlideFactory directly (no queue, no AI dependency).
+      const generated = this.slideFactory.generateDeck(input);
+      if (!generated || generated.length === 0) {
+        throw new Error('SlideFactory produced 0 slides');
+      }
+
+      // Persist slides (createMany expects 0-indexed `order`).
+      const baseSlides = generated.map((s: any, i: number) => ({
+        type:         s.type,
+        order:        i,
+        title:        s.title || '',
+        subtitle:     s.subtitle,
+        content:      s.content || {},
+        speakerNotes: s.speakerNotes,
+      }));
+      await this.slidesService.createMany(deck.id, baseSlides as any);
+
+      // Materialise SlideElement rows so the new editor sees rich content immediately.
+      const persisted = await this.prisma.slide.findMany({ where: { deckId: deck.id }, orderBy: { order: 'asc' }, select: { id: true } });
+      let elementsCreated = 0;
+      for (const s of persisted) {
+        try {
+          const n = await this.migrationService.migrateOne(s.id, { force: false });
+          if (n !== null) elementsCreated += n;
+        } catch (e: any) {
+          // Don't fail the whole job if one slide's migration glitches.
+        }
+      }
+
+      // Apply uploaded brand assets (logo + images) if any
+      let assets = { logos: 0, photos: 0 };
+      try {
+        assets = await this.applyBrandAssets(deck.id, businessInfo);
+      } catch (e: any) {
+        // Don't fail the whole regen if image application glitches
+      }
+
+      await this.prisma.deck.update({ where: { id: deck.id }, data: { status: 'ready' } });
+      await this.prisma.project.update({ where: { id: projectId }, data: { status: 'completed' } });
+
+      const firstSlide = persisted[0];
+      return {
+        success: true,
+        message: `Generated ${persisted.length} slides with ${elementsCreated} elements${assets.photos || assets.logos ? ` + ${assets.photos} photos + ${assets.logos} brand marks` : ''}`,
+        deckId: deck.id,
+        firstSlideId: firstSlide?.id || null,
+        slidesGenerated: persisted.length,
+        elementsCreated,
+        photosApplied: assets.photos,
+        logosApplied: assets.logos,
+        projectId,
+      };
+    } catch (err: any) {
+      await this.prisma.deck.update({ where: { id: deck.id }, data: { status: 'draft' } });
+      await this.prisma.project.update({ where: { id: projectId }, data: { status: 'failed' } });
+      // Re-throw so the frontend sees the real reason
+      throw new Error(`Regeneration failed: ${err.message}`);
+    }
   }
 
   @Post('validate/:deckId')

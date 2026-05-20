@@ -167,6 +167,49 @@ export class SlideElementsService {
     );
     return this.listForSlide(slideId);
   }
+
+  /**
+   * Atomic replace-all: drops every element on the slide and recreates the
+   * full set from `elements`. Used by undo/redo to restore a snapshot.
+   *
+   * - The transaction first deletes existing rows, then re-inserts the supplied
+   *   ones in a single commit so callers never see a half-restored slide.
+   * - Element IDs from the snapshot are preserved when present, so other
+   *   client-side references (e.g. selection state) stay valid.
+   */
+  async syncAll(slideId: string, elements: Partial<SlideElementDTO>[]): Promise<SlideElementDTO[]> {
+    // Validate types up front
+    for (const e of elements) validateType(e.type);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.slideElement.deleteMany({ where: { slideId } });
+      if (elements.length === 0) return;
+      await tx.slideElement.createMany({
+        data: elements.map((e, i) => ({
+          // If the snapshot kept the original id, restore it so client refs survive
+          ...(typeof e.id === 'string' && /^[0-9a-f-]{36}$/i.test(e.id) ? { id: e.id } : {}),
+          slideId,
+          type:   e.type as string,
+          name:   e.name ?? null,
+          order:  e.order ?? i,
+          x:      clampPct(e.x ?? 0),
+          y:      clampPct(e.y ?? 0),
+          width:  clampPct(e.width  ?? 30),
+          height: clampPct(e.height ?? 10),
+          rotation: e.rotation ?? 0,
+          zIndex:   e.zIndex ?? i,
+          locked:   e.locked ?? false,
+          visible:  e.visible ?? true,
+          content:       (e.content       as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+          data:          (e.data          as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+          style:         (e.style         as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+          animations:    (e.animations    as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+          accessibility: (e.accessibility as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+        })),
+      });
+    });
+    return this.listForSlide(slideId);
+  }
 }
 
 // =============================================================================

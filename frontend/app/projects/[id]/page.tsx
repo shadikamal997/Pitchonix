@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api';
-import { ArrowLeft, Edit, FileText, Loader2, TrendingUp, Share2 } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Loader2, TrendingUp, Share2, Image as ImageIcon } from 'lucide-react';
 import ShareProjectModal from '@/components/ShareProjectModal';
+import { BrandAssetsModal } from '@/components/BrandAssetsModal';
 import { QualityScoreBadge } from '@/components/quality/QualityScoreBadge';
 import { GenerationProgress } from '@/components/quality/GenerationProgress';
 import { ExportReadinessIndicator } from '@/components/quality/ExportReadinessIndicator';
@@ -39,6 +40,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showBrandModal, setShowBrandModal] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = () => {
@@ -178,19 +180,68 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         onClose={() => setShowShareModal(false)}
       />
 
+      <BrandAssetsModal
+        projectId={params.id}
+        open={showBrandModal}
+        onClose={() => setShowBrandModal(false)}
+        onApplied={() => fetchProject(true)}
+      />
+
       <div className="container mx-auto px-4 py-8">
         {/* 3-column grid on desktop: 2 cols main content, 1 col quality sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content Column */}
           <div className="lg:col-span-2 space-y-6">
             {polling && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center">
-                <Loader2 className="h-5 w-5 animate-spin text-blue-600 mr-3" />
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center">
+                <Loader2 className="h-5 w-5 animate-spin text-green-600 mr-3" />
                 <div>
-                  <p className="text-blue-900 font-medium">Generating your deck...</p>
-                  <p className="text-blue-700 text-sm">
+                  <p className="text-green-900 font-medium">Generating your deck...</p>
+                  <p className="text-green-700 text-sm">
                     This usually takes 10-30 seconds. We'll refresh automatically.
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* Regenerate banner — appears when the project failed OR any deck is empty.
+                Lets the user retry the auto-generation pipeline with one click. */}
+            {!polling && (project.status === 'failed' || project.decks.some((d) => (d.slides?.length || 0) === 0)) && (
+              <div className="bg-gradient-to-br from-green-50 via-white to-green-50 border border-green-200 rounded-lg p-5 flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-green-100 border border-green-200 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-slate-900">
+                    {project.status === 'failed' ? 'Generation didn\'t finish' : 'Empty deck — ready to auto-generate'}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    {project.status === 'failed'
+                      ? 'The slide generator couldn\'t complete last time. Click below to retry — the system will rebuild every slide automatically from your project info.'
+                      : 'This deck has no slides yet. Click below and the system will auto-generate the full presentation for you.'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        setLoading(true);
+                        await api.post(`/generate/regenerate/${project.id}`);
+                        setPolling(true);
+                        fetchProject(true);
+                        // Start polling for completion
+                        pollIntervalRef.current = setInterval(() => fetchProject(true), 3000);
+                      } catch (err: any) {
+                        alert(err?.response?.data?.message || err?.message || 'Could not start generation');
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    disabled={loading}
+                    className="mt-3 inline-flex items-center gap-2 h-9 px-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-md shadow-green-500/30"
+                  >
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />}
+                    {loading ? 'Starting…' : 'Auto-generate slides'}
+                  </button>
                 </div>
               </div>
             )}
@@ -245,8 +296,24 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                           </p>
                         </div>
                         <div className="flex space-x-2">
-                          <Link href={`/editor/${deck.id}`}>
-                            <Button>
+                          {deck.slides && deck.slides.length > 0 && (
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowBrandModal(true)}
+                              className="border-green-300 hover:bg-green-50 text-green-700"
+                            >
+                              <ImageIcon className="h-4 w-4 mr-2" />
+                              Upload logo & photos
+                            </Button>
+                          )}
+                          <Link
+                            href={
+                              deck.slides && deck.slides.length > 0
+                                ? `/projects/${params.id}/edit/${deck.slides[0].id}`
+                                : `/projects/${params.id}/edit/${deck.id}?new=1`
+                            }
+                          >
+                            <Button className="bg-green-600 hover:bg-green-700 text-white">
                               <Edit className="h-4 w-4 mr-2" />
                               Open Editor
                             </Button>
@@ -271,9 +338,9 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                           </Link>
                         ))}
                       </div>
-                      {deck.slides.length > 8 && (
+                      {deck.slides.length > 8 && deck.slides[0]?.id && (
                         <div className="mt-4 text-center">
-                          <Link href={`/editor/${deck.id}`}>
+                          <Link href={`/projects/${params.id}/edit/${deck.slides[0].id}`}>
                             <Button variant="outline" size="sm">
                               View all {deck.slides.length} slides
                             </Button>

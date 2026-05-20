@@ -407,8 +407,47 @@ function CreateWizardPage() {
 
       console.log('[Wizard] Document type:', wizardData.documentType, 'Format:', format);
 
-      // Strip non-serializable File object from input
-      const { logo: _logo, ...serializableInput } = wizardData;
+      // Upload any Files attached during the wizard, replacing them with URLs.
+      console.log('[Wizard] Uploading attached files…');
+      const uploadOne = async (file: File): Promise<string> => {
+        const form = new FormData();
+        form.append('file', file);
+        const { data } = await api.post('/pdf-studio/images/upload', form, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        const raw = data?.data?.url || data?.url || '';
+        // Resolve relative urls to absolute against the API origin
+        if (!raw) throw new Error('Upload returned no URL');
+        if (raw.startsWith('http')) return raw;
+        const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+        return `${apiBase}${raw.startsWith('/') ? '' : '/'}${raw}`;
+      };
+
+      const logoUrl = wizardData.logo instanceof File ? await uploadOne(wizardData.logo).catch(() => '') : '';
+      const imageUrls: string[] = [];
+      for (const f of (wizardData.images || [])) {
+        if (f instanceof File) {
+          const url = await uploadOne(f).catch(() => '');
+          if (url) imageUrls.push(url);
+        }
+      }
+      console.log(`[Wizard] Uploaded logo=${logoUrl ? 'yes' : 'no'}, images=${imageUrls.length}`);
+
+      // Strip File objects from the wizard payload and substitute the uploaded URLs.
+      const { logo: _logo, images: _images, ...rest } = wizardData;
+      const serializableInput = {
+        ...rest,
+        logo:   logoUrl ? { url: logoUrl } : {},
+        images: imageUrls.map((url) => ({ url })),
+      };
+
+      // Also persist the URLs on the project so the regenerate / template apply
+      // flows can use them later.
+      try {
+        await api.patch(`/projects/${savedProjectId}`, {
+          businessInfo: serializableInput,
+        });
+      } catch (_) { /* non-blocking */ }
 
       if (format === 'pdf') {
         // Generate PDF document

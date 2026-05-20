@@ -34,6 +34,7 @@ import { CommentsModule } from './comments/comments.module';
 import { PresenceModule } from './presence/presence.module';
 import { UnsplashModule } from './integrations/unsplash/unsplash.module';
 import { TemplatesModule } from './templates/templates.module';
+import { SlideExportModule } from './slide-export/slide-export.module';
 
 @Module({
   imports: [
@@ -109,6 +110,7 @@ import { TemplatesModule } from './templates/templates.module';
     PresenceModule,
     UnsplashModule,
     TemplatesModule,
+    SlideExportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
