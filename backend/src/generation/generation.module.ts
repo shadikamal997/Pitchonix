@@ -24,6 +24,26 @@ import {
   PDFExportService,
   HTMLPreviewService,
 } from './export';
+import {
+  ContentStructureService,
+  ContentStructureAnalyzer,
+  VisualBlockDetector,
+  ContentBlockMapper,
+  SlideBlueprintGenerator,
+  StructureScorer,
+  StructureValidator,
+} from './content-structure';
+import {
+  DocumentFrameworkEngine,
+  BusinessLogicValidator,
+  ExecutiveQualityEngine,
+  InvestorReadinessEngine,
+  SalesReadinessEngine,
+  BoardReadinessEngine,
+  StrategyReadinessEngine,
+  DocumentScorecardService,
+  AutoExpansionService,
+} from './document-quality';
 
 @Module({
   imports: [
@@ -54,7 +74,31 @@ import {
     HTMLPreviewService,
     ExportService,
     SlideFactory,
+    // Phase 27 — Content Structure Generation Engine
+    ContentStructureService,
+    ContentStructureAnalyzer,
+    VisualBlockDetector,
+    ContentBlockMapper,
+    SlideBlueprintGenerator,
+    StructureScorer,
+    StructureValidator,
+    // Phase 30 — Professional Document Systems
+    DocumentFrameworkEngine,
+    BusinessLogicValidator,
+    ExecutiveQualityEngine,
+    InvestorReadinessEngine,
+    SalesReadinessEngine,
+    BoardReadinessEngine,
+    StrategyReadinessEngine,
+    DocumentScorecardService,
+    AutoExpansionService,
   ],
-  exports: [GenerationService, VisualGenerationService, ExportService, AIEnhancementService],
+  exports: [
+    GenerationService, VisualGenerationService, ExportService, AIEnhancementService,
+    ContentStructureService,
+    DocumentScorecardService,
+    DocumentFrameworkEngine,
+    AutoExpansionService,
+  ],
 })
 export class GenerationModule {}

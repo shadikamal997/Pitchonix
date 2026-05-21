@@ -20,6 +20,7 @@ import { SlideFactory } from './slide-types/slide.factory';
 import { SlidesService } from '../slides/slides.service';
 import { SlideElementsMigrationService } from '../slides/slide-elements-migration.service';
 import { SlideElementsService } from '../slides/slide-elements.service';
+import { AutoExpansionService, DocumentScorecardService } from './document-quality';
 
 @ApiTags('Generation')
 @Controller('generate')
@@ -38,6 +39,8 @@ export class GenerationController {
     private slidesService: SlidesService,
     private migrationService: SlideElementsMigrationService,
     private slideElementsService: SlideElementsService,
+    private autoExpansion: AutoExpansionService,
+    private scorecardService: DocumentScorecardService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -323,6 +326,57 @@ export class GenerationController {
     };
   }
 
+  /**
+   * Phase 30J — Document scorecard debug endpoint.
+   *
+   * Returns the full Phase 30 scorecard for a generated deck:
+   *   - framework completeness
+   *   - business logic warnings
+   *   - executive quality
+   *   - doc-specific readiness (investor / sales / board / strategy)
+   *   - missing sections + improvement suggestions
+   */
+  @Get('scorecard/:deckId')
+  @ApiOperation({ summary: 'Phase 30 — full document scorecard (framework, business, readiness)' })
+  async getScorecard(@Param('deckId') deckId: string) {
+    const deck = await this.prisma.deck.findUnique({
+      where: { id: deckId },
+      include: {
+        slides: { orderBy: { order: 'asc' } },
+        project: true,
+      },
+    });
+    if (!deck) throw new NotFoundException(`Deck ${deckId} not found`);
+
+    const businessInfo: any = deck.project?.businessInfo ?? {};
+    const input: any = {
+      documentType: businessInfo.documentType || 'pitch_deck',
+      companyName:  businessInfo.companyName  || deck.project?.name || 'Untitled',
+      industry:     businessInfo.industry     || 'Technology',
+      ...businessInfo,
+    };
+
+    const slides = deck.slides.map((s: any) => ({
+      type:      s.type,
+      order:     s.order,
+      title:     s.title || '',
+      subtitle:  s.subtitle,
+      content:   s.content || {},
+    }));
+
+    const scorecard = this.scorecardService.build(input, slides as any);
+
+    return {
+      deckId,
+      documentType: input.documentType,
+      ...scorecard,
+      improvementSuggestions: scorecard.reports.framework.missing
+        .map((m) => `Add a ${m.label} section`)
+        .concat(scorecard.reports.business.warnings.map((w) => w.hint || w.message))
+        .slice(0, 10),
+    };
+  }
+
   @Post('apply-brand-assets/:projectId')
   @ApiOperation({ summary: 'Apply uploaded logo + photo URLs to an existing deck (re-runs the brand-asset materializer)' })
   async applyBrandAssetsEndpoint(
@@ -404,7 +458,10 @@ export class GenerationController {
 
     try {
       // Run the deterministic SlideFactory directly (no queue, no AI dependency).
-      const generated = this.slideFactory.generateDeck(input);
+      // Phase 30I — promote framework-required slide types when backing data exists.
+      const expansion = this.autoExpansion.expand(input);
+      const generated = this.slideFactory.generateDeck(input, expansion.promotions);
+      this.scorecardService.build(input, generated);
       if (!generated || generated.length === 0) {
         throw new Error('SlideFactory produced 0 slides');
       }

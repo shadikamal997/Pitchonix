@@ -5,6 +5,11 @@ import { AIEnhancementService } from './ai-enhancement.service';
 import { VisualGenerationService } from './visual';
 import { VisualSlideContent, VisualGenerationOptions } from './visual/types';
 import { ProgressGateway } from './progress/progress.gateway';
+import { ContentStructureService } from './content-structure';
+import {
+  AutoExpansionService,
+  DocumentScorecardService,
+} from './document-quality';
 
 @Injectable()
 export class GenerationService {
@@ -15,6 +20,9 @@ export class GenerationService {
     private aiEnhancementService: AIEnhancementService,
     private visualGenerationService: VisualGenerationService,
     private progressGateway: ProgressGateway,
+    private contentStructureService: ContentStructureService,
+    private autoExpansion: AutoExpansionService,
+    private scorecardService: DocumentScorecardService,
   ) {
     this.slideFactory = new SlideFactory();
   }
@@ -156,13 +164,26 @@ export class GenerationService {
         timestamp: new Date(),
       });
 
-      const slides = this.slideFactory.generateDeck(input);
+      // Phase 30I — Auto-expansion: framework-required slide types with
+      // backing data get promoted into the SlideFactory selection so the
+      // generated deck reflects the document's professional framework.
+      const expansion = this.autoExpansion.expand(input);
+      if (expansion.promotions.length > 0) {
+        this.logger.log(
+          `Phase 30: framework promotions=[${expansion.promotions.join(',')}]` +
+          (expansion.skipped.length > 0
+            ? ` skipped=[${expansion.skipped.map((s) => `${s.slideType}:${s.reason}`).join(';')}]`
+            : ''),
+        );
+      }
+
+      const slides = this.slideFactory.generateDeck(input, expansion.promotions);
 
       // Enhance with AI if enabled and available
       let enhancedSlides = slides;
       if (options?.useAI && this.aiEnhancementService.isAvailable()) {
         this.logger.log('Enhancing slides with AI...');
-        
+
         this.progressGateway?.emitProgress({
           jobId,
           stage: 'slides',
@@ -179,6 +200,33 @@ export class GenerationService {
       } else if (options?.useAI) {
         this.logger.warn('AI enhancement requested but not available');
       }
+
+      // Phase 27 — Content Structure Generation Engine (deterministic, no AI).
+      // Enrich each slide's `content` blob with canonical visual block payloads
+      // (metrics, pricingTiers, team, roadmap, swot, comparison, featureGrid,
+      // processSteps, marketSizing) derived purely from wizard input via
+      // regex/rule-based analysis. The SlideElementsMigrationService downstream
+      // converts these into typed SlideElement rows.
+      this.progressGateway?.emitProgress({
+        jobId,
+        stage: 'slides',
+        progress: 35,
+        message: 'Mapping content to visual structures...',
+        timestamp: new Date(),
+      });
+      const enrichment = this.contentStructureService.enrich(enhancedSlides, input);
+      enhancedSlides = enrichment.slides;
+      this.logger.log(
+        `Phase 27: structure score ${enrichment.score.total.toFixed(0)}/100, ` +
+        `${enrichment.blueprints.reduce((s, b) => s + b.blocks.length, 0)} visual blocks emitted`,
+      );
+
+      // Phase 30H — Document scorecard. Aggregates framework completeness,
+      // business logic warnings, executive quality, and doc-specific
+      // readiness (investor / sales / board / strategy). The service logs
+      // the breakdown; the controller exposes the full report via
+      // GET /api/generate/scorecard/:deckId (Phase 30J).
+      this.scorecardService.build(input, enhancedSlides, enrichment.score.total);
 
       // Validate generated content
       if (!this.validateSlideContent(enhancedSlides)) {

@@ -67,9 +67,15 @@ export class SlideFactory {
   }
 
   /**
-   * Generate complete deck based on wizard input
+   * Generate complete deck based on wizard input.
+   *
+   * @param input               The wizard payload.
+   * @param frameworkPromotions Phase 30I — additional slide types the
+   *                            DocumentFrameworkEngine wants to ensure are
+   *                            present (computed from required framework
+   *                            sections that have backing data).
    */
-  generateDeck(input: WizardInput): SlideContent[] {
+  generateDeck(input: WizardInput, frameworkPromotions: SlideType[] = []): SlideContent[] {
     const config: GenerationConfig = {
       documentType: input.documentType,
       slideCount: input.slideCount,
@@ -82,18 +88,29 @@ export class SlideFactory {
     // Filter applicable generators
     const applicableGenerators = this.generators.filter(gen => gen.isApplicable(input));
 
+    // Phase 30I: framework-promoted slide types must override the generator's
+    // own `isApplicable` filter — otherwise a generator gated on a config flag
+    // (e.g. ExecutiveSummarySlideGenerator requires `includeExecutiveSummary`)
+    // would silently drop framework-required slides even when the framework
+    // engine has confirmed backing data exists.
+    const promotionSet = new Set(frameworkPromotions);
+    const forcedGenerators = this.generators.filter(
+      gen => promotionSet.has(gen.type) && !applicableGenerators.includes(gen),
+    );
+    const candidateGenerators = [...applicableGenerators, ...forcedGenerators];
+
     // Sort by priority
-    const sortedGenerators = this.sortGenerators(applicableGenerators);
+    const sortedGenerators = this.sortGenerators(candidateGenerators);
 
     // Phase 28: slide types backed by structured wizard data get promoted to
-    // core, expanding past the document type's default core list. Without this
-    // promotion, supplying e.g. roadmapPhases + competitors + pricingTiers on a
-    // pitch_deck (whose 8-slot core is already full) would silently drop those
-    // generators.
+    // core. Phase 30I: framework-required slide types with backing data also
+    // get promoted (so e.g. a strategy deck always gets executive summary
+    // when the data exists). The union is passed to selectGenerators.
     const structuredPromotions = this.getStructuredPromotions(input);
+    const promotions = Array.from(new Set([...structuredPromotions, ...frameworkPromotions]));
 
     // Adjust based on slide count target
-    const selectedGenerators = this.selectGenerators(sortedGenerators, config, structuredPromotions);
+    const selectedGenerators = this.selectGenerators(sortedGenerators, config, promotions);
 
     // Generate slides
     const slides = selectedGenerators.map((gen, index) => gen.generate(input, index + 1));
@@ -217,6 +234,15 @@ export class SlideFactory {
         SlideType.TEAM,
       ],
       board_meeting_deck: [
+        SlideType.COVER,
+        SlideType.EXECUTIVE_SUMMARY,
+        SlideType.BUSINESS_MODEL,
+        SlideType.TRACTION,
+        SlideType.FINANCIALS,
+        SlideType.ROADMAP,
+        SlideType.ASK,
+      ],
+      board_meeting: [
         SlideType.COVER,
         SlideType.EXECUTIVE_SUMMARY,
         SlideType.BUSINESS_MODEL,
