@@ -4,10 +4,15 @@ import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import type { SlideElementDTO } from '@/types/slide-element';
 import { renderElement } from './renderers';
 import { findCompositionFamily } from './templates/composition/registry';
-import { findVariant } from './templates/composition/types';
+import { findAllVariants } from './templates/composition/types';
+import { analyzeContent } from './templates/composition/content-analyzer';
+import { selectBestVariant } from './templates/composition/layout-scorer';
+import type { DeckSlideContext } from './templates/composition/deck-context';
 import { resolveFontStack } from '@/app/fonts';
 import { validateSlideLayout } from './design-system/layout-validator';
 import { SAFE_AREA, SPACING } from './design-system/tokens';
+import { snapWithGuides, ignoreSetForDrag, type SnapGuide } from './smart/snap-engine';
+import { isPositionLocked, isSizeLocked, isContentLocked } from './smart/lock-utils';
 
 // =============================================================================
 //  SlideCanvas — the 16:9 editable stage
@@ -45,7 +50,7 @@ const INLINE_EDITABLE_TYPES = new Set([
 ]);
 function isInlineEditable(type: string): boolean { return INLINE_EDITABLE_TYPES.has(type); }
 
-const SNAP_PX = 4;   // pixels considered "close enough" to snap
+// SNAP_PX now lives in smart/snap-engine.ts (Phase 32E).
 const MIN_W = 2;
 const MIN_H = 2;
 
@@ -99,6 +104,9 @@ export interface SlideCanvasProps {
    *  the slide as a composed family variant: background chrome, decorations, and
    *  slot-positioned elements with family typography. Editing still works. */
   compositionFamilyId?: string | null;
+  /** Phase 26 — deck-level context for this slide. When provided, the layout
+   *  scorer applies narrative/pacing/fatigue/transition biases. */
+  deckContext?: DeckSlideContext;
 }
 
 // Internal type — mirrors backend/element-types.ts SlideBackground.
@@ -133,6 +141,7 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
   slideType,
   slideIndex = 0,
   compositionFamilyId,
+  deckContext,
 }) => {
   // Compute the actual CSS background for the slide stage. Order:
   //   1. Explicit slide.background (solid / gradient / image)
@@ -158,7 +167,9 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
   const dragRef = useRef<DragState | null>(null);
   const resizeRef = useRef<ResizeState | null>(null);
   const [stageSize, setStageSize] = useState({ w: 1280, h: 720 });
-  const [guides, setGuides] = useState<{ x?: number; y?: number; cx?: boolean; cy?: boolean }>({});
+  // Phase 32E — snap guide lines. Each guide is rendered as a coloured line
+  // spanning the canvas; vertical guides at a given x%, horizontal at y%.
+  const [guides, setGuides] = useState<SnapGuide[]>([]);
 
   // Marquee multi-select state — set on empty-canvas mousedown
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -192,7 +203,17 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
   // at the family's slot position with family typography. Free (overflow)
   // elements keep their original geometry. Selection / inline edit still work.
   const family = useMemo(() => findCompositionFamily(compositionFamilyId), [compositionFamilyId]);
-  const variant = useMemo(() => family ? findVariant(family, slideType || 'default') : null, [family, slideType]);
+  const contentProfile  = useMemo(() => analyzeContent(sorted), [sorted]);
+  const variantCandidates = useMemo(
+    () => family ? findAllVariants(family, slideType || 'default') : [],
+    [family, slideType],
+  );
+  const variant = useMemo(
+    () => variantCandidates.length
+      ? selectBestVariant(variantCandidates, contentProfile, family?.id ?? '', deckContext).chosen
+      : null,
+    [variantCandidates, contentProfile, family, deckContext],
+  );
   const variantChrome = (variant?.chrome) || family?.chrome || null;
   const variantTypography = variant?.typography || family?.typography || null;
 
@@ -330,23 +351,33 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
 
   // ── Drag (move) ────────────────────────────────────────────────────────────
   const handleElementMouseDown = (e: React.MouseEvent, el: SlideElementDTO) => {
-    if (el.locked) return;
-    // Click-only resize handles? They have their own onMouseDown stopPropagation
+    // Phase 32A/H — additive on Shift OR Cmd/Ctrl. Position-locked still blocks
+    // drag but the element can still be selected (so user can unlock from the
+    // inspector / layers panel).
+    const additive = e.shiftKey || e.metaKey || e.ctrlKey;
     e.stopPropagation();
     e.preventDefault();
-    const additive = e.shiftKey;
     if (!selectedIds.includes(el.id)) {
       selectOne(el.id, additive);
+    } else if (additive) {
+      // Toggle off in the additive case
+      selectOne(el.id, additive);
+      return;
     }
+    if (isPositionLocked(el)) return;
     const ids = (selectedIds.includes(el.id) && !additive)
       ? (selectedIds.length > 0 ? selectedIds : [el.id])
       : (additive ? Array.from(new Set([...selectedIds, el.id])) : [el.id]);
 
+    // Drop position-locked siblings from the drag so they stay put
+    const draggable = ids.filter((id) => !isPositionLocked(idToElement.get(id)));
+    if (draggable.length === 0) return;
+
     dragRef.current = {
-      ids,
+      ids: draggable,
       startMouseX: e.clientX,
       startMouseY: e.clientY,
-      origs: Object.fromEntries(ids.map((id) => {
+      origs: Object.fromEntries(draggable.map((id) => {
         const x = idToElement.get(id)!;
         return [id, { x: x.x, y: x.y, width: x.width, height: x.height }];
       })),
@@ -355,7 +386,7 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
 
   // ── Resize ─────────────────────────────────────────────────────────────────
   const handleResizeMouseDown = (e: React.MouseEvent, el: SlideElementDTO, handle: HandleId) => {
-    if (el.locked) return;
+    if (isSizeLocked(el)) return;
     e.stopPropagation();
     e.preventDefault();
     resizeRef.current = {
@@ -384,24 +415,31 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
         const dxPct = ((ev.clientX - d.startMouseX) / stageSize.w) * 100;
         const dyPct = ((ev.clientY - d.startMouseY) / stageSize.h) * 100;
 
+        // Phase 32E — snap-to-element on the "leader" of the drag (the first
+        // element). The same delta is applied to the rest of the selection so
+        // multi-drag stays rigid. Group members are added to the ignore set.
+        const ignore = ignoreSetForDrag(elements, d.ids);
+        const leaderId = d.ids[0];
+        const leaderOrig = d.origs[leaderId];
+        const naiveX = leaderOrig.x + dxPct;
+        const naiveY = leaderOrig.y + dyPct;
+        const snap = snapWithGuides(
+          naiveX, naiveY, leaderOrig.width, leaderOrig.height,
+          elements, ignore, stageSize.w, stageSize.h,
+        );
+        const snapDx = snap.x - leaderOrig.x;
+        const snapDy = snap.y - leaderOrig.y;
+
         const updates: Array<{ id: string; patch: Partial<SlideElementDTO> }> = d.ids.map((id) => {
           const orig = d.origs[id];
-          let nx = orig.x + dxPct;
-          let ny = orig.y + dyPct;
-          // Snap to canvas edges + center
-          const snapped = snapToCanvas(nx, ny, orig.width, orig.height, stageSize);
-          nx = snapped.x; ny = snapped.y;
+          let nx = orig.x + snapDx;
+          let ny = orig.y + snapDy;
           // Clamp to canvas
           nx = Math.max(0, Math.min(100 - orig.width, nx));
           ny = Math.max(0, Math.min(100 - orig.height, ny));
           return { id, patch: { x: nx, y: ny } };
         });
-        // Show guides only if single element drag
-        if (d.ids.length === 1) {
-          const u = updates[0].patch;
-          const el = idToElement.get(d.ids[0])!;
-          setGuides(computeGuides(u.x ?? el.x, u.y ?? el.y, el.width, el.height));
-        }
+        setGuides(snap.guides);
         onTransformLive(updates);
       }
 
@@ -442,7 +480,7 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
         });
         onTransformCommit(updates);
         dragRef.current = null;
-        setGuides({});
+        setGuides([]);
       }
       if (resizeRef.current) {
         const el = idToElement.get(resizeRef.current.id)!;
@@ -588,7 +626,7 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
             data-element-id={el.id}
             onMouseDown={(e) => { if (!editing) handleElementMouseDown(e, el); }}
             onDoubleClick={(e) => {
-              if (el.locked) return;
+              if (isContentLocked(el)) return;
               if (!isInlineEditable(el.type)) return;
               e.stopPropagation();
               onRequestEdit?.(el.id);
@@ -609,7 +647,7 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
               // (renderElement reads el.style which wins). This sets the inherited
               // CSS context for child renderers.
               ...familyStyle,
-              cursor: editing ? 'text' : el.locked ? 'not-allowed' : 'move',
+              cursor: editing ? 'text' : isPositionLocked(el) ? 'not-allowed' : 'move',
               boxSizing: 'border-box',
             }}
           >
@@ -625,7 +663,7 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
 
             {/* Resize handles only on the selected element if exactly one is selected AND not editing.
                 Slot-managed elements are locked to the family's layout — no resize. */}
-            {selected && !editing && selectedIds.length === 1 && !el.locked && !useSlot && (
+            {selected && !editing && selectedIds.length === 1 && !isSizeLocked(el) && !useSlot && (
               <>
                 {HANDLES.map((h) => (
                   <div
@@ -650,13 +688,26 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
         );
       })}
 
-      {/* Snap guides */}
-      {guides.cx && (
-        <div className="pointer-events-none" style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, background: '#ef4444', opacity: 0.7 }} />
-      )}
-      {guides.cy && (
-        <div className="pointer-events-none" style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: 1, background: '#ef4444', opacity: 0.7 }} />
-      )}
+      {/* Phase 32E — Snap guide lines. Red = canvas / center alignment,
+          fuchsia = element edge, sky = element center. Lines span the canvas. */}
+      {guides.map((g, i) => {
+        const color = g.kind === 'canvas'         ? '#ef4444'
+                    : g.kind === 'element-center' ? '#0ea5e9'
+                    :                                '#d946ef';
+        const common: React.CSSProperties = {
+          position: 'absolute', background: color, opacity: 0.85, zIndex: 99997,
+        };
+        if (g.axis === 'vertical') {
+          return (
+            <div key={`g${i}`} className="pointer-events-none"
+                 style={{ ...common, top: 0, bottom: 0, left: `${g.pos}%`, width: 1 }} />
+          );
+        }
+        return (
+          <div key={`g${i}`} className="pointer-events-none"
+               style={{ ...common, left: 0, right: 0, top: `${g.pos}%`, height: 1 }} />
+        );
+      })}
 
       {/* Marquee selection rectangle */}
       {marquee && marquee.w > 0 && marquee.h > 0 && (
@@ -672,6 +723,23 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
         />
       )}
 
+      {/* Phase 32A — selection count chip */}
+      {selectedIds.length >= 2 && (
+        <div
+          className="pointer-events-none"
+          style={{
+            position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)',
+            zIndex: 99996,
+            background: '#3b82f6', color: 'white',
+            padding: '3px 10px', borderRadius: 999,
+            fontSize: 11, fontWeight: 600,
+            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.35)',
+          }}
+        >
+          {selectedIds.length} selected
+        </div>
+      )}
+
       {/* Family overlays (page numbers, brand marks) — sit ABOVE element content */}
       {variantChrome?.overlays && (
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50 }}>
@@ -682,34 +750,5 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
   );
 };
 
-// =============================================================================
-//  Helpers
-// =============================================================================
-
-function snapToCanvas(
-  x: number, y: number, w: number, h: number, stage: { w: number; h: number },
-): { x: number; y: number } {
-  const pxX  = (x / 100) * stage.w;
-  const pxY  = (y / 100) * stage.h;
-  const pxCX = pxX + (w / 100) * stage.w / 2;
-  const pxCY = pxY + (h / 100) * stage.h / 2;
-
-  let snappedX = x, snappedY = y;
-  // Snap left/right edges to canvas edges
-  if (Math.abs(pxX) < SNAP_PX) snappedX = 0;
-  else if (Math.abs(pxX + (w / 100) * stage.w - stage.w) < SNAP_PX) snappedX = 100 - w;
-  // Snap to horizontal center
-  if (Math.abs(pxCX - stage.w / 2) < SNAP_PX) snappedX = 50 - w / 2;
-
-  if (Math.abs(pxY) < SNAP_PX) snappedY = 0;
-  else if (Math.abs(pxY + (h / 100) * stage.h - stage.h) < SNAP_PX) snappedY = 100 - h;
-  if (Math.abs(pxCY - stage.h / 2) < SNAP_PX) snappedY = 50 - h / 2;
-
-  return { x: snappedX, y: snappedY };
-}
-
-function computeGuides(x: number, y: number, w: number, h: number) {
-  const cx = Math.abs((x + w / 2) - 50) < 0.4;
-  const cy = Math.abs((y + h / 2) - 50) < 0.4;
-  return { cx, cy };
-}
+// (Helpers `snapToCanvas` / `computeGuides` were superseded by
+//  `snapWithGuides` in `smart/snap-engine.ts` — Phase 32E.)

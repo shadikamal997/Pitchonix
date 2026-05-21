@@ -4,6 +4,7 @@ import React from 'react';
 import { Lock, Unlock, Eye, EyeOff, RotateCw } from 'lucide-react';
 import type { SlideElementDTO } from '@/types/slide-element';
 import { PanelSection, Row, NumberField, Toggle, SliderField } from '../Primitives';
+import { getLocks, withLock, type ElementLocks } from '../../smart/lock-utils';
 
 interface Props {
   element: SlideElementDTO;
@@ -73,12 +74,41 @@ export const LayoutPanel: React.FC<Props> = ({ element, onPatch }) => {
       <PanelSection title="State">
         <Toggle value={!!element.locked}
                 onChange={(v) => onPatch({ locked: v })}
-                label="Lock (prevent edits)" />
+                label="Lock everything" />
         <Toggle value={element.visible !== false}
                 onChange={(v) => onPatch({ visible: v })}
                 label="Visible in export" />
       </PanelSection>
+
+      {/* Phase 32H — granular sub-locks. The master `locked` flag above already
+          forbids everything; these toggles let users lock only a subset (e.g.
+          lock position while leaving inline-text editing open). */}
+      {!element.locked && (
+        <PanelSection title="Lock parts">
+          <SubLockRow label="Position"  k="position" element={element} onPatch={onPatch} />
+          <SubLockRow label="Size"      k="size"     element={element} onPatch={onPatch} />
+          <SubLockRow label="Style"     k="style"    element={element} onPatch={onPatch} />
+          <SubLockRow label="Content"   k="content"  element={element} onPatch={onPatch} />
+        </PanelSection>
+      )}
     </>
+  );
+};
+
+const SubLockRow: React.FC<{
+  label:   string;
+  k:       keyof ElementLocks;
+  element: SlideElementDTO;
+  onPatch: (patch: Partial<SlideElementDTO>) => void;
+}> = ({ label, k, element, onPatch }) => {
+  const locks = getLocks(element);
+  const isOn = !!locks[k];
+  return (
+    <Toggle
+      value={isOn}
+      onChange={(v) => onPatch(withLock(element, k, v))}
+      label={label}
+    />
   );
 };
 

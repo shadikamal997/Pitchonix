@@ -36,10 +36,15 @@ import { expandSelectionToGroups, groupSelection, ungroupSelection, groupIdOf, g
 import { tidySlide } from './smart/tidy-engine';
 import { PresenterMode } from './presenter/PresenterMode';
 import { CompositionDebugBadge } from './templates/composition/DebugBadge';
+import { useDeckPlan, logDeckPlan, type DeckSlideInput } from './templates/composition/deck-context';
+import { useDeckElements } from './useDeckElements';
+import { NarrativeDebugPanel } from './templates/composition/NarrativeDebugPanel';
 import { CommentsPanel } from './comments/CommentsPanel';
 import { useSlideComments } from './comments/useSlideComments';
 import { ElementCommentBadge } from './comments/ElementCommentBadge';
-import { Play, MessageSquare } from 'lucide-react';
+import { Play, MessageSquare, Layers as LayersIcon } from 'lucide-react';
+import { LayersPanel } from './layers/LayersPanel';
+import { selectSimilar } from './smart/select-utils';
 import { applyLayout } from './layouts/applyLayout';
 import { findLayout, type LayoutSpec } from './layouts/registry';
 import { Undo2, Redo2, Sparkles } from 'lucide-react';
@@ -76,6 +81,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
   const [presenterOpen, setPresenterOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [layersOpen, setLayersOpen]     = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [commentsFocusElementId, setCommentsFocusElementId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -90,6 +96,11 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
 
   const api$ = useElementsApi(slideId);
   const deckSlides = useDeckSlides(slide?.deckId || null);
+
+  // Phase 32M — in-memory clipboard for ⌘C / ⌘V (slide-scoped; survives until
+  // the next copy or page reload). Holds full SlideElementDTO snapshots so a
+  // future cross-slide paste can read them.
+  const clipboardRef = useRef<SlideElementDTO[] | null>(null);
 
   // ── Undo / redo ───────────────────────────────────────────────────────────
   // The hook holds snapshots of the elements array. `commit` is called from
@@ -378,6 +389,67 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
         return;
       }
 
+      // Phase 32M — Group / Ungroup
+      // ⌘/Ctrl + G        → group selection
+      // ⌘/Ctrl + ⇧ + G    → ungroup
+      if (meta && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        if (e.shiftKey) handleUngroupSelection();
+        else            handleGroupSelection();
+        return;
+      }
+
+      // Phase 32A — Select similar
+      // ⌘/Ctrl + ⇧ + A    → select all elements of the same type as the first selected
+      if (meta && e.shiftKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        if (selectedIds.length > 0) {
+          setSelectedIds(selectSimilar(api$.elements, selectedIds));
+        }
+        return;
+      }
+
+      // Phase 32M — Copy / paste
+      // ⌘/Ctrl + C → copy selection geometry/content (in-memory only)
+      // ⌘/Ctrl + V → paste — creates new elements offset by (2%, 2%)
+      if (meta && e.key.toLowerCase() === 'c' && selectedIds.length > 0) {
+        e.preventDefault();
+        clipboardRef.current = api$.elements
+          .filter((el) => selectedIds.includes(el.id))
+          .map((el) => ({ ...el }));
+        return;
+      }
+      if (meta && e.key.toLowerCase() === 'v' && clipboardRef.current && clipboardRef.current.length > 0) {
+        e.preventDefault();
+        (async () => {
+          const newIds: string[] = [];
+          for (const src of clipboardRef.current!) {
+            // duplicateElement is the simplest path to a server-side clone with
+            // a new id + offset, which mirrors how ⌘D already works.
+            const dup = await api$.duplicateElement(src.id);
+            if (dup) newIds.push(dup.id);
+          }
+          if (newIds.length > 0) setSelectedIds(newIds);
+          history.commit(apiRef.current.elements);
+        })();
+        return;
+      }
+
+      // Phase 32M — Bring forward / send back via ⌘+] / ⌘+[
+      if (meta && (e.key === ']' || e.key === '[')) {
+        if (selectedIds.length === 0) return;
+        e.preventDefault();
+        const delta = e.key === ']' ? 1 : -1;
+        const updates = selectedIds.flatMap((id) => {
+          const el = api$.elements.find((x) => x.id === id);
+          if (!el) return [];
+          return [{ id, patch: { zIndex: (el.zIndex ?? 0) + delta } }];
+        });
+        api$.updateMany(updates);
+        history.commit(apiRef.current.elements);
+        return;
+      }
+
       if (e.key === 'Enter' && !editingId && selectedIds.length === 1) {
         const el = api$.elements.find((x) => x.id === selectedIds[0]);
         if (el && ['heading','subheading','paragraph','quote','caption','label','cta','footer','bulletList','numberedList'].includes(el.type)) {
@@ -388,6 +460,12 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+    // The handlers (handleDuplicateSelected / handleGroupSelection /
+    // handleUngroupSelection) are declared *below* this effect, but the
+    // closure resolves them at fire time. They depend on selectedIds, which
+    // is already in deps, so the effect re-attaches the listener whenever
+    // the selection changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingId, selectedIds, api$.elements, history]);
 
   // ── Selection-derived actions ─────────────────────────────────────────────
@@ -432,6 +510,58 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   useEffect(() => {
     if (slideId && api$.elements.length > 0) bumpSlideThumbnail(slideId);
   }, [slideId, api$.elements]);
+
+  // ── Phase 26.5 / 26.6 — Deck-level narrative plan ─────────────────────────
+  // Load elements for every slide in the deck so the narrative engine can
+  // analyse the full deck. The current slide's elements come from api$ (live,
+  // includes in-progress edits); other slides come from a per-slide fetch
+  // cached in useDeckElements.
+  const deckElements = useDeckElements(deckSlides.slides);
+  const compositionFamilyId = (slide?.metadata as any)?.appliedTemplateId || null;
+
+  // Fix 2 — when the user navigates to a different slide we already have
+  // cached, re-fetch in case it was edited elsewhere (another tab/session
+  // or a sibling editor instance).
+  const lastRefreshedSlide = useRef<string | null>(null);
+  useEffect(() => {
+    if (!slideId) return;
+    if (lastRefreshedSlide.current === slideId) return;
+    lastRefreshedSlide.current = slideId;
+    if (slideId in deckElements.byId) {
+      // Re-fetch in background; the live api$.elements still drive the active
+      // slide so this is purely about correcting other-slide staleness.
+      void deckElements.refresh(slideId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slideId]);
+
+  // Fix 3 — debounce active-slide element changes by 350ms so analyzeDeck
+  // doesn't re-run on every keystroke. The active slide still renders
+  // immediately (it reads api$.elements directly through SlideCanvas);
+  // only the deck-plan view of it lags behind by a third of a second.
+  const [debouncedActiveElements, setDebouncedActiveElements] = useState<SlideElementDTO[]>(api$.elements);
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedActiveElements(api$.elements), 350);
+    return () => clearTimeout(handle);
+  }, [api$.elements]);
+
+  const deckSlideInputs: DeckSlideInput[] = useMemo(() => {
+    return deckSlides.slides.map((s) => {
+      const elements = s.id === slideId
+        ? debouncedActiveElements
+        : (deckElements.byId[s.id] || []);
+      return { slideType: s.type, title: s.title, elements };
+    });
+  }, [deckSlides.slides, slideId, debouncedActiveElements, deckElements.byId]);
+
+  const deckPlan = useDeckPlan(deckSlideInputs, compositionFamilyId || undefined);
+
+  // Dev-mode console log when the deck plan changes
+  useEffect(() => {
+    if (deckPlan.slides.length > 0 && deckElements.ready) logDeckPlan(deckPlan);
+  }, [deckPlan, deckElements.ready]);
+
+  const currentSlideContext = slideIdx >= 0 ? deckPlan.slides[slideIdx] : undefined;
 
   // ── Save status pill ──────────────────────────────────────────────────────
   const SaveStatus = () => {
@@ -616,12 +746,26 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             Delete
           </button>
 
+          <button
+            type="button"
+            onClick={() => { setLayersOpen((v) => !v); if (!layersOpen) setCommentsOpen(false); }}
+            title="Layers panel"
+            className={`relative h-7 px-2.5 text-xs font-semibold rounded flex items-center gap-1.5 transition-colors ${
+              layersOpen
+                ? 'bg-blue-50 text-blue-700 border border-blue-300'
+                : 'bg-white border border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-slate-700'
+            }`}
+          >
+            <LayersIcon className="w-3.5 h-3.5 text-blue-600" />
+            Layers
+          </button>
+
           {slide?.deckId && (
             <>
               <div className="h-5 w-px bg-slate-200" />
               <button
                 type="button"
-                onClick={() => { setCommentsOpen((v) => !v); }}
+                onClick={() => { setCommentsOpen((v) => !v); if (!commentsOpen) setLayersOpen(false); }}
                 title="Comments"
                 className={`relative h-7 px-2.5 text-xs font-semibold rounded flex items-center gap-1.5 transition-colors ${
                   commentsOpen
@@ -703,7 +847,8 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
               themeTokens={slide?.themeTokens || null}
               slideType={(slide as any)?.type || undefined}
               slideIndex={slideIdx >= 0 ? slideIdx : 0}
-              compositionFamilyId={(slide?.metadata as any)?.appliedTemplateId || null}
+              compositionFamilyId={compositionFamilyId}
+              deckContext={currentSlideContext}
             />
           )}
 
@@ -716,6 +861,9 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
               onStyleChange={(patch) => handleStyleChange(editingId, patch)}
             />
           )}
+
+          {/* Phase 26.5 — Narrative debug panel (dev-only) */}
+          <NarrativeDebugPanel plan={deckPlan} currentContext={currentSlideContext} ready={deckElements.ready} />
 
           {/* Element comment badges (Phase 14) */}
           {Object.keys(elementCounts).length > 0 && (
@@ -769,7 +917,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           })()}
         </div>
 
-        {/* Right rail — Comments panel OR Inspector (mutually exclusive) */}
+        {/* Right rail — Comments | Layers | Inspector (mutually exclusive) */}
         {commentsOpen && slide?.deckId ? (
           <CommentsPanel
             projectId={projectId}
@@ -780,6 +928,18 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             onClose={() => { setCommentsOpen(false); setCommentsFocusElementId(null); }}
             currentUserId={currentUserId || undefined}
           />
+        ) : layersOpen ? (
+          <aside className="w-[280px] flex-shrink-0 bg-white border-l border-slate-200 flex flex-col h-full">
+            <LayersPanel
+              elements={api$.elements}
+              selectedIds={selectedIds}
+              onSelect={(ids) => handleSelectIds(ids)}
+              onPatch={(updates) => {
+                api$.updateMany(updates);
+                history.commit(apiRef.current.elements);
+              }}
+            />
+          </aside>
         ) : (
           <Inspector
             elements={api$.elements}
@@ -802,10 +962,10 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
         )}
         <span className="ml-auto flex items-center gap-3">
           <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">←↑↓→</kbd> nudge
-          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⇧+arrow</kbd> 5%
-          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⌫</kbd> delete
+          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⌘C/V</kbd> copy/paste
+          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⌘G</kbd> group
           <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⌘D</kbd> duplicate
-          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">esc</kbd> deselect
+          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⌘/</kbd> shortcuts
         </span>
       </footer>
 
