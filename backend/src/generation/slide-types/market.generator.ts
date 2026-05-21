@@ -10,7 +10,10 @@ export class MarketOpportunitySlideGenerator extends BaseSlideGenerator {
   defaultPriority = 4;
 
   isApplicable(input: WizardInput): boolean {
-    return !!input.marketOpportunity && input.marketOpportunity.trim().length > 0;
+    return (!!input.marketOpportunity && input.marketOpportunity.trim().length > 0) ||
+           !!(input.structured?.marketSizing?.tam ||
+              input.structured?.marketSizing?.sam ||
+              input.structured?.marketSizing?.som);
   }
 
   getTitle(input: WizardInput): string {

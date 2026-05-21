@@ -85,13 +85,36 @@ export class SlideFactory {
     // Sort by priority
     const sortedGenerators = this.sortGenerators(applicableGenerators);
 
+    // Phase 28: slide types backed by structured wizard data get promoted to
+    // core, expanding past the document type's default core list. Without this
+    // promotion, supplying e.g. roadmapPhases + competitors + pricingTiers on a
+    // pitch_deck (whose 8-slot core is already full) would silently drop those
+    // generators.
+    const structuredPromotions = this.getStructuredPromotions(input);
+
     // Adjust based on slide count target
-    const selectedGenerators = this.selectGenerators(sortedGenerators, config);
+    const selectedGenerators = this.selectGenerators(sortedGenerators, config, structuredPromotions);
 
     // Generate slides
     const slides = selectedGenerators.map((gen, index) => gen.generate(input, index + 1));
 
     return slides;
+  }
+
+  /**
+   * Map structured wizard sections → slide types that should be treated as
+   * core when the user supplied real data for them.
+   */
+  private getStructuredPromotions(input: WizardInput): SlideType[] {
+    const s = input.structured;
+    if (!s) return [];
+    const promoted: SlideType[] = [];
+    if ((s.pricingTiers?.length ?? 0) > 0)  promoted.push(SlideType.PRICING);
+    if ((s.roadmapPhases?.length ?? 0) > 0) promoted.push(SlideType.ROADMAP);
+    if ((s.competitors?.length ?? 0) > 0)   promoted.push(SlideType.COMPETITION);
+    if ((s.kpis?.length ?? 0) >= 3)         promoted.push(SlideType.TRACTION);
+    if (!!s.financials?.revenue || (s.financials?.projections?.length ?? 0) > 0) promoted.push(SlideType.FINANCIALS);
+    return promoted;
   }
 
   /**
@@ -107,11 +130,15 @@ export class SlideFactory {
   private selectGenerators(
     generators: ISlideGenerator[],
     config: GenerationConfig,
+    structuredPromotions: SlideType[] = [],
   ): ISlideGenerator[] {
     const { slideCount, contentDepth, documentType } = config;
 
-    // Define core slides that should always be included
-    const coreTypes = this.getCoreSlideTypes(documentType);
+    // Define core slides that should always be included.
+    // Phase 28 promotes structured-backed slide types into the core list so
+    // user-supplied data doesn't get dropped by the slot cap.
+    const baseCore = this.getCoreSlideTypes(documentType);
+    const coreTypes = Array.from(new Set([...baseCore, ...structuredPromotions]));
 
     // Separate core and optional
     const coreGenerators = generators.filter(gen => coreTypes.includes(gen.type));
@@ -120,8 +147,12 @@ export class SlideFactory {
     // Start with core slides
     const selected: ISlideGenerator[] = [...coreGenerators];
 
+    // Effective slide budget: never truncate structured-backed core slides
+    // below the user's data, even if it exceeds the configured slideCount.
+    const effectiveSlideCount = Math.max(slideCount, coreGenerators.length);
+
     // Calculate remaining slots
-    const remainingSlots = slideCount - selected.length;
+    const remainingSlots = effectiveSlideCount - selected.length;
 
     // Add optional slides based on depth and remaining slots
     if (remainingSlots > 0) {
@@ -130,8 +161,8 @@ export class SlideFactory {
     }
 
     // If we have more slides than target, prioritize by keeping highest priority
-    if (selected.length > slideCount) {
-      return selected.slice(0, slideCount);
+    if (selected.length > effectiveSlideCount) {
+      return selected.slice(0, effectiveSlideCount);
     }
 
     return selected;

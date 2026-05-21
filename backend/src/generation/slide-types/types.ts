@@ -37,6 +37,20 @@ export enum SlideType {
   APPENDIX = 'appendix',
 }
 
+// Phase 28 — Structured business data optionally supplied by the wizard.
+// When present, the ContentStructureAnalyzer prefers these over text extraction.
+export interface StructuredWizardInput {
+  kpis?:         Array<{ label: string; value: string; trend?: string; trendDirection?: 'up' | 'down' | 'flat' }>;
+  pricingTiers?: Array<{ name: string; price: string; features: string[]; target?: string; highlight?: boolean }>;
+  roadmapPhases?: Array<{ phase: string; period?: string; milestones: string[] }>;
+  teamMembers?:  Array<{ name: string; role: string; experience?: string; responsibilities?: string }>;
+  competitors?:  Array<{ name: string; strengths?: string; weaknesses?: string }>;
+  funding?:      { amount?: string; roundType?: string; runway?: string; allocations: Array<{ category: string; percentage?: number; amount?: string }> };
+  marketSizing?: { tam?: string; sam?: string; som?: string; growthRate?: string; region?: string; drivers?: string[] };
+  swot?:         { strengths: string[]; weaknesses: string[]; opportunities: string[]; threats: string[] };
+  financials?:   { revenue?: string; costs?: string; grossMargin?: string; burnRate?: string; runway?: string; projections?: Array<{ year: string; revenue: string; expenses: string; ebitda?: string }> };
+}
+
 export interface WizardInput {
   // Step 1: Document Type
   documentType: string;
@@ -88,6 +102,9 @@ export interface WizardInput {
   includeFinancials: boolean;
   includeSpeakerNotes: boolean;
   includeExecutiveSummary: boolean;
+
+  // Phase 28 — Optional structured payload from the wizard.
+  structured?: StructuredWizardInput;
 }
 
 export interface SlideContent {

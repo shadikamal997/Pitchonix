@@ -51,7 +51,8 @@ export class CompetitionSlideGenerator extends BaseSlideGenerator {
   defaultPriority = 8;
 
   isApplicable(input: WizardInput): boolean {
-    return !!input.competitors && input.competitors.trim().length > 0;
+    return (!!input.competitors && input.competitors.trim().length > 0) ||
+           (input.structured?.competitors?.length ?? 0) > 0;
   }
 
   getTitle(input: WizardInput): string {
@@ -108,7 +109,8 @@ export class RoadmapSlideGenerator extends BaseSlideGenerator {
   defaultPriority = 9;
 
   isApplicable(input: WizardInput): boolean {
-    return !!input.roadmap && input.roadmap.trim().length > 0;
+    return (!!input.roadmap && input.roadmap.trim().length > 0) ||
+           (input.structured?.roadmapPhases?.length ?? 0) > 0;
   }
 
   getTitle(input: WizardInput): string {
@@ -183,7 +185,8 @@ export class PricingSlideGenerator extends BaseSlideGenerator {
   defaultPriority = 10;
 
   isApplicable(input: WizardInput): boolean {
-    return !!input.pricing && input.pricing.trim().length > 20;
+    return (!!input.pricing && input.pricing.trim().length > 20) ||
+           (input.structured?.pricingTiers?.length ?? 0) > 0;
   }
 
   getTitle(input: WizardInput): string {

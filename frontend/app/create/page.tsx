@@ -14,6 +14,9 @@ import Step3AudienceGoal from '@/components/wizard/Step3AudienceGoal';
 import Step4BusinessDetails from '@/components/wizard/Step4BusinessDetails';
 import Step5DesignPreferences from '@/components/wizard/Step5DesignPreferences';
 import Step6GenerationSettings from '@/components/wizard/Step6GenerationSettings';
+import StructuredDataStep from '@/components/wizard/StructuredDataStep';
+import WizardIntelligencePanel from '@/components/wizard/WizardIntelligencePanel';
+import { emptyStructuredWizardData, type StructuredWizardData } from '@/lib/wizard-structured';
 
 // Dynamic wizard configuration based on document type
 type StepConfig = {
@@ -37,29 +40,33 @@ const getWizardSteps = (documentType: string): StepConfig[] => {
       ...baseSteps,
       { id: 3, title: 'Audience & Goal', description: 'Investors & purpose', component: 'Step3' },
       { id: 4, title: 'Pitch Details', description: 'Problem & solution', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     business_plan: [
       ...baseSteps,
       { id: 3, title: 'Executive Summary', description: 'High-level overview', component: 'Step3' },
       { id: 4, title: 'Business Model', description: 'How you operate', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     proposal: [
       ...baseSteps,
       { id: 3, title: 'Client & Goal', description: 'Who & what for', component: 'Step3' },
       { id: 4, title: 'Solution & Scope', description: 'What you\'ll deliver', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     sales_deck: [
       ...baseSteps,
       { id: 3, title: 'Target Audience', description: 'Customer profile', component: 'Step3' },
       { id: 4, title: 'Value Proposition', description: 'Why buy from you', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     one_pager: [
       ...baseSteps,
@@ -71,78 +78,89 @@ const getWizardSteps = (documentType: string): StepConfig[] => {
       ...baseSteps,
       { id: 3, title: 'Customer Story', description: 'Who & challenge', component: 'Step3' },
       { id: 4, title: 'Solution & Results', description: 'What you delivered', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     training_presentation: [
       ...baseSteps,
       { id: 3, title: 'Learning Goals', description: 'Objectives', component: 'Step3' },
       { id: 4, title: 'Content Structure', description: 'Topics & modules', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     product_launch: [
       ...baseSteps,
       { id: 3, title: 'Product Details', description: 'Features & benefits', component: 'Step3' },
       { id: 4, title: 'Launch Strategy', description: 'Go-to-market plan', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     strategy_presentation: [
       ...baseSteps,
       { id: 3, title: 'Strategic Vision', description: 'Goals & objectives', component: 'Step3' },
       { id: 4, title: 'Roadmap & Initiatives', description: 'Action plan', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     board_meeting_deck: [
       ...baseSteps,
       { id: 3, title: 'Board Context', description: 'Meeting purpose', component: 'Step3' },
       { id: 4, title: 'Key Topics', description: 'Agenda & updates', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     company_profile: [
       ...baseSteps,
       { id: 3, title: 'Target Audience', description: 'Who will read this', component: 'Step3' },
       { id: 4, title: 'Company Story', description: 'History & achievements', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     executive_summary: [
       ...baseSteps,
       { id: 3, title: 'Summary Context', description: 'Purpose & audience', component: 'Step3' },
       { id: 4, title: 'Key Highlights', description: 'Main points', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     marketing_plan: [
       ...baseSteps,
       { id: 3, title: 'Market & Audience', description: 'Target customers', component: 'Step3' },
       { id: 4, title: 'Strategy & Tactics', description: 'Marketing approach', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     financial_projection: [
       ...baseSteps,
       { id: 3, title: 'Projection Period', description: 'Timeframe & goals', component: 'Step3' },
       { id: 4, title: 'Financial Details', description: 'Revenue & expenses', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     internal_report: [
       ...baseSteps,
       { id: 3, title: 'Report Context', description: 'Purpose & scope', component: 'Step3' },
       { id: 4, title: 'Key Findings', description: 'Data & insights', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
     partnership_proposal: [
       ...baseSteps,
       { id: 3, title: 'Partner Details', description: 'Who & why partner', component: 'Step3' },
       { id: 4, title: 'Partnership Value', description: 'Mutual benefits', component: 'Step4' },
-      { id: 5, title: 'Design', description: 'Visual preferences', component: 'Step5' },
-      { id: 6, title: 'Settings', description: 'Generation options', component: 'Step6' },
+      { id: 5, title: 'Business Data', description: 'KPIs, pricing, team, …', component: 'StepStructured' },
+      { id: 6, title: 'Design', description: 'Visual preferences', component: 'Step5' },
+      { id: 7, title: 'Settings', description: 'Generation options', component: 'Step6' },
     ],
   };
 
@@ -215,6 +233,9 @@ export interface WizardData {
   includeFinancials: boolean;
   includeSpeakerNotes: boolean;
   includeExecutiveSummary: boolean;
+
+  // Phase 28 — Structured business data (preferred by generation engine)
+  structured?: StructuredWizardData;
 }
 
 // Wrap in Suspense to satisfy Next.js requirement for useSearchParams()
@@ -304,6 +325,7 @@ function CreateWizardPage() {
     includeFinancials: true,
     includeSpeakerNotes: true,
     includeExecutiveSummary: true,
+    structured: emptyStructuredWizardData,
   };
   
   const [wizardData, setWizardData] = useState<WizardData>(getInitialData());
@@ -505,7 +527,13 @@ function CreateWizardPage() {
     if (currentStepConfig.component === 'Step4') {
       return wizardData.problem !== '' && wizardData.solution !== '';
     }
-    
+
+    // Phase 28: Structured Data — always permits "next" (everything is optional;
+    // the readiness panel surfaces missing items, doesn't block).
+    if (currentStepConfig.component === 'StepStructured') {
+      return true;
+    }
+
     // Step 5: Design
     if (currentStepConfig.component === 'Step5') {
       return wizardData.theme !== '';
@@ -533,6 +561,14 @@ function CreateWizardPage() {
         return <Step3AudienceGoal data={wizardData} onUpdate={updateWizardData} documentType={wizardData.documentType} />;
       case 'Step4':
         return <Step4BusinessDetails data={wizardData} onUpdate={updateWizardData} documentType={wizardData.documentType} />;
+      case 'StepStructured':
+        return (
+          <StructuredDataStep
+            documentType={wizardData.documentType}
+            structured={wizardData.structured ?? emptyStructuredWizardData}
+            onUpdate={(structured) => updateWizardData({ structured })}
+          />
+        );
       case 'Step5':
         return <Step5DesignPreferences data={wizardData} onUpdate={updateWizardData} />;
       case 'Step6':
@@ -628,6 +664,32 @@ function CreateWizardPage() {
               ))}
             </div>
           </div>
+
+          {/* Phase 28 — Live intelligence panel (hidden on document-type step) */}
+          {currentStep > 1 && (
+            <WizardIntelligencePanel
+              data={{
+                documentType:     wizardData.documentType,
+                companyName:      wizardData.companyName,
+                industry:         wizardData.industry,
+                audience:         wizardData.audience,
+                tone:             wizardData.tone,
+                problem:          wizardData.problem,
+                solution:         wizardData.solution,
+                targetCustomers:  wizardData.targetCustomers,
+                marketOpportunity:wizardData.marketOpportunity,
+                competitors:      wizardData.competitors,
+                differentiation:  wizardData.differentiation,
+                revenueModel:     wizardData.revenueModel,
+                pricing:          wizardData.pricing,
+                traction:         wizardData.traction,
+                team:             wizardData.team,
+                fundingAsk:       wizardData.fundingAsk,
+                roadmap:          wizardData.roadmap,
+                structured:       wizardData.structured,
+              }}
+            />
+          )}
 
           {/* Step Content Card */}
           <div className="rounded-2xl bg-white border border-slate-200 shadow-lg overflow-hidden">

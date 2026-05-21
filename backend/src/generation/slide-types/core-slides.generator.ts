@@ -10,7 +10,8 @@ export class BusinessModelSlideGenerator extends BaseSlideGenerator {
   defaultPriority = 5;
 
   isApplicable(input: WizardInput): boolean {
-    return !!(input.revenueModel || input.pricing);
+    return !!(input.revenueModel || input.pricing) ||
+           (input.structured?.pricingTiers?.length ?? 0) > 0;
   }
 
   getTitle(input: WizardInput): string {
@@ -119,7 +120,8 @@ export class TractionSlideGenerator extends BaseSlideGenerator {
   defaultPriority = 6;
 
   isApplicable(input: WizardInput): boolean {
-    return !!input.traction && input.traction.trim().length > 0;
+    return (!!input.traction && input.traction.trim().length > 0) ||
+           (input.structured?.kpis?.length ?? 0) > 0;
   }
 
   getTitle(input: WizardInput): string {
@@ -228,7 +230,8 @@ export class TeamSlideGenerator extends BaseSlideGenerator {
   defaultPriority = 7;
 
   isApplicable(input: WizardInput): boolean {
-    return !!input.team && input.team.trim().length > 0;
+    return (!!input.team && input.team.trim().length > 0) ||
+           (input.structured?.teamMembers?.length ?? 0) > 0;
   }
 
   getTitle(input: WizardInput): string {
@@ -337,7 +340,10 @@ export class AskSlideGenerator extends BaseSlideGenerator {
   defaultPriority = 100; // Usually last slide
 
   isApplicable(input: WizardInput): boolean {
-    return input.documentType === 'pitch_deck' || !!input.fundingAsk;
+    return input.documentType === 'pitch_deck' ||
+           !!input.fundingAsk ||
+           !!input.structured?.funding?.amount ||
+           (input.structured?.funding?.allocations?.length ?? 0) > 0;
   }
 
   getTitle(input: WizardInput): string {
