@@ -26,13 +26,21 @@ interface Props {
 }
 
 const CHART_KINDS: Array<{ value: ChartKind; label: string }> = [
+  // Core
   { value: 'bar',        label: 'Bar' },
+  { value: 'stackedBar', label: 'Stacked bar' },
   { value: 'line',       label: 'Line' },
   { value: 'area',       label: 'Area' },
   { value: 'pie',        label: 'Pie' },
   { value: 'donut',      label: 'Donut' },
   { value: 'kpi',        label: 'KPI' },
   { value: 'comparison', label: 'Comparison' },
+  // Phase 33 additions
+  { value: 'funnel',     label: 'Funnel' },
+  { value: 'scatter',    label: 'Scatter' },
+  { value: 'waterfall',  label: 'Waterfall' },
+  { value: 'radar',      label: 'Radar' },
+  { value: 'heatmap',    label: 'Heatmap' },
 ];
 
 const DEFAULT_PALETTE = ['#16a34a','#0ea5e9','#7c3aed','#f59e0b','#ef4444','#0891b2','#db2777','#525252'];
@@ -96,8 +104,11 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
     set({ series: next });
   };
 
-  // Some chart kinds use only the first series (pie / donut / kpi)
-  const isSingleSeries = c.type === 'pie' || c.type === 'donut' || c.type === 'kpi';
+  // Some chart kinds use only the first series (pie / donut / kpi / funnel /
+  // waterfall — waterfall reads series[0].values as signed deltas).
+  const isSingleSeries =
+    c.type === 'pie' || c.type === 'donut' || c.type === 'kpi' ||
+    c.type === 'funnel' || c.type === 'waterfall';
 
   return (
     <>
@@ -155,6 +166,42 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
                     label="Show grid" />
           </>
         )}
+      </PanelSection>
+
+      {/* Phase 33I — Insights layer */}
+      <PanelSection title="Insights">
+        <Toggle
+          value={!!c.insight?.highlightBest}
+          onChange={(v) => set({ insight: { ...(c.insight || {}), highlightBest: v } })}
+          label="Highlight best value"
+        />
+        <Toggle
+          value={!!c.insight?.highlightWorst}
+          onChange={(v) => set({ insight: { ...(c.insight || {}), highlightWorst: v } })}
+          label="Highlight worst value"
+        />
+        <Row label="Growth">
+          <TextField
+            value={c.insight?.growth?.label ?? ''}
+            onChange={(v) => set({
+              insight: { ...(c.insight || {}), growth: v ? { label: v, tone: c.insight?.growth?.tone || 'positive' } : undefined },
+            })}
+            placeholder="e.g. +24% YoY"
+          />
+          {c.insight?.growth?.label && (
+            <SegmentedControl
+              value={c.insight.growth.tone ?? 'positive'}
+              onChange={(t) => set({
+                insight: { ...(c.insight || {}), growth: { label: c.insight!.growth!.label, tone: t as any } },
+              })}
+              options={[
+                { value: 'positive', label: '+' },
+                { value: 'neutral',  label: '•' },
+                { value: 'negative', label: '−' },
+              ]}
+            />
+          )}
+        </Row>
       </PanelSection>
 
       <PanelSection title={`Categories (${c.categories.length})`}>

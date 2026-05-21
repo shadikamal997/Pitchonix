@@ -76,8 +76,32 @@ export interface MetricContent { value: string; label: string; unit?: string; de
 export interface KpiContent    { value: string; label: string; sublabel?: string; series?: number[]; trendDirection?: 'up' | 'down' | 'flat' }
 
 // Chart
-export type ChartKind = 'bar' | 'line' | 'pie' | 'donut' | 'area' | 'kpi' | 'comparison';
+export type ChartKind =
+  // Legacy / core
+  | 'bar' | 'line' | 'pie' | 'donut' | 'area' | 'kpi' | 'comparison'
+  // Phase 33 additions
+  | 'stackedBar'    // bars within a category stacked by series
+  | 'funnel'        // diminishing horizontal trapezoids (sales / TAM-SAM-SOM)
+  | 'scatter'       // pairs (x, y) per series — values[2i]=x, values[2i+1]=y
+  | 'waterfall'     // signed deltas (positive=green, negative=red, totals=blue)
+  | 'radar'         // multi-axis polygon
+  | 'heatmap';      // categories × series matrix coloured by intensity
 export interface ChartSeries  { name: string; values: number[]; color?: string }
+export interface ChartInsight {
+  /** Phase 33I — highlight the maximum-value bar / point. */
+  highlightBest?:  boolean;
+  /** Phase 33I — highlight the minimum-value bar / point. */
+  highlightWorst?: boolean;
+  /** Phase 33I — free-form annotations pinned to a (category, series) cell. */
+  annotations?: Array<{
+    categoryIndex: number;
+    seriesIndex?:  number;          // omitted = first series
+    label:         string;
+    tone?:         'positive' | 'negative' | 'neutral';
+  }>;
+  /** Phase 33I — overall growth callout shown in the top-right of the chart. */
+  growth?: { label: string; tone?: 'positive' | 'negative' | 'neutral' };
+}
 export interface ChartContent {
   type: ChartKind;
   title?: string;
@@ -87,6 +111,11 @@ export interface ChartContent {
   legend?: { visible: boolean; position?: 'top' | 'bottom' | 'left' | 'right' };
   showValues?: boolean;
   showGrid?: boolean;
+  /** Phase 33I — insight overlay applied during render. */
+  insight?: ChartInsight;
+  /** Phase 33A — chart variant chosen via family + brand tokens. When omitted
+   *  the renderer falls back to the deprecated 8-colour palette. */
+  familyId?: string;
 }
 
 // Table

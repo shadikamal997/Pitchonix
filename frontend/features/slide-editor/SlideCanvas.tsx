@@ -657,7 +657,7 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
               </div>
             ) : (
               <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
-                {renderElement(el, { pageNumber, total: totalPages })}
+                {renderElement(el, { pageNumber, total: totalPages, familyId: compositionFamilyId ?? undefined })}
               </div>
             )}
 
