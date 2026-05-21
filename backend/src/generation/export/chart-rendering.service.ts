@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import { ChartConfiguration } from 'chart.js';
+import sharp from 'sharp';
 import { ChartConfig, ChartType } from '../visual/types';
+import { buildChartSvg } from './svg-chart-builder';
+import type { ChartContent } from './chart-types';
 
 /**
  * Chart Rendering Service
@@ -19,6 +22,55 @@ export class ChartRenderingService {
       height: 600,
       backgroundColour: 'white',
     });
+  }
+
+  /**
+   * Phase 33.5 — Render any ChartContent (the Phase 33 frontend shape) to
+   * a PNG buffer via the shared SVG builder + sharp. Preferred over
+   * `renderChart()` for editor-edited charts; guarantees pixel parity with
+   * the frontend SVG renderer because both produce the same SVG.
+   *
+   * Returns a Buffer (raw PNG bytes). Use `renderChartContentToDataUrl()`
+   * for an inline base64 string.
+   */
+  async renderChartContent(
+    content: ChartContent,
+    opts?: { width?: number; height?: number },
+  ): Promise<Buffer> {
+    const width  = opts?.width  ?? 1200;
+    const height = opts?.height ?? 720;
+    const svg = buildChartSvg(content, { width, height });
+    try {
+      return await sharp(Buffer.from(svg))
+        .resize(width, height, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+        .png()
+        .toBuffer();
+    } catch (error: any) {
+      this.logger.error(`SVG→PNG conversion failed: ${error.message}`, error.stack);
+      throw new Error(`Chart rendering failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Convenience: same as renderChartContent but returns a data URL ready
+   * to embed in HTML / PPTX / PDF.
+   */
+  async renderChartContentToDataUrl(
+    content: ChartContent,
+    opts?: { width?: number; height?: number },
+  ): Promise<string> {
+    const buffer = await this.renderChartContent(content, opts);
+    return `data:image/png;base64,${buffer.toString('base64')}`;
+  }
+
+  /**
+   * Render multiple ChartContents in parallel.
+   */
+  async renderChartContents(
+    contents: ChartContent[],
+    opts?: { width?: number; height?: number },
+  ): Promise<Buffer[]> {
+    return Promise.all(contents.map((c) => this.renderChartContent(c, opts)));
   }
 
   /**

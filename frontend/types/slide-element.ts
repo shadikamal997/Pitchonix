@@ -85,8 +85,22 @@ export type ChartKind =
   | 'scatter'       // pairs (x, y) per series — values[2i]=x, values[2i+1]=y
   | 'waterfall'     // signed deltas (positive=green, negative=red, totals=blue)
   | 'radar'         // multi-axis polygon
-  | 'heatmap';      // categories × series matrix coloured by intensity
+  | 'heatmap'       // categories × series matrix coloured by intensity
+  // Phase 33.5 additions
+  | 'bubble'        // scatter with sized markers — [x, y, r] triplets
+  | 'gauge'         // semicircular value vs max
+  | 'treemap'       // proportional rectangle packing (single series)
+  | 'stackedArea'   // area chart with series stacked
+  | 'percentStackedBar'   // stacked bar normalized to 100% per category
+  | 'percentStackedArea'  // stacked area normalized to 100%
+  | 'dualAxis'      // bar (series[0]) + line (series[1]) on independent axes
+  | 'matrix2x2';    // 2×2 quadrant scatter (risk / impact-effort / positioning)
 export interface ChartSeries  { name: string; values: number[]; color?: string }
+export interface ChartNumberFormat {
+  kind?:     'currency' | 'percent' | 'integer' | 'decimal' | 'compact';
+  currency?: string;     // defaults to '$'
+  decimals?: number;     // defaults to 1
+}
 export interface ChartInsight {
   /** Phase 33I — highlight the maximum-value bar / point. */
   highlightBest?:  boolean;
@@ -116,6 +130,9 @@ export interface ChartContent {
   /** Phase 33A — chart variant chosen via family + brand tokens. When omitted
    *  the renderer falls back to the deprecated 8-colour palette. */
   familyId?: string;
+  /** Phase 33.5 — formatting applied to every value rendered on the chart
+   *  (bars, lines, axes, KPI numbers, callouts). */
+  numberFormat?: ChartNumberFormat;
 }
 
 // Table

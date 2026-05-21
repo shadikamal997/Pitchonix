@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Plus, X, ChevronUp, ChevronDown, Palette as PaletteIcon } from 'lucide-react';
-import type { SlideElementDTO, ChartContent, ChartKind, ChartSeries } from '@/types/slide-element';
+import { Plus, X, ChevronUp, ChevronDown, Palette as PaletteIcon, Sparkles } from 'lucide-react';
+import type { SlideElementDTO, ChartContent, ChartKind, ChartSeries, ChartNumberFormat } from '@/types/slide-element';
 import {
   PanelSection, Row, TextField, NumberField, ColorField, SelectField, SegmentedControl, Toggle,
 } from '../Primitives';
+import { generateInsights } from '../../charts/auto-insights';
 
 // =============================================================================
 //  ChartPanel — full editor for chart elements.
@@ -27,20 +28,38 @@ interface Props {
 
 const CHART_KINDS: Array<{ value: ChartKind; label: string }> = [
   // Core
-  { value: 'bar',        label: 'Bar' },
-  { value: 'stackedBar', label: 'Stacked bar' },
-  { value: 'line',       label: 'Line' },
-  { value: 'area',       label: 'Area' },
-  { value: 'pie',        label: 'Pie' },
-  { value: 'donut',      label: 'Donut' },
-  { value: 'kpi',        label: 'KPI' },
-  { value: 'comparison', label: 'Comparison' },
+  { value: 'bar',                label: 'Bar' },
+  { value: 'stackedBar',         label: 'Stacked bar' },
+  { value: 'percentStackedBar',  label: '100% stacked bar' },
+  { value: 'line',               label: 'Line' },
+  { value: 'area',               label: 'Area' },
+  { value: 'stackedArea',        label: 'Stacked area' },
+  { value: 'percentStackedArea', label: '100% stacked area' },
+  { value: 'pie',                label: 'Pie' },
+  { value: 'donut',              label: 'Donut' },
+  { value: 'kpi',                label: 'KPI' },
+  { value: 'comparison',         label: 'Comparison' },
   // Phase 33 additions
-  { value: 'funnel',     label: 'Funnel' },
-  { value: 'scatter',    label: 'Scatter' },
-  { value: 'waterfall',  label: 'Waterfall' },
-  { value: 'radar',      label: 'Radar' },
-  { value: 'heatmap',    label: 'Heatmap' },
+  { value: 'funnel',             label: 'Funnel' },
+  { value: 'scatter',            label: 'Scatter' },
+  { value: 'waterfall',          label: 'Waterfall' },
+  { value: 'radar',              label: 'Radar' },
+  { value: 'heatmap',            label: 'Heatmap' },
+  // Phase 33.5 additions
+  { value: 'bubble',             label: 'Bubble' },
+  { value: 'gauge',              label: 'Gauge' },
+  { value: 'treemap',            label: 'Treemap' },
+  { value: 'dualAxis',           label: 'Dual axis' },
+  { value: 'matrix2x2',          label: '2×2 matrix' },
+];
+
+const NUMBER_FORMAT_KINDS: Array<{ value: NonNullable<ChartNumberFormat['kind']> | 'auto'; label: string; hint: string }> = [
+  { value: 'auto',     label: 'Auto',     hint: '12K · 1.2M' },
+  { value: 'integer',  label: 'Integer',  hint: '1,200' },
+  { value: 'decimal',  label: 'Decimal',  hint: '12.5' },
+  { value: 'percent',  label: 'Percent',  hint: '18.4%' },
+  { value: 'currency', label: 'Currency', hint: '$1.2M' },
+  { value: 'compact',  label: 'Compact',  hint: '1.2M' },
 ];
 
 const DEFAULT_PALETTE = ['#16a34a','#0ea5e9','#7c3aed','#f59e0b','#ef4444','#0891b2','#db2777','#525252'];
@@ -105,10 +124,11 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
   };
 
   // Some chart kinds use only the first series (pie / donut / kpi / funnel /
-  // waterfall — waterfall reads series[0].values as signed deltas).
+  // waterfall / gauge / treemap — single-value or single-array charts).
   const isSingleSeries =
     c.type === 'pie' || c.type === 'donut' || c.type === 'kpi' ||
-    c.type === 'funnel' || c.type === 'waterfall';
+    c.type === 'funnel' || c.type === 'waterfall' ||
+    c.type === 'gauge' || c.type === 'treemap';
 
   return (
     <>
@@ -168,8 +188,54 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
         )}
       </PanelSection>
 
-      {/* Phase 33I — Insights layer */}
+      {/* Phase 33.5 — Number formatting */}
+      <PanelSection title="Number format">
+        <Row label="Style">
+          <SelectField
+            value={c.numberFormat?.kind ?? 'auto'}
+            onChange={(v) => {
+              if (v === 'auto') {
+                set({ numberFormat: undefined });
+              } else {
+                set({ numberFormat: { ...(c.numberFormat || {}), kind: v as any } });
+              }
+            }}
+            options={NUMBER_FORMAT_KINDS.map((f) => ({ value: f.value, label: `${f.label} — ${f.hint}` }))}
+          />
+        </Row>
+        {c.numberFormat?.kind === 'currency' && (
+          <Row label="Symbol">
+            <TextField
+              value={c.numberFormat.currency ?? '$'}
+              onChange={(v) => set({ numberFormat: { ...(c.numberFormat || {}), currency: v || '$' } })}
+              placeholder="$"
+            />
+          </Row>
+        )}
+        {(c.numberFormat?.kind === 'currency' ||
+          c.numberFormat?.kind === 'percent'  ||
+          c.numberFormat?.kind === 'decimal'  ||
+          c.numberFormat?.kind === 'compact') && (
+          <Row label="Decimals">
+            <NumberField
+              value={c.numberFormat.decimals ?? 1}
+              onChange={(v) => set({ numberFormat: { ...(c.numberFormat || {}), decimals: Math.max(0, Math.min(4, Math.round(v))) } })}
+              step={1}
+            />
+          </Row>
+        )}
+      </PanelSection>
+
+      {/* Phase 33I + 33.5 — Insights layer */}
       <PanelSection title="Insights">
+        <button
+          type="button"
+          onClick={() => set({ insight: generateInsights(c) })}
+          className="w-full mb-2 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-semibold rounded bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border border-purple-200 text-purple-800"
+        >
+          <Sparkles className="w-3 h-3" />
+          Auto-detect insights
+        </button>
         <Toggle
           value={!!c.insight?.highlightBest}
           onChange={(v) => set({ insight: { ...(c.insight || {}), highlightBest: v } })}
@@ -202,6 +268,20 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
             />
           )}
         </Row>
+        {c.insight?.annotations && c.insight.annotations.length > 0 && (
+          <Row label="Annotations">
+            <div className="text-[10px] text-slate-500">
+              {c.insight.annotations.length} pinned ·{' '}
+              <button
+                type="button"
+                onClick={() => set({ insight: { ...(c.insight || {}), annotations: undefined } })}
+                className="underline hover:text-slate-700"
+              >
+                clear
+              </button>
+            </div>
+          </Row>
+        )}
       </PanelSection>
 
       <PanelSection title={`Categories (${c.categories.length})`}>
