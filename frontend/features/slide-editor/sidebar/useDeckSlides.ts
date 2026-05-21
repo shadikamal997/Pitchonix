@@ -24,6 +24,8 @@ export interface SlideListItem {
   speakerNotes: string | null;
   layoutKey?:   string | null;
   themeKey?:    string | null;
+  /** Phase 32F — slide.metadata.sectionId is consumed by the sectioned sidebar. */
+  metadata?:    any | null;
 }
 
 export interface UseDeckSlides {
@@ -37,6 +39,14 @@ export interface UseDeckSlides {
   remove:           (slideId: string) => Promise<boolean>;
   reorder:          (newOrderIds: string[]) => Promise<void>;
   updateLocal:      (slideId: string, patch: Partial<SlideListItem>) => void;   // for title rename, etc.
+  /** Phase 32F — write a slide's metadata back to the server. Used to assign
+   *  / unassign a section. Optimistic; merges with the existing metadata blob. */
+  patchSlideMetadata: (slideId: string, patch: Record<string, any>) => Promise<void>;
+  /** Phase 32G — bulk delete in a single round-trip per id (no batch endpoint
+   *  exists yet; the loop is short for typical use). */
+  removeMany:       (ids: string[]) => Promise<void>;
+  /** Phase 32G — bulk duplicate. */
+  duplicateMany:    (ids: string[]) => Promise<string[]>;
 }
 
 export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides {
@@ -135,5 +145,46 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
     setSlides((prev) => prev.map((s) => (s.id === slideId ? { ...s, ...patch } : s)));
   }, []);
 
-  return { slides, loading, error, refresh, insertAfter, insertAtEnd, duplicate, remove, reorder, updateLocal };
+  const patchSlideMetadata = useCallback(async (slideId: string, patch: Record<string, any>) => {
+    // Optimistic merge — preserve any keys the caller didn't mention.
+    let nextMetadata: any = null;
+    setSlides((prev) => prev.map((s) => {
+      if (s.id !== slideId) return s;
+      nextMetadata = { ...(s.metadata || {}), ...patch };
+      return { ...s, metadata: nextMetadata };
+    }));
+    try {
+      await api.patch(`/slides/${slideId}`, { metadata: nextMetadata });
+    } catch {
+      await refresh();
+    }
+  }, [refresh]);
+
+  const removeMany = useCallback(async (ids: string[]) => {
+    // Optimistic
+    setSlides((prev) => prev.filter((s) => !ids.includes(s.id)));
+    try {
+      await Promise.all(ids.map((id) => api.delete(`/slides/${id}`)));
+    } catch {
+      await refresh();
+    }
+  }, [refresh]);
+
+  const duplicateMany = useCallback(async (ids: string[]): Promise<string[]> => {
+    const newIds: string[] = [];
+    for (const id of ids) {
+      try {
+        const { data } = await api.post<SlideListItem>(`/slides/${id}/duplicate`);
+        newIds.push(data.id);
+      } catch { /* keep going; one failure shouldn't abort the batch */ }
+    }
+    await refresh();
+    return newIds;
+  }, [refresh]);
+
+  return {
+    slides, loading, error, refresh,
+    insertAfter, insertAtEnd, duplicate, remove, reorder,
+    updateLocal, patchSlideMetadata, removeMany, duplicateMany,
+  };
 }

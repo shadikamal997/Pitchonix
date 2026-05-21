@@ -96,6 +96,15 @@ export interface TableContent {
   rows:    TableCell[][];   // row-major
   borders?: { color?: string; width?: number; style?: 'solid' | 'dashed' | 'none' };
   zebra?:   boolean;
+  /** Phase 32K — optional explicit footer row (totals, sums). Rendered in
+   *  <tfoot> with footer-row styling distinct from the header. */
+  footer?:  TableCell[];
+  /** Phase 32K — when true, header/footer pick up the element's theme colour
+   *  (`style.fill` for the band, contrasted text colour). Falls back to slate. */
+  themed?:  boolean;
+  /** Phase 32K — explicit column widths in CSS units (px or %). When missing,
+   *  the browser distributes evenly via `table-layout: fixed`. */
+  colWidths?: Array<string | number>;
 }
 
 // Media

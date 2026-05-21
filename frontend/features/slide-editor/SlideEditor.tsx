@@ -15,7 +15,8 @@ import { InlineTextEditor } from './editing/InlineTextEditor';
 import { InlineListEditor } from './editing/InlineListEditor';
 import { FloatingToolbar } from './editing/FloatingToolbar';
 import { Inspector } from './inspector/Inspector';
-import { SlideSidebar } from './sidebar/SlideSidebar';
+import { SectionedSidebar } from './sidebar/SectionedSidebar';
+import type { DeckMetadata } from './sidebar/sections';
 import { useDeckSlides } from './sidebar/useDeckSlides';
 import { bumpSlideThumbnail, bumpAllSlideThumbnails } from './sidebar/SlideThumbnail';
 import { useUndoRedo } from './useUndoRedo';
@@ -101,6 +102,32 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   // the next copy or page reload). Holds full SlideElementDTO snapshots so a
   // future cross-slide paste can read them.
   const clipboardRef = useRef<SlideElementDTO[] | null>(null);
+
+  // Phase 32F — deck-level metadata (sections catalog). Fetched once per deck
+  // and patched via the SectionedSidebar's onPatchDeckMetadata callback.
+  const [deckMetadata, setDeckMetadata] = useState<DeckMetadata | null>(null);
+  useEffect(() => {
+    if (!slide?.deckId) return;
+    let cancelled = false;
+    api.get(`/decks/${slide.deckId}`).then(({ data }) => {
+      if (!cancelled) setDeckMetadata((data?.metadata as DeckMetadata) || {});
+    }).catch(() => { /* non-blocking */ });
+    return () => { cancelled = true; };
+  }, [slide?.deckId]);
+  const handlePatchDeckMetadata = useCallback(async (patch: Partial<DeckMetadata>) => {
+    if (!slide?.deckId) return;
+    const next = { ...(deckMetadata || {}), ...patch };
+    setDeckMetadata(next);   // optimistic
+    try {
+      await api.patch(`/decks/${slide.deckId}`, { metadata: next });
+    } catch {
+      // Restore on failure by re-fetching
+      try {
+        const { data } = await api.get(`/decks/${slide.deckId}`);
+        setDeckMetadata((data?.metadata as DeckMetadata) || {});
+      } catch { /* keep optimistic if both calls fail */ }
+    }
+  }, [slide?.deckId, deckMetadata]);
 
   // ── Undo / redo ───────────────────────────────────────────────────────────
   // The hook holds snapshots of the elements array. `commit` is called from
@@ -808,8 +835,8 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
 
       {/* ── Sidebar + Stage + Inspector ───────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left sidebar */}
-        <SlideSidebar
+        {/* Left sidebar — sectioned + virtualized + multi-select (Phase 32F/G/L) */}
+        <SectionedSidebar
           api={deckSlides}
           currentSlideId={slideId}
           onNavigate={gotoSlide}
@@ -818,6 +845,8 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             await api.patch(`/slides/${id}`, { title: newTitle });
             if (id === slideId) setSlide((prev) => prev ? { ...prev, title: newTitle } : prev);
           }}
+          deckMetadata={deckMetadata}
+          onPatchDeckMetadata={handlePatchDeckMetadata}
         />
         <div className="flex-1 overflow-auto flex items-center justify-center p-8 relative">
           {api$.loading ? (

@@ -112,7 +112,20 @@ export const TablePanel: React.FC<Props> = ({ element, onPatch }) => {
     <>
       <PanelSection title="Table">
         <Toggle value={hasHeaders} onChange={toggleHeaders} label="Header row" />
-        <Toggle value={!!c.zebra} onChange={(v) => set({ zebra: v })} label="Zebra stripes" />
+        <Toggle
+          value={!!c.footer && c.footer.length > 0}
+          onChange={(on) => {
+            if (on) {
+              const footer: TableCell[] = Array.from({ length: cols }, () => ({ text: '', bold: true }));
+              set({ footer });
+            } else {
+              set({ footer: undefined });
+            }
+          }}
+          label="Footer row (totals)"
+        />
+        <Toggle value={!!c.zebra}  onChange={(v) => set({ zebra: v })}  label="Zebra stripes" />
+        <Toggle value={!!c.themed} onChange={(v) => set({ themed: v })} label="Theme-aware header" />
       </PanelSection>
 
       <PanelSection title="Borders">

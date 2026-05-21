@@ -61,24 +61,39 @@ export const TableRenderer: React.FC<Props> = ({ el }) => {
   };
 
   const hasHeaders = content.headers.length > 0;
+  const hasFooter  = !!content.footer && content.footer.length > 0;
   const cols = Math.max(
     content.headers.length,
+    content.footer?.length ?? 0,
     ...content.rows.map((r) => r.length),
     1,
   );
+
+  // Phase 32K — theme-aware band colours.
+  // When `themed` is true, the header background uses `style.fill` (or a
+  // safe slate fallback) and the text is auto-contrasted; the footer mirrors
+  // the band at lower opacity.
+  const themeBand = content.themed
+    ? (elStyle.fill && elStyle.fill !== 'transparent' ? elStyle.fill : '#0f172a')
+    : null;
+  const themeText = themeBand ? contrastTextOn(themeBand) : undefined;
 
   return (
     <div style={wrapStyle} className="slide-table">
       <table style={tableStyle}>
         <colgroup>
-          {Array.from({ length: cols }).map((_, i) => <col key={i} />)}
+          {Array.from({ length: cols }).map((_, i) => {
+            const w = content.colWidths?.[i];
+            return <col key={i} style={{ width: w !== undefined ? (typeof w === 'number' ? `${w}px` : w) : undefined }} />;
+          })}
         </colgroup>
 
         {hasHeaders && (
           <thead>
             <tr>
               {content.headers.map((cell, i) => (
-                <CellNode key={i} cell={cell} header borderRule={borderRule} />
+                <CellNode key={i} cell={cell} header borderRule={borderRule}
+                          themeBand={themeBand} themeText={themeText} />
               ))}
             </tr>
           </thead>
@@ -93,9 +108,20 @@ export const TableRenderer: React.FC<Props> = ({ el }) => {
             </tr>
           ))}
         </tbody>
+
+        {hasFooter && (
+          <tfoot>
+            <tr>
+              {content.footer!.map((cell, i) => (
+                <CellNode key={i} cell={cell} footer borderRule={borderRule}
+                          themeBand={themeBand} themeText={themeText} />
+              ))}
+            </tr>
+          </tfoot>
+        )}
       </table>
 
-      {content.headers.length === 0 && content.rows.length === 0 && (
+      {content.headers.length === 0 && content.rows.length === 0 && !hasFooter && (
         <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 11 }}>
           No table data
         </div>
@@ -111,19 +137,33 @@ export const TableRenderer: React.FC<Props> = ({ el }) => {
 const CellNode: React.FC<{
   cell:       TableCell;
   header?:    boolean;
+  footer?:    boolean;
   borderRule: string;
-}> = ({ cell, header, borderRule }) => {
+  themeBand?: string | null;
+  themeText?: string;
+}> = ({ cell, header, footer, borderRule, themeBand, themeText }) => {
   const Tag: 'th' | 'td' = header ? 'th' : 'td';
-  const isBold = !!cell.bold || header;
+  const isBold = !!cell.bold || header || footer;
+  // Phase 32K — themed band overrides the per-cell defaults but yields to an
+  // explicit `cell.fill`.
+  const bandBg = cell.fill ?? (
+    themeBand
+      ? (footer ? `color-mix(in srgb, ${themeBand} 18%, transparent)` : themeBand)
+      : (header ? '#f1f5f9'
+      : footer ? '#f8fafc'
+      : undefined)
+  );
+  const bandColor = cell.color ?? (themeBand ? (footer ? undefined : themeText) : undefined);
   const style: React.CSSProperties = {
     padding: '6px 8px',
     border: borderRule === 'none' ? 'none' : borderRule,
-    textAlign: cell.align ?? (header ? 'left' : 'left'),
+    textAlign: cell.align ?? 'left',
     fontWeight: isBold ? 700 : 400,
-    background: cell.fill ?? (header ? '#f1f5f9' : undefined),
-    color: cell.color,
+    background: bandBg,
+    color: bandColor,
     verticalAlign: 'middle',
     wordBreak: 'break-word',
+    borderTop: footer ? `2px solid ${themeBand || '#cbd5e1'}` : undefined,
   };
   return (
     <Tag
@@ -131,10 +171,35 @@ const CellNode: React.FC<{
       colSpan={cell.colspan && cell.colspan > 1 ? cell.colspan : undefined}
       rowSpan={cell.rowspan && cell.rowspan > 1 ? cell.rowspan : undefined}
     >
-      {cell.text || (header ? '' : <span>&nbsp;</span>)}
+      {cell.text || (header || footer ? '' : <span>&nbsp;</span>)}
     </Tag>
   );
 };
+
+// =============================================================================
+//  contrastTextOn — pick white or near-black based on a hex/HSL band colour.
+//  Used to keep theme-banded headers legible without manual text colour edits.
+// =============================================================================
+
+function contrastTextOn(color: string): string {
+  // Try to parse a #RRGGBB or #RGB hex; fall back to white.
+  const hex = color.trim();
+  let r = 0, g = 0, b = 0;
+  if (/^#([0-9a-fA-F]{6})$/.test(hex)) {
+    r = parseInt(hex.slice(1, 3), 16);
+    g = parseInt(hex.slice(3, 5), 16);
+    b = parseInt(hex.slice(5, 7), 16);
+  } else if (/^#([0-9a-fA-F]{3})$/.test(hex)) {
+    r = parseInt(hex[1] + hex[1], 16);
+    g = parseInt(hex[2] + hex[2], 16);
+    b = parseInt(hex[3] + hex[3], 16);
+  } else {
+    return '#ffffff';
+  }
+  // YIQ luminance approximation
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 145 ? '#0f172a' : '#ffffff';
+}
 
 // =============================================================================
 //  Normalisation — backstop for elements still carrying loose shapes.
@@ -149,6 +214,9 @@ function normalise(raw: any): TableContent {
               : [],
     borders: c.borders,
     zebra:   !!c.zebra,
+    footer:  Array.isArray(c.footer) ? c.footer.map(normaliseCell) : undefined,
+    themed:  !!c.themed,
+    colWidths: Array.isArray(c.colWidths) ? c.colWidths.slice() : undefined,
   };
 }
 
