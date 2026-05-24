@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { useToast } from '@/components/ToastProvider';
 import { Button } from '@/components/ui/button';
-import { Palette, Plus, Edit, Trash, X } from 'lucide-react';
+import {
+  Palette, Plus, Edit, Trash, X, Settings,
+  Type, ImageIcon, Files, Shield, MessageSquare, Archive, Download, Upload,
+} from 'lucide-react';
 import api from '@/lib/api';
 
 export default function BrandKitsPage() {
@@ -56,18 +59,18 @@ export default function BrandKitsPage() {
               <div className="animate-pulse">Loading brand kits...</div>
             </div>
           ) : brandKits.length === 0 ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-              <Palette className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2 text-gray-900">No Brand Kits Yet</h2>
-              <p className="text-gray-600 mb-6">
-                Create custom brand kits with your logo, colors, and fonts.
-                <br />
-                Apply them to your presentations and PDFs for consistent branding.
-              </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                Create Your First Brand Kit
-              </Button>
-            </div>
+            <EmptyState onCreate={() => setShowCreateDialog(true)} onImportZip={async (file) => {
+              try {
+                const form = new FormData();
+                form.append('file', file);
+                const { data } = await api.post('/brand-kits/import-zip', form, {
+                  headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                if (data?.id) router.push(`/brand-kits/${data.id}`);
+              } catch (e: any) {
+                toast.error(e?.response?.data?.message || 'Import failed');
+              }
+            }} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {brandKits.map((kit: any) => (
@@ -86,10 +89,14 @@ export default function BrandKitsPage() {
             <BrandKitDialog
               mode="create"
               onClose={() => setShowCreateDialog(false)}
-              onSuccess={() => {
+              onSuccess={(newKit: any) => {
                 setShowCreateDialog(false);
-                fetchBrandKits();
-                toast.success('Brand kit created');
+                toast.success('Brand kit created — opening dashboard…');
+                // Phase 37 UX fix: jump straight to the 8-tab dashboard so users
+                // discover Colors / Typography / Logos / Assets / Voice /
+                // Charts / Audit / Export-ZIP / Apply-to-workspace immediately.
+                if (newKit?.id) router.push(`/brand-kits/${newKit.id}`);
+                else fetchBrandKits();
               }}
               toast={toast}
             />
@@ -147,13 +154,85 @@ function BrandKitCard({ kit, onEdit, onRefresh, toast }: any) {
         )}
       </div>
       <div className="flex gap-2">
-        <Button size="sm" variant="outline" className="flex-1" onClick={onEdit}>
-          <Edit className="h-3 w-3 mr-1" /> Edit
+        {/* Phase 37Q — Open dashboard is the primary action; it surfaces all
+            8 tabs (Colors, Typography, Logos, Assets, Voice, Charts, Audit,
+            Overview) plus Export ZIP / Import ZIP / Apply-to-workspace. */}
+        <a
+          href={`/brand-kits/${kit.id}`}
+          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded"
+        >
+          <Settings className="h-4 w-4" /> Open dashboard
+        </a>
+        <Button size="sm" variant="outline" onClick={onEdit} title="Quick rename / recolor">
+          <Edit className="h-3 w-3" />
         </Button>
-        <Button size="sm" variant="outline" onClick={handleDelete}>
-          <Trash className="h-3 w-3 mr-1" /> Delete
+        <Button size="sm" variant="outline" onClick={handleDelete} title="Delete this brand kit">
+          <Trash className="h-3 w-3" />
         </Button>
       </div>
+    </div>
+  );
+}
+
+// =============================================================================
+//  Empty state — advertises every tab + action that's behind the create flow.
+//  Without this, users only saw a 3-field create modal and assumed the
+//  feature was that limited; the 8-tab dashboard at /brand-kits/[id] was
+//  invisible until they created + clicked Manage.
+// =============================================================================
+function EmptyState({ onCreate, onImportZip }: { onCreate: () => void; onImportZip: (file: File) => void }) {
+  const features: { Icon: any; label: string; desc: string }[] = [
+    { Icon: Palette,         label: 'Colors',     desc: 'Primary, secondary, accent, semantic + chart palette' },
+    { Icon: Type,            label: 'Typography', desc: 'Heading, body & caption font families' },
+    { Icon: ImageIcon,       label: 'Logos',      desc: 'Primary / mono / dark / light / favicon variants' },
+    { Icon: Files,           label: 'Assets',     desc: 'Images, icon marks & favicons (native upload)' },
+    { Icon: MessageSquare,   label: 'Voice',      desc: 'Tone, voice + house writing rules for AI generation' },
+    { Icon: Shield,          label: 'Audit',      desc: 'Per-deck compliance scan + one-click auto-fix' },
+    { Icon: Archive,         label: 'Export ZIP', desc: 'Portable bundle with assets baked in' },
+    { Icon: Download,        label: 'Apply to workspace', desc: 'Rebrand every deck in one click' },
+  ];
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-8">
+      <div className="text-center mb-8">
+        <Palette className="h-12 w-12 text-blue-600 mx-auto mb-3" />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Create your first brand kit</h2>
+        <p className="text-gray-600 max-w-xl mx-auto">
+          A brand kit centralises your colors, fonts, logos, assets and voice — then
+          applies them to every deck, PDF and CV in your workspace.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        {features.map(({ Icon, label, desc }) => (
+          <div key={label} className="border border-gray-200 rounded-lg p-3 text-left">
+            <Icon className="h-5 w-5 text-blue-600 mb-2" />
+            <div className="text-sm font-semibold text-gray-900">{label}</div>
+            <div className="text-[11px] text-gray-500 leading-snug">{desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap justify-center gap-3">
+        <Button onClick={onCreate} className="px-6">
+          <Plus className="h-4 w-4 mr-2" /> Create brand kit
+        </Button>
+        <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 rounded-md cursor-pointer text-sm font-semibold text-gray-700">
+          <Upload className="h-4 w-4" /> Import .zip
+          <input
+            type="file"
+            accept=".zip,application/zip"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onImportZip(f);
+            }}
+          />
+        </label>
+      </div>
+      <p className="text-center text-[11px] text-gray-400 mt-4">
+        Tip: the create form just collects a name + 2 seed colors — you'll land on the
+        full 8-tab dashboard right after.
+      </p>
     </div>
   );
 }
@@ -172,12 +251,14 @@ function BrandKitDialog({ mode, kit, onClose, onSuccess, toast }: any) {
     }
     setSubmitting(true);
     try {
+      let created: any = null;
       if (mode === 'edit') {
         await api.patch(`/brand-kits/${kit.id}`, { name: name.trim(), primaryColor, secondaryColor });
       } else {
-        await api.post('/brand-kits', { name: name.trim(), primaryColor, secondaryColor });
+        const { data } = await api.post('/brand-kits', { name: name.trim(), primaryColor, secondaryColor });
+        created = data;
       }
-      onSuccess();
+      onSuccess(created);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || `Failed to ${mode} brand kit`);
     } finally {
@@ -188,11 +269,20 @@ function BrandKitDialog({ mode, kit, onClose, onSuccess, toast }: any) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">
-            {mode === 'edit' ? 'Edit Brand Kit' : 'Create Brand Kit'}
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">
+              {mode === 'edit' ? 'Edit Brand Kit' : 'Create Brand Kit'}
+            </h2>
+            {mode === 'create' && (
+              <p className="text-xs text-gray-500 mt-1 leading-snug">
+                Just a name + 2 seed colors to get started. <strong>The next
+                screen has the full editor</strong> for typography, logos,
+                assets, voice, charts, audit and more.
+              </p>
+            )}
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 flex-shrink-0 ml-2">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -244,12 +334,21 @@ function BrandKitDialog({ mode, kit, onClose, onSuccess, toast }: any) {
           </div>
           <div className="flex gap-2 mt-6">
             <Button type="submit" disabled={submitting} className="flex-1">
-              {submitting ? (mode === 'edit' ? 'Saving...' : 'Creating...') : (mode === 'edit' ? 'Save Changes' : 'Create')}
+              {submitting
+                ? (mode === 'edit' ? 'Saving...' : 'Creating…')
+                : (mode === 'edit' ? 'Save Changes' : 'Create & open editor →')}
             </Button>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
           </div>
+          {mode === 'create' && (
+            <p className="text-[11px] text-gray-400 text-center mt-2">
+              You'll land on a dashboard with 8 tabs: Overview, Logos, Colors,
+              Typography, Charts, Voice, Assets, Audit — plus Export ZIP /
+              Import ZIP / Apply-to-workspace.
+            </p>
+          )}
         </form>
       </div>
     </div>

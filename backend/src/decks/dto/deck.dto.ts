@@ -37,4 +37,11 @@ export class UpdateDeckDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  // Phase 37.3J — clear / change of the applied brand kit.
+  // `null` detaches the kit; a uuid switches it (without rebranding tokens —
+  // for that, use POST /api/brand-kits/:id/apply/:deckId instead).
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  brandKitId?: string | null;
 }

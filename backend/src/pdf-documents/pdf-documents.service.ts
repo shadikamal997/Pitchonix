@@ -20,6 +20,8 @@ export interface UpdatePdfDocumentDto {
   qualityScore?: number;
   validationResult?: any;
   exportReady?: boolean;
+  // Phase 37.3E — explicit clear / change of the bound brand kit.
+  brandKitId?: string | null;
 }
 
 @Injectable()

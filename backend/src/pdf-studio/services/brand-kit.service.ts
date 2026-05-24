@@ -113,24 +113,36 @@ export class BrandKitService {
         return DEFAULT_BRAND_KIT;
       }
 
-      // Map database model to BrandKit interface
-      const config = (brandKit.config as any) || {};
+      // Phase 37.2B — Prefer the unified Phase 37 BrandTokens shape when
+      // available; fall back to legacy `config` / per-column values so older
+      // kits stay rendered correctly. This is the "renderer switch" that
+      // makes PDF Studio + presentations share one source of truth.
+      const tokens = (brandKit.tokens   as any) || null;
+      const identity = (brandKit.identity as any) || null;
+      const config  = (brandKit.config   as any) || {};
+
+      const tokenColors    = tokens?.colors     || {};
+      const tokenTypo      = tokens?.typography || {};
+      const tokenStyle     = tokens?.tokens     || {};
+
       return {
         id: brandKit.id,
         name: brandKit.name,
         userId: brandKit.userId,
-        colors: config.colors || {
-          primary: brandKit.primaryColor || '#3B82F6',
-          secondary: brandKit.secondaryColor || '#1D4ED8',
-          accent: '#60A5FA',
-          text: '#1F2937',
-          background: '#FFFFFF',
-          surface: '#F9FAFB',
-        },
-        typography: config.typography || {
-          fontFamily: brandKit.fontFamily || 'Inter, system-ui, sans-serif',
-          fontSize: { base: 16, heading: 32, body: 16 },
-        },
+        colors: {
+          primary:    tokenColors.primary    ?? config.colors?.primary    ?? brandKit.primaryColor   ?? '#3B82F6',
+          secondary:  tokenColors.secondary  ?? config.colors?.secondary  ?? brandKit.secondaryColor ?? '#1D4ED8',
+          accent:     tokenColors.accent     ?? config.colors?.accent     ?? '#60A5FA',
+          text:       config.colors?.text       ?? '#1F2937',
+          background: tokenColors.neutral    ?? config.colors?.background ?? '#FFFFFF',
+          surface:    config.colors?.surface    ?? '#F9FAFB',
+        } as any,
+        typography: {
+          fontFamily:  tokenTypo.body?.family    ?? config.typography?.fontFamily  ?? brandKit.fontFamily ?? 'Inter, system-ui, sans-serif',
+          headingFont: tokenTypo.heading?.family ?? config.typography?.headingFont ?? brandKit.fontFamily ?? undefined,
+          bodyFont:    tokenTypo.body?.family    ?? config.typography?.bodyFont    ?? brandKit.fontFamily ?? undefined,
+          fontSize:    config.typography?.fontSize ?? { base: 16, heading: 32, body: 16 },
+        } as any,
         logo: config.logo || {
           url: brandKit.logo || '',
           position: 'top-left',
@@ -140,8 +152,17 @@ export class BrandKitService {
           showOnFooters: false,
         },
         spacing: config.spacing || DEFAULT_BRAND_KIT.spacing,
-        style: config.style || DEFAULT_BRAND_KIT.style,
-        contact: config.contact || DEFAULT_BRAND_KIT.contact,
+        style: {
+          ...DEFAULT_BRAND_KIT.style,
+          ...config.style,
+          borderRadius: tokenStyle.borderRadius ?? (config.style?.borderRadius) ?? DEFAULT_BRAND_KIT.style.borderRadius,
+          shadowStyle:  tokenStyle.shadowStyle  ?? (config.style?.shadowStyle)  ?? DEFAULT_BRAND_KIT.style.shadowStyle,
+        } as any,
+        contact: config.contact || identity ? {
+          ...(config.contact || {}),
+          ...(identity?.companyName ? { companyName: identity.companyName } : {}),
+          ...(identity?.website     ? { website:     identity.website     } : {}),
+        } : DEFAULT_BRAND_KIT.contact,
       };
     } catch (error) {
       console.error('Error fetching brand kit:', error);
