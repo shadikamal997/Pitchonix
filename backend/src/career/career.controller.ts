@@ -14,6 +14,7 @@ import { CvImportService }    from './cv-import.service';
 import { CvExportService, CvExportFormat } from './cv-export.service';
 import { BrandKitsService } from '../brand-kits/brand-kits.service';
 import { CvDoctype } from './cv-types';
+import { CvAnalyzerService, CvProfileSnapshot } from './cv-analyzer.service';
 
 // =============================================================================
 //  Phase 42 — Career documents API.
@@ -56,6 +57,7 @@ export class CareerController {
     private readonly importer:  CvImportService,
     private readonly exporter:  CvExportService,
     private readonly brandKits: BrandKitsService,
+    private readonly analyzer:  CvAnalyzerService,
   ) {}
 
   // ─── Profile ────────────────────────────────────────────────────────────────
@@ -208,5 +210,99 @@ export class CareerController {
   @Get('templates/count')
   countTemplates() {
     return this.templates.countByDoctype();
+  }
+
+  // ===========================================================================
+  //  Phase 42.3 — CV Intelligence Studio
+  //
+  //    POST /career/analyze/parse-file       multipart file  → { profile, warnings }
+  //    POST /career/analyze                  body { profile } → CvQualityReport
+  //    POST /career/analyze/apply-fix        body { profile, issueId, userInput? } → profile
+  //    POST /career/analyze/recommend-templates  body { profile, report? } → template ranking
+  //    POST /career/analyze/match-job        body { profile, jobDescription } → CvJobMatchReport
+  //    POST /career/analyze/save             body { profile, doctype, title, templateId? }
+  //                                          → creates a CvDocument from the cleaned profile
+  // ===========================================================================
+
+  @Post('analyze/parse-file')
+  @ApiOperation({ summary: 'Phase 42.3A — parse an uploaded CV into a CvProfile snapshot (no DB write)' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  async analyzeParseFile(@GetUser() user: any, @UploadedFile() file: any) {
+    if (!file?.buffer) throw new BadRequestException('Missing file (multipart field "file")');
+    // Re-use the existing importer; route through a transient profile so we
+    // don't clobber the user's saved profile. The transient profile is
+    // returned to the client and then thrown away unless they choose Save.
+    const transient = await this.profiles.getOrCreate(user.id);
+    const { profile, warnings } = await this.importer.importFromFile(
+      transient.id, file.buffer, file.originalname || 'cv', file.mimetype,
+    );
+    return { profile, warnings };
+  }
+
+  @Post('analyze')
+  @ApiOperation({ summary: 'Phase 42.3C — quality report for an in-memory CvProfile snapshot' })
+  analyze(@Body() body: { profile: CvProfileSnapshot }) {
+    if (!body?.profile) throw new BadRequestException('Missing profile');
+    return this.analyzer.analyze(body.profile);
+  }
+
+  @Post('analyze/apply-fix')
+  @ApiOperation({ summary: 'Phase 42.3F — apply one fix to a profile snapshot (user-initiated)' })
+  applyFix(@Body() body: { profile: CvProfileSnapshot; issueId: string; userInput?: string }) {
+    if (!body?.profile || !body?.issueId) throw new BadRequestException('Missing profile/issueId');
+    return { profile: this.analyzer.applyFix(body.profile, body.issueId, body.userInput) };
+  }
+
+  @Post('analyze/recommend-templates')
+  @ApiOperation({ summary: 'Phase 42.3H — template recommendations for a profile' })
+  async recommendTemplates(@Body() body: { profile: CvProfileSnapshot; doctype?: CvDoctype }) {
+    if (!body?.profile) throw new BadRequestException('Missing profile');
+    const report = this.analyzer.analyze(body.profile);
+    const tpl = await this.templates.list({ doctype: body.doctype || 'cv' });
+    const slim = (Array.isArray(tpl) ? tpl : (tpl as any)?.items || []).map((t: any) => ({
+      id: t.id, name: t.name, category: t.category, atsSafe: !!t.atsSafe,
+    }));
+    return this.analyzer.recommendTemplates(report, slim);
+  }
+
+  @Post('analyze/match-job')
+  @ApiOperation({ summary: 'Phase 42.3I — match a profile against a pasted job description' })
+  matchJob(@Body() body: { profile: CvProfileSnapshot; jobDescription: string }) {
+    if (!body?.profile || !body?.jobDescription) throw new BadRequestException('Missing profile/jobDescription');
+    return this.analyzer.matchJob(body.profile, body.jobDescription);
+  }
+
+  @Post('analyze/save')
+  @ApiOperation({ summary: 'Phase 42.3K — persist the improved profile + create a CvDocument from it' })
+  async analyzeSave(
+    @GetUser() user: any,
+    @Body() body: {
+      profile:    CvProfileSnapshot;
+      doctype?:   CvDoctype;
+      title?:     string;
+      templateId?: string | null;
+      brandKitId?: string | null;
+      overwriteProfile?: boolean;
+    },
+  ) {
+    if (!body?.profile) throw new BadRequestException('Missing profile');
+    const transient = await this.profiles.getOrCreate(user.id);
+    // Optionally overwrite the user's stored profile with the improved one
+    // (default behaviour: yes — that's the whole point of the wizard).
+    if (body.overwriteProfile !== false) {
+      // Re-use replaceFromImport — it already overwrites every section JSON
+      // column at once and stamps an import source for audit.
+      await this.profiles.replaceFromImport(transient.id, 'docx', body.profile as any);
+    }
+    const doc = await this.documents.create({
+      userId:     user.id,
+      profileId:  transient.id,
+      doctype:    body.doctype || 'cv',
+      title:      body.title || 'Improved CV',
+      templateId: body.templateId ?? null,
+      brandKitId: body.brandKitId ?? null,
+    });
+    return { documentId: doc.id, profileId: transient.id };
   }
 }
