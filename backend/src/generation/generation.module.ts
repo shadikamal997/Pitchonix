@@ -44,6 +44,12 @@ import {
   DocumentScorecardService,
   AutoExpansionService,
 } from './document-quality';
+// Phase 31 — Unified Generation Pipeline
+import { UnifiedGenerationPipeline } from './pipeline/unified-pipeline.service';
+import { GenerationEventBus } from './pipeline/event-bus';
+import { GenerationProgressBridge } from './pipeline/progress-bridge';
+// Phase 35 — Version History
+import { VersionHistoryModule } from '../version-history/version-history.module';
 
 @Module({
   imports: [
@@ -56,6 +62,7 @@ import {
     TemplateModule,
     SuggestionsModule,
     ProgressModule,
+    VersionHistoryModule,
     // Import PDF documents module for PDF generation
     require('../pdf-documents/pdf-documents.module').PdfDocumentsModule,
   ],
@@ -92,6 +99,10 @@ import {
     StrategyReadinessEngine,
     DocumentScorecardService,
     AutoExpansionService,
+    // Phase 31 — Unified Generation Pipeline
+    GenerationEventBus,
+    UnifiedGenerationPipeline,
+    GenerationProgressBridge,
   ],
   exports: [
     GenerationService, VisualGenerationService, ExportService, AIEnhancementService,
@@ -99,6 +110,8 @@ import {
     DocumentScorecardService,
     DocumentFrameworkEngine,
     AutoExpansionService,
+    UnifiedGenerationPipeline,
+    GenerationEventBus,
   ],
 })
 export class GenerationModule {}

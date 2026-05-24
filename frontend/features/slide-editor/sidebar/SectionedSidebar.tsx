@@ -44,6 +44,10 @@ interface Props {
   deckMetadata:    DeckMetadata | null | undefined;
   /** Persist a *patch* of the deck metadata. Caller merges + PATCHes. */
   onPatchDeckMetadata: (patch: Partial<DeckMetadata>) => Promise<void>;
+  /** Phase 35-final-B Task 3 — when true (Version History preview mode),
+   *  hide every destructive / mutating affordance. Navigation still works
+   *  so the user can move between snapshot slides. */
+  readOnly?:       boolean;
 }
 
 type Row =
@@ -55,6 +59,7 @@ type Row =
 export const SectionedSidebar: React.FC<Props> = ({
   api: deckApi, currentSlideId, onNavigate, onCurrentDeleted, onTitleRename,
   deckMetadata, onPatchDeckMetadata,
+  readOnly = false,
 }) => {
   const [view, setView]                   = useState<'thumbnails' | 'outline'>('thumbnails');
   const [search, setSearch]               = useState('');
@@ -312,14 +317,17 @@ export const SectionedSidebar: React.FC<Props> = ({
         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Slides</span>
         <span className="text-[10px] text-slate-400">{slides.length}</span>
         <div className="ml-auto flex items-center gap-1">
-          <button
-            type="button"
-            onClick={handleCreateSection}
-            title="Add section"
-            className="p-1 rounded text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-          >
-            <FolderPlus className="w-3.5 h-3.5" />
-          </button>
+          {/* Phase 35-final-B Task 3 — hide destructive affordances in preview. */}
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={handleCreateSection}
+              title="Add section"
+              className="p-1 rounded text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            >
+              <FolderPlus className="w-3.5 h-3.5" />
+            </button>
+          )}
           <ViewToggle value={view} onChange={setView} />
         </div>
       </div>
@@ -339,8 +347,8 @@ export const SectionedSidebar: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Bulk action bar — visible whenever 2+ selected */}
-      {selectedIds.size > 1 && (
+      {/* Bulk action bar — visible whenever 2+ selected (suppressed in preview). */}
+      {!readOnly && selectedIds.size > 1 && (
         <div className="px-2 py-1.5 border-b border-blue-200 bg-blue-50 text-[11px] font-semibold text-blue-800 flex items-center gap-2">
           <span>{selectedIds.size} selected</span>
           <div className="ml-auto flex items-center gap-1">
@@ -456,6 +464,8 @@ export const SectionedSidebar: React.FC<Props> = ({
     }
 
     if (row.kind === 'add-slide-to-section') {
+      // Phase 35-final-B Task 3 — suppress add-slide affordance in preview.
+      if (readOnly) return null;
       return (
         <button
           type="button"

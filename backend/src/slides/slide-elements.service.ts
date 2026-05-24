@@ -4,6 +4,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { ELEMENT_TYPES, ElementType, SlideElementDTO } from './element-types';
+import { CollaborationBroadcaster } from '../collaboration/collaboration-broadcaster';
 
 interface ReorderEntry { id: string; order: number; zIndex?: number }
 
@@ -11,7 +12,18 @@ interface ReorderEntry { id: string; order: number; zIndex?: number }
 export class SlideElementsService {
   private readonly logger = new Logger(SlideElementsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private broadcaster: CollaborationBroadcaster,
+  ) {}
+
+  /** Phase 34G — resolve the deckId for a slide so we can broadcast into the right room. */
+  private async deckIdOfSlide(slideId: string): Promise<string | null> {
+    const slide = await this.prisma.slide.findUnique({
+      where: { id: slideId }, select: { deckId: true },
+    });
+    return slide?.deckId || null;
+  }
 
   // ---------------------------------------------------------------------------
   //  Ownership / authorization
@@ -86,7 +98,11 @@ export class SlideElementsService {
         accessibility: (input.accessibility as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
       },
     });
-    return toDTO(row);
+    const dto = toDTO(row);
+    // Phase 34G — broadcast element.created to every collaborator on this deck.
+    const deckId = await this.deckIdOfSlide(slideId);
+    if (deckId) this.broadcaster.toDeck(deckId, 'element.created', { slideId, element: dto });
+    return dto;
   }
 
   async update(elementId: string, patch: Partial<SlideElementDTO>): Promise<SlideElementDTO> {
@@ -111,11 +127,24 @@ export class SlideElementsService {
     if (patch.accessibility !== undefined)  data.accessibility = patch.accessibility as Prisma.InputJsonValue ?? Prisma.JsonNull;
 
     const row = await this.prisma.slideElement.update({ where: { id: elementId }, data });
-    return toDTO(row);
+    const dto = toDTO(row);
+    // Phase 34G — broadcast element.updated. We send the full DTO so receivers
+    // don't have to GET to learn the new state.
+    const deckId = await this.deckIdOfSlide(dto.slideId!);
+    if (deckId) this.broadcaster.toDeck(deckId, 'element.updated', { slideId: dto.slideId, element: dto });
+    return dto;
   }
 
   async remove(elementId: string): Promise<{ id: string }> {
+    // Capture deck + slide BEFORE delete so we can still broadcast afterwards.
+    const slot = await this.prisma.slideElement.findUnique({
+      where: { id: elementId }, select: { slideId: true },
+    });
     await this.prisma.slideElement.delete({ where: { id: elementId } });
+    if (slot) {
+      const deckId = await this.deckIdOfSlide(slot.slideId);
+      if (deckId) this.broadcaster.toDeck(deckId, 'element.deleted', { slideId: slot.slideId, elementId });
+    }
     return { id: elementId };
   }
 

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import type { SlideElementDTO } from '@/types/slide-element';
+import { useIsPreviewing } from './versions/useVersionPreview';
+import { useSafetySnapshot } from './versions/useSafetySnapshot';
 
 // =============================================================================
 //  useElementsApi
@@ -53,10 +55,34 @@ export interface UseElementsApi extends ApiState {
   syncAll:        (elements: SlideElementDTO[]) => Promise<void>;
 }
 
-export function useElementsApi(slideId: string | null | undefined): UseElementsApi {
+export function useElementsApi(
+  slideId: string | null | undefined,
+  /** Phase 35.1A — deckId enables safety-snapshot creation before deletes.
+   *  Optional; legacy callers without deckId still work but skip snapshots. */
+  deckId?: string | null,
+  /** Phase 35-final-B Task 1 — when supplied, the hook reports these elements
+   *  directly instead of fetching from the API. Used by Version History
+   *  preview mode so the canvas renders the historical slide's elements.
+   *  When set: skip the network fetch, skip the debounced flush, and pin
+   *  saveStatus = 'saved'. Mutators continue to short-circuit via the
+   *  existing isPreviewing guard. */
+  overrideElements?: SlideElementDTO[] | null,
+): UseElementsApi {
   const [state, setState] = useState<ApiState>({
     elements: [], loading: !!slideId, error: null, saveStatus: 'saved',
   });
+
+  // Phase 35.1A — shared preview state + safety helper.
+  const isPreviewing = useIsPreviewing();
+  const safety = useSafetySnapshot(deckId);
+
+  // Phase 35-final-B Task 1 — override pin. When overrideElements is set,
+  // mirror them into local state and disable all network paths below.
+  const hasOverride = Array.isArray(overrideElements);
+  useEffect(() => {
+    if (!hasOverride) return;
+    setState({ elements: overrideElements as SlideElementDTO[], loading: false, error: null, saveStatus: 'saved' });
+  }, [hasOverride, overrideElements]);
 
   // pending PATCH bodies per-element (debounced flush)
   const pendingRef = useRef<Map<string, Partial<SlideElementDTO>>>(new Map());
@@ -65,6 +91,7 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
 
   // ── Load on mount / slideId change ─────────────────────────────────────────
   useEffect(() => {
+    if (hasOverride) return;  // override active — no network fetch
     if (!slideId) {
       setState({ elements: [], loading: false, error: null, saveStatus: 'saved' });
       return;
@@ -88,10 +115,17 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
       }
     })();
     return () => { cancelled = true; };
-  }, [slideId]);
+    // hasOverride is in the dep array so re-mounting back to live mode after
+    // preview exit triggers a fresh fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slideId, hasOverride]);
 
   // ── Debounced flush ────────────────────────────────────────────────────────
   const flush = useCallback(async () => {
+    // Phase 35-final-B Task 1 — never write back when previewing or override
+    // is active. Drop any queued patches so they don't fire when the user
+    // exits preview.
+    if (hasOverride || isPreviewing) { pendingRef.current.clear(); return; }
     if (!slideId) return;
     if (pendingRef.current.size === 0) return;
 
@@ -132,7 +166,14 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
   }, [state.saveStatus]);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
+  //
+  // Phase 35.1A — every mutator is gated on `isPreviewing`. When the editor
+  // is showing a historical version, the deck must be immutable: text edits,
+  // drags, creates, duplicates, deletes, reorders all short-circuit. This
+  // single chokepoint replaces having to guard every UI handler individually.
+
   const updateElement = useCallback((id: string, patch: Partial<SlideElementDTO>) => {
+    if (isPreviewing) return;
     setState((s) => ({
       ...s,
       elements: s.elements.map((e) => (e.id === id ? { ...e, ...patch, updatedAt: new Date().toISOString() } : e)),
@@ -141,9 +182,10 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
     const prev = pendingRef.current.get(id) || {};
     pendingRef.current.set(id, { ...prev, ...patch });
     scheduleFlush();
-  }, [scheduleFlush]);
+  }, [scheduleFlush, isPreviewing]);
 
   const updateMany = useCallback((updates: Array<{ id: string; patch: Partial<SlideElementDTO> }>) => {
+    if (isPreviewing) return;
     if (updates.length === 0) return;
     setState((s) => {
       const map = new Map(updates.map((u) => [u.id, u.patch]));
@@ -158,10 +200,10 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
       pendingRef.current.set(u.id, { ...prev, ...u.patch });
     }
     scheduleFlush();
-  }, [scheduleFlush]);
+  }, [scheduleFlush, isPreviewing]);
 
   const createElement = useCallback(async (input: Partial<SlideElementDTO>): Promise<SlideElementDTO | null> => {
-    if (!slideId) return null;
+    if (isPreviewing || !slideId) return null;
     try {
       // Flush pending changes first so server has consistent prior state
       if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); await flush(); }
@@ -172,10 +214,10 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
       setState((s) => ({ ...s, error: err?.message || 'Create failed', saveStatus: 'error' }));
       return null;
     }
-  }, [slideId, flush]);
+  }, [slideId, flush, isPreviewing]);
 
   const duplicateElement = useCallback(async (id: string): Promise<SlideElementDTO | null> => {
-    if (!slideId) return null;
+    if (isPreviewing || !slideId) return null;
     try {
       if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); await flush(); }
       const { data } = await api.post<SlideElementDTO>(`/slides/${slideId}/elements/${id}/duplicate`);
@@ -184,10 +226,14 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
     } catch {
       return null;
     }
-  }, [slideId, flush]);
+  }, [slideId, flush, isPreviewing]);
 
   const deleteElement = useCallback(async (id: string): Promise<boolean> => {
-    if (!slideId) return false;
+    if (isPreviewing || !slideId) return false;
+    // Phase 35.1A — capture a safety snapshot before destroying state. The
+    // helper is non-blocking; we proceed even if snapshotting fails so the
+    // user's delete is never blocked on snapshot infrastructure.
+    await safety.before('Before deleting element');
     // optimistic remove
     setState((s) => ({ ...s, elements: s.elements.filter((e) => e.id !== id) }));
     try {
@@ -199,10 +245,10 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
       return false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slideId]);
+  }, [slideId, isPreviewing, safety]);
 
   const reorder = useCallback(async (entries: Array<{ id: string; order: number; zIndex?: number }>) => {
-    if (!slideId || entries.length === 0) return;
+    if (isPreviewing || !slideId || entries.length === 0) return;
     try {
       const { data } = await api.post<SlideElementDTO[]>(`/slides/${slideId}/elements/reorder`, { entries });
       setState((s) => ({ ...s, elements: data }));
@@ -210,7 +256,7 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
       await refresh();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slideId]);
+  }, [slideId, isPreviewing]);
 
   const refresh = useCallback(async () => {
     if (!slideId) return;
@@ -229,7 +275,7 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
   }, [slideId, refresh]);
 
   const syncAll = useCallback(async (elements: SlideElementDTO[]) => {
-    if (!slideId) return;
+    if (isPreviewing || !slideId) return;
     // Flush any pending edits before the snapshot replace so they don't race the sync.
     if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); await flush(); }
     // Optimistic local replace
@@ -241,7 +287,7 @@ export function useElementsApi(slideId: string | null | undefined): UseElementsA
       setState((s) => ({ ...s, saveStatus: 'error', error: err?.message || 'Restore failed' }));
       await refresh();
     }
-  }, [slideId, flush, refresh]);
+  }, [slideId, flush, refresh, isPreviewing]);
 
   return {
     elements:      state.elements,

@@ -7,6 +7,7 @@ import {
   PanelSection, Row, TextField, NumberField, ColorField, SelectField, SegmentedControl, Toggle,
 } from '../Primitives';
 import { generateInsights } from '../../charts/auto-insights';
+import { ApplyChartBrandButton } from '@/features/brand-kits/ApplyChartBrandButton';
 
 // =============================================================================
 //  ChartPanel — full editor for chart elements.
@@ -132,6 +133,14 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
 
   return (
     <>
+      {/* Phase 37.1B — one-click brand rebrand. Rewrites colors only; data,
+          labels, axes, and legend are preserved by the server-side service. */}
+      <PanelSection title="Brand">
+        <div className="flex justify-end">
+          <ApplyChartBrandButton elementId={element.id} />
+        </div>
+      </PanelSection>
+
       <PanelSection title="Chart type">
         <Row label="Kind">
           <SelectField

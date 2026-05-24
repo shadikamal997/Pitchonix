@@ -17,6 +17,7 @@ import { Injectable } from '@nestjs/common';
 import { SlideContent, SlideType, WizardInput } from '../slide-types/types';
 import { ExecutiveQualityReport } from './types';
 import { getFramework } from './frameworks';
+import { analyzeSlide } from '../quality/smart-component-quality-probe';
 
 @Injectable()
 export class ExecutiveQualityEngine {
@@ -68,9 +69,11 @@ export class ExecutiveQualityEngine {
     }
 
     // ── KPI coverage ────────────────────────────────────────────────────
+    // Phase 32.75 Tier 8 — counts come through the smart-component quality
+    // probe (which transparently falls back to legacy fields).
     const kpisAvailable = input.structured?.kpis?.length ?? 0;
     const kpisSurfaced = slides
-      .map((s) => (s.content?.metrics?.length ?? 0) + (s.content?.kpis?.length ?? 0))
+      .map((s) => { const sig = analyzeSlide(s); return sig.metricsCount + sig.kpiCount; })
       .reduce((a, b) => a + b, 0);
     let kpiCoverage: number;
     if (kpisAvailable === 0 && framework.targets.minKpis > 0) {
@@ -157,21 +160,22 @@ function extractWordCount(slide: SlideContent): number {
 }
 
 function hasVisualContent(slide: SlideContent): boolean {
-  const c = slide.content || {};
-  return !!(
-    (Array.isArray(c.metrics)        && c.metrics.length > 0) ||
-    (Array.isArray(c.kpis)           && c.kpis.length > 0) ||
-    (Array.isArray(c.pricingTiers)   && c.pricingTiers.length > 0) ||
-    (Array.isArray(c.team)           && c.team.length > 0) ||
-    (Array.isArray(c.phases)         && c.phases.length > 0) ||
-    (Array.isArray(c.competitors)    && c.competitors.length > 0) ||
-    (c.swot && (c.swot.strengths?.length || c.swot.weaknesses?.length)) ||
-    (Array.isArray(c.allocations)    && c.allocations.length > 0) ||
-    c.marketSizing ||
-    c.timeline ||
-    c.chart ||
-    c.featureGrid ||
-    c.processSteps
+  // Phase 32.75 Tier 8 — derived from quality probe (smart-tree first,
+  // legacy fields second). Any of: metrics, pricing, team, roadmap, swot,
+  // comparison, financial chart, features, timeline, market sizing.
+  const sig = analyzeSlide(slide);
+  return (
+    sig.hasMetrics ||
+    sig.hasPricing ||
+    sig.hasTeam ||
+    sig.hasRoadmap ||
+    sig.hasSwot ||
+    sig.hasComparison ||
+    sig.hasFinancialChart ||
+    sig.hasMarketSizing ||
+    sig.featureCount > 0 ||
+    sig.timelineItemCount > 0 ||
+    sig.chartCount > 0
   );
 }
 

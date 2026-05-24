@@ -5,7 +5,9 @@ import {
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RequireRole } from '../workspaces/role.guard';
 import { SlideExportService, ExportFormat } from './slide-export.service';
+import { ExportCompatReportService } from './export-compat-report.service';
 
 const FORMATS: ExportFormat[] = ['pptx', 'pdf', 'png', 'jpeg'];
 
@@ -16,11 +18,24 @@ const FORMATS: ExportFormat[] = ['pptx', 'pdf', 'png', 'jpeg'];
 export class SlideExportController {
   private readonly logger = new Logger(SlideExportController.name);
 
-  constructor(private readonly exportService: SlideExportService) {}
+  constructor(
+    private readonly exportService:  SlideExportService,
+    private readonly compatReport:   ExportCompatReportService,
+  ) {}
+
+  // ---------- Phase 38.2I — Export compatibility report (pre-export) ----------
+  @Get(':deckId/compatibility')
+  @ApiOperation({ summary: 'Compute the export compatibility report for this deck (Phase 38.2I)' })
+  @RequireRole('exports.generate', { kind: 'workspaceFromDeck', param: 'deckId' })
+  async compatibility(@Param('deckId') deckId: string, @Req() req: any) {
+    await this.exportService.assertDeckOwnership(deckId, req.user.id);
+    return this.compatReport.run(deckId);
+  }
 
   // Inspect (no file) — useful for previewing the manifest before downloading.
   @Get(':deckId/manifest')
   @ApiOperation({ summary: 'Get an element export manifest preview (no file)' })
+  @RequireRole('exports.generate', { kind: 'workspaceFromDeck', param: 'deckId' })
   async manifest(
     @Param('deckId') deckId: string,
     @Query('format') format: string,
@@ -37,9 +52,11 @@ export class SlideExportController {
   // Download — streams the file back with proper headers.
   @Post(':deckId/:format')
   @ApiOperation({ summary: 'Export deck (PPTX / PDF / PNG / JPEG)' })
+  @RequireRole('exports.generate', { kind: 'workspaceFromDeck', param: 'deckId' })
   async download(
     @Param('deckId') deckId: string,
     @Param('format') format: string,
+    @Query('withComments') withComments: string | undefined,
     @Req() req: any,
     @Res() res: Response,
   ) {
@@ -47,7 +64,9 @@ export class SlideExportController {
     await this.exportService.assertDeckOwnership(deckId, req.user.id);
 
     try {
-      const result = await this.exportService.export(deckId, fmt);
+      // Phase 36.1J — comments appendix opt-in (PDF only for now).
+      const includeComments = withComments === '1' || withComments === 'true';
+      const result = await this.exportService.export(deckId, fmt, { includeComments });
       res.setHeader('Content-Type', result.mime);
       res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
       res.setHeader('Content-Length', String(result.buffer.length));

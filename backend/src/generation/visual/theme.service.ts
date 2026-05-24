@@ -1,17 +1,28 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { WizardInput } from '../slide-types/types';
 import { ThemeConfig } from './types';
+import { PrismaService } from '../../prisma/prisma.service';
+import type { BrandTokens, BrandVoice, BrandIdentity } from '../../brand-kits/brand-kits.service';
 
 /**
  * Theme Service
  * Manages presentation themes and branding
+ *
+ * Phase 37.1A — extended with an async `getThemeForPresentationAsync` that
+ * loads a BrandKit by `input.brandKitId` and uses its tokens as the
+ * primary source. The legacy sync `getThemeForPresentation` is preserved
+ * for callers that pass inline `brandColors` / `fontStyle`.
  */
 @Injectable()
 export class ThemeService {
   private readonly logger = new Logger(ThemeService.name);
   private themes: Map<string, ThemeConfig> = new Map();
 
-  constructor() {
+  constructor(
+    // Optional so unit tests + tools that instantiate ThemeService directly
+    // (without a Nest container) keep working.
+    @Optional() private prisma?: PrismaService,
+  ) {
     this.initializeThemes();
   }
 
@@ -38,6 +49,69 @@ export class ThemeService {
     }
 
     return theme;
+  }
+
+  /**
+   * Phase 37.1A — async variant that loads a saved BrandKit by id and
+   * applies its tokens on top of the resolved theme. Falls back to the
+   * sync behavior when no kit id is supplied or the lookup fails — the
+   * generation pipeline keeps working in either case.
+   *
+   *   { colors, typography, voice, identity } ← BrandKit
+   */
+  async getThemeForPresentationAsync(input: WizardInput): Promise<ThemeConfig & {
+    voice?: BrandVoice; identity?: BrandIdentity; logo?: string;
+  }> {
+    let theme: ThemeConfig & { voice?: BrandVoice; identity?: BrandIdentity; logo?: string } =
+      this.getThemeForPresentation(input);
+
+    if (!input.brandKitId || !this.prisma) return theme;
+
+    try {
+      const kit = await this.prisma.brandKit.findUnique({
+        where: { id: input.brandKitId },
+      });
+      if (!kit) {
+        this.logger.warn(`BrandKit ${input.brandKitId} not found, using inline theme`);
+        return theme;
+      }
+      theme = this.applyBrandKitTokens(theme, kit);
+    } catch (e: any) {
+      this.logger.warn(`BrandKit lookup failed: ${e?.message}`);
+    }
+    return theme;
+  }
+
+  /**
+   * Phase 37.1A — merge a persisted BrandKit's tokens into a ThemeConfig.
+   * BrandKit tokens take precedence over the wizard's inline values.
+   */
+  private applyBrandKitTokens(
+    theme: ThemeConfig,
+    kit: { tokens: any; voice: any; identity: any; logo: string | null; primaryColor: string | null; secondaryColor: string | null; fontFamily: string | null },
+  ): ThemeConfig & { voice?: BrandVoice; identity?: BrandIdentity; logo?: string } {
+    const tokens = (kit.tokens as BrandTokens | null) || {};
+    const colors = tokens.colors || {};
+    const typo   = tokens.typography || {};
+
+    const next: ThemeConfig & { voice?: BrandVoice; identity?: BrandIdentity; logo?: string } = {
+      ...theme,
+      colors: {
+        ...theme.colors,
+        primary:   colors.primary   ?? kit.primaryColor   ?? theme.colors.primary,
+        secondary: colors.secondary ?? kit.secondaryColor ?? theme.colors.secondary,
+        accent:    colors.accent    ?? theme.colors.accent,
+      },
+      fonts: {
+        ...theme.fonts,
+        heading: typo.heading?.family ?? kit.fontFamily ?? theme.fonts.heading,
+        body:    typo.body?.family    ?? kit.fontFamily ?? theme.fonts.body,
+      },
+      voice:    (kit.voice    as BrandVoice    | null) || undefined,
+      identity: (kit.identity as BrandIdentity | null) || undefined,
+      logo:     kit.logo || undefined,
+    };
+    return next;
   }
 
   /**

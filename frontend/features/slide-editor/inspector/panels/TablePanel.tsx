@@ -241,6 +241,25 @@ export const TablePanel: React.FC<Props> = ({ element, onPatch }) => {
             <NumberField value={selectedCell.rowspan ?? 1} min={1} max={Math.max(1, c.rows.length)}
                          onChange={(v) => writeCell(selected.row, selected.col, { rowspan: Math.max(1, Math.round(v)) })} />
           </Row>
+          {/* Phase 38J — quick merge / split actions on the selected cell. */}
+          <Row label="Merge">
+            <ActionBtn
+              onClick={() => writeCell(selected.row, selected.col, { colspan: Math.min(cols, (selectedCell.colspan ?? 1) + 1) })}
+              disabled={(selectedCell.colspan ?? 1) >= cols - selected.col}
+              title="Merge with cell to the right"
+            >→</ActionBtn>
+            <ActionBtn
+              onClick={() => writeCell(selected.row, selected.col, { rowspan: Math.min(Math.max(1, c.rows.length), (selectedCell.rowspan ?? 1) + 1) })}
+              disabled={selected.row === 0 || (selectedCell.rowspan ?? 1) >= c.rows.length - (selected.row - 1)}
+              title="Merge with cell below"
+            >↓</ActionBtn>
+            <ActionBtn
+              onClick={() => writeCell(selected.row, selected.col, { colspan: 1, rowspan: 1 })}
+              disabled={(selectedCell.colspan ?? 1) === 1 && (selectedCell.rowspan ?? 1) === 1}
+              title="Split merged cell"
+              danger
+            >×</ActionBtn>
+          </Row>
 
           {/* Row / column action bar for the selected cell's row & column */}
           <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-slate-100">

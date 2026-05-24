@@ -43,7 +43,10 @@ export class VisualGenerationService {
       `Generating visual content for ${slides.length} slides with options: ${JSON.stringify(defaultOptions)}`,
     );
 
-    const theme = this.themeService.getThemeForPresentation(input);
+    // Phase 37.1A — async variant loads the saved BrandKit (when input.brandKitId
+    // is present) and uses its tokens as the primary theme source. Falls back
+    // to the inline wizard brandColors/fontStyle when no kit is supplied.
+    const theme = await this.themeService.getThemeForPresentationAsync(input);
     const visualSlides: VisualSlideContent[] = [];
 
     for (const slide of slides) {

@@ -14,6 +14,8 @@
 import type { SlideElementDTO, ElementStyle, SlideBackground, SlideThemeTokens } from '../slides/element-types';
 import type { RenderDeckInput, RenderSlideInput } from './render-types';
 import { getPlannedTextFit } from './render-planner';
+import { buildChartSvg } from '../generation/export/svg-chart-builder';
+import type { ChartContent } from '../generation/export/chart-types';
 
 export const SLIDE_VIEWPORT_WIDTH  = 1280;
 export const SLIDE_VIEWPORT_HEIGHT = 720;
@@ -298,81 +300,24 @@ function renderKpi(el: SlideElementDTO): string {
 }
 
 function renderChart(el: SlideElementDTO): string {
-  const c = (el.content as any) || {};
-  const kind = c.type || 'bar';
-  const categories: string[] = c.categories || [];
-  const series: any[] = c.series || [];
-  // Compact inline SVG — matches the canvas renderer's basic shape geometry.
-  const svg = renderChartSvg(kind, categories, series, c.title);
-  return `<div style="width:100%;height:100%;display:flex;flex-direction:column;${textStyleAttr(el.style)}">
-    ${c.title ? `<div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:6px;">${escapeHtml(c.title)}</div>` : ''}
-    <div style="flex:1;min-height:0;">${svg}</div>
-  </div>`;
-}
-
-function renderChartSvg(kind: string, categories: string[], series: any[], _title?: string): string {
-  const W = 100, H = 100;
-  const max = Math.max(1, ...series.flatMap((s) => (s.values || []).map(Number).filter((n: number) => Number.isFinite(n))));
-  const palette = ['#16a34a', '#0ea5e9', '#a855f7', '#f59e0b', '#ef4444'];
-
-  if (kind === 'pie' || kind === 'donut') {
-    const values: number[] = (series[0]?.values || []).map(Number);
-    const total = values.reduce((a, b) => a + b, 0) || 1;
-    let a0 = -Math.PI / 2;
-    const cx = 50, cy = 50, r = 42, ri = kind === 'donut' ? 22 : 0;
-    const arcs = values.map((v, i) => {
-      const a1 = a0 + (v / total) * Math.PI * 2;
-      const large = a1 - a0 > Math.PI ? 1 : 0;
-      const x0 = cx + Math.cos(a0) * r, y0 = cy + Math.sin(a0) * r;
-      const x1 = cx + Math.cos(a1) * r, y1 = cy + Math.sin(a1) * r;
-      const xi0 = cx + Math.cos(a0) * ri, yi0 = cy + Math.sin(a0) * ri;
-      const xi1 = cx + Math.cos(a1) * ri, yi1 = cy + Math.sin(a1) * ri;
-      const d = ri > 0
-        ? `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} L ${xi1} ${yi1} A ${ri} ${ri} 0 ${large} 0 ${xi0} ${yi0} Z`
-        : `M ${cx} ${cy} L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
-      a0 = a1;
-      return `<path d="${d}" fill="${palette[i % palette.length]}" />`;
-    }).join('');
-    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;">${arcs}</svg>`;
-  }
-
-  // bar / line / area / kpi / comparison — bar fallback
-  const n = categories.length || (series[0]?.values || []).length;
-  const sCount = series.length || 1;
-  const groupW = (W - 8) / Math.max(1, n);
-  const barW = (groupW - 2) / sCount;
-  let body = '';
-  series.forEach((s, si) => {
-    (s.values || []).forEach((v: number, i: number) => {
-      const h = (Math.max(0, Number(v)) / max) * (H - 14);
-      const x = 4 + i * groupW + si * barW + 1;
-      const y = H - 6 - h;
-      if (kind === 'bar') {
-        body += `<rect x="${x}" y="${y}" width="${Math.max(0.5, barW - 0.5)}" height="${h}" fill="${s.color || palette[si % palette.length]}" />`;
-      }
-    });
-  });
-
-  if (kind === 'line' || kind === 'area') {
-    series.forEach((s, si) => {
-      const vals: number[] = s.values || [];
-      const pts = vals.map((v, i) => {
-        const x = 4 + i * groupW + groupW / 2;
-        const y = H - 6 - (Math.max(0, Number(v)) / max) * (H - 14);
-        return `${x.toFixed(2)},${y.toFixed(2)}`;
-      });
-      const color = s.color || palette[si % palette.length];
-      if (kind === 'area' && pts.length > 1) {
-        const first = pts[0].split(',')[0];
-        const last  = pts[pts.length - 1].split(',')[0];
-        body += `<polygon points="${pts.join(' ')} ${last},${H - 6} ${first},${H - 6}" fill="${color}" fill-opacity="0.18" />`;
-      }
-      body += `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" />`;
-    });
-  }
-
-  body += `<line x1="4" y1="${H - 6}" x2="${W - 4}" y2="${H - 6}" stroke="#cbd5e1" stroke-width="0.5" />`;
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100%;">${body}</svg>`;
+  const raw = (el.content as any) || {};
+  const content: ChartContent = {
+    type:         raw.type || 'bar',
+    title:        typeof raw.title === 'string' ? raw.title : undefined,
+    categories:   Array.isArray(raw.categories) ? raw.categories.map(String) : [],
+    series:       Array.isArray(raw.series) ? raw.series : [],
+    axes:         raw.axes,
+    legend:       raw.legend ?? { visible: true, position: 'bottom' },
+    showValues:   raw.showValues,
+    showGrid:     raw.showGrid,
+    insight:      raw.insight,
+    familyId:     raw.familyId,
+    numberFormat: raw.numberFormat,
+  };
+  // Shared SVG builder — same code path the editor uses, so all 21 chart
+  // types render identically in HTML/PDF/PNG/JPEG export.
+  const svg = buildChartSvg(content);
+  return `<div style="width:100%;height:100%;${textStyleAttr(el.style)}">${svg}</div>`;
 }
 
 function renderTable(el: SlideElementDTO): string {

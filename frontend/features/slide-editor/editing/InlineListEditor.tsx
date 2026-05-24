@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCaret from '@tiptap/extension-collaboration-caret';
 import type { SlideElementDTO } from '@/types/slide-element';
+import { useYDoc } from '@/features/collaboration/useYDoc';
 
 // =============================================================================
 //  InlineListEditor
@@ -31,9 +34,11 @@ interface Props {
   onCommit:       () => void;
   /** Reports the currently-focused editor up to the floating toolbar. */
   onEditorReady?: (editor: Editor | null) => void;
+  /** Phase 34.3A — current user info for per-item CollaborationCaret. */
+  collaborator?:  { name: string; color: string };
 }
 
-export const InlineListEditor: React.FC<Props> = ({ element, ordered, onChange, onCommit, onEditorReady }) => {
+export const InlineListEditor: React.FC<Props> = ({ element, ordered, onChange, onCommit, onEditorReady, collaborator }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const initialContent = (element.content as any) as ListContent | null;
   const [items, setItems] = useState<ListItem[]>(initialContent?.items?.length
@@ -100,6 +105,8 @@ export const InlineListEditor: React.FC<Props> = ({ element, ordered, onChange, 
               index={i}
               start={initialContent?.start ?? 1}
               item={it}
+              elementId={element.id}
+              collaborator={collaborator}
               onFocusEditor={(ed) => { setFocusedId(it.id); onEditorReady?.(ed); }}
               onChange={(html, text) => updateItemContent(it.id, html, text)}
               onAddAfter={() => addItemAfter(it.id)}
@@ -117,6 +124,8 @@ export const InlineListEditor: React.FC<Props> = ({ element, ordered, onChange, 
               key={it.id}
               index={i}
               item={it}
+              elementId={element.id}
+              collaborator={collaborator}
               onFocusEditor={(ed) => { setFocusedId(it.id); onEditorReady?.(ed); }}
               onChange={(html, text) => updateItemContent(it.id, html, text)}
               onAddAfter={() => addItemAfter(it.id)}
@@ -138,6 +147,8 @@ export const InlineListEditor: React.FC<Props> = ({ element, ordered, onChange, 
 
 const ListItemRow: React.FC<{
   item:          ListItem;
+  elementId:     string;
+  collaborator?: { name: string; color: string };
   index:         number;
   ordered?:      boolean;
   start?:        number;
@@ -148,15 +159,38 @@ const ListItemRow: React.FC<{
   onFocusEditor: (editor: Editor | null) => void;
   focusNext:     'start' | 'end' | null;
   clearFocusNext: () => void;
-}> = ({ item, index, ordered, start = 1, onChange, onAddAfter, onRemove, onEscape, onFocusEditor, focusNext, clearFocusNext }) => {
-  const editor = useEditor({
-    extensions: [
+}> = ({ item, elementId, collaborator, index, ordered, start = 1, onChange, onAddAfter, onRemove, onEscape, onFocusEditor, focusNext, clearFocusNext }) => {
+  // Phase 34.3A — per-item Y.Doc using the list:{elementId}:{itemId} convention.
+  // The backend YDocStore recognises this prefix and does NOT persist
+  // (canonical state lives inside SlideElement.content). CRDT merging still
+  // happens in-memory for the active collaboration session.
+  const ydoc = useYDoc(`list:${elementId}:${item.id}`);
+
+  const extensions = useMemo(() => {
+    const exts: any[] = [
       StarterKit.configure({
         heading: false, codeBlock: false, blockquote: false,
         horizontalRule: false, bulletList: false, orderedList: false,
+        undoRedo: false,   // Yjs owns history when Collaboration is active
       }),
-    ],
-    content: item.html && item.html.trim() ? item.html : (item.text ? `<p>${item.text}</p>` : '<p></p>'),
+    ];
+    if (ydoc?.doc) {
+      exts.push(Collaboration.configure({ document: ydoc.doc }));
+      if (ydoc.awareness && collaborator) {
+        exts.push(CollaborationCaret.configure({
+          provider: { awareness: ydoc.awareness } as any,
+          user:     { name: collaborator.name, color: collaborator.color },
+        }));
+      }
+    }
+    return exts;
+  }, [ydoc?.doc, ydoc?.awareness, collaborator?.name, collaborator?.color]);
+
+  const editor = useEditor({
+    extensions,
+    content: ydoc?.doc
+      ? undefined
+      : (item.html && item.html.trim() ? item.html : (item.text ? `<p>${item.text}</p>` : '<p></p>')),
     immediatelyRender: false,
     onUpdate: ({ editor }) => onChange(editor.getHTML(), editor.getText()),
     onFocus:  ({ editor }) => onFocusEditor(editor),
@@ -189,7 +223,28 @@ const ListItemRow: React.FC<{
         return false;
       },
     },
-  });
+  }, [extensions]);
+
+  // Phase 34.3A — Y.Doc seeding safety net. If after 800ms the Y.Doc is
+  // still empty and no remote state arrived, seed from item.html so first-
+  // edit doesn't lose existing list text.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!ydoc?.doc || !editor) return;
+    const t = setTimeout(() => {
+      if (seededRef.current) return;
+      const isEmpty = ydoc.doc.getXmlFragment('default').length === 0;
+      if (isEmpty && (item.html || item.text)) {
+        const html = item.html && item.html.trim() ? item.html : `<p>${item.text}</p>`;
+        try { editor.commands.setContent(html, { emitUpdate: true }); } catch { /* ignore */ }
+      }
+      seededRef.current = true;
+    }, 800);
+    const handler = () => { seededRef.current = true; clearTimeout(t); };
+    ydoc.doc.on('update', handler);
+    return () => { clearTimeout(t); ydoc.doc.off('update', handler); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ydoc?.doc, editor]);
 
   // Honour focusNext request from parent (e.g. after Enter or Backspace).
   useEffect(() => {

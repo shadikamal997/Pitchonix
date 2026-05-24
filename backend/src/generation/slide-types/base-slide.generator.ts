@@ -1,4 +1,5 @@
 import { SlideType, SlideContent, WizardInput, ISlideGenerator } from './types';
+import { generationAdapter } from '../smart-adapter';
 
 /**
  * Base abstract class for all slide generators
@@ -13,12 +14,23 @@ export abstract class BaseSlideGenerator implements ISlideGenerator {
   abstract getSubtitle(input: WizardInput): string;
   abstract getSpeakerNotes(input: WizardInput): string;
 
+  /**
+   * Phase 32.75 Tier 4 hook. Generators that map to a Tier 3 smart component
+   * override this and return `true`; the base class then asks the adapter
+   * for the family's element tree and attaches it to `SlideContent.smartComponent`.
+   *
+   * Default `false` keeps every other generator unchanged.
+   */
+  protected usesSmartComponent(): boolean {
+    return false;
+  }
+
   getDefaultPriority(): number {
     return this.defaultPriority;
   }
 
   generate(input: WizardInput, order: number): SlideContent {
-    return {
+    const out: SlideContent = {
       type: this.type,
       order,
       title: this.getTitle(input),
@@ -29,6 +41,17 @@ export abstract class BaseSlideGenerator implements ISlideGenerator {
       speakerNotes: input.includeSpeakerNotes ? this.getSpeakerNotes(input) : undefined,
       qualityScore: this.calculateQualityScore(input),
     };
+
+    // Phase 32.75 Tier 4 — request smart component if the generator opts in.
+    // Failures are non-fatal (Part I — fallback rules): a null request just
+    // means downstream uses the legacy manual layout.
+    if (this.usesSmartComponent()) {
+      const req = generationAdapter.requestFor(this.type, input);
+      if (req) {
+        out.smartComponent = { family: req.family, type: req.type, elementTree: req.elementTree };
+      }
+    }
+    return out;
   }
 
   protected getLayoutKey(input: WizardInput): string {
@@ -68,48 +91,9 @@ export abstract class BaseSlideGenerator implements ISlideGenerator {
     return Math.min(100, Math.max(0, Math.round(score)));
   }
 
-  protected formatBulletPoints(text: string | undefined, maxPoints: number = 5): string[] {
-    if (!text) return [];
-    
-    // Split by common delimiters
-    const points = text
-      .split(/[.\n,;]/)
-      .map(p => p.trim())
-      .filter(p => p.length > 10 && p.length < 200)
-      .slice(0, maxPoints);
-
-    return points.length > 0 ? points : [text.substring(0, 150)];
-  }
-
-  protected extractNumbers(text: string | undefined): { value: string; context: string }[] {
-    if (!text) return [];
-    
-    const numbers: { value: string; context: string }[] = [];
-    
-    // Match patterns like "$10M", "50%", "1,000 users"
-    const patterns = [
-      /\$[\d,.]+[MBK]?/gi,
-      /\d+%/g,
-      /[\d,]+\s+(users|customers|clients|companies)/gi,
-    ];
-
-    patterns.forEach(pattern => {
-      const matches = text.match(pattern);
-      if (matches) {
-        matches.forEach(match => {
-          const context = this.getContextAroundMatch(text, match);
-          numbers.push({ value: match, context });
-        });
-      }
-    });
-
-    return numbers.slice(0, 3);
-  }
-
-  private getContextAroundMatch(text: string, match: string): string {
-    const index = text.indexOf(match);
-    const start = Math.max(0, index - 30);
-    const end = Math.min(text.length, index + match.length + 30);
-    return text.substring(start, end).trim();
-  }
+  // Phase 32.75 Tier 10 — `formatBulletPoints`, `extractNumbers`, and
+  // `getContextAroundMatch` were utilities used only by the legacy generator
+  // helpers deleted in Tier 9. After Tier 10, no slide generator imports
+  // them, so they were removed (~45 LOC). PDF-studio and content-structure
+  // services have their own copies and are unaffected.
 }

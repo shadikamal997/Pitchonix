@@ -2,13 +2,17 @@ import { ForbiddenException, Injectable, NotFoundException, BadRequestException 
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateSlideDto, UpdateSlideDto } from './dto/slide.dto';
+import { CollaborationBroadcaster } from '../collaboration/collaboration-broadcaster';
 
 @Injectable()
 export class SlidesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private broadcaster: CollaborationBroadcaster,
+  ) {}
 
   async create(deckId: string, dto: CreateSlideDto) {
-    return this.prisma.slide.create({
+    const slide = await this.prisma.slide.create({
       data: {
         deckId,
         type: dto.type,
@@ -21,6 +25,9 @@ export class SlidesService {
         themeKey: dto.themeKey,
       },
     });
+    // Phase 34.1A — broadcast structure change to every collaborator.
+    this.broadcaster.toDeck(deckId, 'slide.created', { slide });
+    return slide;
   }
 
   async createMany(deckId: string, slides: CreateSlideDto[]) {
@@ -61,11 +68,19 @@ export class SlidesService {
   }
 
   async update(id: string, dto: UpdateSlideDto) {
-    return this.prisma.slide.update({ where: { id }, data: dto });
+    const slide = await this.prisma.slide.update({ where: { id }, data: dto });
+    // Phase 34.1A — title/subtitle/order/etc. changes propagate live.
+    this.broadcaster.toDeck(slide.deckId, 'slide.updated', { slide });
+    return slide;
   }
 
   async remove(id: string) {
+    // Capture deckId BEFORE delete so we can broadcast afterwards.
+    const existing = await this.prisma.slide.findUnique({
+      where: { id }, select: { deckId: true },
+    });
     await this.prisma.slide.delete({ where: { id } });
+    if (existing) this.broadcaster.toDeck(existing.deckId, 'slide.deleted', { slideId: id });
     return { message: 'Slide deleted successfully' };
   }
 
@@ -174,7 +189,7 @@ export class SlidesService {
     });
     if (!src) throw new NotFoundException('Slide not found');
 
-    return this.prisma.$transaction(async (tx) => {
+    const copy = await this.prisma.$transaction(async (tx) => {
       // Shift subsequent slides down by 1 — two-phase to avoid unique violations
       const subsequent = await tx.slide.findMany({
         where: { deckId: src.deckId, order: { gt: src.order } },
@@ -227,6 +242,11 @@ export class SlidesService {
 
       return copy;
     });
+    // Phase 34.1A — broadcast both the new slide AND a reorder hint (since
+    // subsequent slides' orders changed inside the transaction).
+    this.broadcaster.toDeck(src.deckId, 'slide.created', { slide: copy, duplicateOf: slideId });
+    this.broadcaster.toDeck(src.deckId, 'slide.reordered', { changedAround: copy.id });
+    return copy;
   }
 
   /**
@@ -258,6 +278,11 @@ export class SlidesService {
       for (const e of entries) {
         await tx.slide.update({ where: { id: e.id }, data: { order: e.order } });
       }
+    });
+    // Phase 34.1A — single reorder event with the new ordering. Receivers
+    // can either refetch (cheaper) or apply the diff themselves.
+    this.broadcaster.toDeck(deckId, 'slide.reordered', {
+      order: entries.map((e) => ({ id: e.id, order: e.order })),
     });
     return this.findAll(deckId);
   }

@@ -1,22 +1,33 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { EditorContent, useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCaret from '@tiptap/extension-collaboration-caret';
 import type { SlideElementDTO } from '@/types/slide-element';
+import { useYDoc } from '@/features/collaboration/useYDoc';
 
 // =============================================================================
-//  InlineTextEditor
+//  InlineTextEditor — Phase 34.2A
 //
-//  TipTap-powered editor that runs INSIDE the canvas for a single text element.
-//  Mounted only while editing this element; unmounted when edit mode ends.
+//  Yjs-bound TipTap editor for a single text element. Two collaboration
+//  layers:
 //
-//  The element's storage shape is:
-//     content: { text: string, html?: string }
+//    Collaboration       — Y.Doc binding (CRDT merge of concurrent edits)
+//    CollaborationCaret  — awareness binding (other users' carets + selection)
 //
-//  - We persist BOTH `html` (for re-render with formatting) and `text`
-//    (for plain-text exports / search). On every keystroke we update local
-//    state; commit happens on exit (Esc / blur / click outside).
+//  Y.Doc lifecycle:
+//    - useYDoc(`text:{elementId}`) maintains a per-element doc + awareness,
+//      synced over the existing /collaboration socket
+//    - The server is authoritative: it ships the initial state on join,
+//      applies every update, and persists debounced to SlideElement.ydocState
+//    - Element.content still mirrors the latest text for export + render
+//      when nobody is actively editing (updated on commit/onChange below)
+//
+//  On commit: we extract HTML + text from TipTap and call onChange one
+//  final time so the element row persists with current content, matching
+//  the pre-Yjs save semantics.
 // =============================================================================
 
 interface Props {
@@ -29,11 +40,15 @@ interface Props {
   onCommit:      () => void;
   /** Reports the live editor so the floating toolbar can dispatch commands to it. */
   onEditorReady?: (editor: Editor | null) => void;
-  multiline?:    boolean;   // true for paragraph/quote; false for heading/caption/cta
+  multiline?:    boolean;
+  /** Phase 34.2C — caret label + color for the CollaborationCaret extension.
+   *  Threaded from SlideEditor's existing collaboration session so we don't
+   *  spawn duplicate sockets here. */
+  collaborator?: { name: string; color: string };
 }
 
 export const InlineTextEditor: React.FC<Props> = ({
-  element, defaultSize, defaultWeight, onChange, onCommit, onEditorReady, multiline = true,
+  element, defaultSize, defaultWeight, onChange, onCommit, onEditorReady, multiline = true, collaborator,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const c = (element.content as any) || {};
@@ -41,20 +56,66 @@ export const InlineTextEditor: React.FC<Props> = ({
     ? c.html
     : (c.text ? `<p>${escapeHtml(c.text)}</p>` : '<p></p>');
 
-  const editor = useEditor({
-    extensions: [
+  // Phase 34.2A — Y.Doc + awareness for this element. `text:{elementId}`
+  // is the docId convention used by YDocStore on the backend.
+  const ydoc = useYDoc(`text:${element.id}`);
+  const me = collaborator;
+
+  // Track whether Y.Doc has received initial server state. We skip seeding
+  // from element.content until then, so we don't fight the server.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!ydoc?.doc) return;
+    // Wait for one external update from the server before considering the
+    // doc hydrated. If after 800ms we still have an empty doc and no
+    // remote state, seed from element.content so first-edit doesn't lose
+    // existing text.
+    const t = setTimeout(() => {
+      if (seededRef.current) return;
+      const isEmpty = ydoc.doc.getXmlFragment('default').length === 0;
+      if (isEmpty && initialHTML && initialHTML !== '<p></p>') {
+        // Seed via the editor (which writes via Y.Doc transaction).
+        try { editor?.commands.setContent(initialHTML, { emitUpdate: true }); } catch { /* ignore */ }
+      }
+      seededRef.current = true;
+    }, 800);
+    const handler = () => { seededRef.current = true; clearTimeout(t); };
+    ydoc.doc.on('update', handler);
+    return () => { clearTimeout(t); ydoc.doc.off('update', handler); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ydoc?.doc, initialHTML]);
+
+  const extensions = useMemo(() => {
+    const exts: any[] = [
       StarterKit.configure({
-        // We won't auto-create block-level structure — text-element editors are
-        // single-block by design. Heading element ≠ HTML heading.
         heading: false,
         codeBlock: false,
         blockquote: false,
         horizontalRule: false,
-        bulletList: false,      // belongs to list elements, not text elements
+        bulletList: false,
         orderedList: false,
+        // CollaborationCaret replaces TipTap's default cursor extension.
+        // Disable the default to avoid conflicts.
+        undoRedo: false,
       }),
-    ],
-    content: initialHTML,
+    ];
+    if (ydoc?.doc) {
+      exts.push(Collaboration.configure({ document: ydoc.doc }));
+      if (ydoc.awareness && me) {
+        exts.push(CollaborationCaret.configure({
+          provider: { awareness: ydoc.awareness } as any,
+          user: { name: me.name, color: me.color },
+        }));
+      }
+    }
+    return exts;
+  }, [ydoc?.doc, ydoc?.awareness, me?.name, me?.color]);
+
+  const editor = useEditor({
+    extensions,
+    // When Collaboration is enabled, content MUST NOT be passed — the Y.Doc
+    // is the source of truth. We seed via setContent after the doc is ready.
+    content: ydoc?.doc ? undefined : initialHTML,
     immediatelyRender: false,
     autofocus: 'end',
     onUpdate: ({ editor }) => {
@@ -73,7 +134,6 @@ export const InlineTextEditor: React.FC<Props> = ({
           onCommit();
           return true;
         }
-        // For single-line elements, swallow Enter to prevent newlines
         if (!multiline && event.key === 'Enter') {
           event.preventDefault();
           onCommit();
@@ -82,7 +142,7 @@ export const InlineTextEditor: React.FC<Props> = ({
         return false;
       },
     },
-  });
+  }, [extensions]);
 
   // Report editor instance up to the floating toolbar
   useEffect(() => {

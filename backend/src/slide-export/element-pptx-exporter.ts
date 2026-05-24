@@ -21,18 +21,33 @@
 // Resolve through require() so it works under both ts-node and nest build.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PptxGenJS: any = require('pptxgenjs');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const sharp: any = require('sharp');
 import type { SlideElementDTO, ElementStyle, SlideBackground } from '../slides/element-types';
 import type { RenderDeckInput } from './render-types';
+import { postProcessAnimations } from './ooxml-animation-writer';
 import { getPlannedTextFit, stripHtml as stripExportHtml } from './render-planner';
+import { buildChartSvg } from '../generation/export/svg-chart-builder';
+import type { ChartContent } from '../generation/export/chart-types';
 
 const SLIDE_W = 13.333;   // inches at 16:9
 const SLIDE_H = 7.5;
+
+// Native pptxgenjs chart types only cover bar/line/pie/donut/area. Every
+// other ChartKind (stackedBar / funnel / scatter / waterfall / radar /
+// heatmap / bubble / gauge / treemap / dualAxis / stackedArea /
+// percentStackedBar / percentStackedArea / matrix2x2 / kpi / comparison)
+// is rendered via the shared SVG builder and embedded as PNG so the export
+// matches the editor pixel-for-pixel.
+type ChartImageMap = Map<string, string>;
 
 export async function exportDeckToPptx(deck: RenderDeckInput): Promise<Buffer> {
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_WIDE';
   pptx.author = 'Pitchonix';
   pptx.title = deck.title;
+
+  const chartImages = await prerenderChartImages(deck);
 
   for (const slide of deck.slides) {
     const ps = pptx.addSlide();
@@ -46,15 +61,98 @@ export async function exportDeckToPptx(deck: RenderDeckInput): Promise<Buffer> {
       .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
 
     for (const el of sorted) {
-      try { addElement(pptx, ps, el); } catch (err) {
+      try { addElement(pptx, ps, el, chartImages); } catch (err) {
         // Soft-fail per element so a broken row doesn't kill the export
         console.warn(`[pptx-export] element ${el.id} (${el.type}) failed:`, (err as Error).message);
       }
     }
+
+    // Phase 38E — speaker notes (writes to <p:notesSlide>).
+    if (slide.speakerNotes && slide.speakerNotes.trim().length > 0) {
+      try { ps.addNotes(slide.speakerNotes); } catch (e) { /* pptxgenjs swallows missing */ }
+    }
+
+    // Phase 38I — per-slide transition. pptxgenjs v3 exposes `slide.transition`
+    // for a subset of effects; we map ours to its API + silently no-op for
+    // anything it doesn't recognise.
+    if (slide.transition && (slide.transition as any).effect) {
+      try {
+        const t = slide.transition as any;
+        const psAny = ps as any;
+        if (typeof psAny.transition === 'function') {
+          psAny.transition({ type: pptxTransitionType(t.effect), duration: (t.duration ?? 400) / 1000 });
+        }
+      } catch { /* unsupported in this pptxgenjs version */ }
+    }
   }
 
   const buf = await pptx.write({ outputType: 'nodebuffer' });
-  return buf as Buffer;
+  // Phase 38.1F + 38.1G — post-process the zip to inject OOXML <p:timing>
+  // animation graphs and overwrite <p:transition> with the correct effect
+  // for the cases pptxgenjs flattens (morph, directional push/reveal/cover).
+  return postProcessAnimations(buf as Buffer, deck.slides);
+}
+
+// =============================================================================
+//  Chart pre-render (Phase 33.75)
+//
+//  pptxgenjs's native addChart() only knows bar/line/pie/donut/area. Anything
+//  else used to fall through to a rounded-rect placeholder, so the editor and
+//  export visibly diverged. We now build the SVG for every chart element via
+//  the shared `buildChartSvg`, convert SVG→PNG via sharp, and embed the PNG
+//  as a regular image so any ChartKind renders correctly.
+//
+//  Pre-render once at the top of the export so the per-element loop can stay
+//  synchronous (pptxgenjs's addImage accepts a data URL, no I/O needed).
+// =============================================================================
+async function prerenderChartImages(deck: RenderDeckInput): Promise<ChartImageMap> {
+  const map: ChartImageMap = new Map();
+  const jobs: Array<Promise<void>> = [];
+
+  for (const slide of deck.slides) {
+    for (const el of slide.elements || []) {
+      if (el.type !== 'chart' || el.visible === false) continue;
+      jobs.push(renderChartToDataUrl(el).then((url) => {
+        if (url) map.set(el.id, url);
+      }).catch((err) => {
+        console.warn(`[pptx-export] chart pre-render failed for ${el.id}:`, (err as Error).message);
+      }));
+    }
+  }
+
+  await Promise.all(jobs);
+  return map;
+}
+
+async function renderChartToDataUrl(el: SlideElementDTO): Promise<string | null> {
+  const raw = (el.content as any) || {};
+  const content: ChartContent = {
+    type:         raw.type || 'bar',
+    title:        typeof raw.title === 'string' ? raw.title : undefined,
+    categories:   Array.isArray(raw.categories) ? raw.categories.map(String) : [],
+    series:       Array.isArray(raw.series) ? raw.series : [],
+    axes:         raw.axes,
+    legend:       raw.legend ?? { visible: true, position: 'bottom' },
+    showValues:   raw.showValues,
+    showGrid:     raw.showGrid,
+    insight:      raw.insight,
+    familyId:     raw.familyId,
+    numberFormat: raw.numberFormat,
+  };
+
+  // Match the on-slide aspect ratio so SVG geometry isn't squashed when
+  // pptxgenjs scales the image into the element's bounding box. Cap the
+  // pixel width so we don't ship 5MP PNGs into the .pptx for tiny charts.
+  const aspect = el.width > 0 && el.height > 0 ? el.width / el.height : 16 / 9;
+  const pxW = Math.max(480, Math.min(1920, Math.round(aspect * 720)));
+  const pxH = Math.round(pxW / aspect);
+
+  const svg = buildChartSvg(content, { width: pxW, height: pxH });
+  const png: Buffer = await sharp(Buffer.from(svg))
+    .resize(pxW, pxH, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+    .png()
+    .toBuffer();
+  return `data:image/png;base64,${png.toString('base64')}`;
 }
 
 // =============================================================================
@@ -68,6 +166,18 @@ function rect(el: SlideElementDTO) {
     w: (el.width  / 100) * SLIDE_W,
     h: (el.height / 100) * SLIDE_H,
   };
+}
+
+/** Phase 38I — map Pitchonix transition effects to pptxgenjs identifiers. */
+function pptxTransitionType(effect: string): string {
+  switch (effect) {
+    case 'fade':   return 'fade';
+    case 'push':   return 'push';
+    case 'reveal': return 'reveal';
+    case 'cover':  return 'cover';
+    case 'morph':  return 'fade';  // morph isn't a v3 native; fade is the closest fallback
+    default:       return 'fade';
+  }
 }
 
 function stripHash(c?: string | null): string {
@@ -100,7 +210,7 @@ function applyBackground(slide: any, bg: SlideBackground) {
 //  Add element
 // =============================================================================
 
-function addElement(_pptx: any, slide: any, el: SlideElementDTO) {
+function addElement(_pptx: any, slide: any, el: SlideElementDTO, chartImages: ChartImageMap) {
   switch (el.type) {
     case 'heading':       return addText(slide, el, { fontSize: 32, bold: true });
     case 'subheading':    return addText(slide, el, { fontSize: 18, bold: false, color: '475569' });
@@ -114,7 +224,7 @@ function addElement(_pptx: any, slide: any, el: SlideElementDTO) {
     case 'numberedList':  return addBulletList(slide, el, true);
     case 'metric':        return addMetric(slide, el);
     case 'kpi':           return addKpi(slide, el);
-    case 'chart':         return addChart(slide, el);
+    case 'chart':         return addChart(slide, el, chartImages);
     case 'table':         return addTable(slide, el);
     case 'image':         return addImage(slide, el);
     case 'logo':          return addImage(slide, el);
@@ -158,9 +268,41 @@ function pickTextStyle(el: SlideElementDTO, base: { fontSize?: number; bold?: bo
 
 function addText(slide: any, el: SlideElementDTO, base: { fontSize?: number; bold?: boolean; color?: string; align?: 'left'|'center'|'right' }) {
   const c = (el.content as any) || {};
-  const text = stripExportHtml(c.html || c.text || '');
   const ts = pickTextStyle(el, base);
   const fit = getPlannedTextFit(el);
+
+  // Phase 38.5G — emit per-run formatting when imported text carried runs.
+  // pptxgenjs accepts an array of `{ text, options }` so each run can carry
+  // its own bold/italic/colour/size/font. Fall back to flat text otherwise.
+  const richRuns = Array.isArray(c.runs) ? (c.runs as any[]).filter((r) => r && typeof r.text === 'string') : null;
+  if (richRuns && richRuns.length > 0) {
+    const blocks = richRuns.map((r) => ({
+      text: r.text,
+      options: {
+        bold:      !!r.bold,
+        italic:    !!r.italic,
+        underline: r.underline ? { style: 'sng' } : undefined,
+        fontSize:  Number.isFinite(r.size) ? r.size : ts.fontSize,
+        color:     r.color && typeof r.color === 'string' && !r.color.startsWith('scheme:')
+          ? stripHash(r.color) : ts.color,
+        fontFace:  r.font || ts.fontFace,
+      },
+    }));
+    slide.addText(blocks as any, {
+      ...rect(el),
+      ...ts,
+      margin: 0,
+      paraSpaceAfterPt: 0,
+      breakLine: false,
+      fit: 'shrink',
+      lineSpacingMultiple: fit?.lineHeight,
+      charSpace: fit?.letterSpacing,
+      fill: bgFill(el.style),
+    });
+    return;
+  }
+
+  const text = stripExportHtml(c.html || c.text || '');
   slide.addText(text, {
     ...rect(el),
     ...ts,
@@ -268,45 +410,25 @@ function addKpi(slide: any, el: SlideElementDTO) {
   if (c.sublabel) slide.addText(c.sublabel, { x: r.x + 0.15, y: r.y + r.h * 0.8, w: r.w - 0.3, h: r.h * 0.2, fontSize: 11, color: '6B7280' });
 }
 
-function addChart(slide: any, el: SlideElementDTO) {
-  const c = (el.content as any) || {};
+function addChart(slide: any, el: SlideElementDTO, chartImages: ChartImageMap) {
   const r = rect(el);
-  const categories: string[] = c.categories || [];
-  const series: any[]        = c.series || [];
+  const dataUrl = chartImages.get(el.id);
 
-  const data = (series.length ? series : [{ name: 'Series 1', values: [] }]).map((s) => ({
-    name: s.name || 'Series',
-    labels: categories,
-    values: (s.values || []).map(Number),
-  }));
-
-  const kindMap: Record<string, any> = {
-    bar:   'bar',
-    line:  'line',
-    pie:   'pie',
-    donut: 'doughnut',
-    area:  'area',
-  };
-  const typeKey = kindMap[c.type as string];
-
-  if (typeKey) {
-    slide.addChart(typeKey, data, {
-      ...r,
-      showLegend: c.legend?.visible !== false,
-      legendPos:  (c.legend?.position || 'b') as any,
-      showTitle:  !!c.title,
-      title:      c.title || '',
-      titleFontSize: 12,
-      catAxisLabelFontSize: 10,
-      valAxisLabelFontSize: 10,
-      chartColors: series.map((s, i) => stripHash(s.color || ['16A34A', '0EA5E9', 'A855F7', 'F59E0B', 'EF4444'][i % 5])),
-      showValue:  !!c.showValues,
-    });
-  } else {
-    // 'kpi' / 'comparison' don't have a native chart; render value tiles.
-    slide.addShape('roundRect', { ...r, fill: { color: 'F8FAFC' }, line: { color: 'E2E8F0', width: 1 }, rectRadius: 0.1 });
-    slide.addText(c.title || c.type || 'Chart', { ...r, fontSize: 14, bold: true, color: '111827', align: 'center', valign: 'middle' });
+  if (dataUrl) {
+    // Shared SVG → PNG path. Covers all 21 ChartKinds (Phase 33.75) with
+    // pixel-equivalent output to the editor canvas.
+    slide.addImage({ data: dataUrl, ...r });
+    return;
   }
+
+  // Pre-render failed (sharp threw, malformed content, etc.). Surface a
+  // visible placeholder rather than swallowing the failure silently so the
+  // bug is caught in QA instead of in front of the customer.
+  const c = (el.content as any) || {};
+  slide.addShape('roundRect', { ...r, fill: { color: 'FEF3F2' }, line: { color: 'F87171', width: 1 }, rectRadius: 0.08 });
+  slide.addText(`Chart render failed (${c.type || 'unknown'})`, {
+    ...r, fontSize: 12, italic: true, color: '991B1B', align: 'center', valign: 'middle',
+  });
 }
 
 function addTable(slide: any, el: SlideElementDTO) {

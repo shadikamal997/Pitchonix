@@ -113,6 +113,26 @@ export interface SlideVariant {
   chrome?:    DecorativeChrome;
   /** Typography overrides specific to this slide type. */
   typography?: FamilyTypography;
+
+  // ---------------------------------------------------------------------------
+  //  Phase 26-era layout-scorer hints (consumed by layout-scorer.ts +
+  //  fatigue-analyzer.ts). All optional — variants that don't declare them
+  //  get a base score and let the default-variant bonus break ties.
+  //
+  //  layoutIntent  : the named layout shape (e.g. 'metric-hero', 'three-tier',
+  //                  'compact-layout') — compared against the content profile's
+  //                  recommendedLayoutIntent for a +30 bonus on match.
+  //
+  //  contentSignals: rules that bump this variant when the slide content
+  //                  matches a metric/threshold (e.g. bullet count > 5 → +10).
+  // ---------------------------------------------------------------------------
+  layoutIntent?:    string;
+  contentSignals?:  Array<{
+    metric: string;
+    op:     'gt' | 'gte' | 'lt' | 'lte' | 'eq';
+    value:  number | string;
+    score:  number;
+  }>;
 }
 
 // =============================================================================
@@ -154,4 +174,18 @@ export function findVariant(family: TemplateFamily, slideType: string): SlideVar
   }
   const def = family.variants.find((v) => v.matches.includes('default'));
   return def || family.variants[0] || null;
+}
+
+/**
+ * Return every variant within the family that matches `slideType` (vs.
+ * `findVariant` which returns only the first). Used by the canvas's
+ * layout scorer to evaluate multiple candidate layouts and pick the best
+ * one for the slide's content.
+ */
+export function findAllVariants(family: TemplateFamily, slideType: string): SlideVariant[] {
+  const key = slideType as SlideTypeKey;
+  const matches = family.variants.filter((v) => v.matches.includes(key));
+  if (matches.length > 0) return matches;
+  const def = family.variants.filter((v) => v.matches.includes('default'));
+  return def.length > 0 ? def : (family.variants[0] ? [family.variants[0]] : []);
 }

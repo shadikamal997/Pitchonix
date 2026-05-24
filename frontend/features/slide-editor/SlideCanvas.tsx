@@ -104,6 +104,11 @@ export interface SlideCanvasProps {
    *  the slide as a composed family variant: background chrome, decorations, and
    *  slot-positioned elements with family typography. Editing still works. */
   compositionFamilyId?: string | null;
+  /** Phase 35-final-B Task 3 — when true (Version History preview mode), the
+   *  canvas dims, hides selection / drag / resize affordances, and routes
+   *  pointer events into an inert overlay. The underlying mutators in
+   *  useElementsApi are also guarded as a defense-in-depth measure. */
+  readOnly?: boolean;
   /** Phase 26 — deck-level context for this slide. When provided, the layout
    *  scorer applies narrative/pacing/fatigue/transition biases. */
   deckContext?: DeckSlideContext;
@@ -142,6 +147,7 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
   slideIndex = 0,
   compositionFamilyId,
   deckContext,
+  readOnly = false,
 }) => {
   // Compute the actual CSS background for the slide stage. Order:
   //   1. Explicit slide.background (solid / gradient / image)
@@ -578,7 +584,7 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
 
   return (
     <div
-      className="relative shadow-2xl rounded-lg overflow-hidden select-none"
+      className={`relative shadow-2xl rounded-lg overflow-hidden select-none ${readOnly ? 'pointer-events-none' : ''}`}
       style={{
         width:    `${1280 * zoom}px`,
         height:   `${720  * zoom}px`,
@@ -590,6 +596,9 @@ export const SlideCanvas: React.FC<SlideCanvasProps> = ({
       }}
       ref={stageRef}
       onMouseDown={(e) => {
+        // Phase 35-final-B Task 3 — never start marquee selection or clear
+        // selection during preview; the stage is inert.
+        if (readOnly) return;
         // Click empty canvas → either start marquee (and clear selection) or just deselect
         if (e.target !== e.currentTarget) return;
         if (!stageRef.current) { onSelect([]); return; }

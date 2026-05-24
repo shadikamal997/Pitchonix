@@ -4,6 +4,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
+import { RequireRole } from '../workspaces/role.guard';
 import { SlideElementsService } from './slide-elements.service';
 import { SlideElementsMigrationService } from './slide-elements-migration.service';
 import { SlideElementDTO } from './element-types';
@@ -32,6 +33,7 @@ export class SlideElementsController {
 
   @Get()
   @ApiOperation({ summary: 'List all editable elements on a slide' })
+  @RequireRole('elements.view', { kind: 'workspaceFromSlide', param: 'slideId' })
   async list(
     @Param('slideId') slideId: string,
     @GetUser() user: any,
@@ -42,6 +44,7 @@ export class SlideElementsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new element on a slide' })
+  @RequireRole('elements.edit', { kind: 'workspaceFromSlide', param: 'slideId' })
   async create(
     @Param('slideId') slideId: string,
     @Body() body: Partial<SlideElementDTO>,
@@ -54,6 +57,7 @@ export class SlideElementsController {
 
   @Patch(':elementId')
   @ApiOperation({ summary: 'Update an element (partial)' })
+  @RequireRole('elements.edit', { kind: 'workspaceFromElement', param: 'elementId' })
   async update(
     @Param('slideId')   _slideId: string,
     @Param('elementId') elementId: string,
@@ -66,6 +70,7 @@ export class SlideElementsController {
 
   @Delete(':elementId')
   @ApiOperation({ summary: 'Delete an element' })
+  @RequireRole('elements.edit', { kind: 'workspaceFromElement', param: 'elementId' })
   async remove(
     @Param('slideId')   _slideId: string,
     @Param('elementId') elementId: string,
@@ -77,6 +82,7 @@ export class SlideElementsController {
 
   @Post(':elementId/duplicate')
   @ApiOperation({ summary: 'Duplicate an element on the same slide' })
+  @RequireRole('elements.edit', { kind: 'workspaceFromElement', param: 'elementId' })
   async duplicate(
     @Param('slideId')   _slideId: string,
     @Param('elementId') elementId: string,

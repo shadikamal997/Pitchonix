@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { PanelSection, Row, TextField, TextArea, ColorField, SelectField, NumberField, SegmentedControl } from '../Primitives';
+import { TransitionControl } from '@/features/pptx-editing/TransitionControl';
 
 // =============================================================================
 //  SlidePanel — shown in the inspector when no element is selected.
@@ -122,6 +123,9 @@ export const SlidePanel: React.FC<Props> = ({ slide, onPatch }) => {
           rows={5}
         />
       </PanelSection>
+
+      {/* Phase 38I — per-slide transition control. */}
+      <TransitionControl slideId={slide.id} />
     </>
   );
 };

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useIsPreviewing } from '../versions/useVersionPreview';
+import { useSafetySnapshot } from '../versions/useSafetySnapshot';
 
 // =============================================================================
 //  useDeckSlides
@@ -54,6 +56,12 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
   const [loading, setLoading] = useState(!!deckId);
   const [error, setError] = useState<string | null>(null);
 
+  // Phase 35.1A — shared preview state + safety snapshot helper. Every
+  // mutator below short-circuits when previewing; destructive mutators
+  // capture a SAFETY snapshot first.
+  const isPreviewing = useIsPreviewing();
+  const safety = useSafetySnapshot(deckId);
+
   // ── Load on mount / deck change ────────────────────────────────────────────
   const refresh = useCallback(async () => {
     if (!deckId) { setSlides([]); setLoading(false); return; }
@@ -71,8 +79,10 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
   useEffect(() => { refresh(); }, [refresh]);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
+  // Phase 35.1A — gated on `isPreviewing` so historical versions are immutable.
+
   const insertAfter = useCallback(async (afterSlideId: string, title?: string): Promise<SlideListItem | null> => {
-    if (!deckId) return null;
+    if (isPreviewing || !deckId) return null;
     try {
       const { data } = await api.post<SlideListItem>(`/slides/deck/${deckId}/insert`, { afterSlideId, title });
       await refresh();
@@ -81,10 +91,10 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
       setError(err?.message || 'Insert failed');
       return null;
     }
-  }, [deckId, refresh]);
+  }, [deckId, refresh, isPreviewing]);
 
   const insertAtEnd = useCallback(async (title?: string): Promise<SlideListItem | null> => {
-    if (!deckId) return null;
+    if (isPreviewing || !deckId) return null;
     try {
       const { data } = await api.post<SlideListItem>(`/slides/deck/${deckId}/insert`, { title });
       await refresh();
@@ -93,10 +103,10 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
       setError(err?.message || 'Insert failed');
       return null;
     }
-  }, [deckId, refresh]);
+  }, [deckId, refresh, isPreviewing]);
 
   const duplicate = useCallback(async (slideId: string): Promise<SlideListItem | null> => {
-    if (!deckId) return null;
+    if (isPreviewing || !deckId) return null;
     try {
       const { data } = await api.post<SlideListItem>(`/slides/${slideId}/duplicate`);
       await refresh();
@@ -105,9 +115,12 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
       setError(err?.message || 'Duplicate failed');
       return null;
     }
-  }, [deckId, refresh]);
+  }, [deckId, refresh, isPreviewing]);
 
   const remove = useCallback(async (slideId: string): Promise<boolean> => {
+    if (isPreviewing) return false;
+    // Phase 35.1A — capture a safety snapshot before destroying a slide.
+    await safety.beforeDelete('slide');
     // Optimistic
     setSlides((prev) => prev.filter((s) => s.id !== slideId));
     try {
@@ -118,10 +131,10 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
       await refresh();
       return false;
     }
-  }, [refresh]);
+  }, [refresh, isPreviewing, safety]);
 
   const reorder = useCallback(async (newOrderIds: string[]) => {
-    if (!deckId || newOrderIds.length === 0) return;
+    if (isPreviewing || !deckId || newOrderIds.length === 0) return;
     // Optimistic reorder
     const map = new Map(slides.map((s) => [s.id, s]));
     const optimistic = newOrderIds
@@ -139,13 +152,15 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
     } catch {
       await refresh();
     }
-  }, [deckId, slides, refresh]);
+  }, [deckId, slides, refresh, isPreviewing]);
 
   const updateLocal = useCallback((slideId: string, patch: Partial<SlideListItem>) => {
+    if (isPreviewing) return;
     setSlides((prev) => prev.map((s) => (s.id === slideId ? { ...s, ...patch } : s)));
-  }, []);
+  }, [isPreviewing]);
 
   const patchSlideMetadata = useCallback(async (slideId: string, patch: Record<string, any>) => {
+    if (isPreviewing) return;
     // Optimistic merge — preserve any keys the caller didn't mention.
     let nextMetadata: any = null;
     setSlides((prev) => prev.map((s) => {
@@ -158,9 +173,12 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
     } catch {
       await refresh();
     }
-  }, [refresh]);
+  }, [refresh, isPreviewing]);
 
   const removeMany = useCallback(async (ids: string[]) => {
+    if (isPreviewing || ids.length === 0) return;
+    // Phase 35.1A — single safety snapshot for the whole batch.
+    await safety.beforeDelete('slides', ids.length);
     // Optimistic
     setSlides((prev) => prev.filter((s) => !ids.includes(s.id)));
     try {
@@ -168,9 +186,10 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
     } catch {
       await refresh();
     }
-  }, [refresh]);
+  }, [refresh, isPreviewing, safety]);
 
   const duplicateMany = useCallback(async (ids: string[]): Promise<string[]> => {
+    if (isPreviewing) return [];
     const newIds: string[] = [];
     for (const id of ids) {
       try {
@@ -180,7 +199,7 @@ export function useDeckSlides(deckId: string | null | undefined): UseDeckSlides 
     }
     await refresh();
     return newIds;
-  }, [refresh]);
+  }, [refresh, isPreviewing]);
 
   return {
     slides, loading, error, refresh,

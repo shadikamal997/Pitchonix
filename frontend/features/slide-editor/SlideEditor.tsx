@@ -43,13 +43,46 @@ import { NarrativeDebugPanel } from './templates/composition/NarrativeDebugPanel
 import { CommentsPanel } from './comments/CommentsPanel';
 import { useSlideComments } from './comments/useSlideComments';
 import { ElementCommentBadge } from './comments/ElementCommentBadge';
-import { Play, MessageSquare, Layers as LayersIcon } from 'lucide-react';
+import { CommentPinLayer } from './comments/CommentPinLayer';
+import { CommentModeOverlay } from './comments/CommentModeOverlay';
+import { Play, MessageSquare, Layers as LayersIcon, Send } from 'lucide-react';
 import { LayersPanel } from './layers/LayersPanel';
 import { selectSimilar } from './smart/select-utils';
 import { applyLayout } from './layouts/applyLayout';
 import { findLayout, type LayoutSpec } from './layouts/registry';
 import { Undo2, Redo2, Sparkles } from 'lucide-react';
 import type { SlideElementDTO, ElementStyle } from '@/types/slide-element';
+// Phase 35 — Version History wiring
+import {
+  VersionPreviewProvider, useVersionPreview, useSlidesForRender,
+} from './versions/useVersionPreview';
+import { VersionPreviewBanner } from './versions/VersionPreviewBanner';
+import { VersionHistoryPanel } from './versions/VersionHistoryPanel';
+import { DeckVersionBadge } from './versions/DeckVersionBadge';
+import { useVersionHistory } from './versions/useVersionHistory';
+// Phase 36 — Reviews wiring
+import { useDeckReviews } from './reviews/useDeckReviews';
+import { ReviewStatusBadge } from './reviews/ReviewStatusBadge';
+import { RequestReviewModal } from './reviews/RequestReviewModal';
+// Phase 36.1B / 36.1F — Reviewer mode + dashboard
+import { ReviewerBanner } from './reviews/ReviewerBanner';
+import { ReviewDashboardPanel } from './reviews/ReviewDashboardPanel';
+// Phase 39.1A — workspace switcher
+import { WorkspaceSwitcher } from '@/features/workspaces/WorkspaceSwitcher';
+// Phase 37K — apply brand kit menu
+import { BrandKitPicker } from '@/features/brand-kits/BrandKitPicker';
+import { useDeckBrandKit } from '@/features/brand-kits/useDeckBrandKit';
+// Phase 34 — real-time collaboration
+import { useCollaboration } from '@/features/collaboration/useCollaboration';
+import { PresenceAvatars } from '@/features/collaboration/PresenceAvatars';
+import { CursorOverlay } from '@/features/collaboration/CursorOverlay';
+import { SelectionOverlay } from '@/features/collaboration/SelectionOverlay';
+import { ConnectionBanner } from '@/features/collaboration/ConnectionBanner';
+import { CollaborationPanel } from '@/features/collaboration/CollaborationPanel';
+import { CollaborationCursorEmitter } from '@/features/collaboration/CollaborationCursorEmitter';
+import { EditingAwarenessOverlay } from '@/features/collaboration/EditingAwarenessOverlay';
+import { Users as UsersIcon } from 'lucide-react';
+import { toastInfo } from '@/hooks/useToast';
 
 interface Slide {
   id: string;
@@ -69,6 +102,30 @@ interface SlideEditorProps {
   slideId: string;
 }
 
+// Phase 35.1C Task 1 — visual disable wrapper for toolbar clusters during
+// Version History preview. When `disabled`, swallows pointer events on the
+// children and dims them, while the wrapper itself carries cursor-not-allowed
+// + a tooltip so hovering anywhere over the cluster explains why.
+const PREVIEW_DISABLE_TIP = 'Editing disabled while previewing a historical version';
+const DisabledWhilePreviewing: React.FC<{
+  disabled: boolean;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ disabled, children, className }) => {
+  if (!disabled) return <>{children}</>;
+  return (
+    <div
+      className={`relative cursor-not-allowed ${className || ''}`}
+      title={PREVIEW_DISABLE_TIP}
+      aria-disabled="true"
+    >
+      <div className="opacity-40 pointer-events-none select-none">
+        {children}
+      </div>
+    </div>
+  );
+};
+
 export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) => {
   const router = useRouter();
   const [slide, setSlide] = useState<Slide | null>(null);
@@ -82,6 +139,9 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
   const [presenterOpen, setPresenterOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  // Phase 36E — comment creation mode. Toggle with the toolbar Comment-Mode
+  // button or the bare `c` shortcut; Esc exits. Disabled while previewing.
+  const [commentMode, setCommentMode] = useState(false);
   const [layersOpen, setLayersOpen]     = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [commentsFocusElementId, setCommentsFocusElementId] = useState<string | null>(null);
@@ -95,8 +155,56 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   // Read the current layout from metadata
   const appliedLayoutId: string | null = (slide?.metadata as any)?.layoutId || null;
 
-  const api$ = useElementsApi(slideId);
+  // Phase 35 — Version History state. `preview` is shared via the Provider
+  // wrapping SlideEditorWithBoundary so mutation hooks see the same value.
+  const preview = useVersionPreview();
+  const versionHistory = useVersionHistory(slide?.deckId || null);
   const deckSlides = useDeckSlides(slide?.deckId || null);
+  const deckBrand  = useDeckBrandKit(slide?.deckId || null);
+  const slidesForRender = useSlidesForRender(deckSlides.slides);
+  const [versionPanelOpen, setVersionPanelOpen] = useState(false);
+  // Phase 36 — Reviews surface
+  const reviews = useDeckReviews(slide?.deckId || null);
+  const [reviewModalOpen,     setReviewModalOpen]     = useState(false);
+  const [reviewDashboardOpen, setReviewDashboardOpen] = useState(false);
+  // Phase 34 — collaboration session for this deck. Cursor + selection
+  // events get throttled at emission sites; the hook owns reconnection.
+  const collab = useCollaboration(slide?.deckId || null, slideId);
+  const [collaborationPanelOpen, setCollaborationPanelOpen] = useState(false);
+  // Phase 36.1B — Reviewer Mode is active when the current user IS the
+  // assigned reviewer on the active request. Combined with version preview,
+  // editing affordances are suppressed; commenting remains enabled.
+  const isReviewerMode  = reviews.isReviewerForMe(currentUserId);
+  const editingDisabled = preview.isPreviewing || isReviewerMode;
+  const editDisableTip  = preview.isPreviewing
+    ? PREVIEW_DISABLE_TIP
+    : (isReviewerMode ? 'Editing disabled — you are reviewing this deck' : '');
+
+  // Phase 35-final-B Task 1 — when previewing, locate the snapshot slide
+  // that corresponds to the active live slideId (matched by order, not id,
+  // since snapshot ids are historical) and pin its elements as the canvas
+  // data source. The hook short-circuits its network paths too.
+  const previewElements = useMemo(() => {
+    if (!preview.isPreviewing || !preview.snapshot) return undefined;
+    const liveOrder = deckSlides.slides.findIndex((s) => s.id === slideId);
+    if (liveOrder < 0) return undefined;
+    const snapSlide = (preview.snapshot.slides || [])[liveOrder];
+    return snapSlide?.elements as SlideElementDTO[] | undefined;
+  }, [preview.isPreviewing, preview.snapshot, deckSlides.slides, slideId]);
+
+  // Phase 35.1A — pass `deckId` so useElementsApi can capture safety
+  // snapshots before destructive element deletes.
+  // Phase 35-final-B Task 1 — `previewElements` pins the snapshot data
+  // source onto the canvas during preview.
+  const api$ = useElementsApi(slideId, slide?.deckId || null, previewElements);
+
+  // Phase 35-final-B Task 2 — give the sidebar a preview-aware view of the
+  // slides list. Shallow-clone deckSlides and replace just `slides`; all
+  // mutators stay intact (they already short-circuit during preview).
+  const sidebarApi = useMemo(() => ({
+    ...deckSlides,
+    slides: slidesForRender as typeof deckSlides.slides,
+  }), [deckSlides, slidesForRender]);
 
   // Phase 32M — in-memory clipboard for ⌘C / ⌘V (slide-scoped; survives until
   // the next copy or page reload). Holds full SlideElementDTO snapshots so a
@@ -193,6 +301,16 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   // Exit edit mode when slide changes
   useEffect(() => { setEditingId(null); setActiveEditor(null); }, [slideId]);
 
+  // Phase 34.1C — broadcast editing.started / .stopped whenever the user
+  // enters / leaves inline-edit mode. Field hint comes from the element type
+  // so collaborators see "John editing · heading".
+  useEffect(() => {
+    if (!editingId || !slideId) return;
+    const el = api$.elements.find((e) => e.id === editingId);
+    collab.sendEditingStart(slideId, editingId, el?.type);
+    return () => { collab.sendEditingStop(slideId, editingId); };
+  }, [editingId, slideId, collab.sendEditingStart, collab.sendEditingStop, api$.elements]);
+
   // ── Load slide metadata ───────────────────────────────────────────────────
   // (Deck-level slide list is owned by useDeckSlides; this effect only fetches
   // the current slide's title / subtitle / speakerNotes / background.)
@@ -216,6 +334,61 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   // Clear selection when slide changes
   useEffect(() => { setSelectedIds([]); }, [slideId]);
 
+  // Phase 34F — tell collaborators which slide I'm viewing.
+  useEffect(() => { if (slideId) collab.sendSlideView(slideId); }, [slideId, collab.sendSlideView]);
+
+  // Phase 34E — broadcast my selection whenever it changes.
+  useEffect(() => {
+    if (slideId) collab.sendSelection(slideId, selectedIds);
+  }, [selectedIds, slideId, collab.sendSelection]);
+
+  // Phase 34G — apply remote element changes by refetching. We rely on the
+  // hook chokepoint (useElementsApi) to debounce; a single refresh per
+  // remote event is cheap enough.
+  useEffect(() => {
+    const off = collab.onElement((event) => {
+      if (event === 'element.created' || event === 'element.updated' || event === 'element.deleted') {
+        try { api$.refresh?.(); } catch { /* ignore */ }
+      }
+    });
+    return off;
+  }, [collab.onElement, api$]);
+
+  // Phase 34.1A — apply remote slide structure changes (create/delete/reorder)
+  // by refreshing the deck sidebar. Slide-content updates also trigger a
+  // sidebar refresh so titles + thumbnails stay in sync.
+  useEffect(() => {
+    const off = collab.onSlide(() => {
+      try { deckSlides.refresh?.(); } catch { /* ignore */ }
+    });
+    return off;
+  }, [collab.onSlide, deckSlides]);
+
+  // Phase 34.1B — version.* events surface as live toasts so every
+  // collaborator sees "John restored 'Approved Version'" without polling.
+  useEffect(() => {
+    const off = collab.onVersion((event, payload) => {
+      try { versionHistory.refresh?.(); } catch { /* ignore */ }
+      const name = payload?.version?.name ?? payload?.sourceVersionName;
+      if (event === 'version.snapshot_created' && name) {
+        toastInfo('New snapshot', `${name}`);
+      } else if (event === 'version.restored' && name) {
+        toastInfo('Version restored', `Deck reverted to "${name}"`);
+        // Phase Ω.1 — after a restore the slide's elements have changed on
+        // the server. Without this refresh, the canvas keeps showing the
+        // pre-restore state until the user manually reloads.
+        try { api$.refresh?.(); } catch { /* ignore */ }
+        try { deckSlides.refresh?.(); } catch { /* ignore */ }
+      } else if (event === 'version.renamed' && name) {
+        toastInfo('Version renamed', `${name}`);
+      }
+    });
+    return off;
+  }, [collab.onVersion, versionHistory, api$, deckSlides]);
+
+  // (Phase 34L/M bus-event subscription is mounted AFTER slideComments is
+  //  declared further down, since useEffect closures otherwise hit the TDZ.)
+
   // Load current user id (once) for comment-author detection.
   useEffect(() => {
     (async () => {
@@ -231,6 +404,21 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   const elementCounts = slideComments.elementCounts;
   const totalOpenComments = Object.values(elementCounts).reduce((a, n) => a + n, 0)
     + slideComments.comments.filter((c) => !c.resolved && !c.slideElementId).length;
+
+  // Phase 34L/M — bridge ReviewEventBus emissions into local refreshes so
+  // comments + review status update instantly across every connected client.
+  useEffect(() => {
+    const offs: Array<() => void> = [];
+    for (const t of ['comment.created', 'comment.resolved', 'comment.reopened',
+                     'comment.assigned', 'comments.resolved_all']) {
+      offs.push(collab.onBusEvent(t, () => slideComments.refresh?.()));
+    }
+    for (const t of ['review.requested', 'review.started', 'review.approved',
+                     'review.changes_requested', 'review.withdrawn', 'review.reopened']) {
+      offs.push(collab.onBusEvent(t, () => reviews.refresh?.()));
+    }
+    return () => { for (const o of offs) o(); };
+  }, [collab.onBusEvent, slideComments, reviews]);
 
   // Auto-focus the panel on the selected element if the panel is open.
   useEffect(() => {
@@ -341,6 +529,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           onChange={updateContent}
           onCommit={commit}
           onEditorReady={setActiveEditor}
+          collaborator={collab.you ? { name: collab.you.name, color: collab.you.color } : undefined}
         />
       );
     }
@@ -352,6 +541,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           onChange={updateContent}
           onCommit={commit}
           onEditorReady={setActiveEditor}
+          collaborator={collab.you ? { name: collab.you.name, color: collab.you.color } : undefined}
         />
       );
     }
@@ -373,9 +563,13 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
         onChange={updateContent}
         onCommit={commit}
         onEditorReady={setActiveEditor}
+        // Phase 34.2C — thread the editor's own collaboration session
+        // identity into the CollaborationCaret label so other users see
+        // who's typing without spawning a duplicate socket inside the editor.
+        collaborator={collab.you ? { name: collab.you.name, color: collab.you.color } : undefined}
       />
     );
-  }, [api$]);
+  }, [api$, collab.you]);
 
   // Auto-focus first element on Enter when one is selected and not yet editing
   // + Cmd/Ctrl+Z (undo) / Cmd/Ctrl+Shift+Z (redo)
@@ -474,6 +668,15 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
         });
         api$.updateMany(updates);
         history.commit(apiRef.current.elements);
+        return;
+      }
+
+      // Phase 36E — bare `c` toggles comment creation mode (only when no
+      // modifier; ⌘C above already handled the copy path).
+      if (!meta && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'c' && !editingId) {
+        if (preview.isPreviewing) return;  // editing affordances suppressed
+        e.preventDefault();
+        setCommentMode((v) => !v);
         return;
       }
 
@@ -626,6 +829,9 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           Back
         </Link>
         <div className="h-5 w-px bg-slate-200" />
+        {/* Phase 39.1A — workspace switcher (read-only here; no create modal slot) */}
+        <WorkspaceSwitcher settingsHref={(id) => `/workspaces/${id}/settings`} />
+        <div className="h-5 w-px bg-slate-200" />
         <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-900 truncate max-w-xs">
           {slide.title}
         </div>
@@ -642,7 +848,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             <MoveLeft className="w-4 h-4" />
           </button>
           <span className="text-xs text-slate-500 w-16 text-center">
-            {slideIdx >= 0 ? `${slideIdx + 1} / ${deckSlides.slides.length}` : '—'}
+            {slideIdx >= 0 ? `${slideIdx + 1} / ${slidesForRender.length}` : '—'}
           </span>
           <button
             disabled={!nextSlide}
@@ -657,38 +863,68 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
         <div className="h-5 w-px bg-slate-200" />
 
         {/* Template gallery */}
-        <button
-          type="button"
-          onClick={() => setTemplateGalleryOpen(true)}
-          title="Browse templates"
-          className="h-7 px-2.5 bg-white border border-slate-200 hover:border-green-400 hover:bg-green-50 text-slate-700 text-xs font-semibold rounded flex items-center gap-1.5"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-green-600" />
-          {appliedTemplate ? appliedTemplate.name : 'Templates'}
-        </button>
+        <DisabledWhilePreviewing disabled={editingDisabled}>
+          <button
+            type="button"
+            onClick={() => setTemplateGalleryOpen(true)}
+            title="Browse templates"
+            className="h-7 px-2.5 bg-white border border-slate-200 hover:border-green-400 hover:bg-green-50 text-slate-700 text-xs font-semibold rounded flex items-center gap-1.5"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-green-600" />
+            {appliedTemplate ? appliedTemplate.name : 'Templates'}
+          </button>
+        </DisabledWhilePreviewing>
+
+        {/* Phase 37.3C — Choose Brand Kit (canonical picker, apply mode) */}
+        {slide?.deckId && (
+          <DisabledWhilePreviewing disabled={editingDisabled}>
+            <BrandKitPicker
+              mode="apply"
+              deckId={slide.deckId}
+              value={deckBrand.brandKitId}
+              compact
+              onApplied={async (newKitId) => {
+                // Apply call already wrote brandKitId server-side; if the user
+                // cleared, we PATCH /decks/:id with brandKitId=null.
+                if (newKitId === null) {
+                  try { await api.patch(`/decks/${slide.deckId}`, { brandKitId: null }); }
+                  catch { /* surfaced by picker alert */ }
+                }
+                deckBrand.refresh();
+                deckSlides.refresh?.();
+              }}
+            />
+          </DisabledWhilePreviewing>
+        )}
 
         {/* Layout switcher */}
-        <LayoutSwitcher
-          currentLayoutId={appliedLayoutId}
-          onPick={handleApplyLayout}
-        />
+        <DisabledWhilePreviewing disabled={editingDisabled}>
+          <LayoutSwitcher
+            currentLayoutId={appliedLayoutId}
+            onPick={handleApplyLayout}
+          />
+        </DisabledWhilePreviewing>
 
         <div className="h-5 w-px bg-slate-200" />
 
         {/* Insert menu */}
-        <InsertMenu onInsert={handleInsertElement} />
+        <DisabledWhilePreviewing disabled={editingDisabled}>
+          <InsertMenu onInsert={handleInsertElement} />
+        </DisabledWhilePreviewing>
 
         <div className="h-5 w-px bg-slate-200" />
 
         {/* Smart tools (Phase 15): tidy, group, overflow stats */}
-        <SmartTools
-          elements={api$.elements}
-          selectedIds={selectedIds}
-          overflowCount={overflowCount}
-          onGroup={handleGroupSelection}
-          onUngroup={handleUngroupSelection}
-          onTidy={handleTidySlide}
-        />
+        <DisabledWhilePreviewing disabled={editingDisabled}>
+          <SmartTools
+            elements={api$.elements}
+            selectedIds={selectedIds}
+            overflowCount={overflowCount}
+            onGroup={handleGroupSelection}
+            onUngroup={handleUngroupSelection}
+            onTidy={handleTidySlide}
+          />
+        </DisabledWhilePreviewing>
 
         <div className="h-5 w-px bg-slate-200" />
 
@@ -697,8 +933,8 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           <button
             type="button"
             onClick={() => history.undo()}
-            disabled={!history.canUndo}
-            title="Undo (⌘Z)"
+            disabled={!history.canUndo || editingDisabled}
+            title={editingDisabled ? editDisableTip : 'Undo (⌘Z)'}
             className="w-7 h-6 flex items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <Undo2 className="w-3.5 h-3.5" />
@@ -706,8 +942,8 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           <button
             type="button"
             onClick={() => history.redo()}
-            disabled={!history.canRedo}
-            title="Redo (⌘⇧Z)"
+            disabled={!history.canRedo || editingDisabled}
+            title={editingDisabled ? editDisableTip : 'Redo (⌘⇧Z)'}
             className="w-7 h-6 flex items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <Redo2 className="w-3.5 h-3.5" />
@@ -717,19 +953,23 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
         <div className="h-5 w-px bg-slate-200" />
 
         {/* Align */}
-        <AlignTools
-          selected={api$.elements.filter((e) => selectedIds.includes(e.id))}
-          onUpdateMany={(u) => { api$.updateMany(u); history.commit(apiRef.current.elements); }}
-        />
+        <DisabledWhilePreviewing disabled={editingDisabled}>
+          <AlignTools
+            selected={api$.elements.filter((e) => selectedIds.includes(e.id))}
+            onUpdateMany={(u) => { api$.updateMany(u); history.commit(apiRef.current.elements); }}
+          />
+        </DisabledWhilePreviewing>
 
         <div className="h-5 w-px bg-slate-200" />
 
         {/* Arrange */}
-        <ArrangeTools
-          allElements={api$.elements}
-          selected={api$.elements.filter((e) => selectedIds.includes(e.id))}
-          onUpdateMany={(u) => { api$.updateMany(u); history.commit(apiRef.current.elements); }}
-        />
+        <DisabledWhilePreviewing disabled={editingDisabled}>
+          <ArrangeTools
+            allElements={api$.elements}
+            selected={api$.elements.filter((e) => selectedIds.includes(e.id))}
+            onUpdateMany={(u) => { api$.updateMany(u); history.commit(apiRef.current.elements); }}
+          />
+        </DisabledWhilePreviewing>
 
         <div className="ml-auto flex items-center gap-3">
           <SaveStatus />
@@ -755,18 +995,18 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           <div className="h-5 w-px bg-slate-200" />
 
           <button
-            disabled={selectedIds.length === 0}
+            disabled={selectedIds.length === 0 || editingDisabled}
             onClick={handleDuplicateSelected}
-            title="Duplicate (Cmd/Ctrl+D)"
+            title={editingDisabled ? editDisableTip : 'Duplicate (Cmd/Ctrl+D)'}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Copy className="w-3.5 h-3.5" />
             Duplicate
           </button>
           <button
-            disabled={selectedIds.length === 0}
+            disabled={selectedIds.length === 0 || editingDisabled}
             onClick={handleDeleteSelected}
-            title="Delete (Del)"
+            title={editingDisabled ? editDisableTip : 'Delete (Del)'}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -808,6 +1048,23 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
                   </span>
                 )}
               </button>
+              {/* Phase 36E — comment creation mode toggle */}
+              <button
+                type="button"
+                onClick={() => setCommentMode((v) => !v)}
+                disabled={preview.isPreviewing}
+                title={preview.isPreviewing
+                  ? PREVIEW_DISABLE_TIP
+                  : commentMode ? 'Exit comment mode (Esc)' : 'Add comment to slide or element (C)'}
+                className={`relative h-7 px-2.5 text-xs font-semibold rounded flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                  commentMode
+                    ? 'bg-amber-500 text-white border border-amber-600 hover:bg-amber-600'
+                    : 'bg-white border border-slate-200 hover:border-amber-400 hover:bg-amber-50 text-slate-700'
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                {commentMode ? 'Click to place' : 'Comment'}
+              </button>
               <button
                 type="button"
                 onClick={() => setPresenterOpen(true)}
@@ -817,6 +1074,51 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
               >
                 <Play className="w-3.5 h-3.5 text-green-600 fill-green-600" />
                 Present
+              </button>
+              {/* Phase 35 — version history badge opens the panel drawer. */}
+              <DeckVersionBadge
+                versions={versionHistory.versions}
+                onClick={() => setVersionPanelOpen((v) => !v)}
+              />
+              {/* Phase 36I — review status badge; click opens Request Review modal. */}
+              <ReviewStatusBadge
+                status={reviews.status}
+                onClick={() => setReviewModalOpen(true)}
+              />
+              {/* Phase 36.1F — Reviews dashboard toggle (assigned-to-me / by-me / by-status). */}
+              <button
+                type="button"
+                onClick={() => {
+                  setReviewDashboardOpen((v) => !v);
+                  if (!reviewDashboardOpen) { setCommentsOpen(false); setLayersOpen(false); setCollaborationPanelOpen(false); }
+                }}
+                title="Review queue"
+                className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${
+                  reviewDashboardOpen
+                    ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                aria-label="Review queue"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+              {/* Phase 34C — live presence avatars + panel toggle */}
+              <PresenceAvatars users={Object.values(collab.users)} you={collab.you} />
+              <button
+                type="button"
+                onClick={() => {
+                  setCollaborationPanelOpen((v) => !v);
+                  if (!collaborationPanelOpen) { setCommentsOpen(false); setLayersOpen(false); setReviewDashboardOpen(false); }
+                }}
+                title="Collaboration"
+                aria-label="Collaboration panel"
+                className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${
+                  collaborationPanelOpen
+                    ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <UsersIcon className="w-3.5 h-3.5" />
               </button>
               <ExportMenu deckId={slide.deckId} deckTitle={slide.title} />
               <button
@@ -833,11 +1135,46 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
         </div>
       </header>
 
+      {/* Phase 35 — Preview banner. Sticks above the editor body whenever
+          the user is viewing a historical version. Mutation hooks are
+          already blocked during preview by the chokepoint guards (35.1A). */}
+      {preview.isPreviewing && preview.meta && (
+        <VersionPreviewBanner
+          meta={preview.meta}
+          onRestore={async () => {
+            if (!preview.versionId) return;
+            await versionHistory.restore(preview.versionId);
+            preview.exit();
+          }}
+          onExit={preview.exit}
+        />
+      )}
+
+      {/* Phase 34O/P — connection-state banner. Shown only when the
+          collaboration socket is reconnecting / disconnected / forbidden. */}
+      <ConnectionBanner state={collab.state} />
+
+      {/* Phase 36.1B — Reviewer banner. Shown when the current user is the
+          assigned reviewer on the active request. Carries Approve / Request
+          Changes / Reopen actions; edit affordances elsewhere are already
+          suppressed via `editingDisabled`. */}
+      {isReviewerMode && reviews.activeRequest && (
+        <ReviewerBanner
+          request={reviews.activeRequest}
+          onOpen={async () => { if (reviews.activeRequest) await reviews.open(reviews.activeRequest.id); }}
+          onApprove={async () => { if (reviews.activeRequest) await reviews.approve(reviews.activeRequest.id); }}
+          onRequestChanges={async () => { if (reviews.activeRequest) await reviews.requestChanges(reviews.activeRequest.id); }}
+          onReopen={async () => { if (reviews.activeRequest) await reviews.reopen(reviews.activeRequest.id); }}
+        />
+      )}
+
       {/* ── Sidebar + Stage + Inspector ───────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar — sectioned + virtualized + multi-select (Phase 32F/G/L) */}
         <SectionedSidebar
-          api={deckSlides}
+          // Phase 35-final-B — sidebarApi swaps slides for snapshot during preview;
+          // readOnly suppresses add/delete/bulk affordances.
+          api={sidebarApi}
           currentSlideId={slideId}
           onNavigate={gotoSlide}
           onCurrentDeleted={handleCurrentDeleted}
@@ -847,6 +1184,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           }}
           deckMetadata={deckMetadata}
           onPatchDeckMetadata={handlePatchDeckMetadata}
+          readOnly={editingDisabled}
         />
         <div className="flex-1 overflow-auto flex items-center justify-center p-8 relative">
           {api$.loading ? (
@@ -867,7 +1205,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
               onDeleteSelected={handleDeleteSelected}
               onDuplicateSelected={handleDuplicateSelected}
               pageNumber={slideIdx >= 0 ? slideIdx + 1 : undefined}
-              totalPages={deckSlides.slides.length || undefined}
+              totalPages={slidesForRender.length || undefined}
               zoom={zoom}
               editingId={editingId}
               onRequestEdit={(id) => { setSelectedIds([id]); setEditingId(id); }}
@@ -878,11 +1216,16 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
               slideIndex={slideIdx >= 0 ? slideIdx : 0}
               compositionFamilyId={compositionFamilyId}
               deckContext={currentSlideContext}
+              // Phase 35-final-B Task 3 — pointer-events-disabled overlay
+              // makes the canvas visually inert during preview.
+              readOnly={editingDisabled}
             />
           )}
 
-          {/* Floating formatting toolbar follows the editing element */}
-          {editingId && (
+          {/* Floating formatting toolbar follows the editing element.
+              Phase 35.1C Task 2 — suppress during Version History preview
+              so the historical version has zero editing affordances. */}
+          {editingId && !editingDisabled && (
             <FloatingToolbar
               editor={activeEditor}
               element={api$.elements.find((e) => e.id === editingId) || null}
@@ -906,6 +1249,55 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
               }}
             />
           )}
+
+          {/* Phase 36D — Slide-level comment pins at (anchorX, anchorY).
+              Numbered + amber for open, slate for resolved. Click opens the
+              Comments panel (slide-scope) and clears any element filter so
+              the matching thread is visible at the top of the unresolved list. */}
+          <CommentPinLayer
+            comments={slideComments.comments}
+            showResolved={false}
+            onOpenThread={() => {
+              setCommentsFocusElementId(null);
+              setCommentsOpen(true);
+            }}
+          />
+
+          {/* Phase 36E — comment creation mode overlay. Mounts above the
+              canvas when active; captures clicks and hit-tests elements to
+              produce slide-level (anchorX/Y) or element-attached comments. */}
+          <CommentModeOverlay
+            active={commentMode && !preview.isPreviewing}
+            elements={api$.elements}
+            onCancel={() => setCommentMode(false)}
+            onSubmit={async (input) => {
+              await slideComments.addComment(input);
+            }}
+          />
+
+          {/* Phase 34D/E — live cursors + selections from remote collaborators.
+              Coordinates are 0..100% of the stage; the host wrapper shares the
+              same coordinate space with SlideCanvas. */}
+          <CursorOverlay cursors={collab.cursors} slideId={slideId} />
+          <SelectionOverlay
+            selections={collab.selections}
+            slideId={slideId}
+            elements={api$.elements}
+          />
+          {/* Phase 34.1C/H — "John editing" pill over actively-edited elements */}
+          <EditingAwarenessOverlay
+            editing={collab.editing}
+            slideId={slideId}
+            elements={api$.elements}
+          />
+
+          {/* Phase 34D — capture mouse position over the stage and emit at
+              ~60fps. We piggyback on the existing inset-0 capture container. */}
+          <CollaborationCursorEmitter
+            slideId={slideId}
+            sendCursor={collab.sendCursor}
+            connected={collab.state === 'connected'}
+          />
 
           {/* Overflow badges (Phase 15) */}
           {overflowCount > 0 && (
@@ -946,8 +1338,24 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           })()}
         </div>
 
-        {/* Right rail — Comments | Layers | Inspector (mutually exclusive) */}
-        {commentsOpen && slide?.deckId ? (
+        {/* Right rail — Collaboration | Reviews | Comments | Layers | Inspector (mutually exclusive) */}
+        {collaborationPanelOpen && slide?.deckId ? (
+          <CollaborationPanel
+            users={Object.values(collab.users)}
+            you={collab.you}
+            selections={collab.selections}
+            state={collab.state}
+            slideTitleById={Object.fromEntries(slidesForRender.map((s) => [s.id, s.title]))}
+            onClose={() => setCollaborationPanelOpen(false)}
+          />
+        ) : reviewDashboardOpen && slide?.deckId ? (
+          <ReviewDashboardPanel
+            deckId={slide.deckId}
+            requests={reviews.requests}
+            currentUserId={currentUserId || undefined}
+            onClose={() => setReviewDashboardOpen(false)}
+          />
+        ) : commentsOpen && slide?.deckId ? (
           <CommentsPanel
             projectId={projectId}
             slideId={slideId}
@@ -956,6 +1364,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             focusedElementId={commentsFocusElementId}
             onClose={() => { setCommentsOpen(false); setCommentsFocusElementId(null); }}
             currentUserId={currentUserId || undefined}
+            reviewerMode={isReviewerMode}
           />
         ) : layersOpen ? (
           <aside className="w-[280px] flex-shrink-0 bg-white border-l border-slate-200 flex flex-col h-full">
@@ -977,6 +1386,13 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             onStyleElement={handleStyleChange}
             slide={slide}
             onPatchSlide={handlePatchSlide}
+            // Phase 35-final-B Task 4 — replace inspector with a lock pane
+            // during preview so editable controls are visually absent.
+            readOnly={editingDisabled}
+            readOnlyContext={preview.meta ? {
+              label: preview.meta.name,
+              timestamp: new Date(preview.meta.createdAt).toLocaleString(),
+            } : null}
           />
         )}
       </div>
@@ -1020,6 +1436,45 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
         />
       )}
 
+      {/* Phase 35 — Version History drawer. Triggered by the toolbar badge.
+          Mounted at the editor root so it overlays the inspector. */}
+      {versionPanelOpen && slide?.deckId && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/10"
+            onClick={() => setVersionPanelOpen(false)}
+          />
+          <aside className="fixed right-0 top-0 bottom-0 z-50 w-80 bg-white border-l border-slate-200 shadow-xl flex flex-col">
+            <div className="flex items-center justify-between px-3 h-10 border-b border-slate-200">
+              <span className="text-xs font-semibold text-slate-800">Version history</span>
+              <button
+                type="button"
+                onClick={() => setVersionPanelOpen(false)}
+                className="text-slate-500 hover:text-slate-800 text-lg leading-none"
+                aria-label="Close version history"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <VersionHistoryPanel
+                deckId={slide.deckId}
+                onPreview={(versionId) => {
+                  preview.enter(versionId);
+                  setVersionPanelOpen(false);
+                }}
+                onRestored={() => {
+                  // Phase Ω.1 — local-user restore needs to reload elements
+                  // + sidebar; remote-user restore is handled via collab.onVersion.
+                  try { api$.refresh?.(); } catch { /* ignore */ }
+                  try { deckSlides.refresh?.(); } catch { /* ignore */ }
+                }}
+              />
+            </div>
+          </aside>
+        </>
+      )}
+
       {/* Presenter mode overlay (Phase 13) */}
       {presenterOpen && deckSlides.slides.length > 0 && (
         <PresenterMode
@@ -1028,6 +1483,17 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           onClose={() => setPresenterOpen(false)}
         />
       )}
+
+      {/* Phase 36H — Request Review modal. Source-of-truth status comes from
+          useDeckReviews; submit/withdraw also route through the hook so the
+          toolbar badge updates immediately on transition. */}
+      <RequestReviewModal
+        open={reviewModalOpen}
+        status={reviews.status}
+        onClose={() => setReviewModalOpen(false)}
+        onSubmit={(input) => reviews.create(input)}
+        onWithdraw={(id) => reviews.withdraw(id)}
+      />
 
       {/* Keyboard shortcuts dialog (Phase 16) */}
       <KeyboardShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
@@ -1048,8 +1514,13 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
 
 const SlideEditorInner = SlideEditor;
 const SlideEditorWithBoundary: React.FC<SlideEditorProps> = (props) => (
-  <EditorErrorBoundary contextLabel={`slide ${props.slideId}`}>
-    <SlideEditorInner {...props} />
-  </EditorErrorBoundary>
+  // Phase 35 — VersionPreviewProvider wraps the boundary so every descendant
+  // (canvas, sidebar, inspector, mutation hooks) shares the same preview
+  // state and read-only enforcement.
+  <VersionPreviewProvider>
+    <EditorErrorBoundary contextLabel={`slide ${props.slideId}`}>
+      <SlideEditorInner {...props} />
+    </EditorErrorBoundary>
+  </VersionPreviewProvider>
 );
 export default SlideEditorWithBoundary;

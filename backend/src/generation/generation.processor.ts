@@ -2,10 +2,28 @@ import { Processor, Process } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { GenerationService } from './generation.service';
-import { SlidesService } from '../slides/slides.service';
 import { QualityControlService } from './quality/quality-control.service';
 import { GenerationStage } from './quality/types';
+import { UnifiedGenerationPipeline } from './pipeline/unified-pipeline.service';
+
+// =============================================================================
+//  GenerationProcessor — Phase 31.5
+//
+//  The Bull queue handler for "generate-deck" jobs is now a thin shell over
+//  the UnifiedGenerationPipeline. It:
+//
+//    1. Flips deck status → generating + starts quality monitoring
+//    2. Builds a GenerationCommand and calls pipeline.execute()
+//    3. Records quality-history + flips deck/project status from the
+//       pipeline's PipelineResult
+//
+//  All slide generation, smart-component attachment, optional AI enhancement,
+//  scorecard, migration, and persistence live inside the pipeline. The
+//  processor owns only the job-lifecycle concerns (monitoring + status).
+//
+//  Phase 31.5 removed ~150 LOC of inline orchestration that previously lived
+//  in this file.
+// =============================================================================
 
 @Injectable()
 @Processor('generation')
@@ -14,227 +32,108 @@ export class GenerationProcessor {
 
   constructor(
     private prisma: PrismaService,
-    private generationService: GenerationService,
-    private slidesService: SlidesService,
     private qualityControlService: QualityControlService,
+    private pipeline: UnifiedGenerationPipeline,
   ) {}
 
   @Process('generate-deck')
   async handleGenerateDeck(job: Job) {
-    const { 
-      projectId, 
-      deckId, 
-      input, 
-      useAI = false,
-      generateVisuals = true,
-    } = job.data;
+    const { projectId, deckId, input, useAI = false } = job.data;
+    this.logger.log(`Processing GENERATE job for deck ${deckId}${useAI ? ' (with AI)' : ''}`);
 
-    this.logger.log(`Processing generation job for deck: ${deckId}${useAI ? ' (with AI)' : ''}${generateVisuals ? ' (with visuals)' : ''}`);
+    // Pre-pipeline: monitoring + status flip.
+    const estimatedSlideCount = this.estimateSlideCount(input.documentType);
+    this.qualityControlService.startMonitoring(deckId, projectId, estimatedSlideCount);
+    this.qualityControlService.updateStage(deckId, GenerationStage.BASE_GENERATION, 'Pipeline starting…');
+
+    await this.prisma.deck.update({ where: { id: deckId }, data: { status: 'generating' } });
 
     try {
-      // 1. Start quality monitoring
-      const estimatedSlideCount = this.estimateSlideCount(input.documentType);
-      this.qualityControlService.startMonitoring(deckId, projectId, estimatedSlideCount);
-      
-      // Update deck status
-      await this.prisma.deck.update({
-        where: { id: deckId },
-        data: { status: 'generating' },
+      // Hand off to the unified pipeline. Quality / migration / persistence
+      // all happen inside execute().
+      const result = await this.pipeline.execute({
+        type: 'GENERATE',
+        projectId,
+        deckId,
+        wizardInput: input,
+        options: {
+          useEnhancement: !!useAI,
+          source: 'queue',
+          jobId: `gen-${deckId}`,
+        },
       });
 
-      // 2. Update to BASE_GENERATION stage
-      this.qualityControlService.updateStage(
-        deckId,
-        GenerationStage.BASE_GENERATION,
-        'Generating slide content...',
-      );
+      if (!result.ok) {
+        throw new Error(`Pipeline failed at stage ${result.error?.stage}: ${result.error?.reason}`);
+      }
 
-      // Generate complete presentation with content, AI, and visual layer
-      this.logger.log('Generating presentation...');
-      const visualSlides = await this.generationService.generatePresentation(
-        input, 
-        { 
-          useAI,
-          generateVisuals,
-        },
-      );
+      // Map pipeline stage transitions to quality-monitor stages so the
+      // existing telemetry dashboards stay populated.
+      if (useAI) {
+        this.qualityControlService.updateStage(deckId, GenerationStage.AI_ENHANCEMENT, 'AI enhancement complete');
+      }
+      this.qualityControlService.updateStage(deckId, GenerationStage.QUALITY_CHECK, 'Quality scored');
 
-      // Update progress after base generation
+      const metrics = result.context.metrics;
       this.qualityControlService.updateSlideProgress(
         deckId,
-        visualSlides.length,
-        'Base content generated',
+        metrics?.slidesGenerated || 0,
+        `Generated ${metrics?.slidesGenerated || 0} slides`,
       );
 
-      // 3. If AI enhancement was used, update stage
-      if (useAI) {
-        this.qualityControlService.updateStage(
-          deckId,
-          GenerationStage.AI_ENHANCEMENT,
-          'AI enhancement completed',
-        );
-      }
-
-      // 4. If visual generation was used, update stage
-      if (generateVisuals) {
-        this.qualityControlService.updateStage(
-          deckId,
-          GenerationStage.VISUAL_GENERATION,
-          'Charts and visuals generated',
-        );
-      }
-
-      // 5. Run quality check
-      this.qualityControlService.updateStage(
-        deckId,
-        GenerationStage.QUALITY_CHECK,
-        'Running quality checks...',
-      );
-
-      this.logger.log('Running quality checks...');
-      const qualityReport = await this.qualityControlService.generateQualityReport(
-        deckId,
-        projectId,
-        visualSlides,
-        input,
-        {
-          aiUsed: useAI,
-        },
-      );
-
-      // Check export readiness
-      const exportReadiness = this.qualityControlService.isExportReady(
-        visualSlides,
-        input,
-      );
-
-      this.logger.log(
-        `Quality Score: ${qualityReport.qualityScore.overall}/100 (${qualityReport.qualityScore.grade}) - Export Ready: ${exportReadiness.ready}`,
-      );
-
-      // PHASE 10: Record quality check in history
-      try {
-        const { QualityHistoryService } = await import('../export/services');
-        const historyService = new QualityHistoryService(this.prisma);
-        
-        await historyService.recordQualityCheck({
-          deckId,
-          qualityMetrics: {
-            overallScore: qualityReport.qualityScore.overall,
-            grade: qualityReport.qualityScore.grade,
-            dimensions: {
-              content: qualityReport.qualityScore.dimensions.content,
-              visual: qualityReport.qualityScore.dimensions.visual,
-              ai: qualityReport.qualityScore.dimensions.aiEnhancement || 0,
-              export: qualityReport.qualityScore.dimensions.exportReadiness,
-            },
-          },
-          validationMetrics: {
-            passed: exportReadiness.ready,
-            errorCount: exportReadiness.issues.filter((i: string) => i.includes('error')).length,
-            warningCount: exportReadiness.issues.filter((i: string) => i.includes('warning')).length,
-            infoCount: 0,
-          },
-          trigger: 'generation',
-        });
-        
-        this.logger.log('Quality check recorded in history');
-      } catch (error) {
-        this.logger.error('Failed to record quality history:', error);
-        // Don't fail the job if history recording fails
-      }
-
-      // Validate content (check base slide structure)
-      const baseSlides = visualSlides.map((vs, index) => ({
-        type: vs.type as any, // Type assertion needed for slide type
-        order: index,
-        title: vs.title,
-        subtitle: vs.subtitle,
-        content: vs.content,
-        speakerNotes: vs.speakerNotes,
-        qualityScore: vs.qualityScore,
-      }));
-      
-      if (!this.generationService.validateSlideContent(baseSlides as any)) {
-        throw new Error('Generated content validation failed');
-      }
-
-      // 6. Save slides to database (including visual metadata)
-      this.logger.log(`Creating ${visualSlides.length} slides...`);
-      await this.slidesService.createMany(deckId, baseSlides);
-
-      // 7. Update deck with quality data
-      await this.prisma.deck.update({
-        where: { id: deckId },
-        data: { 
-          status: 'ready',
-          qualityScore: qualityReport.qualityScore as any,
-          validationResult: qualityReport.validation as any,
-          generationMetrics: qualityReport.generationStatus.metrics as any,
-          lastQualityCheck: new Date(),
-          exportReady: exportReadiness.ready,
-        },
+      // Persist deck-level quality score on the project (preserves prior
+      // behaviour where the queue processor wrote project.qualityScore).
+      await this.prisma.project.update({
+        where: { id: projectId },
+        data: { status: 'completed', qualityScore: metrics?.qualityScore ?? 0 },
       });
 
-      // 8. Complete quality monitoring
       this.qualityControlService.completeGeneration(deckId, true);
 
-      // Update project status
-      await this.prisma.project.update({
-        where: { id: projectId },
-        data: { 
-          status: 'completed',
-          qualityScore: qualityReport.qualityScore.overall,
-        },
-      });
+      this.logger.log(
+        `Pipeline completed for deck ${deckId} in ${result.durationMs}ms ` +
+        `(${metrics?.slidesGenerated} slides, ${metrics?.elementsCreated} elements, quality ${metrics?.qualityScore})`,
+      );
 
-      this.logger.log(`Successfully generated deck: ${deckId} (${visualSlides.length} slides, ${visualSlides.filter(s => s.charts?.length).length} with charts)`);
-
-      return { 
-        success: true, 
-        deckId, 
-        slidesCount: visualSlides.length,
-        chartsCount: visualSlides.reduce((sum, s) => sum + (s.charts?.length || 0), 0),
-        imagesCount: visualSlides.reduce((sum, s) => sum + (s.images?.length || 0), 0),
-        qualityScore: qualityReport.qualityScore.overall,
-        qualityGrade: qualityReport.qualityScore.grade,
-        exportReady: exportReadiness.ready,
+      return {
+        success: true,
+        deckId,
+        slidesCount:    metrics?.slidesGenerated ?? 0,
+        // Smart Components carry charts/images in their element trees; the
+        // legacy `chartsCount`/`imagesCount` aggregates are no longer
+        // meaningful on the slide-content layer — reported as 0 for backwards
+        // compatibility with consumers that read these fields.
+        chartsCount:    0,
+        imagesCount:    0,
+        qualityScore:   metrics?.qualityScore ?? 0,
+        qualityGrade:   gradeFor(metrics?.qualityScore ?? 0),
+        exportReady:    (metrics?.qualityScore ?? 0) >= 70,
+        smartComponentsAttached: metrics?.smartComponentsAttached ?? 0,
+        elementsCreated:         metrics?.elementsCreated ?? 0,
+        pipelineStages: result.stages.map((s) => ({ stage: s.stage, ms: s.ms })),
       };
-    } catch (error) {
-      this.logger.error(`Failed to generate deck: ${error.message}`);
-
-      // Record error in monitoring
+    } catch (error: any) {
+      this.logger.error(`Failed to generate deck ${deckId}: ${error.message}`);
       this.qualityControlService.recordError(deckId, error.message, false);
       this.qualityControlService.completeGeneration(deckId, false);
-
-      // Update statuses to failed
-      await this.prisma.deck.update({
-        where: { id: deckId },
-        data: { status: 'draft' },
-      });
-
-      await this.prisma.project.update({
-        where: { id: projectId },
-        data: { status: 'failed' },
-      });
-
+      await this.prisma.deck.update({ where: { id: deckId }, data: { status: 'draft' } });
+      await this.prisma.project.update({ where: { id: projectId }, data: { status: 'failed' } });
       throw error;
     }
   }
 
-  /**
-   * Estimate slide count based on document type
-   */
   private estimateSlideCount(documentType: string): number {
-    const estimates: Record<string, number> = {
-      pitch_deck: 10,
-      business_plan: 20,
-      sales_deck: 12,
-      one_pager: 1,
-      company_profile: 8,
-      marketing_plan: 15,
-    };
-
-    return estimates[documentType] || 10;
+    return {
+      pitch_deck: 10, business_plan: 20, sales_deck: 12,
+      one_pager: 1, company_profile: 8, marketing_plan: 15,
+    }[documentType] ?? 10;
   }
+}
+
+function gradeFor(score: number): string {
+  if (score >= 90) return 'A';
+  if (score >= 80) return 'B';
+  if (score >= 70) return 'C';
+  if (score >= 60) return 'D';
+  return 'F';
 }

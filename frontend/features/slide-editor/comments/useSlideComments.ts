@@ -19,6 +19,11 @@ export interface CommentUser {
   email: string;
 }
 
+export interface MentionMeta {
+  userId:      string;
+  displayName: string;
+}
+
 export interface CommentDTO {
   id:             string;
   projectId:      string;
@@ -33,13 +38,21 @@ export interface CommentDTO {
   anchorY:        number | null;
   createdAt:      string;
   updatedAt:      string;
+  // Phase 36.1A — mentions parsed at create/edit time.
+  mentions?:      MentionMeta[] | null;
+  // Phase 36.1H — thread assignee.
+  assignedToId?:  string | null;
+  assignedTo?:    CommentUser | null;
+  // Phase 36.1E — edit/delete metadata.
+  editedAt?:      string | null;
+  deletedAt?:     string | null;
   user:           CommentUser;
   replies:        CommentDTO[];
 }
 
 export interface UseSlideCommentsResult {
   comments:        CommentDTO[];
-  elementCounts:   Record<string, number>;   // { [slideElementId]: unresolved count }
+  elementCounts:   Record<string, number>;
   loading:         boolean;
   error:           string | null;
   refresh:         () => Promise<void>;
@@ -48,6 +61,12 @@ export interface UseSlideCommentsResult {
   resolve:         (id: string) => Promise<void>;
   reopen:          (id: string) => Promise<void>;
   remove:          (id: string) => Promise<void>;
+  // Phase 36.1E — edit own message
+  edit:            (id: string, content: string) => Promise<void>;
+  // Phase 36.1H — assignment
+  assign:          (id: string, assigneeId: string | null) => Promise<void>;
+  // Phase 36.1K — bulk resolve for the current slide
+  resolveAll:      () => Promise<number>;
 }
 
 export function useSlideComments(projectId: string | null | undefined, slideId: string | null | undefined): UseSlideCommentsResult {
@@ -146,5 +165,41 @@ export function useSlideComments(projectId: string | null | undefined, slideId: 
     }
   }, [refresh]);
 
-  return { comments, elementCounts, loading, error, refresh, addComment, addReply, resolve, reopen, remove };
+  const edit = useCallback(async (id: string, content: string) => {
+    try {
+      await api.patch(`/comments/${id}`, { content });
+      await refresh();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || 'Failed to edit');
+    }
+  }, [refresh]);
+
+  const assign = useCallback(async (id: string, assigneeId: string | null) => {
+    try {
+      await api.patch(`/comments/${id}/assign`, { assigneeId });
+      await refresh();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || 'Failed to assign');
+    }
+  }, [refresh]);
+
+  const resolveAll = useCallback(async (): Promise<number> => {
+    if (!slideId) return 0;
+    try {
+      const { data } = await api.post<{ resolved: number }>(
+        `/slides/${slideId}/comments/resolve-all`,
+      );
+      await refresh();
+      return data.resolved ?? 0;
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || 'Failed to resolve all');
+      return 0;
+    }
+  }, [slideId, refresh]);
+
+  return {
+    comments, elementCounts, loading, error, refresh,
+    addComment, addReply, resolve, reopen, remove,
+    edit, assign, resolveAll,
+  };
 }

@@ -96,4 +96,40 @@ export class EmailService {
       </div>`,
     );
   }
+
+  /**
+   * Phase 39.1E — Workspace invitation email. Returns boolean (true = sent,
+   * false = mail provider unavailable) so callers can decide whether to
+   * surface the copy-link fallback.
+   */
+  async sendWorkspaceInviteEmail(input: {
+    to:            string;
+    inviterName:   string;
+    workspaceName: string;
+    role:          string;
+    token:         string;
+    expiresAt:     Date;
+  }): Promise<boolean> {
+    const url = `${this.appUrl}/workspaces/accept?token=${input.token}`;
+    const expiresText = input.expiresAt.toLocaleDateString();
+    try {
+      await this.send(
+        input.to,
+        `${input.inviterName} invited you to ${input.workspaceName} on Pitchonix`,
+        `<div style="font-family:sans-serif;max-width:480px;margin:auto">
+          <h2>You've been invited to a workspace</h2>
+          <p><strong>${input.inviterName}</strong> invited you to join <strong>${input.workspaceName}</strong> as a <strong>${input.role}</strong>.</p>
+          <a href="${url}" style="display:inline-block;background:#2563EB;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin:12px 0">Accept invitation</a>
+          <p style="color:#6B7280;font-size:13px">The invitation expires on ${expiresText}.</p>
+          <p style="color:#6B7280;font-size:12px;margin-top:24px;border-top:1px solid #E5E7EB;padding-top:12px;word-break:break-all">If the button doesn't work, paste this link: ${url}</p>
+        </div>`,
+      );
+      return true;
+    } catch (err: any) {
+      // Email is a best-effort enhancement; the invite still exists and the
+      // copy-link UI in the modal continues to work as a fallback.
+      this.logger.warn(`Workspace invite email to ${input.to} failed: ${err?.message}`);
+      return false;
+    }
+  }
 }

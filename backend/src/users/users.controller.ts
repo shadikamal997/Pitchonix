@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Body, UseGuards, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Body, UseGuards, HttpCode, HttpStatus, BadRequestException, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -15,6 +15,18 @@ export class UsersController {
   @ApiOperation({ summary: 'Get current user profile' })
   async getProfile(@GetUser() user: any) {
     return this.usersService.findById(user.id);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search collaborators (mention autocomplete + reviewer picker)' })
+  async search(
+    @GetUser() user: any,
+    @Query('q') q?: string,
+    @Query('limit') limit?: string,
+    @Query('workspaceId') workspaceId?: string,
+  ) {
+    const n = limit ? Math.max(1, Math.min(20, parseInt(limit, 10) || 8)) : 8;
+    return this.usersService.searchCollaborators(user.id, q || '', n, workspaceId);
   }
 
   @Patch('me')

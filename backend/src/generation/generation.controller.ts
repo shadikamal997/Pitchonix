@@ -21,6 +21,9 @@ import { SlidesService } from '../slides/slides.service';
 import { SlideElementsMigrationService } from '../slides/slide-elements-migration.service';
 import { SlideElementsService } from '../slides/slide-elements.service';
 import { AutoExpansionService, DocumentScorecardService } from './document-quality';
+import { UnifiedGenerationPipeline } from './pipeline/unified-pipeline.service';
+import type { GenerationCommand } from './pipeline/types';
+import type { SmartFamilyId } from '../components/smart/smart-types';
 
 @ApiTags('Generation')
 @Controller('generate')
@@ -41,6 +44,7 @@ export class GenerationController {
     private slideElementsService: SlideElementsService,
     private autoExpansion: AutoExpansionService,
     private scorecardService: DocumentScorecardService,
+    private pipeline: UnifiedGenerationPipeline,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -421,103 +425,102 @@ export class GenerationController {
     };
   }
 
+  // ---------------------------------------------------------------------------
+  //  Phase 31 — Unified Generation Pipeline entrypoints
+  //
+  //  Every regeneration-style action below routes through the same pipeline
+  //  (`pipeline.execute(command)`). The pipeline owns: load-context, validate,
+  //  plan, generate (18 generators), smart-component attachment, quality,
+  //  migration, persistence, post-processing. Endpoint handlers are thin
+  //  command builders — no orchestration logic in the controller.
+  // ---------------------------------------------------------------------------
+
   @Post('regenerate/:projectId')
-  @ApiOperation({ summary: 'Synchronously regenerate slides for a project (bypasses Bull queue)' })
+  @ApiOperation({ summary: 'Synchronously regenerate slides via the unified pipeline (REGENERATE command)' })
   async regenerate(@Param('projectId') projectId: string) {
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId },
-      include: { decks: { include: { slides: { select: { id: true } } } } },
+    return this.runPipelineCommand({ type: 'REGENERATE', projectId });
+  }
+
+  @Post('rebuild/:projectId')
+  @ApiOperation({ summary: 'Force a full rebuild (REBUILD command — same stages as REGENERATE but with forceMigrate)' })
+  async rebuild(@Param('projectId') projectId: string) {
+    return this.runPipelineCommand({ type: 'REBUILD', projectId, options: { forceMigrate: true } });
+  }
+
+  @Post('refresh/:deckId')
+  @ApiOperation({ summary: 'Re-run quality + persistence stages without regenerating slides (REFRESH command)' })
+  async refresh(@Param('deckId') deckId: string) {
+    const deck = await this.prisma.deck.findUnique({ where: { id: deckId } });
+    if (!deck) throw new NotFoundException(`Deck ${deckId} not found`);
+    return this.runPipelineCommand({ type: 'REFRESH', projectId: deck.projectId, deckId });
+  }
+
+  @Post('family-switch/:projectId')
+  @ApiOperation({ summary: 'Switch composition family and rebuild smart components (FAMILY_SWITCH command)' })
+  async familySwitch(
+    @Param('projectId') projectId: string,
+    @Body() body: { familyId: SmartFamilyId; deckId?: string },
+  ) {
+    return this.runPipelineCommand({
+      type: 'FAMILY_SWITCH', projectId, deckId: body.deckId, familyId: body.familyId,
     });
-    if (!project) throw new NotFoundException(`Project ${projectId} not found`);
+  }
 
-    const businessInfo = (project.businessInfo as any) || {};
-    const input: any = {
-      documentType: businessInfo.documentType || 'pitch_deck',
-      companyName:  businessInfo.companyName  || project.name || 'My Company',
-      industry:     businessInfo.industry     || 'Technology',
-      stage:        businessInfo.businessStage || businessInfo.stage || 'seed',
-      ...businessInfo,
-    };
+  @Post('template-switch/:projectId')
+  @ApiOperation({ summary: 'Switch template and rebuild (TEMPLATE_SWITCH command)' })
+  async templateSwitch(
+    @Param('projectId') projectId: string,
+    @Body() body: { templateId: string; deckId?: string },
+  ) {
+    return this.runPipelineCommand({
+      type: 'TEMPLATE_SWITCH', projectId, deckId: body.deckId, templateId: body.templateId,
+    });
+  }
 
-    await this.prisma.project.update({ where: { id: projectId }, data: { status: 'generating' } });
-
-    // Pick or create the target deck. Reuse any empty deck so we don't
-    // accumulate dead rows when the user retries multiple times.
-    let deck = project.decks.find((d) => d.slides.length === 0);
-    if (deck) {
-      await this.prisma.deck.update({ where: { id: deck.id }, data: { status: 'generating' } });
-    } else {
-      deck = await this.decksService.create(projectId, {
-        title: `${input.companyName} ${this.formatDocumentType(input.documentType)}`,
-        description: 'AI-generated presentation',
-      }) as any;
+  /**
+   * Single entrypoint that flips the deck/project status, runs the pipeline,
+   * and shapes the response. Brand-asset application stays here (post-pipeline
+   * side effect) so the pipeline's stage list stays domain-pure.
+   */
+  private async runPipelineCommand(command: GenerationCommand) {
+    if (command.projectId) {
+      await this.prisma.project.update({ where: { id: command.projectId }, data: { status: 'generating' } });
     }
-    if (!deck) {
-      throw new Error('Failed to acquire a target deck');
+    const result = await this.pipeline.execute(command);
+    if (!result.ok) {
+      if (command.projectId) {
+        await this.prisma.project.update({ where: { id: command.projectId }, data: { status: 'failed' } });
+      }
+      throw new Error(`Pipeline failed at stage ${result.error?.stage}: ${result.error?.reason}`);
     }
 
-    try {
-      // Run the deterministic SlideFactory directly (no queue, no AI dependency).
-      // Phase 30I — promote framework-required slide types when backing data exists.
-      const expansion = this.autoExpansion.expand(input);
-      const generated = this.slideFactory.generateDeck(input, expansion.promotions);
-      this.scorecardService.build(input, generated);
-      if (!generated || generated.length === 0) {
-        throw new Error('SlideFactory produced 0 slides');
-      }
-
-      // Persist slides (createMany expects 0-indexed `order`).
-      const baseSlides = generated.map((s: any, i: number) => ({
-        type:         s.type,
-        order:        i,
-        title:        s.title || '',
-        subtitle:     s.subtitle,
-        content:      s.content || {},
-        speakerNotes: s.speakerNotes,
-      }));
-      await this.slidesService.createMany(deck.id, baseSlides as any);
-
-      // Materialise SlideElement rows so the new editor sees rich content immediately.
-      const persisted = await this.prisma.slide.findMany({ where: { deckId: deck.id }, orderBy: { order: 'asc' }, select: { id: true } });
-      let elementsCreated = 0;
-      for (const s of persisted) {
-        try {
-          const n = await this.migrationService.migrateOne(s.id, { force: false });
-          if (n !== null) elementsCreated += n;
-        } catch (e: any) {
-          // Don't fail the whole job if one slide's migration glitches.
-        }
-      }
-
-      // Apply uploaded brand assets (logo + images) if any
-      let assets = { logos: 0, photos: 0 };
+    // Apply brand assets (post-pipeline side effect) for full regenerations.
+    let assets = { logos: 0, photos: 0 };
+    if (!command.options?.skipBrandAssets && result.context.deckId) {
       try {
-        assets = await this.applyBrandAssets(deck.id, businessInfo);
-      } catch (e: any) {
-        // Don't fail the whole regen if image application glitches
-      }
-
-      await this.prisma.deck.update({ where: { id: deck.id }, data: { status: 'ready' } });
-      await this.prisma.project.update({ where: { id: projectId }, data: { status: 'completed' } });
-
-      const firstSlide = persisted[0];
-      return {
-        success: true,
-        message: `Generated ${persisted.length} slides with ${elementsCreated} elements${assets.photos || assets.logos ? ` + ${assets.photos} photos + ${assets.logos} brand marks` : ''}`,
-        deckId: deck.id,
-        firstSlideId: firstSlide?.id || null,
-        slidesGenerated: persisted.length,
-        elementsCreated,
-        photosApplied: assets.photos,
-        logosApplied: assets.logos,
-        projectId,
-      };
-    } catch (err: any) {
-      await this.prisma.deck.update({ where: { id: deck.id }, data: { status: 'draft' } });
-      await this.prisma.project.update({ where: { id: projectId }, data: { status: 'failed' } });
-      // Re-throw so the frontend sees the real reason
-      throw new Error(`Regeneration failed: ${err.message}`);
+        const project = command.projectId
+          ? await this.prisma.project.findUnique({ where: { id: command.projectId } })
+          : null;
+        const businessInfo = (project?.businessInfo as any) || {};
+        assets = await this.applyBrandAssets(result.context.deckId, businessInfo);
+      } catch (_e) { /* never break the pipeline result on a brand-asset failure */ }
     }
+
+    return {
+      success: true,
+      command: result.command,
+      durationMs: result.durationMs,
+      stages:  result.stages.map((s) => ({ stage: s.stage, ms: s.ms })),
+      deckId:  result.context.deckId,
+      firstSlideId: result.context.persistedSlideIds?.[0] || null,
+      slidesGenerated:         result.context.metrics?.slidesGenerated ?? 0,
+      smartComponentsAttached: result.context.metrics?.smartComponentsAttached ?? 0,
+      elementsCreated:         result.context.metrics?.elementsCreated ?? 0,
+      qualityScore:            result.context.metrics?.qualityScore ?? 0,
+      photosApplied: assets.photos,
+      logosApplied:  assets.logos,
+      projectId:     result.context.projectId,
+    };
   }
 
   @Post('validate/:deckId')

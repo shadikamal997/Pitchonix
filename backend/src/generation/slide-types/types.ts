@@ -94,6 +94,11 @@ export interface WizardInput {
   };
   fontStyle: string;
   visualStyle: string;
+  // Phase 37.1A — when provided, the generation pipeline loads this BrandKit
+  // and uses its tokens (colors, fonts, voice, identity) as the primary
+  // input — overriding `brandColors` / `fontStyle` / `tone` above. Falls
+  // back to the inline fields when the kit is absent or the lookup fails.
+  brandKitId?: string;
   
   // Step 6: Generation Settings
   slideCount: number;
@@ -117,6 +122,21 @@ export interface SlideContent {
   themeKey?: string;
   speakerNotes?: string;
   qualityScore?: number;
+  /**
+   * Phase 32.75 Tier 4 — Smart Component request.
+   *
+   * Set by generators that have a matching Tier 3 smart component. Downstream
+   * code (the elements migration service, or the editor itself) MAY prefer
+   * `componentTree` over the legacy `content.*` fields when materialising
+   * SlideElement rows. Absent when no smart component matches; the legacy
+   * manual layout remains the source of truth in that case (Part I — never
+   * break generation).
+   */
+  smartComponent?: {
+    family:      string;     // SmartFamilyId — kept loose to avoid cross-file import
+    type:        string;     // SmartComponentType
+    elementTree: any[];      // SlideElementDTO[]; opaque here to keep the file framework-free
+  };
 }
 
 export interface ISlideGenerator {

@@ -11,12 +11,12 @@ datasource db {
 }
 
 model User {
-  id              String           @id @default(uuid())
-  email           String           @unique
-  password        String
-  name            String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Email verification
   isVerified              Boolean   @default(false)
@@ -38,120 +38,353 @@ model User {
   twoFactorSecret  String?
   twoFactorEnabled Boolean @default(false)
 
-  projects        Project[]
-  brandKits       BrandKit[]
-  exportTemplates ExportTemplate[]
-  exportJobs      ExportJob[]
-  notifications   Notification[]
-  activities      Activity[]
-  templateFavourites TemplateFavourite[]
-  projectShares   ProjectShare[]
-  comments        Comment[]
+  projects                Project[]
+  brandKits               BrandKit[]
+  exportTemplates         ExportTemplate[]
+  exportJobs              ExportJob[]
+  notifications           Notification[]
+  activities              Activity[]
+  templateFavourites      TemplateFavourite[]
+  projectShares           ProjectShare[]
+  comments                Comment[]
+  // Phase 36.1H — comments where this user is the assignee.
+  commentsAssigned        Comment[]           @relation("CommentAssignee")
+  savedComponents         SavedComponent[] // Phase 32.75 Tier 2
+  // Phase 36 — Review workflow
+  reviewRequestsRequested ReviewRequest[]     @relation("ReviewRequestRequester")
+  reviewRequestsReviewing ReviewRequest[]     @relation("ReviewRequestReviewer")
+  // Phase 39 — Workspaces & teams
+  organizationsOwned      Organization[]      @relation("OrganizationOwner")
+  workspaceMemberships    WorkspaceMember[]   @relation("WorkspaceMemberUser")
+  workspaceInvitesSent    WorkspaceMember[]   @relation("WorkspaceMemberInviter")
+  workspaceInvitesCreated WorkspaceInvite[]   @relation("WorkspaceInviteCreator")
+  workspaceActivities     WorkspaceActivity[] @relation("WorkspaceActivityActor")
+  workspaceAuditEvents    WorkspaceAuditLog[] @relation("WorkspaceAuditActor")
+  // Phase 39.1D — explicit per-deck access grants
+  deckSharesReceived      DeckShare[]         @relation("DeckShareMember")
+  deckSharesCreated       DeckShare[]         @relation("DeckShareCreator")
+  // Phase 42 — Career documents
+  cvProfiles              CvProfile[]
 
   @@map("users")
 }
 
 model Project {
-  id             String   @id @default(uuid())
+  id             String  @id @default(uuid())
   userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   name           String
   description    String?
-  documentType   String   @default("pitch_deck") // pitch_deck, business_plan, proposal, sales_deck, company_profile, marketing_plan, etc.
-  documentFormat String   @default("slides") // 'slides' for presentations, 'pdf' for PDF Studio documents
+  documentType   String  @default("pitch_deck") // pitch_deck, business_plan, proposal, sales_deck, company_profile, marketing_plan, etc.
+  documentFormat String  @default("slides") // 'slides' for presentations, 'pdf' for PDF Studio documents
   industry       String?
-  status         String   @default("draft") // draft, generated, reviewed, exported
-  businessInfo   Json?    // Stores all wizard data (problem, solution, market, competitors, etc.)
-  audience       String?  // investors, customers, partners, internal, board, banks, government
-  tone           String?  // professional, investor-focused, luxury, bold, simple, technical, corporate
-  
+  status         String  @default("draft") // draft, generated, reviewed, exported
+  businessInfo   Json? // Stores all wizard data (problem, solution, market, competitors, etc.)
+  audience       String? // investors, customers, partners, internal, board, banks, government
+  tone           String? // professional, investor-focused, luxury, bold, simple, technical, corporate
+
   // Media & Branding
-  logoUrl        String?  // Company logo URL
-  imageUrls      String[] // Additional images (products, team, etc.)
-  
-  qualityScore   Int?     // 0-100 Pitchonix Score
-  lastEditedAt   DateTime @default(now())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  logoUrl   String? // Company logo URL
+  imageUrls String[] // Additional images (products, team, etc.)
+
+  qualityScore Int? // 0-100 Pitchonix Score
+  lastEditedAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Archiving (soft-delete)
-  archivedAt     DateTime?
+  archivedAt DateTime?
 
   // Public share link
-  publicToken    String?  @unique
+  publicToken String? @unique
 
   // Analytics counters
-  viewCount      Int      @default(0)
-  exportCount    Int      @default(0)
+  viewCount   Int @default(0)
+  exportCount Int @default(0)
+
+  // Phase 39 — Workspace ownership. Nullable so the auto-backfill can run
+  // for pre-existing projects on first boot (every user gets a Personal
+  // workspace, all their projects move into it).
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  // Phase 39.1D — Sharing visibility:
+  //   private   → only the owner can access (workspace role ignored)
+  //   workspace → workspace members inherit access via their role
+  //   shared    → workspace members PLUS explicit DeckShare grants
+  sharingMode String @default("workspace")
 
   decks          Deck[]
   pdfDocuments   PdfDocument[] // PDF Studio documents
   generationJobs GenerationJob[]
   qualityReports QualityReport[]
   shares         ProjectShare[]
+  deckShares     DeckShare[]
   comments       Comment[]
 
+  @@index([workspaceId])
   @@map("projects")
 }
 
 model Deck {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   templateId  String?
   template    Template? @relation(fields: [templateId], references: [id])
   brandKitId  String?
   brandKit    BrandKit? @relation(fields: [brandKitId], references: [id])
   title       String
   description String?
-  status      String   @default("draft") // draft, generating, ready, exporting
-  metadata    Json?    // Store additional metadata
-  
+  status      String    @default("draft") // draft, generating, ready, exporting
+  metadata    Json? // Store additional metadata
+
   // Quality Control fields (Phase 7/8)
-  qualityScore      Json?     // QualityScore object with overall, grade, dimensions, breakdown
-  validationResult  Json?     // ValidationResult object with errors, warnings, info
-  generationMetrics Json?     // GenerationMetrics with timing, stages, performance
+  qualityScore      Json? // QualityScore object with overall, grade, dimensions, breakdown
+  validationResult  Json? // ValidationResult object with errors, warnings, info
+  generationMetrics Json? // GenerationMetrics with timing, stages, performance
   lastQualityCheck  DateTime? // When quality was last checked
   exportReady       Boolean   @default(false) // Whether deck passes quality checks for export
-  
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  slides          Slide[]
-  exports         Export[]
-  qualityHistory  QualityHistory[] // Phase 10: Quality tracking over time
 
-  @@map("decks")
+  // Phase 32.75 — Master Elements & deck-wide design settings.
+  //   masterSettings: { showPageNumbers, showLogo, showFooter, showDate, showWatermark }
+  // Switches let users hide whole master families without deleting the rows.
+  masterSettings Json?
+
+  // Phase 36 — Review workflow state.
+  //   draft | in_review | approved | changes_requested
+  // Updated by the reviews service whenever a ReviewRequest transitions
+  // (request → in_review; approve → approved; request-changes → changes_requested).
+  // Edits to deck content after approval flip back to draft (Phase 36I warning surface).
+  reviewStatus String @default("draft")
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  slides         Slide[]
+  exports        Export[]
+  qualityHistory QualityHistory[] // Phase 10: Quality tracking over time
+  masterElements MasterElement[] // Phase 32.75
+  versions       DeckVersion[] // Phase 35
+  reviewRequests ReviewRequest[] // Phase 36
+
+  // Phase 38 — first-class masters / themes / sections backrefs.
+  // (LayoutTemplate is workspace-scoped — no deck backref.)
+  masterSlides MasterSlide[]
+  themes       DeckTheme[]
+  sections     DeckSection[]
+
   @@index([projectId])
   @@index([exportReady])
   @@index([lastQualityCheck])
+  @@map("decks")
+}
+
+// =============================================================================
+//  DeckVersion — Phase 35
+//
+//  Immutable snapshot of a deck at a point in time. Auto-created by the
+//  generation pipeline (GENERATE / REGENERATE / FAMILY_SWITCH / etc.) and
+//  before destructive editor actions; can also be created manually via
+//  "Save Version" in the editor.
+//
+//  `snapshot` carries the full deck state needed to restore: slides,
+//  elements, masters, component-instances, theme tokens, framework/quality
+//  scores. Stored as Json so the schema doesn't have to mirror every
+//  downstream change — restore walks the JSON and replays inserts.
+// =============================================================================
+model DeckVersion {
+  id     String  @id @default(uuid())
+  deckId String
+  deck   Deck    @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  userId String? // null for system-generated snapshots (pipeline auto-saves)
+
+  name        String // "Before regenerate" | "Final pitch deck" | …
+  description String?
+  type        String // AUTO_SAVE | MANUAL_SNAPSHOT | GENERATED | REGENERATED | RESTORED | FAMILY_CHANGED | TEMPLATE_CHANGED | EXPORTED | SAFETY
+
+  // Snapshot payload — full deck state at capture time.
+  snapshot Json
+
+  // Lightweight metadata kept out of `snapshot` for quick listing / filtering.
+  slideCount   Int     @default(0)
+  qualityScore Int? // 0..100 if known
+  familyId     String? // composition family at capture time
+  templateId   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([deckId, createdAt])
+  @@index([deckId, type])
+  @@map("deck_versions")
+}
+
+// =============================================================================
+//  SavedComponent — Phase 32.75 Tier 2
+//
+//  User-scoped reusable component library. Stores the canonical element tree
+//  (a list of SlideElement-shaped rows), plus metadata for browsing (name,
+//  category, tags, favourite, usage count, thumbnail).
+//
+//  `version` bumps every time the source elementTree is edited. Instances
+//  store their last-acknowledged version so the editor can flag "update
+//  available" without forcing a sync.
+// =============================================================================
+model SavedComponent {
+  id          String  @id @default(uuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+
+  name        String
+  description String?
+  category    String // see ComponentCategory union in TS types
+  thumbnail   String? // data URL or hosted image
+  familyId    String? // optional composition family this component looks best in
+  tags        String[] @default([])
+  favorite    Boolean  @default(false)
+  usageCount  Int      @default(0)
+  version     Int      @default(1) // bumped every time elementTree changes
+
+  // Source-of-truth element list. Each entry is a SlideElement-shaped object
+  // whose x/y are interpreted as offsets from the instance anchor at insert
+  // time. Stored as JSON because the editor's element shapes are polymorphic.
+  elementTree Json
+
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  instances ComponentInstance[]
+
+  @@index([userId, category])
+  @@index([userId, favorite])
+  @@index([userId, updatedAt])
+  @@map("saved_components")
+}
+
+// =============================================================================
+//  ComponentInstance — Phase 32.75 Tier 2
+//
+//  One row per "linked" placement of a component on a slide. Static (copy-on-
+//  insert) placements DO NOT create a row — they just put plain SlideElement
+//  rows on the slide. So the presence of an instance row implies linked mode.
+//
+//  At render time the slide-export pipeline looks up each instance's
+//  component, snapshots its current elementTree, translates by anchor, and
+//  injects those elements alongside the slide's own elements. This is how
+//  edits to a component propagate to every instance instantly.
+//
+//  `version` here is the component version the user has *acknowledged*.
+//  When component.version > instance.version, the editor surfaces an
+//  "Update available" indicator (rendering still uses latest).
+// =============================================================================
+model ComponentInstance {
+  id          String         @id @default(uuid())
+  componentId String
+  component   SavedComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  slideId     String
+  slide       Slide          @relation(fields: [slideId], references: [id], onDelete: Cascade)
+
+  anchorX Float @default(0) // top-left anchor (% of slide W)
+  anchorY Float @default(0)
+  scale   Float @default(1) // future-proof for resize-on-insert
+
+  version   Int      @default(1) // acknowledged source version
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slideId])
+  @@index([componentId])
+  @@map("component_instances")
+}
+
+// =============================================================================
+//  MasterElement — Phase 32.75
+//
+//  Deck-wide "appears on every slide" element. The render pipeline merges
+//  these into each slide's element list before rasterising, so they show in
+//  the editor and in every export path (PPTX / PDF / PNG / JPEG) without the
+//  per-slide tables having to know about them.
+//
+//  type covers the canonical master families plus an open `custom` bucket.
+//  excludedSlides is a list of slide IDs where the master is suppressed
+//  (title slide, divider sections, etc).
+// =============================================================================
+model MasterElement {
+  id     String @id @default(uuid())
+  deckId String
+  deck   Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  type String // logo|companyName|header|footer|pageNumber|date|copyright|watermark|backgroundShape|backgroundImage|brandBanner|contact|confidential|custom
+  name String?
+
+  // Geometry — same 0..100 percent grid as SlideElement so masters can share
+  // the renderer plumbing without coordinate translation.
+  x           Float   @default(0)
+  y           Float   @default(0)
+  width       Float   @default(20)
+  height      Float   @default(5)
+  rotation    Float   @default(0)
+  zIndex      Int     @default(0)
+  sendToFront Boolean @default(false) // false = render under slide content (default), true = render above
+
+  // Visibility
+  visible        Boolean  @default(true)
+  excludedSlides String[] @default([]) // slide IDs where this master is hidden
+
+  // Polymorphic payload (matches SlideElement.content shape)
+  elementData Json?
+  style       Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([deckId])
+  @@index([deckId, type])
+  @@map("master_elements")
 }
 
 model Slide {
-  id           String   @id @default(uuid())
+  id           String  @id @default(uuid())
   deckId       String
-  deck         Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
-  type         String   // cover, problem, solution, market_size, tam_sam_som, business_model, revenue_streams, traction, customer_segment, competitor_analysis, competitive_advantage, go_to_market, roadmap, team, financial_projection, use_of_funds, investment_ask, closing, appendix
+  deck         Deck    @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  type         String // cover, problem, solution, market_size, tam_sam_som, business_model, revenue_streams, traction, customer_segment, competitor_analysis, competitive_advantage, go_to_market, roadmap, team, financial_projection, use_of_funds, investment_ask, closing, appendix
   order        Int
   title        String
   subtitle     String?
-  content      Json     // Legacy flexible JSON. Kept for back-compat after element-migration; not authoritative once `elementsVersion >= 1`.
-  layoutKey    String?  // Which template layout to use
-  themeKey     String?  // Which theme to apply
-  speakerNotes String?  // Speaker notes
-  qualityScore Int?     // Individual slide quality score
+  content      Json // Legacy flexible JSON. Kept for back-compat after element-migration; not authoritative once `elementsVersion >= 1`.
+  layoutKey    String? // Which template layout to use
+  themeKey     String? // Which theme to apply
+  speakerNotes String? // Speaker notes
+  qualityScore Int? // Individual slide quality score
 
   // Element-based editing system (Phase 1 of slide editor rebuild)
-  elementsVersion Int           @default(0)  // 0 = not migrated, 1+ = element rows are authoritative
-  background      Json?         // {type, color/gradient/image, opacity}
-  themeTokens     Json?         // per-slide theme override
-  metadata        Json?         // free-form (e.g. groupId, sectionId, animationDuration)
-  elements        SlideElement[]
+  elementsVersion    Int                 @default(0) // 0 = not migrated, 1+ = element rows are authoritative
+  background         Json? // {type, color/gradient/image, opacity}
+  themeTokens        Json? // per-slide theme override
+  metadata           Json? // free-form (e.g. groupId, sectionId, animationDuration)
+  elements           SlideElement[]
+  componentInstances ComponentInstance[] // Phase 32.75 Tier 2
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  // Phase 38 — first-class section + master + layout + theme + transition.
+  //   sectionId / masterSlideId / layoutTemplateId / themeId are nullable so
+  //   existing decks keep working; population happens on opt-in upgrade.
+  //   transition: { effect: 'fade'|'push'|'reveal'|'morph'|'cover', duration }.
+  sectionId        String?
+  section          DeckSection?    @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  masterSlideId    String?
+  masterSlide      MasterSlide?    @relation(fields: [masterSlideId], references: [id], onDelete: SetNull)
+  layoutTemplateId String?
+  layoutTemplate   LayoutTemplate? @relation(fields: [layoutTemplateId], references: [id], onDelete: SetNull)
+  themeId          String?
+  theme            DeckTheme?      @relation(fields: [themeId], references: [id], onDelete: SetNull)
+  transition       Json?
 
-  @@map("slides")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([deckId, order])
+  @@index([sectionId])
+  @@index([masterSlideId])
+  @@map("slides")
 }
 
 // =============================================================================
@@ -170,48 +403,58 @@ model Slide {
 //               (always per-element; theme tokens are merged at render time)
 // =============================================================================
 model SlideElement {
-  id            String   @id @default(uuid())
-  slideId       String
-  slide         Slide    @relation(fields: [slideId], references: [id], onDelete: Cascade)
+  id      String @id @default(uuid())
+  slideId String
+  slide   Slide  @relation(fields: [slideId], references: [id], onDelete: Cascade)
 
-  type          String   // heading|subheading|paragraph|bulletList|numberedList|quote|testimonial|metric|kpi|chart|table|image|icon|logo|shape|line|divider|timeline|roadmap|teamCard|pricingCard|comparison|swot|featureGrid|processSteps|cta|footer|pageNumber|videoPlaceholder|embeddedMediaPlaceholder
-  name          String?  // user-editable label ("Hero Title", "Market Stat #2")
-  order         Int      // stable iteration order; canvas z-stack uses zIndex
+  type  String // heading|subheading|paragraph|bulletList|numberedList|quote|testimonial|metric|kpi|chart|table|image|icon|logo|shape|line|divider|timeline|roadmap|teamCard|pricingCard|comparison|swot|featureGrid|processSteps|cta|footer|pageNumber|videoPlaceholder|embeddedMediaPlaceholder
+  name  String? // user-editable label ("Hero Title", "Market Stat #2")
+  order Int // stable iteration order; canvas z-stack uses zIndex
 
   // Geometry (in slide-local coordinates, 0..100 as % of slide W/H so layouts are resolution-independent)
-  x             Float    @default(0)
-  y             Float    @default(0)
-  width         Float    @default(50)
-  height        Float    @default(10)
-  rotation      Float    @default(0)   // degrees
-  zIndex        Int      @default(0)
+  x        Float @default(0)
+  y        Float @default(0)
+  width    Float @default(50)
+  height   Float @default(10)
+  rotation Float @default(0) // degrees
+  zIndex   Int   @default(0)
 
   // Display flags
-  locked        Boolean  @default(false)
-  visible       Boolean  @default(true)
+  locked  Boolean @default(false)
+  visible Boolean @default(true)
 
   // Polymorphic payload — see comment block above
   content       Json?
   data          Json?
   style         Json?
   animations    Json?
-  accessibility Json?    // {altText, role, ariaLabel}
+  accessibility Json? // {altText, role, ariaLabel}
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  // Phase 34.2B — Y.Doc state for collaborative text elements.
+  //   - Holds Y.encodeStateAsUpdate() for any element whose text is being
+  //     CRDT-edited (headings, paragraphs, lists, etc.).
+  //   - Server-side YDocStore writes this debounced (~2s) after Y updates.
+  //   - On first room-join with no row, the gateway seeds the Y.Doc from
+  //     `content` so existing decks "upgrade" lazily on first collaboration.
+  //   - `content` remains the canonical export source; YDocStore mirrors
+  //     into `content` (as a ProseMirror JSON serialisation) on each persist.
+  ydocState Bytes?
 
-  @@map("slide_elements")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([slideId, order])
   @@index([slideId, type])
+  @@map("slide_elements")
 }
 
 model Template {
   id          String   @id @default(uuid())
   name        String
   description String?
-  thumbnail   String?  // URL to template preview image
+  thumbnail   String? // URL to template preview image
   isPublic    Boolean  @default(true)
-  config      Json     // Template configuration (colors, fonts, layout)
+  config      Json // Template configuration (colors, fonts, layout)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   decks       Deck[]
@@ -220,31 +463,90 @@ model Template {
 }
 
 model BrandKit {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  logo        String?  // URL to logo
-  primaryColor String? // Hex color
+  id             String     @id @default(uuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Phase 37A — workspace ownership. Nullable for the one-time backfill;
+  // new kits are required to belong to a workspace.
+  workspaceId    String?
+  workspace      Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  name           String
+  description    String? // Phase 37A
+  isDefault      Boolean    @default(false) // Phase 37A — one default per workspace
+  logo           String? // URL to logo
+  primaryColor   String? // Hex color
   secondaryColor String? // Hex color
-  fontFamily  String?
-  config      Json?    // Additional brand settings
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  decks       Deck[]
-  pdfDocuments PdfDocument[] // PDF documents using this brand kit
+  fontFamily     String?
+  config         Json? // Additional brand settings (legacy)
+  // Phase 37C/D/E — rich design tokens (colors, typography, spacing,
+  // chart styles, etc.). Stored as Json so we can iterate the shape
+  // without schema migrations every time.
+  //   {
+  //     colors: { primary, secondary, accent, success, warning, danger, neutral }
+  //     typography: { heading: { family, weight, lineHeight, letterSpacing },
+  //                   body: {...}, caption: {...} }
+  //     tokens: { borderRadius, shadowStyle, spacingScale, containerWidth, buttonStyle }
+  //     chart:  { palette[], axisColor, gridColor, legendStyle }
+  //     icon:   { style }
+  //   }
+  tokens         Json?
+  // Phase 37I — writing-voice profile for the generation pipeline.
+  //   { tone, voice, rules[], examples[] }
+  voice          Json?
+  // Phase 37A — brand identity strings used by generation + cover slides.
+  //   { companyName, tagline, mission, vision, website }
+  identity       Json?
 
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  decks        Deck[]
+  pdfDocuments PdfDocument[] // PDF documents using this brand kit
+  assets       BrandAsset[] // Phase 37B/R — managed logos + image assets
+
+  @@index([workspaceId])
+  @@index([workspaceId, isDefault])
   @@map("brand_kits")
+}
+
+// =============================================================================
+//  Phase 37B/R — BrandAsset
+//
+//  Managed logo + image assets attached to a BrandKit. Each asset has a
+//  `kind` slot (primary logo, secondary logo, monochrome, dark, light,
+//  icon mark, favicon, generic image) so the brand-apply engine knows
+//  which slot it fills.
+//
+//  Stored as URL pointers (the upload pipeline writes to /uploads/images
+//  and returns a public URL). Width/height are captured at upload time
+//  for layout decisions.
+// =============================================================================
+model BrandAsset {
+  id         String   @id @default(uuid())
+  brandKitId String
+  brandKit   BrandKit @relation(fields: [brandKitId], references: [id], onDelete: Cascade)
+  // logo_primary | logo_secondary | logo_mono | logo_dark | logo_light
+  // | icon_mark | favicon | image
+  kind       String
+  url        String
+  mimeType   String?
+  width      Int?
+  height     Int?
+  alt        String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([brandKitId, kind])
+  @@map("brand_assets")
 }
 
 model Export {
   id        String   @id @default(uuid())
   deckId    String
   deck      Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
-  format    String   // pptx, pdf
+  format    String // pptx, pdf
   status    String   @default("pending") // pending, processing, completed, failed
-  fileUrl   String?  // URL to exported file
-  error     String?  // Error message if failed
+  fileUrl   String? // URL to exported file
+  error     String? // Error message if failed
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -257,8 +559,8 @@ model GenerationJob {
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   status    String   @default("queued") // queued, processing, generating_outline, generating_slides, applying_design, checking_quality, completed, failed
   progress  Int      @default(0) // 0-100
-  result    Json?    // Generated content result
-  error     String?  // Error message if failed
+  result    Json? // Generated content result
+  error     String? // Error message if failed
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -269,11 +571,11 @@ model QualityReport {
   id           String   @id @default(uuid())
   projectId    String
   project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  overallScore Int      // 0-100 overall Pitchonix Score
-  breakdown    Json     // Scores by category (clarity, investor_readiness, design, business_logic, market_strength, financial_completeness, story_flow)
-  issues       Json     // Array of issues with severity (low, medium, high)
-  suggestions  Json     // Array of suggested fixes
-  fixedIssues  Json?    // Array of issues that were auto-fixed
+  overallScore Int // 0-100 overall Pitchonix Score
+  breakdown    Json // Scores by category (clarity, investor_readiness, design, business_logic, market_strength, financial_completeness, story_flow)
+  issues       Json // Array of issues with severity (low, medium, high)
+  suggestions  Json // Array of suggested fixes
+  fixedIssues  Json? // Array of issues that were auto-fixed
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -282,264 +584,264 @@ model QualityReport {
 
 // Phase 10: Export Templates
 model ExportTemplate {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
-  type        String   // 'system' or 'custom'
-  format      String   // 'pptx', 'pdf', 'html'
-  
+  type        String // 'system' or 'custom'
+  format      String // 'pptx', 'pdf', 'html'
+
   // Template configuration
-  config      Json     // Template-specific settings
-  
+  config Json // Template-specific settings
+
   // Branding
-  logoUrl     String?
-  watermark   String?
-  colors      Json?    // Color palette
-  fonts       Json?    // Font settings
-  
+  logoUrl   String?
+  watermark String?
+  colors    Json? // Color palette
+  fonts     Json? // Font settings
+
   // Metadata
-  isDefault   Boolean  @default(false)
-  isPublic    Boolean  @default(false)
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  exportJobs  ExportJob[]
-  
-  @@map("export_templates")
+  isDefault Boolean @default(false)
+  isPublic  Boolean @default(false)
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  exportJobs ExportJob[]
+
   @@index([userId])
   @@index([type])
   @@index([format])
+  @@map("export_templates")
 }
 
 // Phase 10: Quality History Tracking
 model QualityHistory {
-  id                String   @id @default(uuid())
-  deckId            String
-  deck              Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(uuid())
+  deckId String
+  deck   Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
   // Quality metrics
-  overallScore      Float
-  grade             String
-  contentScore      Float
-  visualScore       Float
-  aiScore           Float
-  exportScore       Float
-  
+  overallScore Float
+  grade        String
+  contentScore Float
+  visualScore  Float
+  aiScore      Float
+  exportScore  Float
+
   // Validation results
-  validationPassed  Boolean
-  errorCount        Int      @default(0)
-  warningCount      Int      @default(0)
-  infoCount         Int      @default(0)
-  
+  validationPassed Boolean
+  errorCount       Int     @default(0)
+  warningCount     Int     @default(0)
+  infoCount        Int     @default(0)
+
   // Context
-  trigger           String   // 'generation', 'manual', 'scheduled'
-  version           Int      @default(1)
-  changes           Json?    // What changed since last check
-  
-  createdAt         DateTime @default(now())
-  
-  @@map("quality_history")
+  trigger String // 'generation', 'manual', 'scheduled'
+  version Int    @default(1)
+  changes Json? // What changed since last check
+
+  createdAt DateTime @default(now())
+
   @@index([deckId])
   @@index([createdAt])
+  @@map("quality_history")
 }
 
 // Phase 10: Batch Export Jobs
 model ExportJob {
-  id            String          @id @default(uuid())
-  deckIds       String[]        // Support batch export
-  format        String          // 'pptx', 'pdf', 'html'
-  
+  id      String   @id @default(uuid())
+  deckIds String[] // Support batch export
+  format  String // 'pptx', 'pdf', 'html'
+
   // Template and options
-  templateId    String?
-  template      ExportTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  options       Json            // Export-specific options
-  
+  templateId String?
+  template   ExportTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  options    Json // Export-specific options
+
   // Status
-  status        String          // 'pending', 'processing', 'completed', 'failed'
-  progress      Int             @default(0)
-  currentDeck   String?
-  
+  status      String // 'pending', 'processing', 'completed', 'failed'
+  progress    Int     @default(0)
+  currentDeck String?
+
   // Results
-  outputUrls    String[]        // Generated file URLs
-  errors        Json?
-  
+  outputUrls String[] // Generated file URLs
+  errors     Json?
+
   // Metadata
-  userId        String
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  startedAt     DateTime?
-  completedAt   DateTime?
-  createdAt     DateTime        @default(now())
-  
-  @@map("export_jobs")
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@map("export_jobs")
 }
 
 // ===== PDF STUDIO MODELS =====
 
 // PDF Documents (distinct from slide decks)
 model PdfDocument {
-  id             String        @id @default(uuid())
-  projectId      String
-  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
+  id        String  @id @default(uuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   // Document info
-  title          String
-  description    String?
-  documentType   String        // business_plan, proposal, company_profile, executive_summary, marketing_plan, etc.
+  title        String
+  description  String?
+  documentType String // business_plan, proposal, company_profile, executive_summary, marketing_plan, etc.
 
   // Template & Layout
-  proTemplateId  String?       // Pro template identifier
-  templateType   String?       // Standard template type
-  layoutType     String?       // Document layout style
+  proTemplateId String? // Pro template identifier
+  templateType  String? // Standard template type
+  layoutType    String? // Document layout style
 
   // Design
-  brandKitId     String?
-  brandKit       BrandKit?     @relation(fields: [brandKitId], references: [id])
-  brandColor     String?       // Primary brand color (hex)
-  accentColor    String?       // Secondary accent color (hex)
-  
-  // Content & Structure
-  outline        Json?         // Document outline/structure
-  metadata       Json?         // Additional metadata
-  
-  // Status & Quality
-  status         String        @default("draft") // draft, generating, ready, exporting
-  qualityScore   Float?        // 0-100
-  validationResult Json?       // Validation results
-  exportReady    Boolean       @default(false)
-  lastQualityCheck DateTime?
-  
-  // Timestamps
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  
-  // Relations
-  pages          PdfPage[]
-  exports        PdfExport[]
-  qualityHistory PdfQualityHistory[]
-  contentAnalysis ContentAnalysis?
-  smartBuilderConfig SmartBuilderConfig?
-  contentEnhancements ContentEnhancement[]
-  versions       DocumentVersion[]
+  brandKitId  String?
+  brandKit    BrandKit? @relation(fields: [brandKitId], references: [id])
+  brandColor  String? // Primary brand color (hex)
+  accentColor String? // Secondary accent color (hex)
 
-  @@map("pdf_documents")
+  // Content & Structure
+  outline  Json? // Document outline/structure
+  metadata Json? // Additional metadata
+
+  // Status & Quality
+  status           String    @default("draft") // draft, generating, ready, exporting
+  qualityScore     Float? // 0-100
+  validationResult Json? // Validation results
+  exportReady      Boolean   @default(false)
+  lastQualityCheck DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  pages               PdfPage[]
+  exports             PdfExport[]
+  qualityHistory      PdfQualityHistory[]
+  contentAnalysis     ContentAnalysis?
+  smartBuilderConfig  SmartBuilderConfig?
+  contentEnhancements ContentEnhancement[]
+  versions            DocumentVersion[]
+
   @@index([projectId])
   @@index([documentType])
   @@index([status])
   @@index([exportReady])
+  @@map("pdf_documents")
 }
 
 // Individual PDF Pages
 model PdfPage {
-  id             String       @id @default(uuid())
-  documentId     String
-  document       PdfDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  
+  id         String      @id @default(uuid())
+  documentId String
+  document   PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
   // Page info
-  order          Int
-  pageNumber     Int?         // Actual page number in document (may differ from order)
-  pageType       String       // cover, toc, executive_summary, section_divider, content, metrics, chart, financial_table, timeline, case_study, conclusion
-  title          String?
+  order      Int
+  pageNumber Int? // Actual page number in document (may differ from order)
+  pageType   String // cover, toc, executive_summary, section_divider, content, metrics, chart, financial_table, timeline, case_study, conclusion
+  title      String?
 
   // Content & Structure
-  content        Json         // Page-specific content based on template
-  blocks         Json?        // Structured block content
-  semanticSectionId String?   // Semantic grouping identifier
+  content           Json // Page-specific content based on template
+  blocks            Json? // Structured block content
+  semanticSectionId String? // Semantic grouping identifier
 
   // Template & Design
-  templateId     String?
-  template       PdfTemplate? @relation(fields: [templateId], references: [id])
-  customStyles   Json?        // Custom styling overrides
-  styles         Json?        // Page-level styles (separate from customStyles)
-  layoutType     String?      // Page layout type (single-column, two-column, etc.)
-  densityScore   Float?       // Page density metric (0-100)
-  
+  templateId   String?
+  template     PdfTemplate? @relation(fields: [templateId], references: [id])
+  customStyles Json? // Custom styling overrides
+  styles       Json? // Page-level styles (separate from customStyles)
+  layoutType   String? // Page layout type (single-column, two-column, etc.)
+  densityScore Float? // Page density metric (0-100)
+
   // Quality & Status
-  qualityScore   Float?       // Individual page quality score
-  validationIssues Json?      // Page-specific validation issues
-  
+  qualityScore     Float? // Individual page quality score
+  validationIssues Json? // Page-specific validation issues
+
   // Timestamps
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  
-  @@map("pdf_pages")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([documentId, order])
   @@index([pageType])
+  @@map("pdf_pages")
 }
 
 // PDF Page Templates
 model PdfTemplate {
-  id             String    @id @default(uuid())
-  
+  id String @id @default(uuid())
+
   // Template info
-  name           String
-  description    String?
-  pageType       String    // cover, toc, executive_summary, etc.
-  thumbnail      String?   // Preview image URL
-  
+  name        String
+  description String?
+  pageType    String // cover, toc, executive_summary, etc.
+  thumbnail   String? // Preview image URL
+
   // Template config
-  structure      Json      // Page structure/layout definition
-  defaultContent Json?     // Default content values
-  styleConfig    Json?     // Styling configuration
-  
+  structure      Json // Page structure/layout definition
+  defaultContent Json? // Default content values
+  styleConfig    Json? // Styling configuration
+
   // Metadata
-  isSystem       Boolean   @default(false) // System vs custom template
-  isPublic       Boolean   @default(false)
-  tags           String[]  // Searchable tags
-  
+  isSystem Boolean  @default(false) // System vs custom template
+  isPublic Boolean  @default(false)
+  tags     String[] // Searchable tags
+
   // Timestamps
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  pages          PdfPage[]
-  
-  @@map("pdf_templates")
+  pages PdfPage[]
+
   @@index([pageType])
   @@index([isSystem])
+  @@map("pdf_templates")
 }
 
 // PDF Export Records
 model PdfExport {
-  id            String       @id @default(uuid())
-  documentId    String
-  document      PdfDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  
+  id         String      @id @default(uuid())
+  documentId String
+  document   PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
   // Export config
-  format        String       @default("pdf") // pdf (could support html, docx in future)
-  options       Json?        // Export options (page size, margins, etc.)
-  
+  format  String @default("pdf") // pdf (could support html, docx in future)
+  options Json? // Export options (page size, margins, etc.)
+
   // Status
-  status        String       @default("pending") // pending, processing, completed, failed
-  progress      Int          @default(0) // 0-100
-  
+  status   String @default("pending") // pending, processing, completed, failed
+  progress Int    @default(0) // 0-100
+
   // Result
-  fileUrl       String?      // Generated PDF URL
-  fileSize      Int?         // File size in bytes
-  pageCount     Int?         // Number of pages
-  error         String?      // Error message if failed
-  
+  fileUrl   String? // Generated PDF URL
+  fileSize  Int? // File size in bytes
+  pageCount Int? // Number of pages
+  error     String? // Error message if failed
+
   // Timestamps
-  startedAt     DateTime?
-  completedAt   DateTime?
-  createdAt     DateTime     @default(now())
-  
-  @@map("pdf_exports")
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
   @@index([documentId])
   @@index([status])
   @@index([createdAt])
+  @@map("pdf_exports")
 }
 
 // PDF Quality History (similar to QualityHistory for decks)
 model PdfQualityHistory {
-  id                String      @id @default(uuid())
-  documentId        String
-  document          PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  
+  id         String      @id @default(uuid())
+  documentId String
+  document   PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
   // Quality metrics
   overallScore      Float
   grade             String
@@ -547,147 +849,147 @@ model PdfQualityHistory {
   designScore       Float
   structureScore    Float
   professionalScore Float
-  
+
   // Validation results
-  validationPassed  Boolean
-  errorCount        Int      @default(0)
-  warningCount      Int      @default(0)
-  infoCount         Int      @default(0)
-  
+  validationPassed Boolean
+  errorCount       Int     @default(0)
+  warningCount     Int     @default(0)
+  infoCount        Int     @default(0)
+
   // Context
-  trigger           String   // 'generation', 'manual', 'scheduled'
-  version           Int      @default(1)
-  changes           Json?    // What changed since last check
-  
-  createdAt         DateTime @default(now())
-  
-  @@map("pdf_quality_history")
+  trigger String // 'generation', 'manual', 'scheduled'
+  version Int    @default(1)
+  changes Json? // What changed since last check
+
+  createdAt DateTime @default(now())
+
   @@index([documentId])
   @@index([createdAt])
+  @@map("pdf_quality_history")
 }
 
 // ===== SMART PDF BUILDER MODELS =====
 
 // Content Analysis for raw input
 model ContentAnalysis {
-  id               String       @id @default(uuid())
-  documentId       String?      @unique
-  document         PdfDocument? @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  
+  id         String       @id @default(uuid())
+  documentId String?      @unique
+  document   PdfDocument? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
   // Raw input
-  rawContent       String       @db.Text // Original raw content
-  contentLength    Int          // Character count
-  
+  rawContent    String @db.Text // Original raw content
+  contentLength Int // Character count
+
   // Auto-detection results
-  detectedType     String       // business, academic, report, article, notes, technical, mixed, unknown
-  confidence       Float        // 0-1 confidence score
-  primaryLanguage  String       @default("en")
-  
+  detectedType    String // business, academic, report, article, notes, technical, mixed, unknown
+  confidence      Float // 0-1 confidence score
+  primaryLanguage String @default("en")
+
   // Content classification
-  categories       String[]     // Tags/categories detected
-  keywords         String[]     // Key terms extracted
-  topics           String[]     // Main topics identified
-  
+  categories String[] // Tags/categories detected
+  keywords   String[] // Key terms extracted
+  topics     String[] // Main topics identified
+
   // Structure analysis
-  hasTitle         Boolean      @default(false)
-  hasHeadings      Boolean      @default(false)
-  hasBullets       Boolean      @default(false)
-  hasNumbers       Boolean      @default(false)
-  sectionCount     Int          @default(0)
-  paragraphCount   Int          @default(0)
-  
+  hasTitle       Boolean @default(false)
+  hasHeadings    Boolean @default(false)
+  hasBullets     Boolean @default(false)
+  hasNumbers     Boolean @default(false)
+  sectionCount   Int     @default(0)
+  paragraphCount Int     @default(0)
+
   // Content quality
-  readabilityScore Float?       // Flesch reading ease score
-  grammarIssues    Int          @default(0)
-  spellingIssues   Int          @default(0)
-  clarityScore     Float?       // 0-1 clarity score
-  
+  readabilityScore Float? // Flesch reading ease score
+  grammarIssues    Int    @default(0)
+  spellingIssues   Int    @default(0)
+  clarityScore     Float? // 0-1 clarity score
+
   // Extracted information
-  extractedData    Json?        // Structured data extracted (names, dates, numbers, etc.)
-  suggestedTitle   String?
-  suggestedSections Json?       // Recommended section structure
-  
+  extractedData     Json? // Structured data extracted (names, dates, numbers, etc.)
+  suggestedTitle    String?
+  suggestedSections Json? // Recommended section structure
+
   // Processing metadata
-  processingTime   Int?         // Processing time in ms
-  aiModel          String?      // Which AI model was used
-  
-  createdAt        DateTime     @default(now())
-  
-  @@map("content_analyses")
+  processingTime Int? // Processing time in ms
+  aiModel        String? // Which AI model was used
+
+  createdAt DateTime @default(now())
+
   @@index([detectedType])
   @@index([createdAt])
+  @@map("content_analyses")
 }
 
 // Smart Builder Configuration (user preferences for content transformation)
 model SmartBuilderConfig {
-  id              String   @id @default(uuid())
-  documentId      String   @unique
-  document        PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  
+  id         String      @id @default(uuid())
+  documentId String      @unique
+  document   PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
   // User selections
-  documentGoal    String?  // inform, persuade, report, educate, pitch, document
-  targetAudience  String?  // executives, investors, clients, team, public, academic
-  tone            String   // formal, casual, academic, persuasive, technical, friendly
-  designStyle     String   // minimal, modern, corporate, creative, academic, bold
-  
+  documentGoal   String? // inform, persuade, report, educate, pitch, document
+  targetAudience String? // executives, investors, clients, team, public, academic
+  tone           String // formal, casual, academic, persuasive, technical, friendly
+  designStyle    String // minimal, modern, corporate, creative, academic, bold
+
   // Content transformation preferences
-  improveWriting  Boolean  @default(true)
-  fixGrammar      Boolean  @default(true)
-  addStructure    Boolean  @default(true)
-  generateIntro   Boolean  @default(false)
-  generateSummary Boolean  @default(false)
+  improveWriting     Boolean @default(true)
+  fixGrammar         Boolean @default(true)
+  addStructure       Boolean @default(true)
+  generateIntro      Boolean @default(false)
+  generateSummary    Boolean @default(false)
   generateConclusion Boolean @default(false)
-  expandContent   Boolean  @default(false)
-  shortenContent  Boolean  @default(false)
-  
+  expandContent      Boolean @default(false)
+  shortenContent     Boolean @default(false)
+
   // Layout preferences
   includeTableOfContents Boolean @default(true)
-  includeCoverPage Boolean @default(true)
-  includePageNumbers Boolean @default(true)
-  includeHeaders Boolean @default(true)
-  includeFooters Boolean @default(true)
-  
+  includeCoverPage       Boolean @default(true)
+  includePageNumbers     Boolean @default(true)
+  includeHeaders         Boolean @default(true)
+  includeFooters         Boolean @default(true)
+
   // Advanced options
   customInstructions String? @db.Text
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("smart_builder_configs")
 }
 
 // Content Enhancement History (track content improvements)
 model ContentEnhancement {
-  id              String       @id @default(uuid())
-  documentId      String
-  document        PdfDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  
+  id         String      @id @default(uuid())
+  documentId String
+  document   PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
   // Enhancement details
-  enhancementType String       // improve_writing, fix_grammar, restructure, expand, shorten, professionalize, engage
-  scope           String       // full_document, single_section, single_page
-  targetId        String?      // Page or section ID if applicable
-  
+  enhancementType String // improve_writing, fix_grammar, restructure, expand, shorten, professionalize, engage
+  scope           String // full_document, single_section, single_page
+  targetId        String? // Page or section ID if applicable
+
   // Content before/after
-  originalContent String       @db.Text
-  enhancedContent String       @db.Text
-  changes         Json?        // Detailed changes made
-  
+  originalContent String @db.Text
+  enhancedContent String @db.Text
+  changes         Json? // Detailed changes made
+
   // Quality impact
-  qualityBefore   Float?
-  qualityAfter    Float?
-  improvement     Float?       // Percentage improvement
-  
+  qualityBefore Float?
+  qualityAfter  Float?
+  improvement   Float? // Percentage improvement
+
   // Metadata
-  aiModel         String?
-  processingTime  Int?         // ms
-  userAccepted    Boolean      @default(false)
-  
-  createdAt       DateTime     @default(now())
-  
-  @@map("content_enhancements")
+  aiModel        String?
+  processingTime Int? // ms
+  userAccepted   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
   @@index([documentId])
   @@index([enhancementType])
   @@index([createdAt])
+  @@map("content_enhancements")
 }
 
 // ===== NEW FEATURE MODELS =====
@@ -697,16 +999,16 @@ model Notification {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String   // generation_complete, quality_report, share_invite, system, export_ready
+  type      String // generation_complete, quality_report, share_invite, system, export_ready
   title     String
   message   String
-  link      String?  // optional deep-link URL
+  link      String? // optional deep-link URL
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  @@map("notifications")
   @@index([userId, read])
   @@index([createdAt])
+  @@map("notifications")
 }
 
 // Activity feed events
@@ -714,15 +1016,15 @@ model Activity {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type        String   // project_created, document_generated, export_completed, quality_checked, share_accepted
+  type        String // project_created, document_generated, export_completed, quality_checked, share_accepted
   title       String
   description String?
-  metadata    Json?    // entity id, name, etc.
+  metadata    Json? // entity id, name, etc.
   createdAt   DateTime @default(now())
 
-  @@map("activities")
   @@index([userId])
   @@index([createdAt])
+  @@map("activities")
 }
 
 // Template favourites
@@ -730,12 +1032,12 @@ model TemplateFavourite {
   id         String   @id @default(uuid())
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  templateId String   // references Template.id
+  templateId String // references Template.id
   createdAt  DateTime @default(now())
 
   @@unique([userId, templateId])
-  @@map("template_favourites")
   @@index([userId])
+  @@map("template_favourites")
 }
 
 // Project sharing / team access
@@ -749,9 +1051,9 @@ model ProjectShare {
   createdAt DateTime @default(now())
 
   @@unique([projectId, userId])
-  @@map("project_shares")
   @@index([projectId])
   @@index([userId])
+  @@map("project_shares")
 }
 
 // Comment threads on projects/slides
@@ -779,55 +1081,607 @@ model Comment {
   anchorX        Float?
   anchorY        Float?
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  // Phase 36.1A — mentions. Parsed from content on create/edit and stored
+  // as Json so the schema doesn't have to mirror future mention metadata
+  // changes. Shape: Array<{ userId: string; displayName: string }>.
+  mentions Json?
 
-  @@map("comments")
+  // Phase 36.1H — assignment. Threads (parentId = null) can be assigned to a
+  // workspace user; replies inherit no assignee. Filterable via "Assigned
+  // to me" in the panel.
+  assignedToId String?
+  assignedTo   User?   @relation("CommentAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // Phase 36.1E — edit tracking. editedAt is set whenever content changes
+  // after creation. deletedAt is set by soft-delete; the row stays so reply
+  // threads remain coherent ("[message deleted]").
+  editedAt  DateTime?
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([projectId])
   @@index([userId])
   @@index([slideId])
   @@index([slideElementId])
   @@index([pageId])
+  @@index([assignedToId])
+  @@map("comments")
+}
+
+// =============================================================================
+//  ReviewRequest — Phase 36
+//
+//  One row per review-assignment on a deck. `requestedBy` (deck owner/editor)
+//  asks `reviewer` to approve or request-changes. Reviewer transitions the
+//  status; the parent Deck's `reviewStatus` mirrors the latest active request.
+//
+//  Stored as string status (not Prisma enum) to match the codebase convention
+//  used by Deck.status and DeckVersion.type:
+//
+//    requested         | newly created, reviewer hasn't opened yet
+//    in_review         | reviewer has opened the deck
+//    approved          | reviewer approved
+//    changes_requested | reviewer asked for changes
+//    withdrawn         | requester cancelled before reviewer acted
+// =============================================================================
+model ReviewRequest {
+  id            String @id @default(uuid())
+  deckId        String
+  deck          Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  requestedById String
+  requestedBy   User   @relation("ReviewRequestRequester", fields: [requestedById], references: [id], onDelete: Cascade)
+  reviewerId    String
+  reviewer      User   @relation("ReviewRequestReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  status  String    @default("requested")
+  message String?
+  dueDate DateTime?
+
+  // Set when reviewer first opens the deck in review mode (in_review).
+  openedAt  DateTime?
+  // Set on approve / request-changes / withdraw.
+  decidedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([deckId, status])
+  @@index([reviewerId, status])
+  @@index([requestedById])
+  @@map("review_requests")
+}
+
+// =============================================================================
+//  Phase 39 — Workspaces & Teams
+//
+//  Org ──┬── Workspace ──┬── Member (user + role)
+//        │               ├── Invite (pending email-based)
+//        │               ├── Activity (deck/comment/review events)
+//        │               ├── Audit (member/role/ownership changes)
+//        │               └── Projects
+//        └── Workspace ...
+//
+//  Roles (stored as strings to match the codebase convention):
+//     owner | admin | editor | reviewer | viewer
+// =============================================================================
+
+model Organization {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  ownerId   String
+  owner     User     @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspaces Workspace[]
+
+  @@index([ownerId])
+  @@map("organizations")
+}
+
+model Workspace {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  members    WorkspaceMember[]
+  invites    WorkspaceInvite[]
+  activities WorkspaceActivity[]
+  auditLog   WorkspaceAuditLog[]
+  projects   Project[]
+  brandKits  BrandKit[] // Phase 37A
+
+  @@index([organizationId])
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String    @id @default(uuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation("WorkspaceMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+  // owner | admin | editor | reviewer | viewer
+  role        String    @default("viewer")
+  joinedAt    DateTime  @default(now())
+  invitedById String?
+  invitedBy   User?     @relation("WorkspaceMemberInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@index([workspaceId, role])
+  @@map("workspace_members")
+}
+
+model WorkspaceInvite {
+  id          String    @id @default(uuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  email       String
+  role        String    @default("editor")
+  // Opaque random token used in the accept URL.
+  token       String    @unique
+  expiresAt   DateTime
+  createdById String
+  createdBy   User      @relation("WorkspaceInviteCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId, email])
+  @@index([email])
+  @@map("workspace_invites")
+}
+
+model WorkspaceActivity {
+  id          String    @id @default(uuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  // Acting user — null for system-emitted events (rare).
+  actorId     String?
+  actor       User?     @relation("WorkspaceActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  // Examples: deck.created | deck.updated | comment.added | review.requested
+  //           review.approved | review.changes_requested | version.restored
+  type        String
+  // Optional entity reference (e.g. {kind:'deck', id:'…', name:'…'}).
+  entity      Json?
+  // Free-form additional context.
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, type])
+  @@map("workspace_activities")
+}
+
+model WorkspaceAuditLog {
+  id          String    @id @default(uuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actorId     String
+  actor       User      @relation("WorkspaceAuditActor", fields: [actorId], references: [id], onDelete: Cascade)
+  // Examples: member.invited | member.removed | member.role_changed
+  //           workspace.renamed | ownership.transferred
+  action      String
+  targetType  String? // 'member' | 'invite' | 'workspace' | 'project' | …
+  targetId    String?
+  before      Json? // pre-change snapshot
+  after       Json? // post-change snapshot
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, action])
+  @@map("workspace_audit_log")
+}
+
+// =============================================================================
+//  Phase 39.1D — DeckShare
+//
+//  Explicit per-deck (per-project, since 1 project → 1+ decks) access grants.
+//  Used alongside the workspace permission matrix:
+//
+//    - Project.sharingMode === 'private'   →  only owner has access
+//    - Project.sharingMode === 'workspace' →  members inherit via role
+//    - Project.sharingMode === 'shared'    →  members inherit + DeckShare grants
+//
+//  Permission ladder (highest wins when both workspace + share apply):
+//    view < comment < review < edit
+// =============================================================================
+model DeckShare {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  memberId    String // userId — explicit grant to a specific user
+  member      User     @relation("DeckShareMember", fields: [memberId], references: [id], onDelete: Cascade)
+  // view | comment | review | edit
+  permission  String   @default("view")
+  createdById String
+  createdBy   User     @relation("DeckShareCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([projectId, memberId])
+  @@index([memberId])
+  @@map("deck_shares")
 }
 
 // Document version snapshots
 model DocumentVersion {
-  id         String   @id @default(uuid())
-  documentId String
-  document   PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  version    Int
-  title      String
-  pagesSnapshot Json   // full snapshot of all pages at this point
-  createdAt  DateTime @default(now())
+  id            String      @id @default(uuid())
+  documentId    String
+  document      PdfDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version       Int
+  title         String
+  pagesSnapshot Json // full snapshot of all pages at this point
+  createdAt     DateTime    @default(now())
 
-  @@map("document_versions")
   @@index([documentId])
+  @@map("document_versions")
 }
 
 // Uploaded Images (for visual documents and PDFs)
 model UploadedImage {
-  id            String   @id @default(uuid())
-  
+  id String @id @default(uuid())
+
   // File information
-  filename      String
-  originalName  String
-  mimetype      String
-  size          Int
-  path          String
-  url           String
-  
+  filename     String
+  originalName String
+  mimetype     String
+  size         Int
+  path         String
+  url          String
+
   // Optional user association
-  userId        String?
-  
+  userId String?
+
   // Metadata
-  width         Int?
-  height        Int?
-  tags          String[] @default([])
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  @@map("uploaded_images")
+  width  Int?
+  height Int?
+  tags   String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
   @@index([createdAt])
+  @@map("uploaded_images")
 }
+
+// =============================================================================
+//  Phase 38 — Advanced PPTX Editing
+//
+//  Promotes inline JSON conventions to first-class models so the editor + the
+//  PPTX import/export pipeline have a shared, queryable contract.
+//
+//    MasterSlide     — deck-scoped master record (background, default styles,
+//                       footer slots, watermark). MasterElement rows attach
+//                       via masterSlideId so users can have multiple masters
+//                       per deck (cover-master, body-master, divider-master).
+//    LayoutTemplate  — workspace-scoped saved layout (slots geometry +
+//                       default content). Slides reference one to inherit
+//                       structure; "Convert Slide → Layout" snapshots a slide
+//                       into a new template.
+//    DeckTheme       — workspace-scoped theme tokens (colors, fonts, spacing,
+//                       borders, shadows). Distinct from BrandKit: themes are
+//                       slide-pure design, brand kits add identity / voice.
+//    DeckSection     — first-class section (replaces Slide.metadata.sectionId).
+//                       Carries name, color, collapsed, order; powers section
+//                       reorder, duplicate, and PPTX section export.
+//    ReusableSlide   — library entry for slide / section / component group
+//                       reuse across decks.
+//    DeckTemplate    — converted-deck template (masters + layouts + themes
+//                       + slides). Distinct from existing Template (which is
+//                       a coarser generation preset).
+// =============================================================================
+
+model MasterSlide {
+  id     String @id @default(uuid())
+  deckId String
+  deck   Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  name       String
+  layoutType String   @default("body") // cover|body|divider|appendix|custom
+  background Json? // {type, color/gradient/image, opacity}
+  // Slot definitions: { logos: bool, footer: bool, pageNumbers: bool, watermark: {...} }
+  slots         Json?
+  // Default style overrides applied to every linked slide (typography, palette).
+  defaultStyles Json?
+  // Snapshot of the master element layout for cheap rendering / previewing.
+  preview Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  slides    Slide[]
+
+  @@index([deckId])
+  @@map("master_slides")
+}
+
+model LayoutTemplate {
+  id          String  @id @default(uuid())
+  workspaceId String?
+  name        String
+  layoutType  String // title|titleContent|twoColumn|comparison|timeline|sectionDivider|imageLeft|imageRight|dashboard|financial|agenda|custom
+  // Slot geometry + default content (one entry per placeholder).
+  //   [{ id, role, x, y, w, h, defaultType, placeholder }]
+  slots     Json
+  thumbnail String?
+  // Optional source slide we derived this from (Phase 38B "Convert Slide → Layout").
+  sourceSlideId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  slides    Slide[]
+
+  @@index([workspaceId])
+  @@index([layoutType])
+  @@map("layout_templates")
+}
+
+model DeckTheme {
+  id          String  @id @default(uuid())
+  deckId      String?
+  deck        Deck?   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  name        String
+  // Theme tokens (Phase 38C):
+  //   { colors:{}, fonts:{}, spacing:{}, borders:{}, shadows:{} }
+  tokens     Json
+  isWorkspace Boolean @default(false)
+  thumbnail  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  slides    Slide[]
+
+  @@index([deckId])
+  @@index([workspaceId])
+  @@map("deck_themes")
+}
+
+model DeckSection {
+  id     String @id @default(uuid())
+  deckId String
+  deck   Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  name      String
+  color     String? // hex tag color for sidebar
+  order     Int     @default(0)
+  collapsed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  slides    Slide[]
+
+  @@index([deckId, order])
+  @@map("deck_sections")
+}
+
+model ReusableSlide {
+  id          String  @id @default(uuid())
+  userId      String?
+  workspaceId String?
+  name        String
+  description String?
+  kind        String  @default("slide") // slide|section|component_group
+  // Snapshot payload: full slide(s) + elements + masters reference.
+  payload   Json
+  thumbnail String?
+  tags      String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([kind])
+  @@map("reusable_slides")
+}
+
+model DeckTemplate {
+  id          String  @id @default(uuid())
+  workspaceId String?
+  sourceDeckId String?
+  name        String
+  description String?
+  thumbnail   String?
+  isPublic    Boolean @default(false)
+  // Full template payload (masters + layouts + themes + slides skeleton).
+  payload Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@map("deck_templates")
+}
+
+// =============================================================================
+//  Phase 41.1I — Cross-format conversion lineage.
+//
+//  Every conversion through /convert produces a ConvertedFile row that
+//  records:
+//    - The source file (filename + bytes hash; we don't store the binary)
+//    - The output binary URL (under uploads/converted/)
+//    - Source + target formats
+//    - Quality scores at the moment of conversion
+//    - A `parentId` pointing at the prior conversion in the chain, so a
+//      PDF → DOCX → PPTX → PDF lineage walks naturally.
+//
+//  Self-referential FK so a single tree can be traversed without joins.
+// =============================================================================
+
+model ConvertedFile {
+  id            String  @id @default(uuid())
+  userId        String?
+  workspaceId   String?
+
+  /// Optional FK to the previous ConvertedFile in the lineage chain.
+  parentId      String?
+  parent        ConvertedFile?  @relation("ConvertedFileLineage", fields: [parentId], references: [id], onDelete: SetNull)
+  children      ConvertedFile[] @relation("ConvertedFileLineage")
+
+  sourceFilename String
+  sourceFormat   String     // pptx | pdf | docx | … (mirrors SupportedFormat)
+  sourceBytes    Int
+
+  targetFormat   String     // pptx | pdf | docx | …
+  outputUrl      String     // public URL — for the editor to embed
+  /// Phase 41.2D — opaque handle returned by the active storage provider
+  /// (local filename / S3 key / GCS object name / Azure blob name).
+  /// Nullable for back-compat with pre-41.2 rows where the handle was
+  /// derived from outputUrl basename.
+  storageHandle  String?
+  storageBackend String?    // 'local' | 's3' | 'gcs' | 'azure'
+  outputBytes    Int
+
+  /// Convenience copy of the quality report so the UI can render without re-running.
+  qualityScore   Int        @default(0)
+  qualityReport  Json?
+
+  durationMs     Int        @default(0)
+  brandKitId     String?
+  notes          String?
+
+  createdAt      DateTime   @default(now())
+
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([parentId])
+  @@map("converted_files")
+}
+
+// =============================================================================
+//  Phase 42 — CV / Resume / Cover Letter / Portfolio.
+//
+//  Data model is "profile-first": a user owns one CvProfile that holds all
+//  their career data (experience / education / skills / projects / …). From
+//  that profile they spin up many CvDocuments — each CV, resume, cover
+//  letter, or portfolio variant is its own document with a templateId, a
+//  doctype, and section overrides (e.g. job-specific summary).
+//
+//      CvProfile (1)  ────────────────  CvDocument (many)
+//                                          └ templateId → CvTemplate
+//
+//  CvTemplate is the cross-user template library (50+ designs across
+//  Corporate / Modern / Executive / Creative / etc.). Templates carry a
+//  `layout` JSON spec the renderer interprets and a `previewUrl`.
+//
+//  Brand kit propagation: each CvDocument links to a brandKitId; the
+//  exporter pulls tokens from BrandKitsService at render time.
+// =============================================================================
+
+model CvProfile {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Personal info: { fullName, headline, location, email, phone, website,
+  ///   linkedin, github, summary, photoUrl }
+  personal      Json?
+
+  /// All long-form sections live as Json arrays so the schema doesn't have
+  /// to change every time we add a new credential type. Each entry carries
+  /// a stable `id` so reorder / edit / delete keep referential integrity.
+  experience    Json?    // Array<{ id, company, role, start, end, location, bullets[] }>
+  education     Json?    // Array<{ id, institution, degree, field, start, end, gpa, honors[] }>
+  skills        Json?    // Array<{ id, name, category, level }>
+  languages     Json?    // Array<{ id, name, proficiency }>
+  projects      Json?    // Array<{ id, name, description, role, technologies[], links[], results[] }>
+  certifications Json?   // Array<{ id, name, issuer, date, expires, credentialId, url, attachmentUrl }>
+  awards        Json?    // Array<{ id, title, issuer, date, description }>
+  publications  Json?    // Array<{ id, title, venue, date, url, coauthors }>
+  references    Json?    // Array<{ id, name, title, company, email, phone, note }>
+
+  /// Source-of-truth for any LinkedIn / DOCX / PDF import provenance.
+  importSource  String?  // 'linkedin' | 'docx' | 'pdf' | null
+  importedAt    DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  documents     CvDocument[]
+
+  @@index([userId])
+  @@map("cv_profiles")
+}
+
+model CvDocument {
+  id            String   @id @default(uuid())
+  profileId     String
+  profile       CvProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  userId        String
+
+  /// 'cv' | 'resume' | 'coverLetter' | 'portfolio'
+  doctype       String
+
+  /// Free-form title shown in the dashboard (e.g. "Google Engineering Application").
+  title         String
+
+  /// Optional template the document was built against.
+  templateId    String?
+  template      CvTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  /// Optional brand kit (Phase 42R).
+  brandKitId    String?
+
+  /// Document body. Stored as Json so each doctype can have its own shape:
+  ///   cv / resume      → { sectionOrder: string[], sectionOverrides: {...},
+  ///                          summary?: string, jobTitle?, customSkills? }
+  ///   coverLetter      → { greeting, intro, body[], closing, signature, company?, role? }
+  ///   portfolio        → { sections: [...], showcaseProjectIds: [...] }
+  content       Json
+
+  /// Generated previews + last-known export URLs for the dashboard cards.
+  thumbnailUrl  String?
+  lastExportUrl String?
+
+  /// Used by the dashboard for grouping (e.g. "Software Engineer" applications).
+  variant       String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([profileId])
+  @@index([doctype])
+  @@map("cv_documents")
+}
+
+model CvTemplate {
+  id            String   @id @default(uuid())
+  /// 'cv' | 'resume' | 'coverLetter' | 'portfolio' — matches CvDocument.doctype
+  doctype       String
+
+  /// Display name + category for the gallery (Corporate / Modern / Executive
+  /// / Creative / Minimal / Developer / Designer / Academic / Healthcare /
+  /// Consulting / Finance / Sales).
+  name          String
+  category      String
+
+  /// Layout spec the renderer interprets. Shape is renderer-defined; see
+  /// `cv-templates/library.ts` for the seed data.
+  layout        Json
+  thumbnailUrl  String?
+
+  /// When true, anyone can use it; otherwise it's workspace-scoped.
+  isPublic      Boolean  @default(true)
+  workspaceId   String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  documents     CvDocument[]
+
+  @@index([doctype, category])
+  @@index([workspaceId])
+  @@map("cv_templates")
+}
+
+

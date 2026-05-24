@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { ElementType } from './element-types';
+import { validateSmartComponentTree } from './smart-tree-validator';
 
 // =============================================================================
 //  SlideElementsMigrationService
@@ -15,9 +16,37 @@ import { ElementType } from './element-types';
 //                       redone we can clear elements and re-run.
 //    - DEFAULT-LAYOUT — every slide gets sensible default positions; layout
 //                       refinement happens later (Phase 5+).
+//
+//  Phase 32.75 Tier 5 — Smart Component Rendering Cutover:
+//
+//  When a slide arrives with `content.smartComponent.elementTree`, the
+//  migration service trusts that tree as the canonical render and skips the
+//  legacy reconstruction entirely. Invalid or absent trees fall back to the
+//  legacy path so existing decks (and unmigrated generators) keep working.
+//
+//  This makes Smart Components the PRIMARY rendering source. The legacy
+//  branches below stay in place as the fallback (T5C — never break
+//  generation) and are tagged @deprecated in T5F.
 // =============================================================================
 
 const SLIDE_VERSION_AFTER_MIGRATE = 1;
+
+/**
+ * Migration telemetry. After Tier 10 the only paths are:
+ *   - `smartPath`              — slide had a valid smartComponent tree
+ *   - `missingSmartComponent`  — slide had no smartComponent (chrome-only render)
+ *   - `invalidTrees`           — slide had a tree that failed validation
+ * `fallbackPath` is retained for backwards-compatible accessors but is now
+ * always 0; it was the Tier 7 minimal-fallback counter, removed in Tier 10.
+ */
+export interface MigrationPathMetrics {
+  smartPath:              number;
+  fallbackPath:           number;
+  invalidTrees:           number;
+  missingSmartComponent?: number;
+  families:               Record<string, number>;
+  components:             Record<string, number>;
+}
 
 interface MigrationResult {
   totalSlides:      number;
@@ -25,11 +54,19 @@ interface MigrationResult {
   skippedSlides:    number;
   elementsCreated:  number;
   errors:           Array<{ slideId: string; message: string }>;
+  pathMetrics?:     MigrationPathMetrics;
 }
 
 @Injectable()
 export class SlideElementsMigrationService {
   private readonly logger = new Logger(SlideElementsMigrationService.name);
+
+  /** Per-run path metrics. Reset at the top of `migrateAll`. */
+  private pathMetrics: MigrationPathMetrics = {
+    smartPath: 0, fallbackPath: 0, invalidTrees: 0,
+    missingSmartComponent: 0,
+    families: {}, components: {},
+  };
 
   constructor(private prisma: PrismaService) {}
 
@@ -38,6 +75,7 @@ export class SlideElementsMigrationService {
   // ---------------------------------------------------------------------------
 
   async migrateAll(opts: { force?: boolean } = {}): Promise<MigrationResult> {
+    this.resetPathMetrics();
     const slides = await this.prisma.slide.findMany({
       where: opts.force ? {} : { elementsVersion: { lt: SLIDE_VERSION_AFTER_MIGRATE } },
       orderBy: [{ deckId: 'asc' }, { order: 'asc' }],
@@ -58,12 +96,34 @@ export class SlideElementsMigrationService {
       }
     }
 
+    result.pathMetrics = { ...this.pathMetrics };
     this.logger.log(
       `Migration: ${result.migratedSlides}/${result.totalSlides} migrated ` +
       `(${result.elementsCreated} elements created, ${result.skippedSlides} skipped, ` +
       `${result.errors.length} errors)`,
     );
+    const total = this.pathMetrics.smartPath + this.pathMetrics.fallbackPath;
+    if (total > 0) {
+      const smartPct = (this.pathMetrics.smartPath / total) * 100;
+      this.logger.log(
+        `Tier 5 path metrics: ${this.pathMetrics.smartPath} smart / ${this.pathMetrics.fallbackPath} fallback ` +
+        `(${smartPct.toFixed(1)}% smart, ${this.pathMetrics.invalidTrees} invalid trees rejected)`,
+      );
+    }
     return result;
+  }
+
+  /** Public accessor for tests/scripts (T5E). */
+  getPathMetrics(): MigrationPathMetrics {
+    return { ...this.pathMetrics, families: { ...this.pathMetrics.families }, components: { ...this.pathMetrics.components } };
+  }
+
+  resetPathMetrics(): void {
+    this.pathMetrics = {
+      smartPath: 0, fallbackPath: 0, invalidTrees: 0,
+      missingSmartComponent: 0,
+      families: {}, components: {},
+    };
   }
 
   /**
@@ -101,285 +161,141 @@ export class SlideElementsMigrationService {
 
   // ---------------------------------------------------------------------------
   //  Element extraction — derives typed elements from a slide's content blob
+  //
+  //  Phase 32.75 Tier 5 — Smart Component first. When the slide's content
+  //  carries a valid `smartComponent.elementTree`, we materialise *that*
+  //  directly and return. Every legacy branch below the smart-first early
+  //  return is now a FALLBACK and tagged @deprecated for T5F removal.
+  //
+  //  `public` so the Tier 5 validation script can drive it without spinning
+  //  up Prisma. The instance state used by the helper methods (logger,
+  //  pathMetrics) is benign in test contexts.
   // ---------------------------------------------------------------------------
 
-  private buildElementsForSlide(slide: {
+  public buildElementsForSlide(slide: {
     type: string; title: string; subtitle: string | null;
     content: Prisma.JsonValue; speakerNotes: string | null;
   }): Array<Prisma.SlideElementCreateManyInput> {
     const c = (slide.content || {}) as Record<string, any>;
-    const elements: Array<Omit<Prisma.SlideElementCreateManyInput, 'slideId'>> = [];
+    const smart = c.smartComponent;
 
-    let order = 0;
-    let zIndex = 1;
-    const push = (
-      type: ElementType,
-      box: { x: number; y: number; width: number; height: number },
-      content: any,
-      extra: Partial<Prisma.SlideElementCreateManyInput> = {},
-    ) => {
-      elements.push({
-        type, name: extra.name ?? null,
-        order: order++, zIndex: zIndex++,
-        x: box.x, y: box.y, width: box.width, height: box.height,
+    // ── Phase 32.75 Tier 10 — Smart Component is the SOLE rendering path ──
+    // The Tier 7 minimal fallback (chrome + body + bullets) was deleted
+    // after the Tier 9 matrix verified 720/720 slides hit the smart path
+    // with 0 fallback hits. Slides arriving without a valid smart-component
+    // payload now get slide chrome only, plus a structured error placeholder
+    // so the developer sees the problem instead of silent rendering. Raw
+    // imports must be converted to smart components before reaching here.
+
+    if (smart && smart.elementTree) {
+      const validation = validateSmartComponentTree(smart.elementTree);
+      if (validation.valid) {
+        const built = this.materializeSmartTree(smart);
+        if (built.length > 0) {
+          this.recordSmartPath(smart);
+          const chrome = this.buildSlideChrome(slide);
+          return [...chrome, ...built] as Array<Prisma.SlideElementCreateManyInput>;
+        }
+      } else {
+        this.pathMetrics.invalidTrees += 1;
+        this.logger.error(
+          `Slide ${slide.type}: smartComponent tree is invalid (${validation.reason}). ` +
+          `Slide will render with chrome only. Fix the generator or repair the slide content.`,
+        );
+      }
+    } else {
+      this.pathMetrics.missingSmartComponent = (this.pathMetrics.missingSmartComponent ?? 0) + 1;
+      this.logger.error(
+        `Slide ${slide.type}: missing smartComponent.elementTree. ` +
+        `Legacy slide content is no longer renderable directly — convert to a smart component first. ` +
+        `Slide will render with chrome only.`,
+      );
+    }
+
+    // Chrome-only fallback. No body reconstruction, no bullet extraction.
+    return this.buildSlideChrome(slide) as Array<Prisma.SlideElementCreateManyInput>;
+  }
+
+  // ---------------------------------------------------------------------------
+  //  Phase 32.75 Tier 5 — Smart Component materialisation
+  // ---------------------------------------------------------------------------
+
+  /** Convert a (validated) smart-component element tree into Prisma create inputs. */
+  private materializeSmartTree(smart: { family?: string; type?: string; elementTree: any[] }): Array<Omit<Prisma.SlideElementCreateManyInput, 'slideId'>> {
+    return (smart.elementTree as any[]).map((e, i): Omit<Prisma.SlideElementCreateManyInput, 'slideId'> => ({
+      type:        e.type as ElementType,
+      name:        e.name ?? null,
+      // Title chrome occupies order 0..1, so smart-tree starts at 100 to keep
+      // headings ordered above body elements without colliding.
+      order:       100 + i,
+      zIndex:      typeof e.zIndex === 'number' ? e.zIndex : (100 + i),
+      x:           e.x, y: e.y, width: e.width, height: e.height,
+      rotation:    typeof e.rotation === 'number' ? e.rotation : 0,
+      locked:      !!e.locked,
+      visible:     e.visible !== false,
+      content:     e.content ?? null,
+      data:        e.data ?? null,
+      style:       e.style ?? null,
+      animations:  e.animations ?? null,
+      accessibility: e.accessibility ?? null,
+    }));
+  }
+
+  /** Slide chrome (title + subtitle + footer + page number) is independent of
+   *  the smart body tree. Same defaults the legacy branch uses, hoisted into
+   *  a small helper. */
+  private buildSlideChrome(slide: { title: string; subtitle: string | null }): Array<Omit<Prisma.SlideElementCreateManyInput, 'slideId'>> {
+    const chrome: Array<Omit<Prisma.SlideElementCreateManyInput, 'slideId'>> = [];
+    if (slide.title) {
+      chrome.push({
+        type: 'heading', name: 'Title',
+        order: 0, zIndex: 1,
+        x: 6, y: 8, width: 88, height: 14,
         rotation: 0, locked: false, visible: true,
-        content: content ?? null,
-        data: extra.data ?? null,
-        style: extra.style ?? null,
+        content: { text: slide.title }, data: null, style: null,
         animations: null, accessibility: null,
       });
-    };
-
-    // ── Title (always) ────────────────────────────────────────────────────
-    if (slide.title) {
-      push('heading', { x: 6, y: 8, width: 88, height: 14 },
-        { text: slide.title }, { name: 'Title' });
     }
-
-    // ── Subtitle (if present) ─────────────────────────────────────────────
     if (slide.subtitle) {
-      push('subheading', { x: 6, y: 22, width: 88, height: 8 },
-        { text: slide.subtitle }, { name: 'Subtitle' });
-    }
-
-    // Track running y-position for the body region
-    let bodyY = slide.subtitle ? 32 : 24;
-
-    // ── Body paragraph(s) ─────────────────────────────────────────────────
-    const bodyText = pickFirst(c, ['body', 'text', 'description', 'paragraph', 'summary']);
-    if (typeof bodyText === 'string' && bodyText.trim()) {
-      push('paragraph', { x: 6, y: bodyY, width: 88, height: 18 },
-        { text: bodyText }, { name: 'Body' });
-      bodyY += 20;
-    }
-
-    // ── Bullet list ───────────────────────────────────────────────────────
-    const bullets = pickFirstArray(c, ['bullets', 'points', 'highlights', 'features']);
-    if (bullets && bullets.length > 0) {
-      push('bulletList', { x: 6, y: bodyY, width: 88, height: Math.min(45, 6 * bullets.length + 6) },
-        { items: bullets.map((t, i) => ({ id: `item-${i + 1}`, text: String(t) })) },
-        { name: 'Bullet List' });
-      bodyY += Math.min(45, 6 * bullets.length + 6) + 2;
-    }
-
-    // ── Metrics ───────────────────────────────────────────────────────────
-    const metrics = pickFirstArray(c, ['metrics', 'kpis', 'stats', 'numbers']);
-    if (metrics && metrics.length > 0) {
-      const colW = 88 / Math.min(metrics.length, 4);
-      metrics.slice(0, 4).forEach((m: any, i: number) => {
-        push('metric',
-          { x: 6 + (i * colW), y: bodyY, width: colW - 2, height: 14 },
-          { value: String(m.value ?? m.number ?? ''), label: String(m.label ?? m.name ?? ''), unit: m.unit, delta: m.delta, deltaDirection: m.deltaDirection },
-          { name: `Metric ${i + 1}` });
+      chrome.push({
+        type: 'subheading', name: 'Subtitle',
+        order: 1, zIndex: 2,
+        x: 6, y: 22, width: 88, height: 8,
+        rotation: 0, locked: false, visible: true,
+        content: { text: slide.subtitle }, data: null, style: null,
+        animations: null, accessibility: null,
       });
-      bodyY += 16;
     }
-
-    // ── Charts ────────────────────────────────────────────────────────────
-    const charts = pickFirstArray(c, ['charts', 'visualizations']);
-    if (charts && charts.length > 0) {
-      charts.slice(0, 2).forEach((ch: any, i: number) => {
-        const w = charts.length === 1 ? 88 : 43;
-        const x = charts.length === 1 ? 6 : 6 + i * 45;
-        push('chart',
-          { x, y: bodyY, width: w, height: 30 },
-          this.normalizeChart(ch),
-          { name: ch.title || `Chart ${i + 1}` });
-      });
-      bodyY += 32;
-    }
-
-    // ── Hero / inline image ───────────────────────────────────────────────
-    const imageUrl = pickFirst(c, ['heroImage', 'image', 'imageUrl']);
-    if (typeof imageUrl === 'string' && imageUrl.trim()) {
-      push('image', { x: 50, y: 24, width: 44, height: 60 },
-        { src: imageUrl, fit: 'cover' }, { name: 'Image' });
-    }
-
-    // ── Quote / testimonial ───────────────────────────────────────────────
-    const quote = pickFirst(c, ['quote']);
-    if (typeof quote === 'string' && quote.trim()) {
-      push('quote', { x: 6, y: bodyY, width: 88, height: 18 },
-        { text: quote, attribution: pickFirst(c, ['quoteAttribution', 'author']) },
-        { name: 'Quote' });
-      bodyY += 20;
-    }
-    if (c.testimonial && typeof c.testimonial === 'object') {
-      const t = c.testimonial;
-      push('testimonial', { x: 6, y: bodyY, width: 88, height: 22 },
-        { quote: t.quote || '', author: t.author || '', role: t.role, company: t.company, avatarUrl: t.avatarUrl },
-        { name: 'Testimonial' });
-      bodyY += 24;
-    }
-
-    // ── Timeline / roadmap ────────────────────────────────────────────────
-    const timeline = pickFirstArray(c, ['timeline', 'milestones', 'phases']);
-    if (timeline && timeline.length > 0 && slide.type === 'roadmap') {
-      push('roadmap', { x: 6, y: bodyY, width: 88, height: 32 },
-        { phases: timeline.map((p: any, i: number) => ({
-            id: `phase-${i + 1}`,
-            phase: p.phase || p.title || `Phase ${i + 1}`,
-            period: p.period || p.date,
-            bullets: Array.isArray(p.bullets) ? p.bullets : (p.description ? [p.description] : []),
-          })) },
-        { name: 'Roadmap' });
-      bodyY += 34;
-    } else if (timeline && timeline.length > 0) {
-      push('timeline', { x: 6, y: bodyY, width: 88, height: 28 },
-        { items: timeline.map((it: any, i: number) => ({
-            id: `tl-${i + 1}`,
-            date: it.date || it.period,
-            title: it.title || it.milestone || `Item ${i + 1}`,
-            description: it.description,
-          })) },
-        { name: 'Timeline' });
-      bodyY += 30;
-    }
-
-    // ── Team (slide.type === 'team') ──────────────────────────────────────
-    const team = pickFirstArray(c, ['team', 'members']);
-    if (team && team.length > 0 && (slide.type === 'team' || slide.type === 'team_introduction')) {
-      push('teamCard', { x: 6, y: bodyY, width: 88, height: 40 },
-        { members: team.map((m: any, i: number) => ({
-            id: `m-${i + 1}`,
-            name: m.name || `Member ${i + 1}`,
-            role: m.role || m.title,
-            bio: m.bio,
-            photoUrl: m.photoUrl || m.avatar,
-            linkedin: m.linkedin,
-          })) },
-        { name: 'Team' });
-      bodyY += 42;
-    }
-
-    // ── Pricing ───────────────────────────────────────────────────────────
-    const pricing = pickFirstArray(c, ['pricingTiers', 'plans', 'tiers']);
-    if (pricing && pricing.length > 0) {
-      push('pricingCard', { x: 6, y: bodyY, width: 88, height: 40 },
-        { tiers: pricing.map((t: any, i: number) => ({
-            id: `tier-${i + 1}`,
-            name: t.name || `Tier ${i + 1}`,
-            price: t.price || '',
-            period: t.period,
-            features: Array.isArray(t.features) ? t.features : [],
-            highlight: !!t.highlight,
-            ctaText: t.ctaText,
-          })) },
-        { name: 'Pricing' });
-      bodyY += 42;
-    }
-
-    // ── SWOT ──────────────────────────────────────────────────────────────
-    if (c.swot || slide.type === 'swot') {
-      const s = c.swot || c;
-      push('swot', { x: 6, y: bodyY, width: 88, height: 40 },
-        { strengths: arr(s.strengths), weaknesses: arr(s.weaknesses),
-          opportunities: arr(s.opportunities), threats: arr(s.threats) },
-        { name: 'SWOT' });
-      bodyY += 42;
-    }
-
-    // ── Comparison table ──────────────────────────────────────────────────
-    if (c.comparison && typeof c.comparison === 'object') {
-      const cm = c.comparison;
-      push('comparison', { x: 6, y: bodyY, width: 88, height: 32 },
-        { columns: arr(cm.columns), rows: arr(cm.rows).map((r: any) => ({ feature: r.feature || '', values: arr(r.values) })) },
-        { name: 'Comparison' });
-      bodyY += 34;
-    }
-
-    // ── Generic table ─────────────────────────────────────────────────────
-    if (c.table && typeof c.table === 'object' && (Array.isArray(c.table.rows) || Array.isArray(c.table.headers))) {
-      push('table', { x: 6, y: bodyY, width: 88, height: 30 },
-        this.normalizeTable(c.table),
-        { name: 'Table' });
-      bodyY += 32;
-    }
-
-    // ── CTA (closing/contact slides) ──────────────────────────────────────
-    const ctaText = pickFirst(c, ['cta', 'ctaText', 'callToAction']);
-    if (typeof ctaText === 'string' && ctaText.trim()) {
-      push('cta', { x: 30, y: bodyY, width: 40, height: 8 },
-        { text: ctaText, href: pickFirst(c, ['ctaHref', 'ctaUrl']) || undefined, variant: 'primary' },
-        { name: 'CTA' });
-      bodyY += 10;
-    }
-
-    // ── Contact info (closing slide) ──────────────────────────────────────
-    if (c.contact && typeof c.contact === 'object') {
-      const lines = [c.contact.company, c.contact.website, c.contact.email, c.contact.phone]
-        .filter(Boolean).join(' · ');
-      if (lines) {
-        push('paragraph', { x: 6, y: bodyY, width: 88, height: 8 },
-          { text: lines }, { name: 'Contact' });
-        bodyY += 10;
-      }
-    }
-
-    // ── Footer / page number (universal, always last) ─────────────────────
-    push('footer', { x: 6, y: 94, width: 70, height: 4 },
-      { text: '' }, { name: 'Footer' });
-    push('pageNumber', { x: 88, y: 94, width: 8, height: 4 },
-      { format: 'numeric' }, { name: 'Page #' });
-
-    return elements as Array<Prisma.SlideElementCreateManyInput>;
+    chrome.push({
+      type: 'footer', name: 'Footer',
+      order: 9998, zIndex: 9998,
+      x: 6, y: 94, width: 70, height: 4,
+      rotation: 0, locked: false, visible: true,
+      content: { text: '' }, data: null, style: null,
+      animations: null, accessibility: null,
+    });
+    chrome.push({
+      type: 'pageNumber', name: 'Page #',
+      order: 9999, zIndex: 9999,
+      x: 88, y: 94, width: 8, height: 4,
+      rotation: 0, locked: false, visible: true,
+      content: { format: 'numeric' }, data: null, style: null,
+      animations: null, accessibility: null,
+    });
+    return chrome;
   }
 
-  // ---------------------------------------------------------------------------
-  //  Helpers to normalize legacy shapes
-  // ---------------------------------------------------------------------------
-
-  private normalizeChart(raw: any) {
-    const kind = (raw.type || 'bar').toLowerCase();
-    const data: any[] = Array.isArray(raw.data) ? raw.data : [];
-    const categories = data.map((d) => String(d.label ?? ''));
-    const series = [{
-      name: raw.seriesName || raw.title || 'Series 1',
-      values: data.map((d) => Number(d.value) || 0),
-      color: raw.color,
-    }];
-    return {
-      type: ['bar', 'line', 'pie', 'donut', 'area', 'kpi', 'comparison'].includes(kind) ? kind : 'bar',
-      title: raw.title,
-      categories,
-      series,
-      axes: raw.axes,
-      legend: raw.legend ?? { visible: true, position: 'bottom' },
-    };
+  private recordSmartPath(smart: { family?: string; type?: string }) {
+    this.pathMetrics.smartPath += 1;
+    if (smart.family) {
+      this.pathMetrics.families[smart.family] = (this.pathMetrics.families[smart.family] || 0) + 1;
+    }
+    if (smart.type) {
+      this.pathMetrics.components[smart.type] = (this.pathMetrics.components[smart.type] || 0) + 1;
+    }
   }
 
-  private normalizeTable(raw: any) {
-    const headers = (Array.isArray(raw.headers) ? raw.headers : []).map((h: any) => ({
-      text: typeof h === 'string' ? h : (h?.text ?? ''),
-      align: h?.align, bold: h?.bold ?? true,
-    }));
-    const rows = (Array.isArray(raw.rows) ? raw.rows : []).map((r: any) =>
-      (Array.isArray(r) ? r : (r.cells || [])).map((c: any) => ({
-        text: typeof c === 'string' ? c : (c?.text ?? ''),
-        align: c?.align, bold: c?.bold, fill: c?.fill, color: c?.color,
-      })),
-    );
-    return { headers, rows, borders: raw.borders, zebra: !!raw.zebra };
-  }
 }
 
-// =============================================================================
-//  Small utilities
-// =============================================================================
-
-function pickFirst(obj: Record<string, any>, keys: string[]): any {
-  for (const k of keys) if (obj[k] != null) return obj[k];
-  return undefined;
-}
-
-function pickFirstArray(obj: Record<string, any>, keys: string[]): any[] | undefined {
-  for (const k of keys) {
-    const v = obj[k];
-    if (Array.isArray(v) && v.length > 0) return v;
-  }
-  return undefined;
-}
-
-function arr(v: any): string[] {
-  return Array.isArray(v) ? v.map((x) => String(x)) : [];
-}
+// Phase 32.75 Tier 10 — `pickFirst` + `pickFirstArray` deleted along with
+// the minimal fallback they fed. The service is now smart-component-only.

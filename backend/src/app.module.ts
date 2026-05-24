@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
@@ -35,6 +36,31 @@ import { PresenceModule } from './presence/presence.module';
 import { UnsplashModule } from './integrations/unsplash/unsplash.module';
 import { TemplatesModule } from './templates/templates.module';
 import { SlideExportModule } from './slide-export/slide-export.module';
+import { MasterElementsModule } from './master-elements/master-elements.module';
+import { ComponentsModule } from './components/components.module';
+import { VersionHistoryModule } from './version-history/version-history.module';
+import { AdminModule }          from './admin/admin.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { WorkspacesModule } from './workspaces/workspaces.module';
+import { SharingModule } from './sharing/sharing.module';
+import { CollaborationModule } from './collaboration/collaboration.module';
+
+// Phase 38 — Advanced PPTX Editing
+import { MasterSlidesModule }       from './master-slides/master-slides.module';
+import { LayoutTemplatesModule }    from './layout-templates/layout-templates.module';
+import { ThemesModule }             from './themes/themes.module';
+import { DeckSectionsModule }       from './deck-sections/deck-sections.module';
+import { SlideAnimationsModule }    from './slide-animations/slide-animations.module';
+import { SlideTransitionsModule }   from './slide-transitions/slide-transitions.module';
+import { SlideLibraryModule }       from './slide-library/slide-library.module';
+import { DeckTemplatesModule }      from './deck-templates/deck-templates.module';
+import { PptxImportModule }         from './pptx-import/pptx-import.module';
+import { SmartArtModule }           from './smartart/smartart.module';
+import { OleWorkspaceModule }       from './ole-workspace/ole-workspace.module';
+// Phase 41 — Universal Document Conversion
+import { UniversalConversionModule } from './universal-conversion/universal-conversion.module';
+// Phase 42 — Career documents (CV / Resume / Cover Letter / Portfolio)
+import { CareerModule } from './career/career.module';
 
 @Module({
   imports: [
@@ -111,8 +137,39 @@ import { SlideExportModule } from './slide-export/slide-export.module';
     UnsplashModule,
     TemplatesModule,
     SlideExportModule,
+    MasterElementsModule,
+    ComponentsModule,
+    VersionHistoryModule,
+    AdminModule,
+    ReviewsModule,
+    WorkspacesModule,
+    SharingModule,
+    CollaborationModule,
+    // Phase 38 — Advanced PPTX Editing
+    MasterSlidesModule,
+    LayoutTemplatesModule,
+    ThemesModule,
+    DeckSectionsModule,
+    SlideAnimationsModule,
+    SlideTransitionsModule,
+    SlideLibraryModule,
+    DeckTemplatesModule,
+    PptxImportModule,
+    // Phase 38.3 — enterprise PPTX
+    SmartArtModule,
+    OleWorkspaceModule,
+    // Phase 41 — Universal Document Conversion
+    UniversalConversionModule,
+    // Phase 42 — Career documents
+    CareerModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Phase Ω.1 — apply the rate limiter globally. Without APP_GUARD the
+    // ThrottlerModule limits are dormant. Buckets configured above:
+    // 10/sec, 100/min, 1000/hr per IP.
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

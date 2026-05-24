@@ -1,0 +1,11 @@
+source,name,category,import,export,roundTrip,visual,overall,band,latencyMs
+synthetic,investor,investor,52,100,100,100,86,gold,2337
+synthetic,sales,sales,60,100,100,100,88,gold,2146
+synthetic,corporate,corporate,52,100,100,100,86,gold,2562
+synthetic,training,training,60,100,100,100,88,gold,2332
+synthetic,financial,financial,52,100,100,100,86,gold,1994
+synthetic,healthcare,healthcare,52,100,100,100,86,gold,1897
+synthetic,enterprise,enterprise,68,100,100,100,90,gold,2187
+synthetic,consulting,consulting,52,100,100,100,86,gold,2085
+synthetic,government,government,52,100,100,100,86,gold,2348
+synthetic,productLaunch,productLaunch,60,100,100,100,88,gold,2162

@@ -45,11 +45,17 @@ export const ExportMenu: React.FC<Props> = ({ deckId, deckTitle }) => {
     return () => document.removeEventListener('mousedown', onClick);
   }, [open]);
 
+  // Phase 36.1J — comments-appendix toggle (PDF only, default off).
+  const [withComments, setWithComments] = useState(false);
+
   const handleExport = async (format: Format) => {
     setOpen(false);
     setStatus({ state: 'running', format });
     try {
-      const res = await api.post(`/slide-export/${deckId}/${format}`, undefined, {
+      const url = format === 'pdf' && withComments
+        ? `/slide-export/${deckId}/${format}?withComments=1`
+        : `/slide-export/${deckId}/${format}`;
+      const res = await api.post(url, undefined, {
         responseType: 'blob',
       });
 
@@ -107,6 +113,19 @@ export const ExportMenu: React.FC<Props> = ({ deckId, deckTitle }) => {
               </div>
             </button>
           ))}
+          {/* Phase 36.1J — PDF appendix toggle */}
+          <label className="flex items-center gap-2 px-3 py-2 border-t border-slate-100 cursor-pointer hover:bg-slate-50">
+            <input
+              type="checkbox"
+              checked={withComments}
+              onChange={(e) => setWithComments(e.target.checked)}
+              className="w-3.5 h-3.5"
+            />
+            <div className="flex-1">
+              <div className="text-[11px] font-semibold text-slate-800">Append comments to PDF</div>
+              <div className="text-[10px] text-slate-500">One card per thread, with status</div>
+            </div>
+          </label>
         </div>
       )}
 

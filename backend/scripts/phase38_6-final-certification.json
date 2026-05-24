@@ -1,0 +1,224 @@
+{
+  "timestamp": "2026-05-24T13:05:01.909Z",
+  "renderer": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "nodeVersion": "v26.0.0",
+    "soffice": {
+      "bin": "soffice",
+      "available": true,
+      "version": "26.2.3.2"
+    },
+    "pdftoppm": {
+      "bin": "pdftoppm",
+      "available": true,
+      "version": "26.04.0"
+    },
+    "tmpDir": "/var/folders/t5/dcggxcnn40s_0cd6880k01tr0000gn/T",
+    "tmpDirWritable": true,
+    "endToEnd": {
+      "attempted": true,
+      "succeeded": true,
+      "pngBytes": 7095,
+      "latencyMs": 1248
+    },
+    "installHint": "brew install --cask libreoffice && brew install poppler",
+    "ready": true
+  },
+  "rows": [
+    {
+      "source": "synthetic",
+      "name": "investor",
+      "category": "investor",
+      "cert": {
+        "scores": {
+          "import": 52,
+          "export": 100,
+          "roundTrip": 100,
+          "visual": 100
+        },
+        "overall": 86,
+        "band": "gold",
+        "notes": [],
+        "rendererAvailable": true
+      },
+      "ms": 2337
+    },
+    {
+      "source": "synthetic",
+      "name": "sales",
+      "category": "sales",
+      "cert": {
+        "scores": {
+          "import": 60,
+          "export": 100,
+          "roundTrip": 100,
+          "visual": 100
+        },
+        "overall": 88,
+        "band": "gold",
+        "notes": [],
+        "rendererAvailable": true
+      },
+      "ms": 2146
+    },
+    {
+      "source": "synthetic",
+      "name": "corporate",
+      "category": "corporate",
+      "cert": {
+        "scores": {
+          "import": 52,
+          "export": 100,
+          "roundTrip": 100,
+          "visual": 100
+        },
+        "overall": 86,
+        "band": "gold",
+        "notes": [],
+        "rendererAvailable": true
+      },
+      "ms": 2562
+    },
+    {
+      "source": "synthetic",
+      "name": "training",
+      "category": "training",
+      "cert": {
+        "scores": {
+          "import": 60,
+          "export": 100,
+          "roundTrip": 100,
+          "visual": 100
+        },
+        "overall": 88,
+        "band": "gold",
+        "notes": [],
+        "rendererAvailable": true
+      },
+      "ms": 2332
+    },
+    {
+      "source": "synthetic",
+      "name": "financial",
+      "category": "financial",
+      "cert": {
+        "scores": {
+          "import": 52,
+          "export": 100,
+          "roundTrip": 100,
+          "visual": 100
+        },
+        "overall": 86,
+        "band": "gold",
+        "notes": [],
+        "rendererAvailable": true
+      },
+      "ms": 1994
+    },
+    {
+      "source": "synthetic",
+      "name": "healthcare",
+      "category": "healthcare",
+      "cert": {
+        "scores": {
+          "import": 52,
+          "export": 100,
+          "roundTrip": 100,
+          "visual": 100
+        },
+        "overall": 86,
+        "band": "gold",
+        "notes": [],
+        "rendererAvailable": true
+      },
+      "ms": 1897
+    },
+    {
+      "source": "synthetic",
+      "name": "enterprise",
+      "category": "enterprise",
+      "cert": {
+        "scores": {
+          "import": 68,
+          "export": 100,
+          "roundTrip": 100,
+          "visual": 100
+        },
+        "overall": 90,
+        "band": "gold",
+        "notes": [],
+        "rendererAvailable": true
+      },
+      "ms": 2187
+    },
+    {
+      "source": "synthetic",
+      "name": "consulting",
+      "category": "consulting",
+      "cert": {
+        "scores": {
+          "import": 52,
+          "export": 100,
+          "roundTrip": 100,
+          "visual": 100
+        },
+        "overall": 86,
+        "band": "gold",
+        "notes": [],
+        "rendererAvailable": true
+      },
+      "ms": 2085
+    },
+    {
+      "source": "synthetic",
+      "name": "government",
+      "category": "government",
+      "cert": {
+        "scores": {
+          "import": 52,
+          "export": 100,
+          "roundTrip": 100,
+          "visual": 100
+        },
+        "overall": 86,
+        "band": "gold",
+        "notes": [],
+        "rendererAvailable": true
+      },
+      "ms": 2348
+    },
+    {
+      "source": "synthetic",
+      "name": "productLaunch",
+      "category": "productLaunch",
+      "cert": {
+        "scores": {
+          "import": 60,
+          "export": 100,
+          "roundTrip": 100,
+          "visual": 100
+        },
+        "overall": 88,
+        "band": "gold",
+        "notes": [],
+        "rendererAvailable": true
+      },
+      "ms": 2162
+    }
+  ],
+  "averages": {
+    "import": 56,
+    "export": 100,
+    "roundTrip": 100,
+    "visual": 100,
+    "overall": 87
+  },
+  "bands": {
+    "platinum": 0,
+    "gold": 10,
+    "silver": 0,
+    "bronze": 0,
+    "basic": 0
+  }
+}

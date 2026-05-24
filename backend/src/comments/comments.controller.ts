@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CommentsService, CreateCommentInput } from './comments.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
+import { RequireRole } from '../workspaces/role.guard';
 
 // =============================================================================
 //  Phase 14 — Collaboration v1
@@ -36,6 +37,7 @@ export class CommentsController {
 
   @Post('projects/:projectId/comments')
   @ApiOperation({ summary: 'Create a comment (project / slide / element anchor)' })
+  @RequireRole('comment.create', { kind: 'workspaceFromProject', param: 'projectId' })
   async create(
     @Param('projectId') projectId: string,
     @GetUser() user: any,
@@ -94,19 +96,72 @@ export class CommentsController {
 
   @Patch('comments/:id/resolve')
   @ApiOperation({ summary: 'Mark comment as resolved' })
+  @RequireRole('comment.resolve', { kind: 'workspaceFromComment', param: 'id' })
   resolve(@Param('id') id: string, @GetUser() user: any) {
     return this.commentsService.resolve(id, user.id);
   }
 
   @Patch('comments/:id/reopen')
   @ApiOperation({ summary: 'Reopen a previously resolved comment' })
+  @RequireRole('comment.resolve', { kind: 'workspaceFromComment', param: 'id' })
   reopen(@Param('id') id: string, @GetUser() user: any) {
     return this.commentsService.reopen(id, user.id);
   }
 
   @Delete('comments/:id')
-  @ApiOperation({ summary: 'Delete a comment (author only)' })
+  @ApiOperation({ summary: 'Delete a comment (author only, soft delete)' })
   remove(@Param('id') id: string, @GetUser() user: any) {
     return this.commentsService.remove(id, user.id);
+  }
+
+  // ---------- Phase 36.1E — edit own message ----------
+
+  @Patch('comments/:id')
+  @ApiOperation({ summary: 'Edit own comment content (re-parses mentions)' })
+  edit(
+    @Param('id') id: string,
+    @GetUser() user: any,
+    @Body() body: { content: string },
+  ) {
+    return this.commentsService.edit(id, user.id, body?.content || '');
+  }
+
+  // ---------- Phase 36.1H — assignment ----------
+
+  @Patch('comments/:id/assign')
+  @ApiOperation({ summary: 'Assign / reassign / unassign a comment thread' })
+  @RequireRole('comment.assign', { kind: 'workspaceFromComment', param: 'id' })
+  assign(
+    @Param('id') id: string,
+    @GetUser() user: any,
+    @Body() body: { assigneeId: string | null },
+  ) {
+    return this.commentsService.assign(id, user.id, body?.assigneeId ?? null);
+  }
+
+  // ---------- Phase 36.1K — bulk resolve ----------
+
+  @Post('slides/:slideId/comments/resolve-all')
+  @ApiOperation({ summary: 'Resolve every open thread on a slide' })
+  resolveAllForSlide(@Param('slideId') slideId: string, @GetUser() user: any) {
+    return this.commentsService.resolveAllForSlide(slideId, user.id);
+  }
+
+  @Post('decks/:deckId/comments/resolve-all')
+  @ApiOperation({ summary: 'Resolve every open thread on a deck' })
+  resolveAllForDeck(@Param('deckId') deckId: string, @GetUser() user: any) {
+    return this.commentsService.resolveAllForDeck(deckId, user.id);
+  }
+
+  // ---------- Phase 36.1L — search ----------
+
+  @Get('projects/:projectId/comments/search')
+  @ApiOperation({ summary: 'Full-text-ish search across comment threads in a project' })
+  search(
+    @Param('projectId') projectId: string,
+    @GetUser() user: any,
+    @Query('q') q?: string,
+  ) {
+    return this.commentsService.search(projectId, user.id, q || '');
   }
 }

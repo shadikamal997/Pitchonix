@@ -1,11 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { analyzeSlide, QualitySignals } from '../generation/quality/smart-component-quality-probe';
 
 @Injectable()
 export class QualityControlService {
   private readonly logger = new Logger(QualityControlService.name);
 
   /**
-   * Validate slide content quality
+   * Validate slide content quality.
+   *
+   * Phase 32.75 Tier 8 — every type-specific check now reads from the smart
+   * component element tree via SmartComponentQualityProbe. The probe
+   * transparently falls back to the legacy `slide.content.*` fields when
+   * `smartComponent` is absent, so this method's behaviour is unchanged for
+   * pre-Tier-4 decks. Once those decks are re-migrated (or expire from the
+   * editor), the legacy fallback in the probe becomes the only remaining
+   * caller of the generator extract* helpers — clearing the way for their
+   * removal.
    */
   validateSlideQuality(slide: any): { valid: boolean; issues: string[] } {
     const issues: string[] = [];
@@ -24,29 +34,30 @@ export class QualityControlService {
       issues.push('Content must be a valid object');
     }
 
-    // Type-specific validation
+    // Type-specific validation — sourced from the quality probe.
+    const signals: QualitySignals = analyzeSlide(slide);
     switch (slide.type) {
       case 'cover':
-        if (!slide.content.tagline) {
+        if (!signals.hasTagline) {
           issues.push('Cover slide should have a tagline');
         }
         break;
 
       case 'problem':
       case 'solution':
-        if (!slide.content.description) {
+        if (!signals.hasDescription) {
           issues.push(`${slide.type} slide should have a description`);
         }
         break;
 
       case 'market':
-        if (!slide.content.tam || !slide.content.sam || !slide.content.som) {
+        if (!(signals.hasTam && signals.hasSam && signals.hasSom)) {
           issues.push('Market slide should have TAM, SAM, and SOM data');
         }
         break;
 
       case 'traction':
-        if (!slide.content.metrics || slide.content.metrics.length === 0) {
+        if (!signals.hasMetrics) {
           issues.push('Traction slide should have metrics');
         }
         break;
@@ -105,7 +116,9 @@ export class QualityControlService {
   }
 
   /**
-   * Suggest improvements for a slide
+   * Suggest improvements for a slide. Same probe-driven path as
+   * validateSlideQuality — type-specific suggestions read business signals
+   * extracted from the smart-component tree.
    */
   suggestImprovements(slide: any): string[] {
     const suggestions: string[] = [];
@@ -115,28 +128,28 @@ export class QualityControlService {
       suggestions.push('Consider making the title more descriptive');
     }
 
-    // Content suggestions based on type
+    const signals = analyzeSlide(slide);
     switch (slide.type) {
       case 'problem':
-        if (!slide.content.stats) {
+        if (!signals.hasMetrics && !signals.hasDescription) {
           suggestions.push('Add statistics to strengthen the problem statement');
         }
         break;
 
       case 'solution':
-        if (!slide.content.differentiators) {
+        if (!signals.hasDifferentiators) {
           suggestions.push('Highlight what makes your solution unique');
         }
         break;
 
       case 'market':
-        if (!slide.content.growth) {
+        if (!signals.hasGrowth) {
           suggestions.push('Include market growth rate (CAGR)');
         }
         break;
 
       case 'traction':
-        if (!slide.content.milestones) {
+        if (!signals.hasMilestones) {
           suggestions.push('Add key milestones to show progress');
         }
         break;
