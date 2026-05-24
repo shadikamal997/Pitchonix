@@ -69,7 +69,11 @@ export const AutoFitText: React.FC<Props> = ({
   };
 
   if (asInnerHTML && innerHTML) {
-    return <div ref={wrapperRef} className={className} style={style} dangerouslySetInnerHTML={{ __html: innerHTML }} />;
+    // Phase Ω.1 — sanitise before injecting. Slide-editor HTML can include
+    // user-typed content from collaborators or imported decks.
+    const DOMPurify: any = typeof window !== 'undefined' ? require('dompurify') : null;
+    const safe = DOMPurify && DOMPurify.sanitize ? DOMPurify.sanitize(innerHTML) : innerHTML;
+    return <div ref={wrapperRef} className={className} style={style} dangerouslySetInnerHTML={{ __html: safe }} />;
   }
   return <div ref={wrapperRef} className={className} style={style}>{text}</div>;
 };

@@ -61,3 +61,16 @@ temp/
 *.pem
 *.key
 *.cert
+
+# Local IDE state
+.claude/
+
+# Build artifacts / generated test outputs
+backend/exports/*.pptx
+backend/exports/*.pdf
+backend/exports/*.zip
+backend/exports/phase*/
+frontend/tsconfig.tsbuildinfo
+
+# Local scratch
+backend/phase12-test.ts

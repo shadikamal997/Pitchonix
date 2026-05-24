@@ -29,8 +29,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
-    let error = 'InternalServerError';
+    let message: string = 'Internal server error';
+    let error: string | undefined;
     let details: any = undefined;
 
     // Handle HttpException
@@ -42,20 +42,29 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
         const responseObj = exceptionResponse as any;
-        message = responseObj.message || message;
-        error = responseObj.error || error;
+        // Phase audit fix — message can be an array (class-validator) or an
+        // object (when the caller throws `new BadRequestException({ ... })`).
+        // Stringify cleanly instead of letting it become "[object Object]".
+        message = normaliseMessage(responseObj.message) || message;
+        error   = responseObj.error;
         details = responseObj.details;
       }
     }
     // Handle standard Error
     else if (exception instanceof Error) {
       message = exception.message;
-      error = exception.name;
+      error   = exception.name;
     }
     // Handle unknown errors
     else {
       message = String(exception);
     }
+
+    // Phase audit fix — derive a sensible `error` label from the HTTP status
+    // when the exception didn't supply one. Previously every 401/404/etc
+    // came out tagged as "InternalServerError" because the default never
+    // got overridden.
+    if (!error) error = errorLabelFor(status);
 
     // Build error response
     const errorResponse: ErrorResponse = {
@@ -68,8 +77,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       details,
     };
 
-    // Include stack trace in development
-    if (process.env.NODE_ENV === 'development' && exception instanceof Error) {
+    // Phase audit fix — only leak stack traces when explicitly opted in.
+    // Treat the default (no NODE_ENV set) as "non-development" so dev-mode
+    // runs of `nest start` don't accidentally publish stack traces.
+    const isExplicitlyDev = process.env.NODE_ENV === 'development' && process.env.EXPOSE_STACK_TRACES === '1';
+    if (isExplicitlyDev && exception instanceof Error) {
       errorResponse.stack = exception.stack;
     }
 
@@ -84,5 +96,40 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     // Send response
     response.status(status).json(errorResponse);
+  }
+}
+
+// =============================================================================
+//  Helpers
+// =============================================================================
+
+function normaliseMessage(raw: unknown): string {
+  if (raw == null) return '';
+  if (typeof raw === 'string') return raw;
+  if (Array.isArray(raw)) return raw.map((m) => normaliseMessage(m)).filter(Boolean).join('; ');
+  if (typeof raw === 'object') {
+    // class-validator nested error → pull constraint messages if present.
+    const r = raw as any;
+    if (r.message) return normaliseMessage(r.message);
+    try { return JSON.stringify(raw); } catch { return String(raw); }
+  }
+  return String(raw);
+}
+
+function errorLabelFor(status: number): string {
+  switch (status) {
+    case 400: return 'Bad Request';
+    case 401: return 'Unauthorized';
+    case 403: return 'Forbidden';
+    case 404: return 'Not Found';
+    case 405: return 'Method Not Allowed';
+    case 409: return 'Conflict';
+    case 410: return 'Gone';
+    case 422: return 'Unprocessable Entity';
+    case 429: return 'Too Many Requests';
+    case 500: return 'Internal Server Error';
+    case 502: return 'Bad Gateway';
+    case 503: return 'Service Unavailable';
+    default:  return 'Error';
   }
 }

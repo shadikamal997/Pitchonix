@@ -8,9 +8,12 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PdfPagesService } from './pdf-pages.service';
 
+@UseGuards(JwtAuthGuard)
 @Controller('pdf-pages')
 export class PdfPagesController {
   constructor(private readonly pdfPagesService: PdfPagesService) {}

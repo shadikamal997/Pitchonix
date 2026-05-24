@@ -1,6 +1,8 @@
-import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PdfGenerationService } from './pdf-generation.service';
 
+@UseGuards(JwtAuthGuard)
 @Controller('pdf-generation')
 export class PdfGenerationController {
   constructor(private readonly pdfGenerationService: PdfGenerationService) {}

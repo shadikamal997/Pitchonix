@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -11,12 +12,26 @@ import * as fs from 'fs';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
-  // Warn loudly if JWT_SECRET is missing — auth tokens will be insecure
+  // Phase Ω.1 — JWT_SECRET enforcement.
+  // In production (or any non-development NODE_ENV) we hard-fail rather
+  // than fall back to an insecure default. In dev we keep the warning.
   if (!process.env.JWT_SECRET) {
+    if (process.env.NODE_ENV && process.env.NODE_ENV !== 'development') {
+      logger.error('JWT_SECRET is not set. Refusing to start in non-development mode.');
+      throw new Error('JWT_SECRET must be set when NODE_ENV is not "development".');
+    }
     logger.warn('⚠️  JWT_SECRET is not set. Using an insecure default. Set JWT_SECRET in your .env file before deploying.');
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Phase Ω.1 — security headers (CSP, X-Content-Type-Options, X-Frame-Options,
+  // Strict-Transport-Security, etc.). `contentSecurityPolicy: false` because
+  // Swagger/iframe previews need inline scripts; tighten in production-only.
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }));
 
   // Enable CORS — support comma-separated FRONTEND_URL list for multi-origin setups
   const allowedOrigins = Array.from(new Set((process.env.FRONTEND_URL || 'http://localhost:3000')

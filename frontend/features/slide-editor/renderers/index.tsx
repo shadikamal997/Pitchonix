@@ -248,8 +248,12 @@ const CTARenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
 // =============================================================================
 
 type ListItemShape = { id: string; text: string; html?: string };
+// Phase Ω.1 — sanitise HTML from generator-supplied list items before
+// inserting via dangerouslySetInnerHTML (defense-in-depth XSS).
+const DOMPurify: any = typeof window !== 'undefined' ? require('dompurify') : null;
+const sanitize = (html: string) => (DOMPurify && DOMPurify.sanitize ? DOMPurify.sanitize(html) : html);
 function renderItemBody(it: ListItemShape) {
-  if (it.html && it.html.trim()) return <span dangerouslySetInnerHTML={{ __html: it.html }} />;
+  if (it.html && it.html.trim()) return <span dangerouslySetInnerHTML={{ __html: sanitize(it.html) }} />;
   return <span>{it.text}</span>;
 }
 
@@ -792,7 +796,7 @@ const EmbedPlaceholderRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => 
 //  Registry
 // =============================================================================
 
-export const ELEMENT_RENDERERS: Record<ElementType, React.FC<{ el: SlideElementDTO; pageNumber?: number; total?: number }>> = {
+export const ELEMENT_RENDERERS: Record<ElementType, React.FC<{ el: SlideElementDTO; pageNumber?: number; total?: number; familyId?: string }>> = {
   heading:    HeadingRenderer,
   subheading: SubheadingRenderer,
   paragraph:  ParagraphRenderer,
@@ -832,7 +836,7 @@ export const ELEMENT_RENDERERS: Record<ElementType, React.FC<{ el: SlideElementD
   divider: DividerRenderer,
 };
 
-export function renderElement(el: SlideElementDTO, ctx: { pageNumber?: number; total?: number } = {}) {
+export function renderElement(el: SlideElementDTO, ctx: { pageNumber?: number; total?: number; familyId?: string } = {}) {
   const Renderer = ELEMENT_RENDERERS[el.type] || PlaceholderRenderer;
-  return <Renderer el={el} pageNumber={ctx.pageNumber} total={ctx.total} />;
+  return <Renderer el={el} pageNumber={ctx.pageNumber} total={ctx.total} familyId={ctx.familyId} />;
 }

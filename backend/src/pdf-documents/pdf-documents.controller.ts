@@ -11,12 +11,14 @@ import {
   Res,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PdfDocumentsService } from './pdf-documents.service';
 import { PdfDocumentGenerationService } from './pdf-document-generation.service';
 import { PdfGenerationService } from '../pdf-generation/pdf-generation.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
+@UseGuards(JwtAuthGuard)
 @Controller('pdf-documents')
 export class PdfDocumentsController {
   constructor(
