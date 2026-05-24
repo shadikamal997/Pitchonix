@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
+// Phase 39 — global workspace context (current workspace + permissions)
+import { WorkspaceProvider } from "@/features/workspaces/WorkspaceContext";
 import { inter, allFontClassNames } from './fonts';
 
 export const metadata: Metadata = {
@@ -30,7 +32,9 @@ export default function RootLayout({
         >
           <ToastProvider>
             <ErrorBoundary>
-              {children}
+              <WorkspaceProvider>
+                {children}
+              </WorkspaceProvider>
               <Toaster />
             </ErrorBoundary>
           </ToastProvider>

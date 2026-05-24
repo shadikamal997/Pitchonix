@@ -6,6 +6,10 @@ import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import { Search, FileText, Trash2, Edit, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+// Phase 39.1A — workspace switcher
+import { WorkspaceSwitcher } from '@/features/workspaces/WorkspaceSwitcher';
+import { CreateWorkspaceModal } from '@/features/workspaces/CreateWorkspaceModal';
+import { useMyWorkspaces } from '@/features/workspaces/useWorkspaces';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -58,7 +62,10 @@ export default function ProjectsPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <main className="p-8 bg-gray-50 min-h-full">
+    <>
+      {/* Phase 39.1A — sticky workspace context bar */}
+      <ProjectsWorkspaceBar />
+      <main className="p-8 bg-gray-50 min-h-full">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">All Projects</h1>
@@ -159,5 +166,30 @@ export default function ProjectsPage() {
         )}
       </div>
     </main>
+    </>
+  );
+}
+
+// Phase 39.1A — small subcomponent so the hook + modal state live alongside.
+function ProjectsWorkspaceBar() {
+  const workspaces = useMyWorkspaces();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center gap-3">
+          <WorkspaceSwitcher
+            settingsHref={(id) => `/workspaces/${id}/settings`}
+            onCreate={() => setOpen(true)}
+          />
+          <span className="text-[10px] uppercase tracking-wide text-slate-400 font-mono">Workspace</span>
+        </div>
+      </div>
+      <CreateWorkspaceModal
+        open={open}
+        onClose={() => setOpen(false)}
+        onCreate={async (input) => { await workspaces.create(input); }}
+      />
+    </>
   );
 }

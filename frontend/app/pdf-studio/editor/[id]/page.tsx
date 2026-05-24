@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import ExportDropdown from '@/components/pdf-studio/ExportDropdown';
+import { BrandKitPicker, BrandKitBadge } from '@/features/brand-kits/BrandKitPicker';
 import ThemePicker, { PDF_THEMES } from '@/components/pdf-studio/ThemePicker';
 import { ChartPanel, ChartConfig } from '@/components/pdf-studio/ChartPanel';
 import LivePreview from '@/components/LivePreview';
@@ -1107,6 +1108,31 @@ export default function PdfEditorPage() {
               >
                 {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
+
+              {/* Phase 37.3E — Brand Kit picker (lives next to Export so the user
+                  knows which kit is baked into the next render). */}
+              {document?.brandKitId && <BrandKitBadge kitId={document.brandKitId} compact />}
+              <BrandKitPicker
+                mode="select"
+                value={document?.brandKitId || null}
+                compact
+                emptyLabel="Brand Kit"
+                onSelect={async (kitId) => {
+                  const prev = document;
+                  setDocument({ ...document, brandKitId: kitId });
+                  try {
+                    await api.put(`/pdf-documents/${documentId}`, { brandKitId: kitId });
+                    // Phase Ω.1 — invalidate the LivePreview cache so the
+                    // preview iframe re-renders with the new brand tokens
+                    // (matches the pattern used by every other metadata write
+                    // in this file at lines 591/613/629).
+                    try { await api.post(`/pdf-studio/export/preview/${documentId}/invalidate`); }
+                    catch { /* preview will refresh on next edit */ }
+                  } catch (e) {
+                    setDocument(prev);
+                  }
+                }}
+              />
 
               <ExportDropdown onExport={handleExport} loading={saving} />
             </div>

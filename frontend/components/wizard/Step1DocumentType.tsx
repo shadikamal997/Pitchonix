@@ -1,9 +1,10 @@
 import { WizardData } from '@/app/create/page';
-import { 
-  Rocket, 
-  Briefcase, 
-  FileCheck, 
-  TrendingUp, 
+import { useRouter } from 'next/navigation';
+import {
+  Rocket,
+  Briefcase,
+  FileCheck,
+  TrendingUp,
   Building2,
   Megaphone,
   FileText,
@@ -17,7 +18,10 @@ import {
   BookOpen,
   GraduationCap,
   Layers,
-  FileType
+  FileType,
+  Mail,
+  Layout as LayoutIcon,
+  User,
 } from 'lucide-react';
 
 interface Step1Props {
@@ -219,6 +223,52 @@ const DOCUMENT_TYPES: DocumentType[] = [
     textColor: 'text-indigo-600',
     bgColor: 'bg-indigo-50 hover:bg-indigo-100',
   },
+
+  // Phase 42 — CAREER DOCUMENTS (route directly to /career builder).
+  {
+    id: 'cv',
+    name: 'CV',
+    icon: User,
+    description: 'Full curriculum vitae',
+    category: 'career' as any,
+    format: 'pdf',
+    color: 'from-emerald-500 to-emerald-600',
+    textColor: 'text-emerald-600',
+    bgColor: 'bg-emerald-50 hover:bg-emerald-100',
+  },
+  {
+    id: 'resume',
+    name: 'Resume',
+    icon: Briefcase,
+    description: 'Concise 1-2 page resume',
+    category: 'career' as any,
+    format: 'pdf',
+    color: 'from-teal-500 to-teal-600',
+    textColor: 'text-teal-600',
+    bgColor: 'bg-teal-50 hover:bg-teal-100',
+  },
+  {
+    id: 'cover_letter',
+    name: 'Cover Letter',
+    icon: Mail,
+    description: 'Tailored letter for a specific role',
+    category: 'career' as any,
+    format: 'pdf',
+    color: 'from-sky-500 to-sky-600',
+    textColor: 'text-sky-600',
+    bgColor: 'bg-sky-50 hover:bg-sky-100',
+  },
+  {
+    id: 'portfolio',
+    name: 'Portfolio',
+    icon: LayoutIcon,
+    description: 'Showcase of work, projects, and case studies',
+    category: 'career' as any,
+    format: 'pdf',
+    color: 'from-fuchsia-500 to-fuchsia-600',
+    textColor: 'text-fuchsia-600',
+    bgColor: 'bg-fuchsia-50 hover:bg-fuchsia-100',
+  },
 ];
 
 const CATEGORIES = [
@@ -244,6 +294,18 @@ const CATEGORIES = [
     borderColor: 'border-cyan-200',
     selectedBg: 'bg-gradient-to-br from-cyan-500 to-blue-600',
   },
+  // Phase 42 — Career docs as a first-class wizard category.
+  {
+    id: 'career' as DocumentCategory,
+    name: 'Career Documents',
+    icon: Briefcase,
+    description: 'CV, Resume, Cover Letter, Portfolio',
+    color: 'from-emerald-500 to-teal-600',
+    iconBg: 'bg-emerald-100',
+    iconColor: 'text-emerald-600',
+    borderColor: 'border-emerald-200',
+    selectedBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+  },
 ];
 
 // Export for use in other components
@@ -251,20 +313,33 @@ export { DOCUMENT_TYPES };
 export type { DocumentType };
 
 export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
+  const router = useRouter();
   const selectedType = DOCUMENT_TYPES.find(t => t.id === data.documentType);
-  
+
   // Get document types by category
   const presentationTypes = DOCUMENT_TYPES.filter(type => type.category === 'presentations');
-  const pdfDocumentTypes = DOCUMENT_TYPES.filter(type => type.category === 'pdf_documents');
+  const pdfDocumentTypes  = DOCUMENT_TYPES.filter(type => type.category === 'pdf_documents');
+  // Phase 42 — career types short-circuit the wizard and jump to the builder.
+  const careerTypes       = DOCUMENT_TYPES.filter((type) => (type.category as any) === 'career');
+
+  const pickCareer = (id: string) => {
+    // Map wizard id → /career?create=<doctype>
+    const map: Record<string, string> = {
+      cv: 'cv', resume: 'resume', cover_letter: 'coverLetter', portfolio: 'portfolio',
+    };
+    const doctype = map[id] || 'cv';
+    router.push(`/career?create=${doctype}`);
+  };
 
   const renderDocumentCard = (type: DocumentType) => {
     const Icon = type.icon;
     const isSelected = data.documentType === type.id;
+    const isCareer = (type.category as any) === 'career';
 
     return (
       <button
         key={type.id}
-        onClick={() => onUpdate({ documentType: type.id })}
+        onClick={() => isCareer ? pickCareer(type.id) : onUpdate({ documentType: type.id })}
         className={`p-3 rounded-lg border text-left transition-all bg-white ${
           isSelected
             ? 'border-green-600 ring-1 ring-green-600 shadow-md shadow-green-500/10'
@@ -330,6 +405,22 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {pdfDocumentTypes.map(renderDocumentCard)}
+        </div>
+      </div>
+
+      {/* Phase 42 — Career Documents Category */}
+      <div>
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
+            <Briefcase className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Career Documents</h3>
+            <p className="text-xs text-slate-500">CV, Resume, Cover Letter, Portfolio — opens the career builder</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+          {careerTypes.map(renderDocumentCard)}
         </div>
       </div>
 

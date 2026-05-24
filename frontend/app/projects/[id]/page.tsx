@@ -14,6 +14,8 @@ import { GenerationProgress } from '@/components/quality/GenerationProgress';
 import { ExportReadinessIndicator } from '@/components/quality/ExportReadinessIndicator';
 import { getQualityReport, getGenerationStatus } from '@/lib/quality-api';
 import type { QualityReport, GenerationStatus } from '@/types/quality';
+import { BrandKitPicker, BrandKitBadge } from '@/features/brand-kits/BrandKitPicker';
+import { useDeckBrandKit } from '@/features/brand-kits/useDeckBrandKit';
 
 interface Deck {
   id: string;
@@ -285,70 +287,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
             ) : (
               <div className="space-y-6">
                 {project.decks.map((deck) => (
-                  <Card key={deck.id}>
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="mb-2">{deck.title}</CardTitle>
-                          <p className="text-sm text-gray-600">
-                            {deck.slides.length} slides • Created{' '}
-                            {new Date(deck.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex space-x-2">
-                          {deck.slides && deck.slides.length > 0 && (
-                            <Button
-                              variant="outline"
-                              onClick={() => setShowBrandModal(true)}
-                              className="border-green-300 hover:bg-green-50 text-green-700"
-                            >
-                              <ImageIcon className="h-4 w-4 mr-2" />
-                              Upload logo & photos
-                            </Button>
-                          )}
-                          <Link
-                            href={
-                              deck.slides && deck.slides.length > 0
-                                ? `/projects/${params.id}/edit/${deck.slides[0].id}`
-                                : `/projects/${params.id}/edit/${deck.id}?new=1`
-                            }
-                          >
-                            <Button className="bg-green-600 hover:bg-green-700 text-white">
-                              <Edit className="h-4 w-4 mr-2" />
-                              Open Editor
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {deck.slides.slice(0, 8).map((slide, index) => (
-                          <Link
-                            key={slide.id}
-                            href={`/projects/${params.id}/edit/${slide.id}`}
-                            className="group block border rounded-lg p-4 bg-white hover:shadow-md hover:border-green-400 transition-all cursor-pointer"
-                          >
-                            <div className="text-xs text-gray-500 mb-1 flex items-center justify-between">
-                              <span>Slide {slide.order}</span>
-                              <span className="text-green-700 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-semibold uppercase tracking-wider">Edit →</span>
-                            </div>
-                            <div className="font-medium text-sm line-clamp-2">{slide.title}</div>
-                            <div className="text-xs text-gray-500 mt-1 capitalize">{slide.type}</div>
-                          </Link>
-                        ))}
-                      </div>
-                      {deck.slides.length > 8 && deck.slides[0]?.id && (
-                        <div className="mt-4 text-center">
-                          <Link href={`/projects/${params.id}/edit/${deck.slides[0].id}`}>
-                            <Button variant="outline" size="sm">
-                              View all {deck.slides.length} slides
-                            </Button>
-                          </Link>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <DeckCard key={deck.id} deck={deck} params={params} setShowBrandModal={setShowBrandModal} fetchProject={fetchProject} />
                 ))}
               </div>
             )}
@@ -417,7 +356,100 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
             </div>
           )}
         </div>
+
       </div>
     </div>
+  );
+}
+
+// =============================================================================
+//  Phase 37.3D — DeckCard (extracted so we can use the useDeckBrandKit hook
+//  per-deck rather than hoisting it into the parent).
+// =============================================================================
+function DeckCard({ deck, params, setShowBrandModal, fetchProject }: any) {
+  const brand = useDeckBrandKit(deck.id);
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <CardTitle className="mb-0">{deck.title}</CardTitle>
+              <BrandKitBadge kitId={brand.brandKitId} />
+            </div>
+            <p className="text-sm text-gray-600">
+              {deck.slides.length} slides • Created{' '}
+              {new Date(deck.createdAt).toLocaleDateString()}
+            </p>
+          </div>
+          <div className="flex space-x-2 items-center">
+            {deck.slides && deck.slides.length > 0 && (
+              <BrandKitPicker
+                mode="apply"
+                deckId={deck.id}
+                value={brand.brandKitId}
+                onApplied={async (newKitId) => {
+                  if (newKitId === null) {
+                    try { await api.patch(`/decks/${deck.id}`, { brandKitId: null }); }
+                    catch { /* surfaced by picker */ }
+                  }
+                  brand.refresh();
+                  fetchProject(true);
+                }}
+              />
+            )}
+            {deck.slides && deck.slides.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setShowBrandModal(true)}
+                className="border-green-300 hover:bg-green-50 text-green-700"
+              >
+                <ImageIcon className="h-4 w-4 mr-2" />
+                Upload logo & photos
+              </Button>
+            )}
+            <Link
+              href={
+                deck.slides && deck.slides.length > 0
+                  ? `/projects/${params.id}/edit/${deck.slides[0].id}`
+                  : `/projects/${params.id}/edit/${deck.id}?new=1`
+              }
+            >
+              <Button className="bg-green-600 hover:bg-green-700 text-white">
+                <Edit className="h-4 w-4 mr-2" />
+                Open Editor
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {deck.slides.slice(0, 8).map((slide: any) => (
+            <Link
+              key={slide.id}
+              href={`/projects/${params.id}/edit/${slide.id}`}
+              className="group block border rounded-lg p-4 bg-white hover:shadow-md hover:border-green-400 transition-all cursor-pointer"
+            >
+              <div className="text-xs text-gray-500 mb-1 flex items-center justify-between">
+                <span>Slide {slide.order}</span>
+                <span className="text-green-700 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-semibold uppercase tracking-wider">Edit →</span>
+              </div>
+              <div className="font-medium text-sm line-clamp-2">{slide.title}</div>
+              <div className="text-xs text-gray-500 mt-1 capitalize">{slide.type}</div>
+            </Link>
+          ))}
+        </div>
+        {deck.slides.length > 8 && deck.slides[0]?.id && (
+          <div className="mt-4 text-center">
+            <Link href={`/projects/${params.id}/edit/${deck.slides[0].id}`}>
+              <Button variant="outline" size="sm">
+                View all {deck.slides.length} slides
+              </Button>
+            </Link>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

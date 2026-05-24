@@ -13,6 +13,7 @@ import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { A4Preview } from '@/components/A4Preview';
 import { FadeIn, SlideUp, StaggerContainer, StaggerItem } from '@/components/Animations';
+import { BrandKitPicker, BrandKitBadge } from '@/features/brand-kits/BrandKitPicker';
 
 type Step = 'input' | 'review' | 'template' | 'enhanced';
 
@@ -35,6 +36,12 @@ export default function SmartBuilderPage() {
     tone: 'formal',
     designStyle: 'modern',
   });
+
+  // Phase 37Q.UX — brand-kit picker. Selected kit is passed to <A4Preview>
+  // and (when available) injected into the generate payload so the rendered
+  // PDF inherits the kit's colors, fonts, logo.
+  const [brandKitId, setBrandKitId] = useState<string | null>(null);
+  const [brandKit,   setBrandKit]   = useState<any | null>(null);
 
   const handleAnalyze = async () => {
     if (!rawContent.trim()) {
@@ -348,16 +355,31 @@ Key Features:
                 {/* Preview Section */}
                 <SectionErrorBoundary sectionName="Document Preview">
                   <SlideUp delay={0.1} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <div className="flex items-center gap-2.5 mb-4">
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
-                        <FileText className="w-4 h-4 text-white" />
+                    <div className="flex items-center justify-between gap-2.5 mb-4">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
+                          <FileText className="w-4 h-4 text-white" />
+                        </div>
+                        <h2 className="text-lg font-bold text-slate-900">Live Preview</h2>
+                        {brandKitId && <BrandKitBadge kitId={brandKitId} />}
                       </div>
-                      <h2 className="text-lg font-bold text-slate-900">Live Preview</h2>
+                      {/* Phase 37.3E — canonical Brand Kit picker */}
+                      <BrandKitPicker
+                        mode="select"
+                        value={brandKitId}
+                        onSelect={(id, k) => { setBrandKitId(id); setBrandKit(k); }}
+                      />
                     </div>
                     <A4Preview
                       content={rawContent}
                       title={title || 'Untitled Document'}
-                      brandKit={null}
+                      brandKit={brandKit ? {
+                        logo:   brandKit.logo,
+                        colors: brandKit.tokens?.colors || {
+                          primary:   brandKit.primaryColor,
+                          secondary: brandKit.secondaryColor,
+                        },
+                      } : null}
                     />
                   </SlideUp>
                 </SectionErrorBoundary>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,7 @@ interface Deck {
 
 export default function EditorPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [deck, setDeck] = useState<Deck | null>(null);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [editedSlide, setEditedSlide] = useState<Slide | null>(null);
@@ -48,16 +49,43 @@ export default function EditorPage({ params }: { params: { id: string } }) {
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [focusElementId, setFocusElementId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDeck();
   }, [params.id]);
+
+  // Phase 37.2D — honor ?slide=/?focus= deep links from the brand audit panel.
+  useEffect(() => {
+    if (!deck) return;
+    const slideParam = searchParams?.get('slide');
+    const focusParam = searchParams?.get('focus');
+    if (slideParam) {
+      const idx = deck.slides.findIndex((s) => s.id === slideParam);
+      if (idx >= 0 && idx !== currentSlideIndex) setCurrentSlideIndex(idx);
+    }
+    setFocusElementId(focusParam || null);
+  }, [deck, searchParams]);
 
   useEffect(() => {
     if (deck && deck.slides[currentSlideIndex]) {
       setEditedSlide({ ...deck.slides[currentSlideIndex] });
     }
   }, [currentSlideIndex, deck]);
+
+  // Scroll the focused element into view + flash a highlight ring once mounted.
+  useEffect(() => {
+    if (!focusElementId) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector(`[data-element-id="${focusElementId}"]`);
+      if (el && typeof (el as HTMLElement).scrollIntoView === 'function') {
+        (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-4', 'ring-amber-400');
+        setTimeout(() => el.classList.remove('ring-4', 'ring-amber-400'), 2400);
+      }
+    }, 200);
+    return () => clearTimeout(t);
+  }, [focusElementId, currentSlideIndex]);
 
   const fetchDeck = async () => {
     try {

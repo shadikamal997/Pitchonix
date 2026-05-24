@@ -13,6 +13,10 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
 import NotificationBell from '@/components/NotificationBell';
+// Phase 39.1A — workspace switcher
+import { WorkspaceSwitcher } from '@/features/workspaces/WorkspaceSwitcher';
+import { CreateWorkspaceModal } from '@/features/workspaces/CreateWorkspaceModal';
+import { useMyWorkspaces } from '@/features/workspaces/useWorkspaces';
 import {
   Plus,
   FileText,
@@ -299,6 +303,10 @@ export default function DashboardPage() {
   
   const totalExports = projects.filter(p => p.status === 'exported').length;
 
+  // Phase 39.1A — workspace switcher mount + create-modal state
+  const workspaces = useMyWorkspaces();
+  const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
+
   // Show nothing while Zustand is rehydrating to avoid flash of unauthenticated state
   if (!_hasHydrated) {
     return (
@@ -313,6 +321,22 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-full bg-slate-50">
+      {/* Phase 39.1A — sticky workspace context bar */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center gap-3">
+          <WorkspaceSwitcher
+            settingsHref={(id) => `/workspaces/${id}/settings`}
+            onCreate={() => setCreateWorkspaceOpen(true)}
+          />
+          <span className="text-[10px] uppercase tracking-wide text-slate-400 font-mono">Workspace</span>
+          <div className="ml-auto" />
+        </div>
+      </div>
+      <CreateWorkspaceModal
+        open={createWorkspaceOpen}
+        onClose={() => setCreateWorkspaceOpen(false)}
+        onCreate={async (input) => { await workspaces.create(input); }}
+      />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Welcome Section */}
         <motion.div 

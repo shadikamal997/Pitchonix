@@ -21,6 +21,9 @@ import {
   Sparkles,
   FileType,
   BarChart2,
+  Briefcase,
+  Shuffle,
+  Upload,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -41,7 +44,12 @@ const navigationItems: NavigationItem[] = [
   { id: "create", name: "Create New", icon: Plus, href: "/create" },
   { id: "projects", name: "Projects", icon: FolderOpen, href: "/projects" },
   { id: "pdf-studio", name: "PDF Studio", icon: FileType, href: "/pdf-studio" },
+  { id: "career", name: "Career Docs", icon: Briefcase, href: "/career" },
   { id: "brand-kits", name: "Brand Kits", icon: Palette, href: "/brand-kits" },
+  // Phase Ω.1 — surface universal conversion + PPTX import (both were
+  // built out fully but invisible because they had no sidebar entry).
+  { id: "convert", name: "Convert", icon: Shuffle, href: "/convert" },
+  { id: "pptx-import", name: "Import .pptx", icon: Upload, href: "/pptx-import" },
   { id: "export-templates", name: "Export Templates", icon: Download, href: "/export-templates" },
   { id: "analytics", name: "Analytics", icon: BarChart2, href: "/analytics" },
   { id: "settings", name: "Settings", icon: Settings, href: "/settings" },

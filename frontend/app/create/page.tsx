@@ -13,6 +13,8 @@ import Step2BusinessInfo from '@/components/wizard/Step2BusinessInfo';
 import Step3AudienceGoal from '@/components/wizard/Step3AudienceGoal';
 import Step4BusinessDetails from '@/components/wizard/Step4BusinessDetails';
 import Step5DesignPreferences from '@/components/wizard/Step5DesignPreferences';
+// Phase 37.2A — Brand Selection wizard step
+import StepBrandSelection from '@/components/wizard/StepBrandSelection';
 import Step6GenerationSettings from '@/components/wizard/Step6GenerationSettings';
 import StructuredDataStep from '@/components/wizard/StructuredDataStep';
 import WizardIntelligencePanel from '@/components/wizard/WizardIntelligencePanel';
@@ -164,8 +166,19 @@ const getWizardSteps = (documentType: string): StepConfig[] => {
     ],
   };
 
-  // Return specific config or default pitch_deck config
-  return configs[documentType] || configs.pitch_deck;
+  // Phase 37.2A — inject the Brand step right before Design across every
+  // document type. Doing it here (rather than editing each variant) keeps
+  // additions to one place; step numbers are re-derived below.
+  const base = configs[documentType] || configs.pitch_deck;
+  const designIdx = base.findIndex((s) => s.component === 'Step5');
+  const withBrand: StepConfig[] = designIdx >= 0
+    ? [
+        ...base.slice(0, designIdx),
+        { id: 0, title: 'Brand', description: 'Pick a brand kit', component: 'StepBrand' },
+        ...base.slice(designIdx),
+      ]
+    : base;
+  return withBrand.map((s, i) => ({ ...s, id: i + 1 }));
 };
 
 export interface WizardData {
@@ -225,6 +238,10 @@ export interface WizardData {
   };
   fontStyle: string;
   visualStyle: string;
+  // Phase 37.2A — selected BrandKit. When set, the generation pipeline
+  // loads this kit's tokens (colors, typography, voice, identity) and
+  // those take precedence over `brandColors` / `fontStyle` / `tone`.
+  brandKitId?: string | null;
   
   // Step 6 - Settings
   slideCount: number;
@@ -567,6 +584,14 @@ function CreateWizardPage() {
             documentType={wizardData.documentType}
             structured={wizardData.structured ?? emptyStructuredWizardData}
             onUpdate={(structured) => updateWizardData({ structured })}
+          />
+        );
+      case 'StepBrand':
+        // Phase 37.2A — pick a saved brand kit; sets wizardData.brandKitId.
+        return (
+          <StepBrandSelection
+            selectedBrandKitId={wizardData.brandKitId}
+            onSelect={(id) => updateWizardData({ brandKitId: id })}
           />
         );
       case 'Step5':
