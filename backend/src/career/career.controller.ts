@@ -111,12 +111,27 @@ export class CareerController {
   }
 
   @Post('profile/:profileId/import/file')
-  @ApiOperation({ summary: 'Import an existing CV (DOCX/PDF/HTML/MD) into a profile (Phase 42L)' })
+  @ApiOperation({ summary: 'Import an existing CV (DOCX/PDF/HTML/MD) into a profile (Phase 42L + 42.7)' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
-  importFile(@Param('profileId') profileId: string, @UploadedFile() file: any) {
+  importFile(
+    @Param('profileId') profileId: string,
+    @UploadedFile() file: any,
+    @Query('forceOcr') forceOcr?: string,
+    @Body('sectionMappings') sectionMappingsRaw?: any,
+  ) {
     if (!file?.buffer) throw new BadRequestException('Missing file (multipart field "file")');
-    return this.importer.importFromFile(profileId, file.buffer, file.originalname || 'cv', file.mimetype);
+    // sectionMappings can arrive as a JSON string in multipart bodies.
+    let sectionMappings: Record<string, any> | undefined;
+    if (sectionMappingsRaw) {
+      try {
+        sectionMappings = typeof sectionMappingsRaw === 'string' ? JSON.parse(sectionMappingsRaw) : sectionMappingsRaw;
+      } catch { sectionMappings = undefined; }
+    }
+    return this.importer.importFromFile(profileId, file.buffer, file.originalname || 'cv', file.mimetype, {
+      sectionMappings: sectionMappings as any,
+      forceOcr:        forceOcr === '1' || forceOcr === 'true',
+    });
   }
 
   // ─── Documents ──────────────────────────────────────────────────────────────

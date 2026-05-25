@@ -94,11 +94,17 @@ export function useCvProfile() {
     return data;
   };
 
-  const importFile = async (file: File) => {
+  const importFile = async (
+    file: File,
+    opts?: { forceOcr?: boolean; sectionMappings?: Record<string, string> },
+  ) => {
     if (!profile) return null;
-    const form = new FormData(); form.append('file', file);
-    const { data } = await api.post<{ profile: CvProfileDto; warnings: string[]; debug?: any }>(
-      `/career/profile/${profile.id}/import/file`, form,
+    const form = new FormData();
+    form.append('file', file);
+    if (opts?.sectionMappings) form.append('sectionMappings', JSON.stringify(opts.sectionMappings));
+    const qs = opts?.forceOcr ? '?forceOcr=1' : '';
+    const { data } = await api.post<{ profile: CvProfileDto; warnings: string[]; debug?: any; confidence?: any; quality?: any }>(
+      `/career/profile/${profile.id}/import/file${qs}`, form,
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );
     setProfile(data.profile);

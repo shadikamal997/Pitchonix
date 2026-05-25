@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import {
   Briefcase, FileText, Mail, Layout, Sparkles, User, Plus, Trash2, Copy,
   Download, Upload, ExternalLink, Loader2,
+  CheckCircle2, AlertTriangle, XCircle, Eye, X,
 } from 'lucide-react';
 import { useCvProfile, useCvDocuments, useCvTemplates, CvDoctype } from '@/features/career/hooks';
 
@@ -125,6 +126,8 @@ interface ImportResult {
   warnings:        string[];
   counts:          Record<string, number>;
   debug?:          any;
+  confidence?:     any;
+  quality?:        any;
   failedMessage?:  string;
 }
 
@@ -133,15 +136,18 @@ const ProfileTab: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [linkedinOpen, setLinkedinOpen] = useState(false);
   const [lastImport, setLastImport] = useState<ImportResult | null>(null);
+  // Phase 42.7 — keep the last uploaded file in memory so the Recovery
+  // Center can retry with OCR / new mappings without asking the user to
+  // re-select it from disk.
+  const [lastFile, setLastFile] = useState<File | null>(null);
   if (loading && !profile) return <Loader />;
   if (!profile) return <div className="text-xs text-slate-500 italic">No profile.</div>;
   const p = profile.personal || {};
 
-  const onFile = async (file?: File) => {
-    if (!file) return;
+  const runImport = async (file: File, opts?: { forceOcr?: boolean; sectionMappings?: Record<string, string> }) => {
     setBusy(true); setLastImport(null);
     try {
-      const res = await importFile(file);
+      const res = await importFile(file, opts);
       const c: Record<string, number> = {};
       if (res?.profile) {
         c.Experience     = res.profile.experience?.length     || 0;
@@ -152,10 +158,12 @@ const ProfileTab: React.FC = () => {
         c.Certifications = res.profile.certifications?.length || 0;
       }
       setLastImport({
-        filename: file.name,
-        warnings: res?.warnings || [],
-        counts:   c,
-        debug:    res?.debug,
+        filename:   file.name,
+        warnings:   res?.warnings || [],
+        counts:     c,
+        debug:      res?.debug,
+        confidence: res?.confidence,
+        quality:    res?.quality,
       });
     } catch (e: any) {
       setLastImport({
@@ -163,6 +171,12 @@ const ProfileTab: React.FC = () => {
         failedMessage: e?.response?.data?.message || e?.message || 'Import failed',
       });
     } finally { setBusy(false); }
+  };
+
+  const onFile = async (file?: File) => {
+    if (!file) return;
+    setLastFile(file);
+    await runImport(file);
   };
 
   return (
@@ -235,8 +249,18 @@ const ProfileTab: React.FC = () => {
           Runs through Universal Conversion → maps sections onto your profile.
         </p>
 
-        {/* Phase 42.6 — inline import-result card (replaces window.alert) */}
-        {lastImport && <ImportResultCard result={lastImport} onDismiss={() => setLastImport(null)} />}
+        {/* Phase 42.6 + 42.7 — inline import-result card (replaces window.alert) */}
+        {lastImport && (
+          <ImportResultCard
+            result={lastImport}
+            onDismiss={() => setLastImport(null)}
+            onRetryOcr={lastFile ? () => runImport(lastFile, { forceOcr: true }) : undefined}
+            onApplyMappings={lastFile
+              ? (mappings) => runImport(lastFile, { sectionMappings: mappings })
+              : undefined}
+            busy={busy}
+          />
+        )}
       </section>
 
       {linkedinOpen && (
@@ -279,41 +303,60 @@ const ProfileTab: React.FC = () => {
 //  which the backend scrapes.
 // =============================================================================
 // =============================================================================
-//  Phase 42.6 — Import result card (replaces native window.alert).
+//  Phase 42.6 + 42.7 — Import result card.
 //
-//  Shows a structured summary of what came out of the import:
-//    - extracted section counts (Experience / Education / Skills / …)
-//    - warnings (one line each, severity-tinted)
-//    - dev-mode debug accordion (raw text preview, detected / unknown headings)
-//    - "Analyze this CV" CTA that links to /career/analyze where the
-//      analyzer can do a stronger pass
+//  Shows a structured summary of what came out of the import + the new
+//  PRO+ surfaces:
+//    - 42.7D confidence bar (overall + per-band)
+//    - 42.7E quality report (detected / missing sections)
+//    - 42.7F raw text preview modal
+//    - 42.7C manual section mapping for unknown headings
+//    - 42.7J recovery panel (Run OCR / Map sections / View raw / Retry)
+//    - 42.7H duplicate detection chips
 // =============================================================================
-const ImportResultCard: React.FC<{ result: ImportResult; onDismiss: () => void }> = ({ result, onDismiss }) => {
+const ImportResultCard: React.FC<{
+  result:          ImportResult;
+  onDismiss:       () => void;
+  onRetryOcr?:     () => void;
+  onApplyMappings?: (mappings: Record<string, string>) => void;
+  busy?:           boolean;
+}> = ({ result, onDismiss, onRetryOcr, onApplyMappings, busy }) => {
   const total = Object.values(result.counts).reduce((s, n) => s + n, 0);
   const sparse = !result.failedMessage && total <= 0;
   const failed = !!result.failedMessage;
-  const partial = !failed && (result.warnings.length > 0 || sparse);
+  const confidence = result.confidence as { overall?: number; band?: string; bands?: any } | undefined;
+  const lowConfidence = (confidence?.overall ?? 100) < 70;
+  const showRecovery = !failed && (sparse || lowConfidence || (result.quality?.unknownHeadings || []).length > 0);
+
   const tone =
     failed  ? 'bg-red-50 border-red-200 text-red-900' :
-    partial ? 'bg-amber-50 border-amber-200 text-amber-900' :
+    showRecovery ? 'bg-amber-50 border-amber-200 text-amber-900' :
               'bg-green-50 border-green-200 text-green-900';
-  const Icon =
-    failed  ? require('lucide-react').XCircle :
-    partial ? require('lucide-react').AlertTriangle :
-              require('lucide-react').CheckCircle2;
+
+  const [rawOpen, setRawOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
 
   return (
+    <>
     <div className={`mt-3 border rounded-lg p-3 ${tone}`}>
       <div className="flex items-start gap-2">
-        <Icon className="w-4 h-4 flex-shrink-0 mt-0.5" />
+        {failed ? <XCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          : showRecovery ? <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          : <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="text-sm font-bold">
               {failed  ? 'Import failed'
                 : sparse ? `Imported "${result.filename}" — only personal info recognised`
-                : partial ? `Imported "${result.filename}" with warnings`
+                : showRecovery ? `Imported "${result.filename}" with warnings`
                 : `Imported "${result.filename}"`}
             </span>
+            {confidence?.overall != null && <ConfidenceBadge value={confidence.overall} band={confidence.band} />}
+            {result.quality?.ocr?.used && (
+              <span className="text-[9px] uppercase tracking-wide bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                OCR ({result.quality.ocr.avgConfidence ?? '?'}%)
+              </span>
+            )}
             <button onClick={onDismiss} className="ml-auto text-[10px] opacity-70 hover:opacity-100 underline">dismiss</button>
           </div>
 
@@ -329,39 +372,198 @@ const ImportResultCard: React.FC<{ result: ImportResult; onDismiss: () => void }
             </div>
           )}
 
+          {/* 42.7D — Confidence per-band bars */}
+          {confidence?.bands && (
+            <div className="mt-2 grid grid-cols-5 gap-1.5">
+              {(['heading','sections','skills','experience','education'] as const).map((k) => {
+                const v = confidence.bands[k] ?? 0;
+                const fill = v >= 80 ? 'bg-green-600' : v >= 60 ? 'bg-amber-500' : 'bg-red-500';
+                return (
+                  <div key={k}>
+                    <div className="flex items-center justify-between text-[9px] uppercase tracking-wide font-bold opacity-80">
+                      <span>{k}</span><span>{v}</span>
+                    </div>
+                    <div className="h-1 w-full bg-white/50 rounded-full overflow-hidden">
+                      <div className={`h-full ${fill}`} style={{ width: `${v}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 42.7E — Quality report (detected / missing) */}
+          {result.quality?.detected && (
+            <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+              <div>
+                <div className="text-[9px] uppercase tracking-wide font-bold opacity-80">Detected</div>
+                <div className="flex flex-wrap gap-1 mt-0.5">
+                  {(result.quality.detected || []).map((s: string) =>
+                    <span key={s} className="bg-green-100 text-green-900 px-1 py-0.5 rounded font-mono text-[10px]">✓ {s}</span>)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[9px] uppercase tracking-wide font-bold opacity-80">Missing</div>
+                <div className="flex flex-wrap gap-1 mt-0.5">
+                  {(result.quality.missing || []).map((s: string) =>
+                    <span key={s} className="bg-white/60 text-slate-600 px-1 py-0.5 rounded font-mono text-[10px]">⚠ {s}</span>)}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 42.7H — duplicate detection */}
+          {result.quality?.duplicates?.skills?.length > 0 && (
+            <p className="mt-1.5 text-[10px] opacity-80">
+              Detected duplicate skills: {result.quality.duplicates.skills.slice(0, 3).map((g: any) => `${g.canonical} (${g.variants.length})`).join(' · ')}
+              {result.quality.duplicates.skills.length > 3 ? ' + more' : ''}
+            </p>
+          )}
+
           {result.warnings.length > 0 && (
             <ul className="mt-2 space-y-0.5 text-[11px] list-disc ml-4">
               {result.warnings.map((w, i) => <li key={i}>{w}</li>)}
             </ul>
           )}
 
-          {(sparse || partial) && !failed && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Link href="/career/analyze"
-                className="inline-flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded">
-                <Sparkles className="w-3 h-3" /> Analyze this CV
-              </Link>
-              <span className="text-[10px] opacity-70">The analyzer runs a stronger classification pass on the extracted text.</span>
+          {/* 42.7J — Recovery Center */}
+          {showRecovery && !failed && (
+            <div className="mt-3 border-t border-current/20 pt-2.5">
+              <div className="text-[10px] uppercase tracking-wide font-bold opacity-80 mb-1.5">Recovery actions</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link href="/career/analyze"
+                  className="inline-flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded">
+                  <Sparkles className="w-3 h-3" /> Run deep analysis
+                </Link>
+                {onRetryOcr && (
+                  <button onClick={onRetryOcr} disabled={busy}
+                    className="inline-flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold border border-current/30 hover:bg-white/40 rounded disabled:opacity-50">
+                    <Eye className="w-3 h-3" /> Run OCR
+                  </button>
+                )}
+                {(result.quality?.unknownHeadings || []).length > 0 && onApplyMappings && (
+                  <button onClick={() => setMapOpen(true)}
+                    className="inline-flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold border border-current/30 hover:bg-white/40 rounded">
+                    <FileText className="w-3 h-3" /> Map {result.quality.unknownHeadings.length} unknown heading(s)
+                  </button>
+                )}
+                <button onClick={() => setRawOpen(true)}
+                  className="inline-flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold border border-current/30 hover:bg-white/40 rounded">
+                  <Eye className="w-3 h-3" /> View extracted text
+                </button>
+              </div>
             </div>
           )}
 
           {result.debug && (
             <details className="mt-2 text-[10px]">
-              <summary className="cursor-pointer font-mono opacity-80">Developer debug (mappedSections, detected/unknown headings, raw text)</summary>
+              <summary className="cursor-pointer font-mono opacity-80">Developer debug</summary>
               <div className="mt-1 grid grid-cols-2 gap-2">
                 <DebugBlock title="Mapped sections" value={JSON.stringify(result.debug.mappedSections, null, 2)} />
                 <DebugBlock title="Detected headings" value={(result.debug.detectedHeadings || []).join('\n') || '— none —'} />
                 <DebugBlock title="Unknown headings"  value={(result.debug.unknownHeadings  || []).join('\n') || '— none —'} />
-                <DebugBlock title={`Raw text (first ${result.debug.rawTextPreview?.length || 0} chars)`} value={result.debug.rawTextPreview || ''} />
+                <DebugBlock title={`Raw text preview`} value={result.debug.rawTextPreview || ''} />
               </div>
-              <p className="mt-1 italic opacity-70">used fallback heuristics: {String(result.debug.usedFallback)} · total lines: {result.debug.totalLines}</p>
             </details>
           )}
         </div>
       </div>
     </div>
+
+    {rawOpen && result.debug && (
+      <RawTextModal debug={result.debug} onClose={() => setRawOpen(false)} />
+    )}
+    {mapOpen && onApplyMappings && (
+      <ManualMappingModal
+        unknownHeadings={result.quality.unknownHeadings || []}
+        onCancel={() => setMapOpen(false)}
+        onApply={(m) => { setMapOpen(false); onApplyMappings(m); }}
+      />
+    )}
+    </>
   );
 };
+
+const ConfidenceBadge: React.FC<{ value: number; band?: string }> = ({ value, band }) => {
+  const tone = value >= 95 ? 'bg-green-600 text-white'
+             : value >= 80 ? 'bg-green-100 text-green-800'
+             : value >= 65 ? 'bg-amber-100 text-amber-800'
+             : value >= 45 ? 'bg-orange-100 text-orange-800'
+             :               'bg-red-100 text-red-800';
+  return <span className={`text-[9px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded ${tone}`}>{value}/100 · {band || ''}</span>;
+};
+
+// 42.7F — Raw extraction modal
+const RawTextModal: React.FC<{ debug: any; onClose: () => void }> = ({ debug, onClose }) => (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+      <header className="px-4 py-2.5 border-b border-slate-200 flex items-center gap-2">
+        <Eye className="w-4 h-4 text-purple-600" />
+        <h2 className="text-sm font-bold">Extracted text preview</h2>
+        <button onClick={onClose} className="ml-auto text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
+      </header>
+      <div className="p-4 overflow-y-auto space-y-3">
+        <div className="grid grid-cols-2 gap-3 text-[11px]">
+          <DebugBlock title="Detected headings" value={(debug.detectedHeadings || []).join('\n') || '— none —'} />
+          <DebugBlock title="Unknown headings"  value={(debug.unknownHeadings  || []).join('\n') || '— none —'} />
+          <DebugBlock title="Mapped sections"   value={JSON.stringify(debug.mappedSections, null, 2)} />
+          <DebugBlock title="Stats" value={`fallback used: ${String(debug.usedFallback)}\ntotal lines: ${debug.totalLines}`} />
+        </div>
+        <DebugBlock title={`Raw text (first ${debug.rawTextPreview?.length || 0} chars)`} value={debug.rawTextPreview || ''} />
+      </div>
+    </div>
+  </div>
+);
+
+// 42.7C — Manual section mapping modal
+const ManualMappingModal: React.FC<{
+  unknownHeadings: string[];
+  onCancel: () => void;
+  onApply:  (mappings: Record<string, string>) => void;
+}> = ({ unknownHeadings, onCancel, onApply }) => {
+  const targets = ['experience','education','skills','languages','projects','certifications','awards','publications','summary','references'];
+  const [pick, setPick] = useState<Record<string, string>>({});
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-xl">
+        <header className="px-4 py-2.5 border-b border-slate-200 flex items-center gap-2">
+          <FileText className="w-4 h-4 text-purple-600" />
+          <h2 className="text-sm font-bold">Map unknown section headings</h2>
+          <button onClick={onCancel} className="ml-auto text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
+        </header>
+        <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
+          <p className="text-[11px] text-slate-500 mb-2">Pick a target for each heading. Leave blank to skip. We'll re-run the import with these mappings.</p>
+          {unknownHeadings.map((h, i) => (
+            <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs">
+              <div className="font-mono truncate bg-slate-50 border border-slate-200 rounded px-2 py-1">{h}</div>
+              <span className="text-slate-400">→</span>
+              <select value={pick[normaliseClient(h)] || ''}
+                onChange={(e) => setPick((s) => ({ ...s, [normaliseClient(h)]: e.target.value }))}
+                className="h-7 px-2 border border-slate-300 rounded text-xs bg-white">
+                <option value="">— skip —</option>
+                {targets.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+        <footer className="px-4 py-2.5 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button onClick={onCancel} className="h-7 px-2.5 text-xs font-semibold border border-slate-300 hover:bg-slate-50 rounded">Cancel</button>
+          <button onClick={() => onApply(Object.fromEntries(Object.entries(pick).filter(([_, v]) => v)))}
+            className="h-7 px-2.5 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded">
+            Re-import with mappings
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+};
+
+function normaliseClient(s: string): string {
+  // Mirrors backend normaliseLatin (sufficient for matching keys in sectionMappings)
+  return (s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/[:.!?–—\-_]+$/, '').replace(/^[:.!?–—\-_]+/, '')
+    .replace(/\s{2,}/g, ' ').trim();
+}
 
 const DebugBlock: React.FC<{ title: string; value: string }> = ({ title, value }) => (
   <div>

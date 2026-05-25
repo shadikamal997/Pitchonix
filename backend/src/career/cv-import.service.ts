@@ -3,6 +3,11 @@ import { PptxImportService } from '../pptx-import/pptx-import.service';
 import { UniversalConversionService } from '../universal-conversion/universal-conversion.service';
 import { CvProfilesService } from './cv-profiles.service';
 import { CvProfileDto } from './cv-types';
+import {
+  classifyHeadingMultiLang, normaliseLatin, canonicalSkill,
+  findDuplicateSkills, findDuplicateExperiences, computeConfidence, runOcrOnPdf,
+  type SectionKey, type ImportConfidence,
+} from './cv-import-pro';
 
 // =============================================================================
 //  Phase 42L + 42M + 42.6 — CV import.
@@ -123,13 +128,50 @@ export class CvImportService {
   //  DOCX / PDF / HTML / MD → CvProfile
   // ---------------------------------------------------------------------------
 
-  async importFromFile(profileId: string, buffer: Buffer, filename: string, mimetype?: string): Promise<{ profile: CvProfileDto; warnings: string[]; debug?: any }> {
+  async importFromFile(profileId: string, buffer: Buffer, filename: string, mimetype?: string, opts?: { sectionMappings?: Record<string, SectionKey>; forceOcr?: boolean }): Promise<{ profile: CvProfileDto; warnings: string[]; debug?: any; confidence?: ImportConfidence; quality?: any }> {
     if (!buffer?.length) throw new BadRequestException('Empty file buffer');
     const result = await this.conversion.convert({
       buffer, filename, mimetype, targetFormat: 'html',
     });
     const udm = result.document;
     const warnings: string[] = [];
+    let usedOcr = false;
+    let ocrConfidence: number | null = null;
+
+    // -----------------------------------------------------------------------
+    //  Phase 42.7A — OCR fallback when text extraction is empty / sparse.
+    //
+    //  Trigger: PDF input + total extractable text < 200 chars, OR caller
+    //  passed forceOcr=true. We rasterise the PDF and run tesseract.js. The
+    //  OCR text replaces the UDM contents as a single synthetic page.
+    // -----------------------------------------------------------------------
+    const initialText = (udm.pages || []).flatMap((p: any) => p.nodes.map((n: any) => n.text || '')).join('\n').trim();
+    const isPdf = (filename || '').toLowerCase().endsWith('.pdf') || mimetype === 'application/pdf';
+    const shouldRunOcr = isPdf && (opts?.forceOcr || initialText.length < 200);
+    if (shouldRunOcr) {
+      try {
+        this.logger.log(`CV import: triggering OCR fallback (initial text=${initialText.length} chars)`);
+        const ocr = await runOcrOnPdf(buffer, { langs: ['eng', 'fra', 'deu', 'spa', 'ron', 'ita', 'nld', 'por', 'ara'].slice(0, 1), maxPages: 5 });
+        if (ocr.text.length > 100) {
+          usedOcr = true;
+          ocrConfidence = ocr.pageConfidences.length > 0
+            ? Math.round(ocr.pageConfidences.reduce((s, c) => s + c, 0) / ocr.pageConfidences.length)
+            : null;
+          // Replace the UDM with an OCR-synthesised single page of paragraphs.
+          const ocrLines = ocr.text.split(/[\r\n]+/).map((l) => l.trim()).filter(Boolean);
+          (udm as any).pages = [{
+            nodes: ocrLines.map((text) => ({ type: 'paragraph', text })),
+            notes: undefined, background: undefined, title: undefined,
+          }];
+          warnings.push(`OCR fallback used (${ocr.pagesRendered} page(s), avg confidence ${ocrConfidence ?? '?'}%). Text quality may be lower than native extraction.`);
+        } else {
+          warnings.push('OCR could not extract usable text — the document may be scanned at low resolution.');
+        }
+      } catch (e: any) {
+        this.logger.warn(`OCR failed: ${e?.message || e}`);
+        warnings.push(`OCR failed (${e?.message || e}). Falling back to the small amount of text extracted directly.`);
+      }
+    }
 
     // -----------------------------------------------------------------------
     //  Phase 42.6 — promote heading-like paragraphs to "synthetic" headings.
@@ -165,26 +207,21 @@ export class CvImportService {
           const raw  = (node.text || '').trim();
           const norm = normaliseHeading(raw);
           detectedHeadings.push(raw);
-          const key = SECTION_HEADINGS[norm];
-          if (key) {
-            currentSection = key;
-            sections[currentSection] = sections[currentSection] || [];
-            inSummary = false;
-          } else if (SUMMARY_HEADINGS.has(norm)) {
+          // Phase 42.7C — caller can override mapping for previously-unknown headings.
+          const mapped: SectionKey | null = (opts?.sectionMappings && opts.sectionMappings[norm]) || null;
+          // Phase 42.7B — multi-language classifier (EN + FR + DE + ES + RO + IT + NL + PT + AR).
+          const key: SectionKey | null = mapped || classifyHeadingMultiLang(raw);
+          if (key === 'summary') {
             currentSection = null;
             inSummary = true;
+          } else if (key) {
+            currentSection = key as keyof CvProfileDto;
+            sections[currentSection] = sections[currentSection] || [];
+            inSummary = false;
           } else {
-            // Try substring fallback ("My Work Experience" → experience).
-            const sub = matchHeadingBySubstring(norm);
-            if (sub) {
-              currentSection = sub;
-              sections[currentSection] = sections[currentSection] || [];
-              inSummary = false;
-            } else {
-              currentSection = null;
-              inSummary = false;
-              if (norm && norm.length < 40) unknownHeadings.push(raw);
-            }
+            currentSection = null;
+            inSummary = false;
+            if (norm && norm.length < 40) unknownHeadings.push(raw);
           }
           continue;
         }
@@ -228,6 +265,20 @@ export class CvImportService {
       payload[key] = mapLinesToSection(key, lines) as any;
     }
 
+    // Phase 42.7I — canonical skill names (React.js / NodeJS / JS → canonical).
+    if (payload.skills) {
+      payload.skills = (payload.skills as any[]).map((s) => ({ ...s, name: canonicalSkill(s.name || '') }));
+    }
+    // Phase 42.7H — duplicate detection (surface to UI; don't auto-delete).
+    const dupSkills = findDuplicateSkills((payload.skills as any) || []);
+    const dupExp    = findDuplicateExperiences((payload.experience as any) || []);
+    if (dupSkills.length > 0) {
+      warnings.push(`${dupSkills.length} skill duplicate group(s) detected — e.g. "${dupSkills[0].variants.slice(0,3).join(', ')}".`);
+    }
+    if (dupExp.length > 0) {
+      warnings.push(`${dupExp.length} duplicate experience entry/entries detected.`);
+    }
+
     // Build warnings + debug payload.
     const extractedCounts: Record<string, number> = {};
     for (const k of Object.keys(sections) as (keyof CvProfileDto)[]) {
@@ -255,9 +306,32 @@ export class CvImportService {
       totalLines:        allLines.length,
     } : undefined;
 
-    if (debug) this.logger.log(`CV import: ${allLines.length} lines, ${detectedHeadings.length} headings, mapped=${JSON.stringify(extractedCounts)}`);
+    // Phase 42.7D — confidence engine.
+    const confidence = computeConfidence(payload, {
+      headingsDetected: detectedHeadings.length - unknownHeadings.length,
+      headingsUnknown:  unknownHeadings.length,
+      usedFallback,
+    });
 
-    return { profile, warnings, debug };
+    // Phase 42.7E — quality report payload.
+    const quality = {
+      score:    confidence.overall,
+      band:     confidence.band,
+      detected: confidence.detected,
+      missing:  confidence.missing,
+      counts:   extractedCounts,
+      duplicates: {
+        skills:      dupSkills.map((g) => ({ canonical: g.canonical, variants: g.variants })),
+        experiences: dupExp.map((g) => g.rep),
+      },
+      ocr: usedOcr ? { used: true, avgConfidence: ocrConfidence } : { used: false },
+      usedFallback,
+      unknownHeadings: unknownHeadings.slice(0, 20),
+    };
+
+    if (debug) this.logger.log(`CV import: ${allLines.length} lines, ${detectedHeadings.length} headings, mapped=${JSON.stringify(extractedCounts)}, confidence=${confidence.overall} (${confidence.band})`);
+
+    return { profile, warnings, debug, confidence, quality };
   }
 
   // ---------------------------------------------------------------------------
