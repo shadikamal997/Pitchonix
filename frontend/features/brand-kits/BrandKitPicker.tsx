@@ -9,6 +9,7 @@ import { useMyBrandKits } from './useBrandKits';
 import api from '@/lib/api';
 import { BrandPreviewWall } from './BrandPreviewWall';
 import { useToast } from '@/components/ToastProvider';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 37.3A — BrandKitPicker (canonical)
@@ -265,6 +266,7 @@ const PickerBody: React.FC<{
   onApply:      (kit: BrandKitLite | null) => void | Promise<void>;
   mode:         BrandKitPickerMode;
 }> = ({ items, loading, previewId, currentValue, onPreview, onClear, onApply, mode }) => {
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
   const [wallKit, setWallKit] = useState<BrandKitLite | null>(null);
   const selectedKit = items.find((k) => k.id === previewId) || null;
@@ -301,7 +303,7 @@ const PickerBody: React.FC<{
 
   const doClear = async () => {
     if (!currentValue) return;
-    if (!window.confirm('Remove the brand kit from this work? Existing styling stays in place but the kit will no longer be linked.')) return;
+    if (!(await confirm({ title: 'Remove brand kit?', message: 'Existing styling stays in place but the kit will no longer be linked to this work.', confirmLabel: 'Remove', tone: 'warning' }))) return;
     setBusy(true);
     try { await onClear(); } finally { setBusy(false); }
   };

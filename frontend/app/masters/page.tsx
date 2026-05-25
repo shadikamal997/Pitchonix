@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Layers, Plus, Copy, Trash2, Link2 } from 'lucide-react';
 import { useMasterSlides } from '@/features/pptx-editing/hooks';
+import { useToast } from '@/components/ToastProvider';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 38A — Master Slides dashboard
@@ -17,6 +19,8 @@ export default function MastersPage() {
   const [deckId, setDeckId] = useState('');
   const { items, loading, create, duplicate, remove, applyToDeck, update } = useMasterSlides(deckId);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -63,11 +67,21 @@ export default function MastersPage() {
                   className="flex-1 h-7 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center justify-center gap-1"
                 ><Copy className="w-3 h-3" /> Copy</button>
                 <button
-                  onClick={async () => { setActiveId(m.id); try { const r = await applyToDeck(m.id); alert(`Applied to ${r?.applied} slides`); } finally { setActiveId(null); } }}
+                  onClick={async () => {
+                    setActiveId(m.id);
+                    try { const r = await applyToDeck(m.id); toast.success(`Applied to ${r?.applied ?? 0} slides`); }
+                    catch (e: any) { toast.error(e?.response?.data?.message || e?.message || 'Apply failed'); }
+                    finally { setActiveId(null); }
+                  }}
                   disabled={activeId === m.id}
                   className="flex-1 h-7 text-[10px] font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center justify-center gap-1 disabled:opacity-40"
                 ><Link2 className="w-3 h-3" /> Apply</button>
-                <button onClick={() => { if (window.confirm('Delete this master?')) remove(m.id); }}
+                <button onClick={async () => {
+                  if (await confirm({ title: 'Delete master?', message: `"${m.name}" will be removed.`, confirmLabel: 'Delete', tone: 'danger' })) {
+                    try { await remove(m.id); toast.success('Master deleted.'); }
+                    catch (e: any) { toast.error(e?.response?.data?.message || e?.message || 'Delete failed'); }
+                  }
+                }}
                   className="h-7 px-2 text-[10px] font-semibold bg-red-50 text-red-700 rounded hover:bg-red-100"
                 ><Trash2 className="w-3 h-3" /></button>
               </div>

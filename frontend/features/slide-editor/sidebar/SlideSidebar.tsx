@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import type { SlideListItem, UseDeckSlides } from './useDeckSlides';
 import { SlideThumbnail } from './SlideThumbnail';
+import { useToast } from '@/components/ToastProvider';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  SlideSidebar — left rail in the editor
@@ -39,6 +41,8 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen]     = useState<string | null>(null);
   const [busy, setBusy]             = useState(false);
+  const toast = useToast();
+  const confirmDialog = useConfirm();
 
   const slides = api.slides;
 
@@ -110,10 +114,10 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
   const handleDelete = async (slideId: string) => {
     setMenuOpen(null);
     if (slides.length <= 1) {
-      alert('Cannot delete the last slide.');
+      toast.error('A presentation must contain at least one slide.');
       return;
     }
-    if (!confirm('Delete this slide?')) return;
+    if (!(await confirmDialog({ title: 'Delete slide?', message: 'This slide will be permanently removed from the deck.', confirmLabel: 'Delete', tone: 'danger' }))) return;
     setBusy(true);
     try {
       // Pick a neighbour to land on before deletion

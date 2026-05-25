@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
+// Phase Ω.3.1 — global confirmation dialog (replaces window.confirm)
+import { ConfirmProvider } from "@/components/ConfirmDialog";
 // Phase 39 — global workspace context (current workspace + permissions)
 import { WorkspaceProvider } from "@/features/workspaces/WorkspaceContext";
 import { inter, allFontClassNames } from './fonts';
@@ -31,12 +33,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ToastProvider>
-            <ErrorBoundary>
-              <WorkspaceProvider>
-                {children}
-              </WorkspaceProvider>
-              <Toaster />
-            </ErrorBoundary>
+            <ConfirmProvider>
+              <ErrorBoundary>
+                <WorkspaceProvider>
+                  {children}
+                </WorkspaceProvider>
+                <Toaster />
+              </ErrorBoundary>
+            </ConfirmProvider>
           </ToastProvider>
         </ThemeProvider>
       </body>

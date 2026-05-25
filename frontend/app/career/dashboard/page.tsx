@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api';
 import { useCvProfile, useCvDocuments } from '@/features/career/hooks';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 42.4G — Career Intelligence Dashboard
@@ -25,6 +26,7 @@ import { useCvProfile, useCvDocuments } from '@/features/career/hooks';
 export default function CareerDashboardPage() {
   const { profile } = useCvProfile();
   const { items: docs } = useCvDocuments('cv');
+  const confirm = useConfirm();
   const [snapshots, setSnapshots] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
   // Phase 42.8G — Import history (separate from snapshot timeline).
@@ -58,7 +60,7 @@ export default function CareerDashboardPage() {
   }, [toast]);
 
   const deleteSnapshot = async (id: string) => {
-    if (!window.confirm('Delete this snapshot?')) return;
+    if (!(await confirm({ title: 'Delete snapshot?', message: 'This entry will be removed from your analysis history.', confirmLabel: 'Delete', tone: 'danger' }))) return;
     try {
       await api.delete(`/career/analyze/snapshots/${id}`);
       loadSnapshots();
@@ -67,7 +69,7 @@ export default function CareerDashboardPage() {
   };
 
   const wipeHistory = async () => {
-    if (!window.confirm('Delete ALL analysis history? This cannot be undone.')) return;
+    if (!(await confirm({ title: 'Delete all history?', message: 'Every analysis snapshot will be permanently removed. This cannot be undone.', confirmLabel: 'Delete all', tone: 'danger' }))) return;
     try {
       await api.delete('/career/analyze/snapshots');
       loadSnapshots();

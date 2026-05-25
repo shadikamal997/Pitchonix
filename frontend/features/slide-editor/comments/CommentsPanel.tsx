@@ -6,6 +6,7 @@ import {
   Search, Pencil, UserPlus, CheckCheck, AtSign, MoreHorizontal,
 } from 'lucide-react';
 import { useSlideComments, type CommentDTO } from './useSlideComments';
+import { useConfirm } from '@/components/ConfirmDialog';
 import type { SlideElementDTO } from '@/types/slide-element';
 import { MentionTextarea } from './MentionTextarea';
 import { MentionText } from './MentionText';
@@ -44,6 +45,7 @@ export const CommentsPanel: React.FC<Props> = ({
   projectId, slideId, slideTitle, elements, focusedElementId,
   onClose, onCountsChange, currentUserId, reviewerMode,
 }) => {
+  const confirm = useConfirm();
   const {
     comments, elementCounts, loading, error,
     addComment, addReply, resolve, reopen, remove,
@@ -126,7 +128,7 @@ export const CommentsPanel: React.FC<Props> = ({
   };
 
   const handleResolveAll = async () => {
-    if (!window.confirm('Resolve every open thread on this slide?')) return;
+    if (!(await confirm({ title: 'Resolve all threads?', message: 'Every open comment thread on this slide will be marked resolved.', confirmLabel: 'Resolve all' }))) return;
     setResolvingAll(true);
     try { await resolveAll(); } finally { setResolvingAll(false); }
   };

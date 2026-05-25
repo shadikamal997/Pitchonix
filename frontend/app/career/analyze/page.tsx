@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api';
 import { useCvTemplates } from '@/features/career/hooks';
+import { useConfirm } from '@/components/ConfirmDialog';
 import { CvDiffEditor } from '@/features/career/CvDiffEditor';
 import { TemplateRadar, TemplateRadarCompare, type TemplateInsightAxes } from '@/features/career/TemplateRadar';
 
@@ -52,6 +53,7 @@ interface CvReport {
 
 export default function CvAnalyzePage() {
   const router = useRouter();
+  const confirm = useConfirm();
   const [step, setStep] = useState<Step>('upload');
 
   // Wizard state
@@ -134,7 +136,7 @@ export default function CvAnalyzePage() {
 
   const generateVariants = async () => {
     if (!profile) return;
-    if (!window.confirm('Generate 4 CV variants (ATS, Executive, Modern, Developer)?')) return;
+    if (!(await confirm({ title: 'Generate 4 CV variants?', message: 'We\'ll create separate documents for ATS, Executive, Modern, and Developer styles. You can keep, edit or delete any of them.', confirmLabel: 'Generate' }))) return;
     setBusy(true); setError(null);
     try {
       // Save profile first so variants link to it.

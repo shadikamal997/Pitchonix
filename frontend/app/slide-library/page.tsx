@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Trash2, FileInput } from 'lucide-react';
 import { useSlideLibrary, ReusableSlideDTO } from '@/features/pptx-editing/hooks';
+import { useToast } from '@/components/ToastProvider';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 38O — Slide Library
@@ -14,17 +16,19 @@ import { useSlideLibrary, ReusableSlideDTO } from '@/features/pptx-editing/hooks
 
 export default function SlideLibraryPage() {
   const { items, loading, insert, remove } = useSlideLibrary();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [deckId, setDeckId] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
 
   const handleInsert = async (id: string) => {
-    if (!deckId.trim()) { alert('Paste a deck id first.'); return; }
+    if (!deckId.trim()) { toast.warning('Paste a deck id first.'); return; }
     setBusy(id);
     try {
       const res = await insert(id, deckId.trim());
-      alert(`Inserted ${res?.inserted ?? 1} slide(s) into deck.`);
+      toast.success(`Inserted ${res?.inserted ?? 1} slide(s) into deck.`);
     } catch (e: any) {
-      alert(`Insert failed: ${e?.response?.data?.message || e?.message || e}`);
+      toast.error(`Insert failed: ${e?.response?.data?.message || e?.message || e}`);
     } finally { setBusy(null); }
   };
 
@@ -75,7 +79,12 @@ export default function SlideLibraryPage() {
                     <FileInput className="w-3 h-3" /> {busy === it.id ? 'Inserting…' : 'Insert'}
                   </button>
                   <button
-                    onClick={() => { if (window.confirm('Delete this library entry?')) remove(it.id); }}
+                    onClick={async () => {
+                      if (await confirm({ title: 'Delete entry?', message: `"${it.name}" will be removed from the slide library.`, confirmLabel: 'Delete', tone: 'danger' })) {
+                        try { await remove(it.id); toast.success('Entry deleted.'); }
+                        catch (e: any) { toast.error(e?.response?.data?.message || e?.message || 'Delete failed'); }
+                      }
+                    }}
                     className="h-7 px-2 text-[10px] font-semibold bg-red-50 text-red-700 rounded hover:bg-red-100"
                   ><Trash2 className="w-3 h-3" /></button>
                 </div>

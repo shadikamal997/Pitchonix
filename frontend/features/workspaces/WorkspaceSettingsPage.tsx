@@ -8,6 +8,7 @@ import { useWorkspaceContext } from './WorkspaceContext';
 import { InviteMemberModal } from './InviteMemberModal';
 import type { WorkspaceRole } from '@/types/workspace';
 import { relativeTime } from '../slide-editor/comments/relative-time';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 39I — WorkspaceSettingsPage
@@ -31,6 +32,7 @@ const ROLE_LABEL: Record<WorkspaceRole, string> = {
 export const WorkspaceSettingsPage: React.FC<{ workspaceId: string }> = ({ workspaceId }) => {
   const detail = useWorkspaceDetail(workspaceId);
   const { can } = useWorkspaceContext();
+  const confirm = useConfirm();
   const [tab, setTab] = useState<Tab>('general');
   const [inviteOpen, setInviteOpen] = useState(false);
 
@@ -103,6 +105,7 @@ const TabButton: React.FC<{
 const GeneralTab: React.FC<{ detail: ReturnType<typeof useWorkspaceDetail> }> = ({ detail }) => {
   const ws = detail.workspace!;
   const { can } = useWorkspaceContext();
+  const confirm = useConfirm();
   const [name, setName] = useState(ws.name);
   const [description, setDescription] = useState(ws.description || '');
   const [busy, setBusy] = useState(false);
@@ -123,7 +126,7 @@ const GeneralTab: React.FC<{ detail: ReturnType<typeof useWorkspaceDetail> }> = 
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this workspace? Projects in it will be detached but not deleted.')) return;
+    if (!(await confirm({ title: 'Delete workspace?', message: 'Projects in this workspace will be detached but not deleted.', confirmLabel: 'Delete workspace', tone: 'danger' }))) return;
     await detail.remove();
     window.location.href = '/dashboard';
   };
@@ -225,6 +228,7 @@ const MemberRow: React.FC<{
   detail: ReturnType<typeof useWorkspaceDetail>;
 }> = ({ member, detail }) => {
   const { can } = useWorkspaceContext();
+  const confirm = useConfirm();
   const isOwner = member.role === 'owner';
   const canChange = can('member.role_change') && !isOwner;
   const canRemove = can('member.remove') && !isOwner;
@@ -264,7 +268,7 @@ const MemberRow: React.FC<{
           {canTransfer && (
             <button
               onClick={async () => {
-                if (window.confirm(`Transfer ownership to ${member.user.name || member.user.email}? You will be demoted to admin.`)) {
+                if (await confirm({ title: 'Transfer ownership?', message: `${member.user.name || member.user.email} will become the workspace owner. You will be demoted to admin.`, confirmLabel: 'Transfer', tone: 'warning' })) {
                   await detail.transferOwnership(member.user.id);
                 }
               }}
@@ -276,7 +280,7 @@ const MemberRow: React.FC<{
           {canRemove && (
             <button
               onClick={async () => {
-                if (window.confirm(`Remove ${member.user.name || member.user.email} from this workspace?`)) {
+                if (await confirm({ title: 'Remove member?', message: `${member.user.name || member.user.email} will lose access to this workspace.`, confirmLabel: 'Remove', tone: 'danger' })) {
                   await detail.removeMember(member.id);
                 }
               }}

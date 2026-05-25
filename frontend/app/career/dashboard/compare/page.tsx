@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, GitCompare, Loader2, RotateCcw } from 'lucide-react';
 import api from '@/lib/api';
 import { CvDiffEditor } from '@/features/career/CvDiffEditor';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 42.5B — Snapshot vs Snapshot comparison.
@@ -30,6 +31,7 @@ interface SnapshotFull extends SnapshotListItem {
 }
 
 export default function SnapshotComparePage() {
+  const confirm = useConfirm();
   const [snapshots, setSnapshots] = useState<SnapshotListItem[]>([]);
   const [aId, setAId] = useState<string>('');
   const [bId, setBId] = useState<string>('');
@@ -75,7 +77,7 @@ export default function SnapshotComparePage() {
       setInfo('Snapshot has no profile payload to restore.');
       return;
     }
-    if (!window.confirm(`Restore profile from snapshot "${snap.label || snap.id}"? This will overwrite the saved profile.`)) return;
+    if (!(await confirm({ title: 'Restore profile?', message: `Snapshot "${snap.label || snap.id}" will overwrite your current saved profile.`, confirmLabel: 'Restore', tone: 'warning' }))) return;
     setBusy(true); setErr(null); setInfo(null);
     try {
       await api.post('/career/analyze/save', { profile: snap.profileJson, doctype: 'cv', title: 'Restored CV' });

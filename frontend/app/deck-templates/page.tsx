@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, LayoutTemplate, Plus, Trash2, Sparkles } from 'lucide-react';
 import { useDeckTemplates } from '@/features/pptx-editing/hooks';
+import { useToast } from '@/components/ToastProvider';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 38P — Template Builder / Deck Templates dashboard
@@ -15,32 +17,35 @@ import { useDeckTemplates } from '@/features/pptx-editing/hooks';
 
 export default function DeckTemplatesPage() {
   const { items, loading, fromDeck, instantiate, remove } = useDeckTemplates();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [sourceDeckId, setSourceDeckId] = useState('');
   const [templateName, setTemplateName] = useState('');
   const [projectId, setProjectId] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const handleSnapshot = async () => {
-    if (!sourceDeckId.trim()) { alert('Paste a deck id first.'); return; }
+    if (!sourceDeckId.trim()) { toast.warning('Paste a deck id first.'); return; }
     try {
       await fromDeck(sourceDeckId.trim(), {
         name: templateName.trim() || undefined,
         isPublic: false,
       });
       setSourceDeckId(''); setTemplateName('');
+      toast.success('Template saved.');
     } catch (e: any) {
-      alert(`Save-as-template failed: ${e?.response?.data?.message || e?.message || e}`);
+      toast.error(`Save-as-template failed: ${e?.response?.data?.message || e?.message || e}`);
     }
   };
 
   const handleInstantiate = async (id: string) => {
-    if (!projectId.trim()) { alert('Paste a project id first.'); return; }
+    if (!projectId.trim()) { toast.warning('Paste a project id first.'); return; }
     setActiveId(id);
     try {
       const deck = await instantiate(id, projectId.trim());
-      alert(`Created deck ${deck.id}`);
+      toast.success(`Created deck ${deck.id}`);
     } catch (e: any) {
-      alert(`Instantiate failed: ${e?.response?.data?.message || e?.message || e}`);
+      toast.error(`Instantiate failed: ${e?.response?.data?.message || e?.message || e}`);
     } finally { setActiveId(null); }
   };
 
@@ -100,7 +105,12 @@ export default function DeckTemplatesPage() {
                     <Sparkles className="w-3 h-3" /> {activeId === t.id ? 'Creating…' : 'New deck'}
                   </button>
                   <button
-                    onClick={() => { if (window.confirm('Delete this template?')) remove(t.id); }}
+                    onClick={async () => {
+                      if (await confirm({ title: 'Delete template?', message: `"${t.name}" will be permanently removed.`, confirmLabel: 'Delete', tone: 'danger' })) {
+                        try { await remove(t.id); toast.success('Template deleted.'); }
+                        catch (e: any) { toast.error(e?.response?.data?.message || e?.message || 'Delete failed'); }
+                      }
+                    }}
                     className="h-7 px-2 text-[10px] font-semibold bg-red-50 text-red-700 rounded hover:bg-red-100"
                   ><Trash2 className="w-3 h-3" /></button>
                 </div>

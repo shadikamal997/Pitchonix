@@ -5,6 +5,7 @@ import { Search, Star, StarOff, Copy, Trash2, Grid3x3, List, Plus, Sparkles } fr
 import { PanelSection } from '../inspector/Primitives';
 import { useComponents, useSlideInstances, categoryLabel } from './useComponents';
 import { useSmartComponents } from './useSmartComponents';
+import { useToast } from '@/components/ToastProvider';
 import {
   COMPONENT_CATEGORY_GROUPS, COMPONENT_CATEGORIES,
 } from '@/types/saved-component';
@@ -57,6 +58,7 @@ interface Props {
 }
 
 export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onInserted, activeFamily }) => {
+  const toast = useToast();
   const [tab,    setTab]    = useState<LibraryTab>('mine');
   const [filter, setFilter] = useState<FilterMode>('all');
   const [view,   setView]   = useState<ViewMode>('grid');
@@ -116,7 +118,7 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
     if (!name) return;
     const category = (prompt(`Category? (${COMPONENT_CATEGORIES.slice(0, 6).join(', ')}, …)`, 'custom') || 'custom') as ComponentCategory;
     if (!COMPONENT_CATEGORIES.includes(category)) {
-      alert(`Unknown category. Use one of: ${COMPONENT_CATEGORIES.join(', ')}`);
+      toast.error(`Unknown category. Use one of: ${COMPONENT_CATEGORIES.join(', ')}`);
       return;
     }
     const input: CreateComponentInput = {

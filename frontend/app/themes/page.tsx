@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Palette, Plus, Trash2 } from 'lucide-react';
 import { useThemes, ThemeDTO } from '@/features/pptx-editing/hooks';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 38C — Theme Builder
@@ -23,6 +24,7 @@ const DEFAULT_TOKENS = {
 
 export default function ThemesPage() {
   const { items, create, update, remove } = useThemes({});
+  const confirm = useConfirm();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected: ThemeDTO | null = items.find((t) => t.id === selectedId) || null;
 
@@ -60,7 +62,7 @@ export default function ThemesPage() {
                 <span className="w-3 h-3 rounded" style={{ background: (t.tokens?.colors?.primary) || '#94A3B8' }} />
                 <span className="truncate">{t.name}</span>
                 <button
-                  onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this theme?')) remove(t.id); }}
+                  onClick={async (e) => { e.stopPropagation(); if (await confirm({ title: 'Delete theme?', message: `"${t.name}" will be removed.`, confirmLabel: 'Delete', tone: 'danger' })) remove(t.id); }}
                   className="ml-auto p-0.5 text-red-600 hover:bg-red-50 rounded"
                 ><Trash2 className="w-3 h-3" /></button>
               </div>

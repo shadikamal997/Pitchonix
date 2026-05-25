@@ -10,6 +10,7 @@ import {
   CheckCircle2, AlertTriangle, XCircle, Eye, X,
 } from 'lucide-react';
 import { useCvProfile, useCvDocuments, useCvTemplates, CvDoctype } from '@/features/career/hooks';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 42J — Career documents workspace.
@@ -748,6 +749,7 @@ const LinkedInImportModal: React.FC<{
 
 const DocumentList: React.FC<{ doctype: CvDoctype; label: string }> = ({ doctype, label }) => {
   const { items, create, remove, duplicate, exportDoc } = useCvDocuments(doctype);
+  const confirm = useConfirm();
   const [busy, setBusy] = useState<string | null>(null);
 
   const createNew = async () => {
@@ -811,7 +813,9 @@ const DocumentList: React.FC<{ doctype: CvDoctype; label: string }> = ({ doctype
                   className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1">
                   <Copy className="w-3 h-3" />
                 </button>
-                <button onClick={() => { if (window.confirm(`Delete "${d.title}"?`)) remove(d.id); }}
+                <button onClick={async () => {
+                  if (await confirm({ title: 'Delete document?', message: `"${d.title}" will be permanently removed.`, confirmLabel: 'Delete', tone: 'danger' })) remove(d.id);
+                }}
                   className="h-7 px-2 text-[10px] font-semibold bg-red-50 text-red-700 rounded hover:bg-red-100">
                   <Trash2 className="w-3 h-3" />
                 </button>

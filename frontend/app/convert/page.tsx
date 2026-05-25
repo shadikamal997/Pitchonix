@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api';
 import { BrandKitPicker, BrandKitBadge } from '@/features/brand-kits/BrandKitPicker';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 41N — Universal Conversion Wizard.
@@ -408,6 +409,7 @@ const BatchPanel: React.FC<{
 //  Click a row to show lineage chain via /convert/lineage/:id.
 // =============================================================================
 const HistoryPanel: React.FC = () => {
+  const confirm = useConfirm();
   const [items, setItems]   = useState<any[]>([]);
   const [chain, setChain]   = useState<any[] | null>(null);
   const [busy,  setBusy]    = useState(false);
@@ -433,7 +435,7 @@ const HistoryPanel: React.FC = () => {
 
   const [restoredId, setRestoredId] = useState<string | null>(null);
   const restore = async (id: string) => {
-    if (!window.confirm('Restore this conversion result?')) return;
+    if (!(await confirm({ title: 'Restore conversion?', message: 'Restoring will re-create the downloaded artefact and overwrite any subsequent edits in the lineage.', confirmLabel: 'Restore' }))) return;
     try {
       await api.post(`/convert/restore/${id}`);
       setRestoredId(id);

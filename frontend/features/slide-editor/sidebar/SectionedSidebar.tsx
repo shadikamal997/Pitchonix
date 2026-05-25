@@ -8,6 +8,8 @@ import {
 import api from '@/lib/api';
 import type { SlideListItem, UseDeckSlides } from './useDeckSlides';
 import { SlideThumbnail } from './SlideThumbnail';
+import { useToast } from '@/components/ToastProvider';
+import { useConfirm } from '@/components/ConfirmDialog';
 import {
   type Section, type DeckMetadata,
   getSections, bucketSlides, sectionIdOf, newSectionId,
@@ -70,6 +72,9 @@ export const SectionedSidebar: React.FC<Props> = ({
   const [selectedIds, setSelectedIds]     = useState<Set<string>>(new Set());
   /** Phase 32F — inline-rename for sections. */
   const [renamingSectionId, setRenamingSectionId] = useState<string | null>(null);
+  /** Phase Ω.3.1 — toast + confirm dialog (replaces window.alert/confirm). */
+  const toast = useToast();
+  const confirmDialog = useConfirm();
 
   // Sync the active slide into the selection set so single-click still feels right
   useEffect(() => {
@@ -265,10 +270,10 @@ export const SectionedSidebar: React.FC<Props> = ({
   const handleBulkDelete = useCallback(async () => {
     if (selectedIds.size === 0) return;
     if (selectedIds.size >= slides.length) {
-      alert('Cannot delete every slide. Keep at least one.');
+      toast.error('A presentation must contain at least one slide.');
       return;
     }
-    if (!confirm(`Delete ${selectedIds.size} slide(s)?`)) return;
+    if (!(await confirmDialog({ title: `Delete ${selectedIds.size} slide(s)?`, message: 'The selected slides will be permanently removed from the deck.', confirmLabel: 'Delete', tone: 'danger' }))) return;
     const ids = Array.from(selectedIds);
     const idx = slides.findIndex((s) => s.id === currentSlideId);
     const fallback = slides.slice(idx + 1).find((s) => !selectedIds.has(s.id)) ||

@@ -72,6 +72,7 @@ import { WorkspaceSwitcher } from '@/features/workspaces/WorkspaceSwitcher';
 // Phase 37K — apply brand kit menu
 import { BrandKitPicker } from '@/features/brand-kits/BrandKitPicker';
 import { useDeckBrandKit } from '@/features/brand-kits/useDeckBrandKit';
+import { useConfirm } from '@/components/ConfirmDialog';
 // Phase 34 — real-time collaboration
 import { useCollaboration } from '@/features/collaboration/useCollaboration';
 import { PresenceAvatars } from '@/features/collaboration/PresenceAvatars';
@@ -158,6 +159,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   // Phase 35 — Version History state. `preview` is shared via the Provider
   // wrapping SlideEditorWithBoundary so mutation hooks see the same value.
   const preview = useVersionPreview();
+  const confirmDialog = useConfirm();
   const versionHistory = useVersionHistory(slide?.deckId || null);
   const deckSlides = useDeckSlides(slide?.deckId || null);
   const deckBrand  = useDeckBrandKit(slide?.deckId || null);
@@ -264,7 +266,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
     history.commit(apiRef.current.elements);
 
     if (layout.blank) {
-      const confirmed = window.confirm('Blank layout will remove every element on this slide. Continue?');
+      const confirmed = await confirmDialog({ title: 'Apply blank layout?', message: 'Every element on this slide will be removed.', confirmLabel: 'Apply blank', tone: 'warning' });
       if (!confirmed) return;
       await apiRef.current.syncAll([]);
     } else {
@@ -490,7 +492,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   const handleTidySlide = useCallback(async () => {
     const decision = tidySlide(apiRef.current.elements);
     if (decision.next.length === 0 && apiRef.current.elements.length > 0) return;
-    if (!window.confirm(`Tidy slide → ${decision.layoutName}\n\n${decision.reason}\n\nThis will re-position your elements. Continue?`)) return;
+    if (!(await confirmDialog({ title: `Tidy slide → ${decision.layoutName}`, message: `${decision.reason}\n\nElements will be re-positioned.`, confirmLabel: 'Tidy slide' }))) return;
     history.commit(apiRef.current.elements);
     await apiRef.current.syncAll(decision.next);
     if (decision.layoutId) {

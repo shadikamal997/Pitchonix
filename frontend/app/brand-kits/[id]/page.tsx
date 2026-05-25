@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useBrandKit, importBrandKit } from '@/features/brand-kits/useBrandKits';
 import { useToast } from '@/components/ToastProvider';
+import { useConfirm } from '@/components/ConfirmDialog';
 import { BrandPreviewPanel } from '@/features/brand-kits/BrandPreviewPanel';
 import { BrandAuditPanel } from '@/features/brand-kits/BrandAuditPanel';
 import { Download, Upload as UploadIcon, Share2, Archive, PackageOpen } from 'lucide-react';
@@ -603,13 +604,15 @@ const BatchApplyButton: React.FC<{
   workspaceId: string | null;
 }> = ({ detail, workspaceId }) => {
   const [busy, setBusy] = React.useState(false);
+  const toast = useToast();
+  const confirm = useConfirm();
   if (!workspaceId) return null;
   const onClick = async () => {
-    if (!window.confirm('Apply this brand kit to every deck in the workspace? This rewrites their themeTokens.')) return;
+    if (!(await confirm({ title: 'Apply to every deck?', message: 'This brand kit\'s tokens will overwrite every deck in the workspace.', confirmLabel: 'Apply to all', tone: 'warning' }))) return;
     setBusy(true);
     try {
       const res = await detail.applyToMany({ workspaceId });
-      if (res) alert(`Applied to ${res.applied} deck${res.applied === 1 ? '' : 's'}.`);
+      if (res) toast.success(`Applied to ${res.applied} deck${res.applied === 1 ? '' : 's'}.`);
     } finally { setBusy(false); }
   };
   return (

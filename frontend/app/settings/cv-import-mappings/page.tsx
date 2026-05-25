@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Loader2, Trash2, FileText, RotateCcw, Save } from 'lucide-react';
 import api from '@/lib/api';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // =============================================================================
 //  Phase 42.8D — CV Import Mapping Memory management.
@@ -25,6 +26,7 @@ interface MemoryRow {
 }
 
 export default function CvImportMappingsPage() {
+  const confirm = useConfirm();
   const [rows, setRows] = useState<MemoryRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,13 +50,13 @@ export default function CvImportMappingsPage() {
   };
 
   const removeRow = async (id: string) => {
-    if (!window.confirm('Delete this mapping?')) return;
+    if (!(await confirm({ title: 'Delete mapping?', message: 'This mapping will no longer auto-apply.', confirmLabel: 'Delete', tone: 'danger' }))) return;
     try { await api.delete(`/career/import/mappings/${id}`); setRows((r) => r.filter((x) => x.id !== id)); setToast('Mapping deleted'); }
     catch (e: any) { setError(e?.response?.data?.message || e?.message); }
   };
 
   const wipeAll = async () => {
-    if (!window.confirm('Delete ALL saved mappings? Future imports will treat unknown headings as new.')) return;
+    if (!(await confirm({ title: 'Delete all mappings?', message: 'Future imports will treat unknown headings as new.', confirmLabel: 'Delete all', tone: 'danger' }))) return;
     try { await api.delete('/career/import/mappings'); setRows([]); setToast('All mappings cleared'); }
     catch (e: any) { setError(e?.response?.data?.message || e?.message); }
   };
