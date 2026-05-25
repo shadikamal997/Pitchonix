@@ -75,7 +75,7 @@ export default function Step6GenerationSettings({ data, onUpdate, documentType =
                 onClick={() => onUpdate({ slideCount: num })}
                 className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
                   effectiveSlideCount === num
-                    ? 'bg-[#4F7563] text-white shadow-lg shadow-green-500/30'
+                    ? 'bg-[#4F7563] text-white shadow-lg shadow-[0_12px_24px_rgba(79,117,99,0.30)]'
                     : 'bg-[#F1F0EC] text-[#111111] hover:bg-[#E3E1DA] border border-[#E3E1DA]'
                 }`}
               >
@@ -132,7 +132,7 @@ export default function Step6GenerationSettings({ data, onUpdate, documentType =
                 key={option.value}
                 className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md ${
                   data.contentDepth === option.value
-                    ? 'border-[#4F7563] bg-[#EEF5F1] shadow-lg shadow-green-500/20'
+                    ? 'border-[#4F7563] bg-[#EEF5F1] shadow-lg shadow-[0_10px_22px_rgba(79,117,99,0.22)]'
                     : 'border-[#E3E1DA] hover:border-[#A8B9AE]'
                 }`}
               >
@@ -158,7 +158,7 @@ export default function Step6GenerationSettings({ data, onUpdate, documentType =
       {/* Include Options */}
       <div className="rounded-2xl border-2 border-[#F1F0EC] bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
+          <div className="w-10 h-10 rounded-xl bg-[#4F7563] flex items-center justify-center shadow-md">
             <span className="text-white text-xl font-bold">✨</span>
           </div>
           <div className="flex-1">

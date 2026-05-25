@@ -260,7 +260,7 @@ export default function CreateWizardPageWrapper() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="min-h-screen bg-[#EDEBE6] flex items-center justify-center">
           <div className="relative">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4F7563]" />
             <div className="absolute inset-0 rounded-full border-2 border-[#DDE8E1] animate-pulse" />
@@ -606,38 +606,38 @@ function CreateWizardPage() {
   const progress = (currentStep / totalSteps) * 100;
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Modern Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-[#E3E1DA] shadow-sm">
+    <div className="min-h-screen bg-[#EDEBE6]">
+      {/* Header — Phase Δ */}
+      <header className="sticky top-0 z-50 bg-[#EDEBE6]/85 backdrop-blur-md border-b border-[#E3E1DA]/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="text-[#6B6B6B] hover:text-[#111111]">
+                <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Exit
                 </Button>
               </Link>
               <div className="h-8 w-px bg-[#E3E1DA]" />
               <div>
-                <h1 className="text-lg font-bold text-[#111111]">
+                <h1 className="text-lg font-bold text-[#111111] tracking-tight">
                   {wizardData.companyName || 'Create New Project'}
                 </h1>
                 <p className="text-xs text-[#6B6B6B]">Step-by-step wizard</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#EEF5F1] border border-green-100">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#E3E1DA] shadow-[0_8px_18px_rgba(0,0,0,0.04)]">
                 <div className="w-2 h-2 rounded-full bg-[#4F7563] animate-pulse" />
-                <span className="text-xs font-medium text-[#355846]">
+                <span className="text-[12px] font-semibold text-[#111111]">
                   Step {currentStep} of {STEPS.length}
                 </span>
               </div>
             </div>
           </div>
-          <div className="h-1 bg-[#F1F0EC]">
-            <div 
-              className="h-full bg-gradient-to-r from-green-600 to-emerald-500 transition-all duration-500 ease-out"
+          <div className="h-1 bg-[#F1F0EC] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#4F7563] transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -653,12 +653,12 @@ function CreateWizardPage() {
                 <div key={step.id} className="flex items-center flex-1">
                   <div className="flex flex-col items-center flex-1">
                     <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center font-semibold transition-all shadow-lg ${
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center font-semibold transition-all ${
                         currentStep > step.id
-                          ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-emerald-500/30'
+                          ? 'bg-[#4F7563] text-white shadow-[0_12px_24px_rgba(79,117,99,0.30)]'
                           : currentStep === step.id
-                          ? 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-green-500/30 scale-110'
-                          : 'bg-white border-2 border-[#E3E1DA] text-[#C9C6BD]'
+                          ? 'bg-[#111114] text-white shadow-[0_14px_28px_rgba(0,0,0,0.18)] scale-110'
+                          : 'bg-white border border-[#E3E1DA] text-[#9A9A9A] shadow-[0_8px_18px_rgba(0,0,0,0.04)]'
                       }`}
                     >
                       {currentStep > step.id ? <Check className="h-6 w-6" /> : step.id}
@@ -678,8 +678,8 @@ function CreateWizardPage() {
                     <div className="flex-1 px-3 flex items-center">
                       <div
                         className={`h-1 w-full rounded-full transition-all ${
-                          currentStep > step.id 
-                            ? 'bg-gradient-to-r from-emerald-500 to-emerald-600' 
+                          currentStep > step.id
+                            ? 'bg-[#4F7563]'
                             : 'bg-[#E3E1DA]'
                         }`}
                       />

@@ -175,7 +175,7 @@ const DOCUMENT_TYPES: DocumentType[] = [
     description: 'Revenue forecasts and financial models',
     category: 'pdf_documents',
     format: 'pdf',
-    color: 'from-emerald-500 to-emerald-600',
+    color: 'bg-[#4F7563]',
     textColor: 'text-[#4F7563]',
     bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
@@ -232,7 +232,7 @@ const DOCUMENT_TYPES: DocumentType[] = [
     description: 'Full curriculum vitae',
     category: 'career' as any,
     format: 'pdf',
-    color: 'from-emerald-500 to-emerald-600',
+    color: 'bg-[#4F7563]',
     textColor: 'text-[#4F7563]',
     bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
@@ -304,7 +304,7 @@ const CATEGORIES = [
     iconBg: 'bg-[#DDE8E1]',
     iconColor: 'text-[#4F7563]',
     borderColor: 'border-emerald-200',
-    selectedBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+    selectedBg: 'bg-[#4F7563]',
   },
 ];
 
@@ -349,7 +349,7 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
         <div className="flex items-start gap-2.5">
           <div className={`shrink-0 w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
             isSelected
-              ? 'bg-gradient-to-br from-green-600 to-emerald-500'
+              ? 'bg-[#4F7563]'
               : 'bg-[#EDEBE6] group-hover:bg-[#EEF5F1]'
           }`}>
             <Icon className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-[#6B6B6B]'}`} />
@@ -379,7 +379,7 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
       {/* Presentations Category */}
       <div>
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-green-600 to-emerald-500">
+          <div className="p-2 rounded-lg bg-[#4F7563]">
             <Layers className="h-4 w-4 text-white" />
           </div>
           <div>
@@ -395,7 +395,7 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
       {/* PDF Documents Category */}
       <div>
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
+          <div className="p-2 rounded-lg bg-[#4F7563]">
             <FileType className="h-4 w-4 text-white" />
           </div>
           <div>
@@ -411,7 +411,7 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
       {/* Phase 42 — Career Documents Category */}
       <div>
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
+          <div className="p-2 rounded-lg bg-[#4F7563]">
             <Briefcase className="h-4 w-4 text-white" />
           </div>
           <div>
@@ -428,7 +428,7 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
       {selectedType && (
         <div className="mt-6 p-3 rounded-lg bg-[#EEF5F1] border border-[#DDE8E1]">
           <div className="flex items-center gap-2.5">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-emerald-500 flex items-center justify-center">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#4F7563] flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>

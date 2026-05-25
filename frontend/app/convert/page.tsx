@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, FileUp, ShuffleIcon, Loader2, ChevronRight, CheckCircle2, AlertTriangle, Download,
+  FileText, FileType, FileSpreadsheet, Code2, Globe, BookOpen, Layers, Sparkles, History,
+  Settings2, Boxes, Gauge,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { BrandKitPicker, BrandKitBadge } from '@/features/brand-kits/BrandKitPicker';
@@ -85,64 +87,202 @@ export default function ConvertPage() {
     } finally { setBusy(false); }
   };
 
+  const TAB_ICON: Record<TopTab, React.ComponentType<any>> = {
+    wizard:      ShuffleIcon,
+    batch:       Boxes,
+    history:     History,
+    diagnostics: Gauge,
+  };
+
   return (
     <div className="min-h-screen bg-[#EDEBE6]">
-      {/* tab state — top-level "Convert" wizard vs. "History" / "Batch" / "Diagnostics" */}
-      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
-        <Link href="/dashboard" className="text-xs text-[#9A9A9A] hover:text-[#111111] flex items-center gap-1">
-          <ArrowLeft className="w-3 h-3" /> Back
-        </Link>
-        <div className="h-5 w-px bg-[#E3E1DA]" />
-        <h1 className="text-base font-bold text-[#111111] flex items-center gap-2">
-          <ShuffleIcon className="w-4 h-4 text-[#9A9A9A]" /> Document Conversion
-        </h1>
+      {/* Sticky header */}
+      <header className="bg-[#EDEBE6]/85 backdrop-blur-md border-b border-[#E3E1DA]/60 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-3">
+          <Link href="/dashboard" className="text-xs text-[#9A9A9A] hover:text-[#111111] flex items-center gap-1">
+            <ArrowLeft className="w-3 h-3" /> Dashboard
+          </Link>
+          <div className="h-5 w-px bg-[#E3E1DA]" />
+          <h1 className="text-base font-bold text-[#111111] flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-[#EEF5F1] text-[#4F7563] flex items-center justify-center">
+              <ShuffleIcon className="w-3.5 h-3.5" />
+            </div>
+            Document Conversion
+          </h1>
+          <span className="text-[10px] uppercase tracking-wide text-[#9A9A9A] font-semibold hidden sm:inline">Studio</span>
+          <Link
+            href="/pptx-import"
+            className="ml-auto inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-white text-[13px] font-semibold text-[#111111] shadow-[0_8px_18px_rgba(0,0,0,0.04)] hover:bg-[#F7F6F2] transition-colors"
+          >
+            <FileUp className="w-3.5 h-3.5" /> Import PPTX
+          </Link>
+        </div>
       </header>
 
-      <div className="max-w-3xl mx-auto px-6 py-6 space-y-5">
-        {/* Phase Ω.1 — top-level tabs surface batch / history / diagnostics
-            which were all backend-only previously. */}
-        <div className="flex items-center gap-1 border-b border-[#E3E1DA] mb-1">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        {/* HERO */}
+        <div className="relative overflow-hidden rounded-[28px] bg-[#263F34] p-7 sm:p-10 shadow-[0_24px_60px_rgba(38,63,52,0.30)]">
+          <div className="absolute inset-0 opacity-25 pointer-events-none">
+            <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-[#4F7563] blur-3xl" />
+            <div className="absolute bottom-0 left-1/3 w-64 h-64 rounded-full bg-[#7A988A] blur-3xl" />
+          </div>
+          <div className="relative grid md:grid-cols-2 gap-8 items-center">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/15">
+                <Sparkles className="w-3.5 h-3.5 text-[#DDE8E1]" />
+                <span className="text-[11px] font-semibold tracking-wide uppercase text-[#DDE8E1]">Universal Conversion</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-[-0.02em] text-white leading-tight">
+                Convert anything to anything — with a fidelity score.
+              </h2>
+              <p className="text-[#DDE8E1] text-sm leading-relaxed max-w-md">
+                PPTX, PDF, DOCX, HTML, Markdown, RTF, plain text, spreadsheets. Apply a Brand Kit, preview the quality report, then download in one click.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <button
+                  onClick={() => { setTopTab('wizard'); setStep('upload'); }}
+                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-white text-[#263F34] hover:bg-[#F7F6F2] font-semibold text-sm shadow-[0_12px_24px_rgba(0,0,0,0.15)]"
+                >
+                  <FileUp className="w-4 h-4" /> Start a conversion
+                </button>
+                <button
+                  onClick={() => setTopTab('batch')}
+                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-white/10 border border-white/25 text-white hover:bg-white/15 font-semibold text-sm backdrop-blur-sm"
+                >
+                  <Boxes className="w-4 h-4" /> Batch convert
+                </button>
+              </div>
+            </div>
+            <div className="hidden md:block relative">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { Icon: FileType,        label: 'PPTX',  pct: 96 },
+                  { Icon: FileText,        label: 'PDF',   pct: 94 },
+                  { Icon: BookOpen,        label: 'DOCX',  pct: 92 },
+                  { Icon: Globe,           label: 'HTML',  pct: 98 },
+                  { Icon: Code2,           label: 'MD',    pct: 99 },
+                  { Icon: FileSpreadsheet, label: 'XLSX',  pct: 88 },
+                ].map((f) => (
+                  <div key={f.label} className="bg-white/8 backdrop-blur-md border border-white/15 rounded-2xl p-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.18)] flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                      <f.Icon className="w-4 h-4 text-[#DDE8E1]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white font-semibold text-[12.5px]">{f.label}</div>
+                      <div className="text-[#A8B9AE] text-[10px]">Avg fidelity {f.pct}%</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Capabilities row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="pn-card p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="pn-label uppercase">Formats supported</span>
+              <div className="pn-icon-circle" style={{ width: 36, height: 36 }}><Layers className="w-4 h-4" /></div>
+            </div>
+            <div>
+              <div className="pn-metric">7</div>
+              <div className="text-[11px] text-[#9A9A9A] mt-0.5">PPTX · PDF · DOCX · HTML · MD · TXT · RTF</div>
+            </div>
+          </div>
+          <div className="pn-card p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="pn-label uppercase">Avg fidelity</span>
+              <div className="pn-icon-circle" style={{ width: 36, height: 36 }}><Gauge className="w-4 h-4" /></div>
+            </div>
+            <div>
+              <div className="pn-metric">94%</div>
+              <div className="text-[11px] text-[#9A9A9A] mt-0.5">Text · layout · images · charts · tables</div>
+            </div>
+          </div>
+          <div className="pn-card p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="pn-label uppercase">Brand-aware</span>
+              <div className="pn-icon-circle" style={{ width: 36, height: 36 }}><Sparkles className="w-4 h-4" /></div>
+            </div>
+            <div>
+              <div className="pn-metric">Yes</div>
+              <div className="text-[11px] text-[#9A9A9A] mt-0.5">Apply any Brand Kit on conversion</div>
+            </div>
+          </div>
+          <div className="pn-card p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="pn-label uppercase">Batch</span>
+              <div className="pn-icon-circle" style={{ width: 36, height: 36 }}><Boxes className="w-4 h-4" /></div>
+            </div>
+            <div>
+              <div className="pn-metric">∞</div>
+              <div className="text-[11px] text-[#9A9A9A] mt-0.5">Convert files in parallel, track progress</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Workspace tabs */}
+        <div className="flex items-center gap-2 flex-wrap">
           {([
             { id: 'wizard',      label: 'Convert'      },
             { id: 'batch',       label: 'Batch'        },
             { id: 'history',     label: 'History'      },
             { id: 'diagnostics', label: 'Diagnostics'  },
-          ] as { id: TopTab; label: string }[]).map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTopTab(t.id)}
-              className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${topTab === t.id ? 'border-[#4F7563] text-[#355846]' : 'border-transparent text-[#9A9A9A] hover:text-[#111111]'}`}
-            >
-              {t.label}
-            </button>
-          ))}
+          ] as { id: TopTab; label: string }[]).map((t) => {
+            const Icon = TAB_ICON[t.id];
+            const active = topTab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTopTab(t.id)}
+                className={`inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-[13px] font-semibold transition-all ${
+                  active
+                    ? 'bg-[#111114] text-white shadow-[0_12px_22px_rgba(0,0,0,0.18)]'
+                    : 'bg-white text-[#111111] border border-[#E3E1DA] hover:bg-[#F7F6F2]'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" /> {t.label}
+              </button>
+            );
+          })}
         </div>
 
         {topTab === 'batch'       && <BatchPanel       brandKitId={brandKitId} setBrandKitId={setBrandKitId} />}
         {topTab === 'history'     && <HistoryPanel />}
         {topTab === 'diagnostics' && <DiagnosticsPanel />}
 
-        {topTab === 'wizard' && <>
-        {/* Stepper */}
-        <div className="flex items-center gap-2 text-[11px]">
+        {topTab === 'wizard' && <div className="max-w-3xl mx-auto space-y-5">
+        {/* Stepper — soft pills */}
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold flex-wrap">
           {(['upload', 'format', 'options', 'preview', 'convert'] as Step[]).map((s, i, all) => (
             <React.Fragment key={s}>
-              <div className={`px-2 py-1 rounded ${step === s ? 'bg-[#4F7563] text-white' : 'bg-[#F1F0EC] text-[#6B6B6B]'}`}>
-                {i + 1}. {s}
+              <div className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full capitalize ${
+                step === s
+                  ? 'bg-[#4F7563] text-white shadow-[0_10px_22px_rgba(79,117,99,0.30)]'
+                  : 'bg-white text-[#6B6B6B] border border-[#E3E1DA]'
+              }`}>
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${step === s ? 'bg-white/15' : 'bg-[#F1F0EC]'}`}>{i + 1}</span>
+                {s}
               </div>
               {i < all.length - 1 && <ChevronRight className="w-3 h-3 text-[#C9C6BD]" />}
             </React.Fragment>
           ))}
         </div>
 
-        {error && <div className="bg-[#FCF1F1] border border-[#F7E3E3] text-[#7a2929] text-xs rounded p-3">{error}</div>}
+        {error && <div className="rounded-3xl bg-[#FCF1F1] border border-[#F7E3E3] text-[#7a2929] text-sm p-4 flex items-start gap-2.5"><AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" /><span>{error}</span></div>}
 
         {step === 'upload' && (
-          <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
-            <h2 className="text-sm font-bold">1. Choose a file</h2>
-            <label className="flex items-center gap-2 border border-dashed border-[#C9C6BD] rounded p-6 cursor-pointer hover:bg-[#EDEBE6]">
-              <FileUp className="w-4 h-4 text-[#9A9A9A]" />
-              <span className="text-xs text-[#6B6B6B]">{file ? file.name : 'Click to pick a PPTX / PDF / DOCX / XLSX / HTML / MD / TXT / RTF / CSV file'}</span>
+          <section className="pn-card p-6 space-y-4">
+            <h2 className="pn-h3">1. Choose a file</h2>
+            <label className="flex items-center gap-3 border-2 border-dashed border-[#A8B9AE] rounded-3xl bg-[#EEF5F1] p-7 cursor-pointer hover:bg-[#DDE8E1] transition-colors">
+              <div className="w-12 h-12 rounded-2xl bg-white text-[#4F7563] flex items-center justify-center shrink-0">
+                <FileUp className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-[#263F34]">{file ? file.name : 'Click to upload a document'}</div>
+                <div className="text-[11px] text-[#4F7563] mt-0.5">PPTX · POTX · PDF · DOCX · ODT · RTF · TXT · MD · HTML · CSV · XLSX · ODS</div>
+              </div>
               <input type="file" className="hidden"
                 accept=".pptx,.potx,.pdf,.docx,.doc,.odt,.rtf,.txt,.md,.markdown,.html,.htm,.csv,.xlsx,.xls,.ods"
                 onChange={(e) => setFile(e.target.files?.[0] || null)} />
@@ -150,13 +290,13 @@ export default function ConvertPage() {
             <button
               onClick={() => file && setStep('format')}
               disabled={!file}
-              className="px-3 py-1.5 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] disabled:opacity-40"
-            >Next →</button>
+              className="pn-btn pn-btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+            >Continue <ChevronRight className="w-4 h-4" /></button>
           </section>
         )}
 
         {step === 'format' && (
-          <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
+          <section className="pn-card p-6 space-y-4">
             <h2 className="text-sm font-bold">2. Output format</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {OUTPUTS.map((o) => (
@@ -180,7 +320,7 @@ export default function ConvertPage() {
         )}
 
         {step === 'options' && (
-          <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
+          <section className="pn-card p-6 space-y-4">
             <h2 className="text-sm font-bold">3. Options</h2>
 
             {/* Phase 37.3G — Brand Kit picker (replaces the old paste-a-UUID input) */}
@@ -213,7 +353,7 @@ export default function ConvertPage() {
         )}
 
         {step === 'preview' && preview && (
-          <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
+          <section className="pn-card p-6 space-y-4">
             <h2 className="text-sm font-bold flex items-center gap-2">
               4. Preview
               <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${preview.report.overall >= 80 ? 'bg-[#DDE8E1] text-[#263F34]' : preview.report.overall >= 60 ? 'bg-[#F5E1B7] text-amber-800' : 'bg-[#F7E3E3] text-[#7a2929]'}`}>
@@ -291,7 +431,7 @@ export default function ConvertPage() {
             </button>
           </section>
         )}
-        </>}{/* end topTab === 'wizard' */}
+        </div>}{/* end topTab === 'wizard' */}
       </div>
     </div>
   );
@@ -342,7 +482,7 @@ const BatchPanel: React.FC<{
   };
 
   return (
-    <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
+    <section className="pn-card p-6 space-y-4">
       <h2 className="text-sm font-bold">Batch conversion</h2>
       <p className="text-[10px] text-[#9A9A9A]">Convert multiple files at once with the same target format and brand kit.</p>
 
@@ -445,7 +585,7 @@ const HistoryPanel: React.FC = () => {
   };
 
   return (
-    <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
+    <section className="pn-card p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold">Conversion history</h2>
         <button onClick={refresh} disabled={busy}
@@ -514,7 +654,7 @@ const DiagnosticsPanel: React.FC = () => {
   React.useEffect(() => { refresh(); }, []);
 
   return (
-    <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
+    <section className="pn-card p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold">Storage diagnostics</h2>
         <button onClick={refresh} disabled={busy}
