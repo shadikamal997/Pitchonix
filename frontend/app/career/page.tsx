@@ -69,9 +69,13 @@ export default function CareerWorkspacePage() {
         <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
           <Briefcase className="w-4 h-4 text-slate-500" /> Career Documents
         </h1>
-        {/* Phase 42.3R — entry point to the CV Intelligence Studio */}
+        {/* Phase 42.3R / 42.4G — CV Intelligence + Career Dashboard entry points */}
+        <Link href="/career/dashboard"
+          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold border border-purple-300 text-purple-700 hover:bg-purple-50 rounded-md">
+          <Layout className="w-3.5 h-3.5" /> Dashboard
+        </Link>
         <Link href="/career/analyze"
-          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded-md">
+          className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded-md">
           <Sparkles className="w-3.5 h-3.5" /> Improve Existing CV
         </Link>
       </header>

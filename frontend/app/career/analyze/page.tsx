@@ -6,10 +6,11 @@ import Link from 'next/link';
 import {
   ArrowLeft, Upload, Sparkles, FileText, ShieldCheck, Wand2, Loader2,
   CheckCircle2, AlertTriangle, AlertCircle, Trash2, Eye, ChevronRight,
-  Briefcase, Lock,
+  Briefcase, Lock, Award, Layers, Mic,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { useCvTemplates } from '@/features/career/hooks';
+import { CvDiffEditor } from '@/features/career/CvDiffEditor';
 
 // =============================================================================
 //  Phase 42.3R — CV Intelligence Studio wizard.
@@ -54,6 +55,7 @@ export default function CvAnalyzePage() {
 
   // Wizard state
   const [profile, setProfile]       = useState<any | null>(null);
+  const [originalProfile, setOriginalProfile] = useState<any | null>(null); // for diff
   const [report,  setReport]        = useState<CvReport | null>(null);
   const [warnings, setWarnings]     = useState<string[]>([]);
   const [ignored, setIgnored]       = useState<Set<string>>(new Set());
@@ -69,6 +71,13 @@ export default function CvAnalyzePage() {
   const [jdText, setJdText] = useState('');
   const [matchReport, setMatchReport] = useState<any | null>(null);
 
+  // Phase 42.4 PRO+ state
+  const [benchmark,    setBenchmark]    = useState<any | null>(null);
+  const [interview,    setInterview]    = useState<any | null>(null);
+  const [variants,     setVariants]     = useState<any[] | null>(null);
+  const [showDiff,     setShowDiff]     = useState(false);
+  const [preflight,    setPreflight]    = useState<any | null>(null);
+
   // ---- upload + parse ------------------------------------------------------
   const handleUpload = async (file: File) => {
     setBusy(true); setError(null);
@@ -79,12 +88,63 @@ export default function CvAnalyzePage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setProfile(data?.profile || null);
+      setOriginalProfile(data?.profile ? JSON.parse(JSON.stringify(data.profile)) : null);
       setWarnings(data?.warnings || []);
       await runAnalyze(data?.profile);
       setStep('report');
     } catch (e: any) {
       setError(e?.response?.data?.message || e?.message || 'Upload failed');
     } finally { setBusy(false); }
+  };
+
+  // ---- PRO+ extras --------------------------------------------------------
+  const runBenchmark = async () => {
+    if (!profile) return;
+    setBusy(true); setError(null);
+    try {
+      const { data } = await api.post('/career/analyze/benchmark', { profile });
+      setBenchmark(data);
+      // Auto-snapshot benchmark for the dashboard timeline.
+      try { await api.post('/career/analyze/snapshot', { kind: 'benchmark', profile, analysisJson: data }); } catch { /* ignore */ }
+    } catch (e: any) { setError(e?.response?.data?.message || e?.message); }
+    finally { setBusy(false); }
+  };
+
+  const runInterview = async () => {
+    if (!profile) return;
+    setBusy(true); setError(null);
+    try {
+      const { data } = await api.post('/career/analyze/interview', { profile });
+      setInterview(data);
+      try { await api.post('/career/analyze/snapshot', { kind: 'interview', profile, analysisJson: data, score: data?.score }); } catch { /* ignore */ }
+    } catch (e: any) { setError(e?.response?.data?.message || e?.message); }
+    finally { setBusy(false); }
+  };
+
+  const runPreflight = async () => {
+    if (!profile) return;
+    setBusy(true); setError(null);
+    try {
+      const { data } = await api.post('/career/analyze/preflight', { profile });
+      setPreflight(data);
+    } catch (e: any) { setError(e?.response?.data?.message || e?.message); }
+    finally { setBusy(false); }
+  };
+
+  const generateVariants = async () => {
+    if (!profile) return;
+    if (!window.confirm('Generate 4 CV variants (ATS, Executive, Modern, Developer)?')) return;
+    setBusy(true); setError(null);
+    try {
+      // Save profile first so variants link to it.
+      const { data: saved } = await api.post('/career/analyze/save', { profile, doctype: 'cv', title: 'Source CV' });
+      const { data } = await api.post('/career/analyze/variants', {
+        presets: ['ats', 'executive', 'modern', 'developer'],
+        profileId: saved?.profileId,
+      });
+      setVariants(data?.created || []);
+    } catch (e: any) { setError(e?.response?.data?.message || e?.message); }
+    finally { setBusy(false); }
   };
 
   // ---- analyze -------------------------------------------------------------
@@ -95,6 +155,13 @@ export default function CvAnalyzePage() {
     try {
       const { data } = await api.post('/career/analyze', { profile: src });
       setReport(data);
+      // Phase 42.4B — persist snapshot so the Career Dashboard timeline updates.
+      try {
+        await api.post('/career/analyze/snapshot', {
+          kind: 'analysis', profile: src, analysisJson: data,
+          score: data?.overall, atsScore: data?.atsScore,
+        });
+      } catch { /* non-fatal */ }
     } catch (e: any) {
       setError(e?.response?.data?.message || e?.message);
     } finally { setBusy(false); }
@@ -218,22 +285,49 @@ export default function CvAnalyzePage() {
         )}
 
         {step === 'report' && profile && (
-          <ReportStep
-            report={report}
-            busy={busy}
-            onNext={() => setStep('fixes')}
-            jdText={jdText} setJdText={setJdText}
-            matchReport={matchReport} onMatch={runMatch}
-          />
+          <>
+            <ReportStep
+              report={report}
+              busy={busy}
+              onNext={() => setStep('fixes')}
+              jdText={jdText} setJdText={setJdText}
+              matchReport={matchReport} onMatch={runMatch}
+            />
+            {/* Phase 42.4D / 42.4E / 42.4C — benchmark + interview readiness + variants */}
+            <ProExtras
+              benchmark={benchmark} interview={interview} variants={variants}
+              onBenchmark={runBenchmark} onInterview={runInterview} onVariants={generateVariants}
+              busy={busy}
+            />
+          </>
         )}
 
         {step === 'fixes' && profile && report && (
-          <FixesStep
-            report={report} ignored={ignored}
-            onApply={applyFix} onIgnore={ignoreFix} onApplyAllSafe={applyAllSafe}
-            onBack={() => setStep('report')} onNext={() => setStep('template')}
-            busy={busy}
-          />
+          <>
+            {/* Phase 42.4A — Before / After diff toggle */}
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded p-2">
+              <span className="text-xs text-slate-600">
+                Want to see exactly what changed from the original upload?
+              </span>
+              <button onClick={() => setShowDiff((v) => !v)}
+                className="h-7 px-2 text-xs font-semibold border border-slate-300 hover:bg-white rounded inline-flex items-center gap-1">
+                <Layers className="w-3 h-3" /> {showDiff ? 'Hide diff' : 'Show diff'}
+              </button>
+            </div>
+            {showDiff && originalProfile && (
+              <CvDiffEditor
+                original={originalProfile}
+                improved={profile}
+                onChange={async (next) => { setProfile(next); await runAnalyze(next); }}
+              />
+            )}
+            <FixesStep
+              report={report} ignored={ignored}
+              onApply={applyFix} onIgnore={ignoreFix} onApplyAllSafe={applyAllSafe}
+              onBack={() => setStep('report')} onNext={() => setStep('template')}
+              busy={busy}
+            />
+          </>
         )}
 
         {step === 'template' && profile && (
@@ -253,12 +347,16 @@ export default function CvAnalyzePage() {
         )}
 
         {step === 'export' && profile && (
-          <ExportStep
-            onBack={() => setStep('preview')}
-            onSave={saveAndOpen}
-            savedDocId={savedDocId}
-            busy={busy}
-          />
+          <>
+            {/* Phase 42.4J — preflight before download */}
+            <PreflightPanel preflight={preflight} onRun={runPreflight} busy={busy} />
+            <ExportStep
+              onBack={() => setStep('preview')}
+              onSave={saveAndOpen}
+              savedDocId={savedDocId}
+              busy={busy}
+            />
+          </>
         )}
       </div>
     </div>
@@ -712,3 +810,142 @@ function renderPreviewHtml(profile: any, templateId: string | null): string {
 function esc(s: any): string {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+// =============================================================================
+//  Phase 42.4 — PRO+ panels (benchmark / interview readiness / variants)
+// =============================================================================
+const ProExtras: React.FC<{
+  benchmark: any; interview: any; variants: any[] | null;
+  onBenchmark: () => void; onInterview: () => void; onVariants: () => void;
+  busy: boolean;
+}> = ({ benchmark, interview, variants, onBenchmark, onInterview, onVariants, busy }) => (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Award className="w-4 h-4 text-purple-600" />
+        <h3 className="text-sm font-bold text-slate-900">Benchmark</h3>
+      </div>
+      {!benchmark ? (
+        <button onClick={onBenchmark} disabled={busy}
+          className="w-full h-8 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center justify-center gap-1 disabled:opacity-50">
+          {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Award className="w-3 h-3" />} Run benchmark
+        </button>
+      ) : (
+        <div className="space-y-1.5">
+          {(Object.values(benchmark.bands || {}) as any[]).slice(0, 4).map((b, i) => (
+            <div key={i}>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-700 font-semibold">{b.metric}</span>
+                <span className="text-slate-500">{b.value}{b.unit === 'percent' ? '%' : ''}</span>
+              </div>
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className={`h-full ${b.band === 'top10' ? 'bg-green-500' : b.band === 'aboveAvg' ? 'bg-blue-500' : b.band === 'average' ? 'bg-amber-500' : 'bg-red-500'}`}
+                     style={{ width: `${Math.max(0, Math.min(100, b.value))}%` }} />
+              </div>
+              <div className="text-[10px] text-slate-400">industry {b.industry} · top10 {b.top10}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+
+    <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Mic className="w-4 h-4 text-purple-600" />
+        <h3 className="text-sm font-bold text-slate-900">Interview readiness</h3>
+      </div>
+      {!interview ? (
+        <button onClick={onInterview} disabled={busy}
+          className="w-full h-8 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center justify-center gap-1 disabled:opacity-50">
+          {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Mic className="w-3 h-3" />} Predict questions
+        </button>
+      ) : (
+        <div className="space-y-2 text-[11px]">
+          <div className="text-2xl font-bold text-slate-900">{interview.score}<span className="text-xs text-slate-500">/100</span></div>
+          {interview.weakAreas?.length > 0 && (
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-0.5">Weak areas</div>
+              <ul className="list-disc ml-4 text-slate-700">
+                {interview.weakAreas.slice(0, 3).map((w: string, i: number) => <li key={i}>{w}</li>)}
+              </ul>
+            </div>
+          )}
+          {interview.likelyHiringManagerQuestions?.length > 0 && (
+            <details>
+              <summary className="cursor-pointer text-slate-700 font-semibold">Likely hiring-manager Qs ({interview.likelyHiringManagerQuestions.length})</summary>
+              <ul className="list-disc ml-4 text-slate-700 mt-1">
+                {interview.likelyHiringManagerQuestions.slice(0, 5).map((q: any, i: number) => <li key={i}>{q.q}</li>)}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
+    </section>
+
+    <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Layers className="w-4 h-4 text-purple-600" />
+        <h3 className="text-sm font-bold text-slate-900">Generate variants</h3>
+      </div>
+      {!variants ? (
+        <>
+          <p className="text-[11px] text-slate-500">One-click ATS / Executive / Modern / Developer versions, each a separate CvDocument linked to your profile.</p>
+          <button onClick={onVariants} disabled={busy}
+            className="w-full h-8 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center justify-center gap-1 disabled:opacity-50">
+            {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Layers className="w-3 h-3" />} Generate 4 variants
+          </button>
+        </>
+      ) : (
+        <ul className="space-y-1 text-[11px]">
+          {variants.map((v: any) => (
+            <li key={v.documentId} className="flex items-center gap-2 border border-slate-200 rounded px-2 py-1">
+              <span className="font-mono text-[10px] uppercase bg-purple-100 text-purple-800 px-1 py-0.5 rounded">{v.preset}</span>
+              <span className="flex-1 truncate">{v.title}</span>
+              <a href={`/career/builder/${v.documentId}`} className="text-blue-600 hover:underline">Open →</a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  </div>
+);
+
+const PreflightPanel: React.FC<{ preflight: any; onRun: () => void; busy: boolean }> = ({ preflight, onRun, busy }) => (
+  <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-2">
+    <div className="flex items-center justify-between">
+      <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+        <ShieldCheck className="w-4 h-4 text-purple-600" /> Export preflight
+      </h3>
+      <button onClick={onRun} disabled={busy}
+        className="h-7 px-2 text-xs font-semibold border border-slate-300 hover:bg-slate-50 rounded inline-flex items-center gap-1 disabled:opacity-50">
+        {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3" />} Run check
+      </button>
+    </div>
+    {!preflight ? (
+      <p className="text-[11px] text-slate-500 italic">Run the check to see warnings the export would surface (missing contact, page overflow, ATS issues).</p>
+    ) : (
+      <div className="space-y-1.5">
+        {preflight.ok ? (
+          <div className="text-[11px] text-green-700 inline-flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> No blocking issues. Safe to export.
+          </div>
+        ) : (
+          <div className="text-[11px] text-red-700 inline-flex items-center gap-1">
+            <AlertCircle className="w-3 h-3" /> {preflight.warnings.filter((w: any) => w.severity === 'error').length} blocking issue(s).
+          </div>
+        )}
+        <ul className="space-y-0.5 max-h-32 overflow-auto">
+          {preflight.warnings.map((w: any, i: number) => (
+            <li key={i} className={`text-[11px] flex items-start gap-1 ${w.severity === 'error' ? 'text-red-700' : 'text-amber-700'}`}>
+              {w.severity === 'error' ? <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" /> : <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />}
+              <span><strong>{w.section}:</strong> {w.message}</span>
+            </li>
+          ))}
+        </ul>
+        {!preflight.ok && preflight.canForceExport && (
+          <p className="text-[10px] text-slate-500 italic">You can still Save &amp; open below — preflight warnings don't block.</p>
+        )}
+      </div>
+    )}
+  </section>
+);

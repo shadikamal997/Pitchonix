@@ -15,6 +15,11 @@ import { CvExportService, CvExportFormat } from './cv-export.service';
 import { BrandKitsService } from '../brand-kits/brand-kits.service';
 import { CvDoctype } from './cv-types';
 import { CvAnalyzerService, CvProfileSnapshot } from './cv-analyzer.service';
+import {
+  CvSnapshotService, CvVariantsService, CvBenchmarkService,
+  CvInterviewReadinessService, CvExportValidationService,
+  VariantPreset, CvSnapshotKind,
+} from './cv-pro.service';
 
 // =============================================================================
 //  Phase 42 — Career documents API.
@@ -58,6 +63,11 @@ export class CareerController {
     private readonly exporter:  CvExportService,
     private readonly brandKits: BrandKitsService,
     private readonly analyzer:  CvAnalyzerService,
+    private readonly snapshots: CvSnapshotService,
+    private readonly variants:  CvVariantsService,
+    private readonly benchmark: CvBenchmarkService,
+    private readonly interview: CvInterviewReadinessService,
+    private readonly preflight: CvExportValidationService,
   ) {}
 
   // ─── Profile ────────────────────────────────────────────────────────────────
@@ -271,6 +281,121 @@ export class CareerController {
   matchJob(@Body() body: { profile: CvProfileSnapshot; jobDescription: string }) {
     if (!body?.profile || !body?.jobDescription) throw new BadRequestException('Missing profile/jobDescription');
     return this.analyzer.matchJob(body.profile, body.jobDescription);
+  }
+
+  // ===========================================================================
+  //  Phase 42.4 — PRO+ endpoints
+  //
+  //    POST /career/analyze/snapshot                     persist a snapshot
+  //    GET  /career/analyze/snapshots                    list user snapshots
+  //    GET  /career/analyze/snapshots/:id                full snapshot payload
+  //    POST /career/analyze/snapshots/:id/restore        return its profileJson
+  //    DELETE /career/analyze/snapshots/:id
+  //    DELETE /career/analyze/snapshots                  bulk wipe
+  //    POST /career/analyze/variants                     generate one CvDocument per preset
+  //    GET  /career/analyze/variants/presets             list available presets
+  //    POST /career/analyze/benchmark                    benchmark report from a profile
+  //    POST /career/analyze/interview                    interview readiness from a profile
+  //    POST /career/analyze/preflight                    export preflight warnings
+  // ===========================================================================
+
+  @Post('analyze/snapshot')
+  @ApiOperation({ summary: 'Phase 42.4B — persist an analysis / job-match / benchmark / interview snapshot' })
+  async snapshotSave(@GetUser() user: any, @Body() body: {
+    kind:        CvSnapshotKind;
+    profile:     CvProfileSnapshot;
+    documentId?: string;
+    label?:      string;
+    analysisJson: any;
+    score?:      number;
+    atsScore?:   number;
+  }) {
+    if (!body?.kind || !body?.profile || !body?.analysisJson) throw new BadRequestException('Missing kind/profile/analysisJson');
+    const transient = await this.profiles.getOrCreate(user.id);
+    return this.snapshots.save({
+      userId:     user.id,
+      profileId:  transient.id,
+      documentId: body.documentId ?? null,
+      kind:       body.kind,
+      label:      body.label,
+      analysisJson: body.analysisJson,
+      profileJson:  body.profile,
+      score:      body.score,
+      atsScore:   body.atsScore,
+    });
+  }
+
+  @Get('analyze/snapshots')
+  @ApiOperation({ summary: 'Phase 42.4B — list snapshots for the caller' })
+  snapshotList(@GetUser() user: any, @Query('documentId') documentId?: string, @Query('kind') kind?: CvSnapshotKind) {
+    return this.snapshots.list(user.id, { documentId, kind });
+  }
+
+  @Get('analyze/snapshots/:id')
+  snapshotGet(@GetUser() user: any, @Param('id') id: string) {
+    return this.snapshots.get(user.id, id);
+  }
+
+  @Post('analyze/snapshots/:id/restore')
+  snapshotRestore(@GetUser() user: any, @Param('id') id: string) {
+    return this.snapshots.restorePayload(user.id, id);
+  }
+
+  @Delete('analyze/snapshots/:id')
+  snapshotDelete(@GetUser() user: any, @Param('id') id: string) {
+    return this.snapshots.delete(user.id, id);
+  }
+
+  @Delete('analyze/snapshots')
+  @ApiOperation({ summary: 'Phase 42.4M — bulk-delete all analysis history for the caller' })
+  snapshotDeleteAll(@GetUser() user: any, @Query('profileId') profileId?: string) {
+    return this.snapshots.deleteAll(user.id, { profileId });
+  }
+
+  @Post('analyze/variants')
+  @ApiOperation({ summary: 'Phase 42.4C — generate one CvDocument per requested preset' })
+  async variantsGenerate(@GetUser() user: any, @Body() body: {
+    presets: VariantPreset[]; brandKitId?: string; profileId?: string;
+  }) {
+    if (!body?.presets?.length) throw new BadRequestException('Missing presets');
+    const profile = body.profileId
+      ? await this.profiles.get(body.profileId)
+      : await this.profiles.getOrCreate(user.id);
+    const tpl = await this.templates.list({ doctype: 'cv' });
+    const slim = (Array.isArray(tpl) ? tpl : (tpl as any)?.items || []).map((t: any) => ({
+      id: t.id, name: t.name, category: t.category, atsSafe: !!t.atsSafe,
+    }));
+    return this.variants.generate({
+      userId: user.id, profileId: profile.id,
+      presets: body.presets, brandKitId: body.brandKitId, templates: slim,
+    });
+  }
+
+  @Get('analyze/variants/presets')
+  variantsListPresets() {
+    return this.variants.listPresets();
+  }
+
+  @Post('analyze/benchmark')
+  @ApiOperation({ summary: 'Phase 42.4D — percentile-band benchmark for a profile' })
+  benchmarkRun(@Body() body: { profile: CvProfileSnapshot }) {
+    if (!body?.profile) throw new BadRequestException('Missing profile');
+    const report = this.analyzer.analyze(body.profile);
+    return this.benchmark.benchmark(report);
+  }
+
+  @Post('analyze/interview')
+  @ApiOperation({ summary: 'Phase 42.4E — interview readiness for a profile' })
+  interviewRun(@Body() body: { profile: CvProfileSnapshot }) {
+    if (!body?.profile) throw new BadRequestException('Missing profile');
+    return this.interview.analyze(body.profile);
+  }
+
+  @Post('analyze/preflight')
+  @ApiOperation({ summary: 'Phase 42.4J — export-time preflight (warnings + recommendations)' })
+  exportPreflight(@Body() body: { profile: CvProfileSnapshot }) {
+    if (!body?.profile) throw new BadRequestException('Missing profile');
+    return this.preflight.preflight(body.profile);
   }
 
   @Post('analyze/save')

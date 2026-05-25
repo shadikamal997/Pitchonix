@@ -90,6 +90,17 @@ export interface CvJobMatchReport {
   keywordsToAdd:  string[];
   prioritySections: string[];
   recommendations: string[];
+  // Phase 42.4F — advanced job matching breakdown.
+  breakdown?: {
+    keywordMatch:        number;  // 0..100
+    skillMatch:          number;  // 0..100
+    responsibilityMatch: number;  // 0..100
+    industryMatch:       number;  // 0..100
+    seniorityMatch:      number;  // 0..100
+  };
+  strengths?:   string[];
+  weaknesses?:  string[];
+  seniorityDetected?: { cv: 'junior'|'mid'|'senior'|'lead'|'executive'; jd: 'junior'|'mid'|'senior'|'lead'|'executive' };
 }
 
 // =============================================================================
@@ -120,6 +131,8 @@ const ATS_UNSAFE_GLYPHS = ['•', '●', '◆', '■', '▶', '★', '✓', '✔
 const ATS_RISK_SECTIONS = ['photo','image','two-column','sidebar','header-with-photo'];
 
 const MEASURABLE_REGEX = /\b\d+(\.\d+)?\s*(%|x|k|m|million|users?|customers?|reqs|requests?|qps|hours?|days?|years?|sales|leads?|deals?|points?)\b/i;
+
+const SEN_ORDER = ['junior','mid','senior','lead','executive'] as const;
 
 const SECTION_ALIASES: Record<string, string> = {
   'work history':            'experience',
@@ -555,6 +568,48 @@ export class CvAnalyzerService {
     if (missing.includes('aws') || missing.includes('gcp')) recommendations.push('Cloud platforms are usually called out explicitly in the JD; list any cloud experience you have, including personal projects.');
     if (alignment >= 80) recommendations.push('Strong alignment — focus on rewriting bullets to use the exact terms from the JD where truthful.');
 
+    // Phase 42.4F — breakdown + strengths/weaknesses + seniority signal.
+    const keywordMatch = alignment;
+    const skillMatch   = Math.round(skills.filter((s) => Array.from(candidates).includes(s)).length / Math.max(1, skills.length) * 100);
+    // Responsibility match = ratio of present JD terms that ALSO appear in bullets.
+    const respHits = Array.from(candidates).filter((c) => (profile.experience || []).some((e) => (e.bullets || []).some((b) => b.toLowerCase().includes(c)))).length;
+    const responsibilityMatch = Math.round(respHits / Math.max(1, candidates.size) * 100);
+
+    // Industry match: simple keyword sniff against detected type.
+    const detected = this.detectType(profile);
+    const industryHints: Record<string, string[]> = {
+      developer: ['software','engineer','code','api','cloud','backend','frontend','devops'],
+      designer:  ['design','figma','ui','ux','brand','illustrator'],
+      executive: ['executive','c-suite','board','strategy','vp','head of'],
+      academic:  ['research','publication','phd','university'],
+      finance:   ['financial','portfolio','trading','cfa','accounting','audit'],
+      sales:     ['sales','quota','pipeline','crm','account','prospect'],
+      marketing: ['marketing','seo','sem','campaign','growth','brand'],
+      healthcare:['clinical','patient','medical','nurse','hospital'],
+      student:   ['intern','graduate','student'],
+      general:   [],
+    };
+    const industryHits = (industryHints[detected] || []).filter((w) => jd.includes(w)).length;
+    const industryMatch = Math.round(Math.min(100, industryHits * 30));
+
+    // Seniority: detect from JD + CV.
+    const cvSeniority = this.detectSeniority(profile);
+    const jdSeniority = this.detectSenioritySignal(jd);
+    const senDiff = Math.abs(SEN_ORDER.indexOf(cvSeniority) - SEN_ORDER.indexOf(jdSeniority));
+    const seniorityMatch = Math.max(0, 100 - senDiff * 25);
+
+    const strengths: string[] = [];
+    const weaknesses: string[] = [];
+    if (skillMatch    >= 80) strengths.push(`Strong skill overlap (${skillMatch}%).`);
+    if (industryMatch >= 60) strengths.push(`Industry fit detected (${detected}).`);
+    if (seniorityMatch >= 75) strengths.push(`Seniority aligned (${cvSeniority} ≈ ${jdSeniority}).`);
+    if (responsibilityMatch >= 65) strengths.push('Bullets back up most of the JD\'s responsibilities.');
+
+    if (skillMatch < 50)        weaknesses.push(`Only ${skillMatch}% of your listed skills appear in the JD.`);
+    if (responsibilityMatch < 40) weaknesses.push('JD keywords appear in your skills list but not in your bullets — recruiters look for both.');
+    if (senDiff >= 2)           weaknesses.push(`Seniority gap: your CV reads as ${cvSeniority}, the JD targets ${jdSeniority}.`);
+    if (industryMatch < 30 && detected !== 'general') weaknesses.push('Limited industry-vocabulary overlap.');
+
     return {
       alignment,
       missingSkills: missing.slice(0, 15),
@@ -562,7 +617,31 @@ export class CvAnalyzerService {
       keywordsToAdd: missing.slice(0, 8),
       prioritySections: Array.from(new Set(prioritySections)),
       recommendations,
+      breakdown: { keywordMatch, skillMatch, responsibilityMatch, industryMatch, seniorityMatch },
+      strengths,
+      weaknesses,
+      seniorityDetected: { cv: cvSeniority, jd: jdSeniority },
     };
+  }
+
+  private detectSeniority(p: CvProfileSnapshot): 'junior'|'mid'|'senior'|'lead'|'executive' {
+    const text = ((p.personal?.headline || '') + ' ' + (p.experience || []).map((e) => e.role).join(' ')).toLowerCase();
+    if (/\b(ceo|cto|cfo|coo|chief|vp|vice president)\b/.test(text))            return 'executive';
+    if (/\b(head of|director|principal|staff)\b/.test(text))                   return 'lead';
+    if (/\b(senior|sr\.|sr )/.test(text))                                       return 'senior';
+    if (/\b(junior|jr\.|intern|graduate|trainee)\b/.test(text))                 return 'junior';
+    const years = this.calcYears(p.experience || []);
+    if (years >= 8) return 'senior';
+    if (years >= 4) return 'mid';
+    return 'junior';
+  }
+
+  private detectSenioritySignal(jd: string): 'junior'|'mid'|'senior'|'lead'|'executive' {
+    if (/(ceo|cto|cfo|vp|vice president|head of|director)/.test(jd)) return 'executive';
+    if (/(principal|staff|lead engineer)/.test(jd))                  return 'lead';
+    if (/(senior|10\+ years|7\+ years)/.test(jd))                    return 'senior';
+    if (/(junior|graduate|intern|entry level)/.test(jd))             return 'junior';
+    return 'mid';
   }
 
   // =========================================================================

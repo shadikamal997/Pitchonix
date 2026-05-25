@@ -1655,6 +1655,45 @@ model CvDocument {
   @@map("cv_documents")
 }
 
+// =============================================================================
+//  Phase 42.4B — CV Analysis Snapshot
+//
+//  Persisted record of a single run of the CV analyzer (or a job-match,
+//  benchmark, variant generation). Used to power Analysis History and
+//  Compare. Workspace scoping is inherited through profile.userId.
+// =============================================================================
+model CvAnalysisSnapshot {
+  id           String   @id @default(uuid())
+  userId       String
+  profileId    String
+  /// Optional — set when the snapshot is tied to a specific CvDocument.
+  documentId   String?
+
+  /// 'analysis' | 'job-match' | 'benchmark' | 'variants' | 'interview'
+  kind         String
+
+  /// 0..100 rolled-up score (mirrors analysisJson.overall) for fast list/sort.
+  score        Int?
+  atsScore     Int?
+
+  /// Free-form label so users can find a snapshot ("After first cleanup").
+  label        String?
+
+  /// Full report payload — shape depends on `kind`. Stored as Json so we can
+  /// evolve the report contract without a migration per change.
+  analysisJson Json
+
+  /// Snapshot of the profile that produced this report (for restore).
+  profileJson  Json?
+
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([profileId, createdAt])
+  @@index([documentId])
+  @@map("cv_analysis_snapshots")
+}
+
 model CvTemplate {
   id            String   @id @default(uuid())
   /// 'cv' | 'resume' | 'coverLetter' | 'portfolio' — matches CvDocument.doctype
