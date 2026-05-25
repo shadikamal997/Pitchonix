@@ -877,8 +877,21 @@ const ImportPanel: React.FC<{ profile: ReturnType<typeof useCvProfile> }> = ({ p
         jobId,
         onProgress: (p) => setProgress((prev) => ({ ...(prev || { jobId } as any), ...p })),
       });
+      // Phase 43.1B — single source of truth: prefer backend's canonical
+      // counts (built from the same `payload` snapshot used by the
+      // confidence engine) so the top counters never disagree with the
+      // score bars. Fall back to res.profile if the backend hasn't rolled
+      // out the canonical block yet.
+      const canon = (res as any)?.quality?.canonical?.counts;
       const c: Record<string, number> = {};
-      if (res?.profile) {
+      if (canon) {
+        c.Experience     = canon.experience     ?? 0;
+        c.Education      = canon.education      ?? 0;
+        c.Skills         = canon.skills         ?? 0;
+        c.Languages      = canon.languages      ?? 0;
+        c.Projects       = canon.projects       ?? 0;
+        c.Certifications = canon.certifications ?? 0;
+      } else if (res?.profile) {
         c.Experience     = res.profile.experience?.length     || 0;
         c.Education      = res.profile.education?.length      || 0;
         c.Skills         = res.profile.skills?.length         || 0;

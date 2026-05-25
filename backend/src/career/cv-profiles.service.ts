@@ -93,12 +93,37 @@ export class CvProfilesService {
   // ---------------------------------------------------------------------------
 
   async replaceFromImport(profileId: string, source: 'linkedin'|'docx'|'pdf', payload: Partial<CvProfileDto>): Promise<CvProfileDto> {
+    // Phase 43.1B — TRUE REPLACE.
+    //
+    // Previously this loop only wrote keys that were present in `payload`,
+    // which left stale values in the DB whenever an import failed to
+    // extract a particular section. That caused the visible contradiction
+    // the user reported on 43.1B: counts (from DB) showed "Experience 2"
+    // while the bands (from this run's payload) showed 0 — both were
+    // "correct" given their data sources, but they disagreed.
+    //
+    // The import is the source of truth for the imported sections: any
+    // section not present in `payload` is reset to its empty default so
+    // counts, detected[], bands and the saved profile all agree.
     const data: any = {
       importSource: source,
       importedAt:   new Date(),
+      // Section arrays — default to [] when the import didn't produce one.
+      experience:     (payload.experience     as any) ?? [],
+      education:      (payload.education      as any) ?? [],
+      skills:         (payload.skills         as any) ?? [],
+      languages:      ((payload as any).languages     as any) ?? [],
+      projects:       ((payload as any).projects      as any) ?? [],
+      certifications: ((payload as any).certifications as any) ?? [],
+      awards:         ((payload as any).awards         as any) ?? [],
+      publications:   ((payload as any).publications   as any) ?? [],
+      references:     ((payload as any).references     as any) ?? [],
     };
-    for (const k of ['personal','experience','education','skills','languages','projects','certifications','awards','publications','references']) {
-      if (k in payload) data[k] = (payload as any)[k];
+    // Personal stays a merge: name/email/etc parsed across multiple lines
+    // and we don't want to clobber a previously-saved photo or location
+    // when the new file doesn't repeat that information.
+    if ('personal' in payload) {
+      data.personal = payload.personal ?? {};
     }
     const row = await this.prisma.cvProfile.update({ where: { id: profileId }, data });
     return toDto(row);

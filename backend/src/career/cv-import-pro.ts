@@ -51,6 +51,15 @@ const en: Record<string, SectionKey> = {
   'achievements': 'awards', 'honors': 'awards', 'recognition': 'awards',
   'publications': 'publications', 'research': 'publications', 'papers': 'publications',
   'references': 'references', 'referees': 'references',
+  // Phase 43.1B — profile / about / summary aliases. Previously "PROFILE"
+  // at the top of a CV was pushed into `unknownHeadings` because no entry
+  // in the en dictionary mapped it to a SectionKey.
+  'profile': 'summary', 'professional profile': 'summary',
+  'about': 'summary', 'about me': 'summary', 'introduction': 'summary',
+  'summary': 'summary', 'professional summary': 'summary',
+  'career objective': 'summary', 'objective': 'summary',
+  'overview': 'summary', 'personal statement': 'summary',
+  'executive summary': 'summary',
 };
 const fr: Record<string, SectionKey> = {
   'experience': 'experience', 'experience professionnelle': 'experience',

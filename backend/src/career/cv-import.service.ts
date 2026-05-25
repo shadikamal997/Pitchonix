@@ -118,6 +118,53 @@ const SUMMARY_HEADINGS = new Set([
   'overview', 'personal statement', 'executive summary',
 ]);
 
+// =============================================================================
+//  Phase 43.1B — Personal-info headings.
+//
+//  A "CONTACT" or "PERSONAL INFO" heading isn't a real CV section in the
+//  scoring model — the data underneath (name / email / phone / links)
+//  feeds the `personal` object via collectPersonal(). Recognising these
+//  markers prevents them from being pushed to `unknownHeadings[]` and
+//  treated as a scoring penalty.
+// =============================================================================
+const PERSONAL_HEADINGS = new Set([
+  'contact', 'contact info', 'contact information', 'contact details',
+  'personal', 'personal info', 'personal information', 'personal details',
+  'get in touch', 'reach me', 'reach out', 'find me', 'connect with me',
+  'my contact', 'how to reach me',
+]);
+
+// =============================================================================
+//  Phase 43.1B — Person-name detection.
+//
+//  At the top of a CV the visually-largest line is almost always the
+//  person's name. Without this heuristic, "SHADI KAMAL" trips
+//  `looksLikeHeading` (all-caps + short) and was being pushed into
+//  `unknownHeadings`, which (a) polluted the warnings list and (b) made
+//  the heading-confidence band dip.
+//
+//  Heuristic: 2–5 tokens, every token starts with a capital letter, no
+//  digits, total length < 60, doesn't match any known section/personal
+//  heading alias. Diacritics + apostrophes are allowed.
+// =============================================================================
+function looksLikePersonName(s: string): boolean {
+  const t = (s || '').trim();
+  if (!t || t.length > 60 || /\d/.test(t)) return false;
+  const norm = normaliseHeading(t);
+  if (SECTION_HEADINGS[norm] || SUMMARY_HEADINGS.has(norm) || PERSONAL_HEADINGS.has(norm)) return false;
+  const tokens = t.split(/\s+/);
+  if (tokens.length < 2 || tokens.length > 5) return false;
+  // Every token must START with a capital. Tolerates ALL-CAPS as well.
+  return tokens.every((tok) => /^[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ.'-]*$/.test(tok));
+}
+
+function toTitleCase(s: string): string {
+  return (s || '').split(/\s+/).map((w) => {
+    if (!w) return w;
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }).join(' ');
+}
+
 @Injectable()
 export class CvImportService {
   private readonly logger = new Logger(CvImportService.name);
@@ -304,12 +351,39 @@ export class CvImportService {
     const personal: any = {};
     let summaryParts: string[] = [];
     let inSummary = false;
+    // Phase 43.1B — track whether the user has a "Contact" / "Personal Info"
+    // sub-section open. Lines underneath feed `collectPersonal` instead of
+    // being dropped / pushed to unknown headings.
+    let inPersonal = false;
+    // Phase 43.1B — line index tracker so we can spot the person's name at
+    // the very top of the document (first 6 non-blank lines).
+    let lineIdx = 0;
 
     for (const page of udm.pages) {
       for (const node of page.nodes) {
+        const t = ((node as any).text || '').trim();
         if (node.type === 'heading') {
-          const raw  = (node.text || '').trim();
+          const raw  = t;
           const norm = normaliseHeading(raw);
+          // Phase 43.1B — recognise personal-info markers (CONTACT, PERSONAL,
+          // GET IN TOUCH …) and route subsequent lines to collectPersonal().
+          if (PERSONAL_HEADINGS.has(norm)) {
+            detectedHeadings.push(raw);
+            currentSection = null;
+            inSummary = false;
+            inPersonal = true;
+            lineIdx++;
+            continue;
+          }
+          // Phase 43.1B — if the very first heading-like line is the person's
+          // name, capture it as personal.fullName and don't list it as an
+          // "unknown heading". Recognises a 2-5 token capitalised name with
+          // no digits.
+          if (lineIdx < 6 && !personal.fullName && looksLikePersonName(raw)) {
+            personal.fullName = toTitleCase(raw);
+            lineIdx++;
+            continue; // do NOT add to detectedHeadings, unknownHeadings, or any section
+          }
           detectedHeadings.push(raw);
           // Phase 42.7C + 42.8D — explicit user mapping OR learned workspace mapping.
           const mapped: SectionKey | null = (effectiveMappings && effectiveMappings[norm]) || null;
@@ -319,19 +393,30 @@ export class CvImportService {
           if (key === 'summary') {
             currentSection = null;
             inSummary = true;
+            inPersonal = false;
           } else if (key) {
             currentSection = key as keyof CvProfileDto;
             sections[currentSection] = sections[currentSection] || [];
             inSummary = false;
+            inPersonal = false;
           } else {
             currentSection = null;
             inSummary = false;
+            inPersonal = false;
             if (norm && norm.length < 40) unknownHeadings.push(raw);
           }
+          lineIdx++;
           continue;
         }
         if (inSummary && (node.type === 'paragraph')) {
           summaryParts.push(node.text || '');
+          lineIdx++;
+          continue;
+        }
+        if (inPersonal && (node.type === 'paragraph')) {
+          // Lines under a CONTACT/PERSONAL block feed the contact extractor.
+          collectPersonal(personal, node.text || '');
+          lineIdx++;
           continue;
         }
         if (currentSection) {
@@ -341,6 +426,7 @@ export class CvImportService {
           // Top-of-document text → personal/contact heuristics.
           collectPersonal(personal, (node as any).text || '');
         }
+        lineIdx++;
       }
     }
     if (summaryParts.length > 0) personal.summary = summaryParts.join(' ');
@@ -418,6 +504,33 @@ export class CvImportService {
       usedFallback,
     });
 
+    // Phase 43.1B — SINGLE SOURCE OF TRUTH.
+    //
+    // Every UI widget (top counts row, score bars, detected/missing chips,
+    // overall pill) MUST read from the same normalised report. Previously
+    // `extractedCounts` was built from `payload[k].length` while
+    // `confidence.detected` was built from `detectedSections(payload)` —
+    // both derived from the same `payload`, but the frontend ALSO computed
+    // its own counts from `res.profile.experience.length`, which is a
+    // post-save object and can drift (e.g. after Prisma trims invalid rows).
+    //
+    // The canonical counts below cover every section the scoring model
+    // knows about, even ones that ended up with zero items, so the UI
+    // never has to guess.
+    const canonicalCounts = {
+      personal:       Object.keys(personal || {}).filter((k) => personal[k]).length,
+      summary:        (personal?.summary ? 1 : 0),
+      experience:     (payload.experience as any[] | undefined)?.length     ?? 0,
+      education:      (payload.education  as any[] | undefined)?.length     ?? 0,
+      skills:         (payload.skills     as any[] | undefined)?.length     ?? 0,
+      languages:      ((payload as any).languages as any[] | undefined)?.length ?? 0,
+      projects:       ((payload as any).projects as any[] | undefined)?.length  ?? 0,
+      certifications: ((payload as any).certifications as any[] | undefined)?.length ?? 0,
+      awards:         ((payload as any).awards as any[] | undefined)?.length    ?? 0,
+      publications:   ((payload as any).publications as any[] | undefined)?.length ?? 0,
+      references:     ((payload as any).references as any[] | undefined)?.length    ?? 0,
+    };
+
     // Phase 42.7E — quality report payload.
     const quality = {
       score:    confidence.overall,
@@ -425,6 +538,15 @@ export class CvImportService {
       detected: confidence.detected,
       missing:  confidence.missing,
       counts:   extractedCounts,
+      // Phase 43.1B — canonical block (single source of truth).
+      canonical: {
+        counts:      canonicalCounts,
+        detected:    confidence.detected,
+        missing:     confidence.missing,
+        bands:       confidence.bands,
+        overall:     confidence.overall,
+        band:        confidence.band,
+      },
       duplicates: {
         skills:      dupSkills.map((g) => ({ canonical: g.canonical, variants: g.variants })),
         experiences: dupExp.map((g) => g.rep),
@@ -590,7 +712,8 @@ function looksLikeHeading(text: string): boolean {
   // Accept if ALL CAPS or Title Case + short.
   const isAllCaps = t === t.toUpperCase() && /[A-Z]/.test(t);
   const isTitleCase = /^[A-Z][a-z]+(\s+[A-Z][a-z]+)*$/.test(t.replace(/[&,]/g, ' '));
-  const isShortKnown = !!SECTION_HEADINGS[normaliseHeading(t)] || SUMMARY_HEADINGS.has(normaliseHeading(t));
+  const norm = normaliseHeading(t);
+  const isShortKnown = !!SECTION_HEADINGS[norm] || SUMMARY_HEADINGS.has(norm) || PERSONAL_HEADINGS.has(norm);
   return isAllCaps || isTitleCase || isShortKnown;
 }
 
