@@ -378,6 +378,22 @@ export class CvAnalyzerService {
         autoFixAvailable: false, target: { kind: 'section', id: ed.id, field: 'end' },
       }));
     }
+    // Phase 43.1 — flag CVs whose highest education is high-school only.
+    if (edu.length > 0) {
+      const onlyHighSchool = edu.every((e: any) => {
+        const text = `${e?.degree || ''} ${e?.institution || ''}`.toLowerCase();
+        return /high\s*school|secondary\s*school|grammar\s*school|lyc[ée]e|gymnasium|preparatory/.test(text)
+            && !/university|college|bachelor|master|phd|doctor|diploma|associate/.test(text);
+      });
+      if (onlyHighSchool) issues.push(this.mkIssue({
+        id: 'edu-high-school-only', category: 'education', severity: 'info',
+        section: 'education', title: 'Highest education is high school',
+        detail: 'Only secondary-school entries detected.',
+        why: 'For most professional roles recruiters expect a college / vocational credential.',
+        suggestion: 'Add any post-secondary courses, bootcamps or vocational training you have completed.',
+        autoFixAvailable: false,
+      }));
+    }
 
     // ---- Skills checks ------------------------------------------------------
     const sk = p.skills || [];
@@ -750,7 +766,42 @@ export class CvAnalyzerService {
     const atsScore         = Math.max(0, 100 - penalty(['ats']) - (m.estimatedPages > 2 ? 10 : 0));
     const readability      = Math.max(0, 100 - penalty(['readability']) - (m.avgBulletWords > 30 ? 10 : 0));
     const designScore      = Math.max(0, 100 - penalty(['design']));
-    const completeness     = Math.max(0, Math.round((m.sectionsPresent.length / 8) * 100));
+
+    // Phase 43.1 — completeness is now education-aware. A CV whose only
+    // education entry is "High School" should not get the same completeness
+    // boost as one that has a bachelor/master degree. We weight the
+    // education slot 0.0–1.0 instead of treating it as a binary present/absent.
+    const eduWeight = (() => {
+      const edu = p.education || [];
+      if (edu.length === 0) return 0;
+      let best = 0;
+      for (const e of edu) {
+        const text = `${(e as any)?.degree || ''} ${(e as any)?.institution || ''} ${(e as any)?.field || ''}`.toLowerCase();
+        let w = 0.5;
+        if (/ph\.?d|doctor(?:ate|al)/.test(text)) w = 1.10;
+        else if (/master|mba|m\.?sc|m\.?a\b|m\.?eng/.test(text)) w = 1.00;
+        else if (/bachelor|b\.?sc|b\.?a\b|b\.?eng|undergraduate|licen[cs]e/.test(text)) w = 0.85;
+        else if (/diploma|associate|h\.?n\.?d|foundation/.test(text)) w = 0.60;
+        else if (/high\s*school|secondary\s*school|grammar\s*school|lyc[ée]e|gymnasium|preparatory/.test(text)) w = 0.30;
+        else if (/university|college|institute|academy/.test(text)) w = 0.65;
+        if (w > best) best = w;
+      }
+      return Math.min(1.0, best);
+    })();
+    // Compute completeness as the sum of slot weights / 8.
+    // Slots: personal, summary, experience, education(weighted), skills,
+    // languages, projects, certifications.
+    const slotPresent = (k: string): number => m.sectionsPresent.includes(k) ? 1 : 0;
+    const completenessRaw =
+      slotPresent('personal') +
+      slotPresent('summary') +
+      slotPresent('experience') +
+      slotPresent('education') * eduWeight +
+      slotPresent('skills') +
+      slotPresent('languages') +
+      slotPresent('projects') +
+      slotPresent('certifications');
+    const completeness = Math.max(0, Math.round((completenessRaw / 8) * 100));
 
     return {
       structure: Math.round(structureScore),

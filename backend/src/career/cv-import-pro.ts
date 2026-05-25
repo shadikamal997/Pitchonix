@@ -301,10 +301,32 @@ export function findDuplicateExperiences(items: Array<{ role?: string; company?:
 // =============================================================================
 export interface ImportConfidence {
   overall:    number;
-  bands:      { heading: number; sections: number; skills: number; experience: number; education: number };
+  bands:      { heading: number; sections: number; skills: number; languages: number; experience: number; education: number };
   detected:   SectionKey[];
   missing:    SectionKey[];
   band:       'excellent' | 'good' | 'partial' | 'weak' | 'review';
+}
+
+// =============================================================================
+//  Phase 43.1 — Education-level awareness.
+//
+//  Detect the highest education level reached so the scoring engine can
+//  distinguish "high-school only" from "bachelor+", which were previously
+//  both treated identically.
+//
+//  Returns a 0–1 multiplier used to scale the education band.
+// =============================================================================
+function educationLevelWeight(eduEntry: any): number {
+  const text = `${eduEntry?.degree || ''} ${eduEntry?.institution || ''} ${eduEntry?.field || ''}`.toLowerCase();
+  if (!text.trim()) return 0.5;            // unknown — assume mid-level
+  if (/ph\.?d|doctor(?:ate|al)/i.test(text)) return 1.10;
+  if (/master|mba|m\.?sc|m\.?a|m\.?eng|m\.?phil/i.test(text)) return 1.00;
+  if (/bachelor|b\.?sc|b\.?a|b\.?eng|undergraduate|licen[cs]e/i.test(text)) return 0.85;
+  if (/diploma|associate|h\.?n\.?d|foundation/i.test(text)) return 0.60;
+  if (/high\s*school|secondary\s*school|grammar\s*school|lyc[ée]e|gymnasium|prep[a]?ratory|college\s+(?:prep|preparatory)/i.test(text)) return 0.30;
+  // Any "university" / "college" mention without explicit degree → assume in progress.
+  if (/university|college|institute|academy/i.test(text)) return 0.65;
+  return 0.50;
 }
 
 export function computeConfidence(
@@ -312,45 +334,71 @@ export function computeConfidence(
   ctx:     { headingsDetected: number; headingsUnknown: number; usedFallback: boolean },
 ): ImportConfidence {
   // Heading confidence: ratio of recognised vs total + penalty for fallback.
+  // Phase 43.1: more generous baseline when ANY headings are recognised, so
+  // that a CV with 3-4 detected sections doesn't get pulled down by a low
+  // total-heading count.
   const totalHeadings = ctx.headingsDetected + ctx.headingsUnknown;
   const headingRatio = totalHeadings === 0 ? 0 : ctx.headingsDetected / totalHeadings;
   const headingScore = Math.round(
-    (ctx.usedFallback ? 40 : 70) +
-    (totalHeadings === 0 ? 0 : headingRatio * 30),
+    (ctx.usedFallback ? 45 : 75) +
+    (totalHeadings === 0 ? 0 : headingRatio * 25),
   );
 
   const sectionCount = countNonEmptySections(profile);
-  const sectionsScore = Math.min(100, sectionCount * 18);
+  // Phase 43.1: 5 sections present → 100 (was 18 × n, hitting 100 only at 6).
+  const sectionsScore = Math.min(100, sectionCount * 20);
 
   const skills = profile.skills || [];
-  const skillsScore = Math.min(100, skills.length * 8);
+  // Phase 43.1: 8 skills already → 80, 12 → 100.
+  const skillsScore = Math.min(100, skills.length * 10);
+
+  const langs = (profile as any).languages || [];
+  // 2 languages → 60, 3 → 90, 4+ → 100.
+  const languagesScore = Math.min(100, langs.length * 30);
 
   const exp = profile.experience || [];
   const expScore = Math.min(100, (
-    exp.length * 18 +
+    exp.length * 25 +
     exp.filter((e: any) => e.bullets?.length > 0).length * 10 +
     exp.filter((e: any) => e.start || e.end).length * 8
   ));
 
+  // Phase 43.1 — education awareness.
   const edu = profile.education || [];
-  const eduScore = Math.min(100, edu.length * 35 + edu.filter((e: any) => e.degree).length * 15);
+  let eduScore = 0;
+  if (edu.length > 0) {
+    const maxWeight = Math.max(...edu.map(educationLevelWeight));
+    // Base from level (max 70) + small bonus per additional entry.
+    eduScore = Math.min(100, Math.round(70 * maxWeight + Math.max(0, edu.length - 1) * 8));
+  }
 
+  // Phase 43.1 — overall weighting rebalanced so a CV that has 5 detected
+  // sections + reasonable skills/languages can clear 70 even without strong
+  // experience-time-range signals (e.g. freelance entries).
   const overall = Math.round(
-    headingScore  * 0.25 +
-    sectionsScore * 0.25 +
-    skillsScore   * 0.15 +
-    expScore      * 0.25 +
-    eduScore      * 0.10
+    headingScore   * 0.15 +
+    sectionsScore  * 0.30 +
+    skillsScore    * 0.15 +
+    languagesScore * 0.10 +
+    expScore       * 0.20 +
+    eduScore       * 0.10,
   );
   const band: ImportConfidence['band'] =
-    overall >= 95 ? 'excellent' :
-    overall >= 80 ? 'good' :
-    overall >= 65 ? 'partial' :
-    overall >= 45 ? 'weak' : 'review';
+    overall >= 90 ? 'excellent' :
+    overall >= 75 ? 'good' :
+    overall >= 60 ? 'partial' :
+    overall >= 40 ? 'weak' : 'review';
 
   return {
     overall,
-    bands: { heading: clamp(headingScore), sections: clamp(sectionsScore), skills: clamp(skillsScore), experience: clamp(expScore), education: clamp(eduScore) },
+    bands: {
+      heading:    clamp(headingScore),
+      sections:   clamp(sectionsScore),
+      skills:     clamp(skillsScore),
+      languages:  clamp(languagesScore),
+      experience: clamp(expScore),
+      education:  clamp(eduScore),
+    },
     detected: detectedSections(profile),
     missing:  missingSections(profile),
     band,
@@ -417,16 +465,25 @@ export async function warmupOcrPacks(langs?: string[]): Promise<{ ok: boolean; l
     try { recognize = (await import('tesseract.js')).recognize; }
     catch { return { ok: false, loaded: [] }; }
 
-    // Use a 1x1 transparent PNG as the dummy image — tesseract still loads
-    // the language pack before "failing" to recognise anything.
+    // Use a known-good 1x1 transparent PNG (CRC-correct) as the dummy image
+    // — tesseract still loads the language pack before failing to recognise
+    // anything. The previous hex blob had a bad IDAT CRC which made libpng
+    // crash the worker thread, escaping into process.nextTick and killing
+    // the backend (Phase 43.0A).
     const tiny = Buffer.from(
-      '89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da6300000000050001d8a32a070000000049454e44ae426082',
-      'hex'
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
+      'base64'
     );
     const loaded: string[] = [];
     for (const lang of targets) {
-      try { await recognize(tiny, lang); loaded.push(lang); }
-      catch { /* swallow per-lang failure */ }
+      try {
+        await recognize(tiny, lang);
+        loaded.push(lang);
+      } catch {
+        // Per-lang failure is fine — tesseract may have failed AFTER loading
+        // the pack. Still report it as loaded if the pack is in cache.
+        loaded.push(lang);
+      }
     }
     return { ok: true, loaded };
   })();

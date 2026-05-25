@@ -55,7 +55,10 @@ export function useCvProfile() {
       const { data } = await api.get<CvProfileDto>('/career/profile');
       setProfile(data);
     } catch (e: any) {
+      // Phase 43.0A — handle network errors gracefully so the page doesn't
+      // crash with an unhandled rejection when the backend is unreachable.
       setError(e?.response?.data?.message || e?.message || 'Failed to load profile');
+      setProfile(null);
     } finally { setLoading(false); }
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
@@ -190,6 +193,10 @@ export function useCvDocuments(doctype?: CvDoctype) {
     try {
       const { data } = await api.get<CvDocumentDto[]>('/career/documents', { params: doctype ? { doctype } : {} });
       setItems(data || []);
+    } catch {
+      // Phase 43.0A — keep an empty list on network failure so the dashboard
+      // still renders instead of throwing into the React error boundary.
+      setItems([]);
     } finally { setLoading(false); }
   }, [doctype]);
   useEffect(() => { refresh(); }, [refresh]);
@@ -248,6 +255,9 @@ export function useCvTemplates(doctype?: CvDoctype, category?: string) {
         params: { ...(doctype ? { doctype } : {}), ...(category ? { category } : {}) },
       });
       setItems(data || []);
+    } catch {
+      // Phase 43.0A — keep an empty list on network failure.
+      setItems([]);
     } finally { setLoading(false); }
   }, [doctype, category]);
   useEffect(() => { refresh(); }, [refresh]);

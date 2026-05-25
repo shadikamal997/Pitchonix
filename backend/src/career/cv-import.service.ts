@@ -155,13 +155,20 @@ export class CvImportService {
     // -----------------------------------------------------------------------
     //  Phase 42.7A — OCR fallback when text extraction is empty / sparse.
     //
-    //  Trigger: PDF input + total extractable text < 200 chars, OR caller
-    //  passed forceOcr=true. We rasterise the PDF and run tesseract.js. The
-    //  OCR text replaces the UDM contents as a single synthetic page.
+    //  Phase 43.1 — tighter trigger. We only run OCR automatically when the
+    //  PDF really came back empty (< 80 chars total) AND we can't find any
+    //  obvious heading or contact signal in the extracted text. Many CVs
+    //  contain perfectly extractable text but with a low char count if the
+    //  layout is dense; running OCR on those was both slow and lossy.
+    //
+    //  `forceOcr` still bypasses every check for the Recovery Center button.
     // -----------------------------------------------------------------------
     const initialText = (udm.pages || []).flatMap((p: any) => p.nodes.map((n: any) => n.text || '')).join('\n').trim();
     const isPdf = (filename || '').toLowerCase().endsWith('.pdf') || mimetype === 'application/pdf';
-    const shouldRunOcr = isPdf && (opts?.forceOcr || initialText.length < 200);
+    const hasContactSignal = /[\w.+-]+@[\w.-]+\.[a-z]{2,}|\+?\d[\d\s().-]{6,}|linkedin\.com\/in\/|github\.com\//i.test(initialText);
+    const hasHeadingSignal = /\b(experience|education|skills|languages|summary|profile|contact|projects|certifications|employment|work|professional)\b/i.test(initialText);
+    const looksLikeRealCv  = hasContactSignal || hasHeadingSignal || initialText.length >= 150;
+    const shouldRunOcr     = isPdf && (opts?.forceOcr || (initialText.length < 80 && !looksLikeRealCv));
     if (shouldRunOcr) {
       try {
         // Phase 42.8B + 42.9B — pre-OCR language sampling.
@@ -229,20 +236,50 @@ export class CvImportService {
 
     // -----------------------------------------------------------------------
     //  Phase 42.6 — promote heading-like paragraphs to "synthetic" headings.
+    //  Phase 43.1 — also EXPLODE multi-line paragraph nodes so a paragraph
+    //  containing both the section marker and its content (a common PDF
+    //  artefact: "SKILLS\nResponsive design\nAPI integration") gets the
+    //  heading promoted properly. Without this, the whole paragraph was
+    //  > 50 chars and `looksLikeHeading` rejected it, so SKILLS / LANGUAGES
+    //  / CONTACT silently dropped out of the extracted profile.
     //
-    //  Many PDF/DOCX exports emit section markers ("EXPERIENCE", "Skills:",
-    //  "Work History") as paragraph nodes with bold runs, NOT as h1/h2.
-    //  We re-walk the tree once and tag those as type='heading' before the
-    //  main extractor runs.
+    //  Strategy: for every paragraph whose text contains a newline, split
+    //  it into per-line synthetic paragraph nodes, then promote any line
+    //  that looks like a heading to type='heading'.
     // -----------------------------------------------------------------------
-    const allLines: string[] = [];
+    let allLines: string[] = [];
+    for (const page of udm.pages) {
+      const newNodes: any[] = [];
+      for (const node of page.nodes) {
+        const t = (node as any).text || '';
+        if (t) allLines.push(t);
+        if (node.type === 'paragraph' && /[\r\n]/.test(t)) {
+          const lines = t.split(/[\r\n]+/).map((s: string) => s.trim()).filter(Boolean);
+          for (const line of lines) {
+            // Promote heading-like lines, copy others as paragraphs.
+            if (looksLikeHeading(line)) {
+              newNodes.push({ ...node, type: 'heading', text: line });
+            } else {
+              newNodes.push({ ...node, type: 'paragraph', text: line });
+            }
+          }
+        } else {
+          if (node.type === 'paragraph' && looksLikeHeading(t)) {
+            (node as any).type = 'heading';
+          }
+          newNodes.push(node);
+        }
+      }
+      (page as any).nodes = newNodes;
+    }
+
+    // Phase 43.1 — rebuild allLines from the (now-line-exploded) node tree
+    // so the fallback heuristics + personal-info scan see one line per item.
+    allLines = [];
     for (const page of udm.pages) {
       for (const node of page.nodes) {
         const t = (node as any).text || '';
         if (t) allLines.push(t);
-        if (node.type === 'paragraph' && looksLikeHeading(t)) {
-          (node as any).type = 'heading';
-        }
       }
     }
 
@@ -700,11 +737,29 @@ function mapLinesToSection(key: keyof CvProfileDto, lines: string[]): any[] {
       return out;
     }
     case 'education':
+      // Phase 43.1 — extract a `degree` hint + clean the institution string.
+      // Lets the analyzer differentiate "ERJAN HIGH SCHOOL" from "BSc Computer Science".
       return lines.map((l, i) => {
         const dm = l.match(/(\d{4})\s*[-–—to]+\s*(\d{4}|Present)/i);
+        let degree: string | undefined;
+        if (/ph\.?d|doctor(?:ate|al)/i.test(l)) degree = 'PhD';
+        else if (/master|mba|m\.?sc|m\.?a\b|m\.?eng/i.test(l)) degree = 'Master';
+        else if (/bachelor|b\.?sc|b\.?a\b|b\.?eng/i.test(l)) degree = 'Bachelor';
+        else if (/diploma|associate|h\.?n\.?d|foundation/i.test(l)) degree = 'Diploma';
+        else if (/high\s*school|secondary\s*school|grammar\s*school|lyc[ée]e|gymnasium|preparatory/i.test(l)) degree = 'High School';
+        // "University" / "College" without degree → assume in-progress / partial.
+        else if (/university|college|institute|academy/i.test(l)) degree = 'University';
+        const institution = l
+          .replace(/\(.+?\)/g, '')
+          .replace(/\d{4}\s*[-–—to]+\s*(?:\d{4}|Present|Current|Now)/i, '')
+          .trim()
+          .replace(/[,;\s]+$/, '');
         return {
-          id: `edu-${i}`, institution: l.replace(/\(.+?\)/g, '').trim(),
-          start: dm?.[1] || '', end: dm?.[2] === 'Present' ? '' : (dm?.[2] || ''),
+          id: `edu-${i}`,
+          institution,
+          degree,
+          start: dm?.[1] || '',
+          end: dm?.[2] === 'Present' ? '' : (dm?.[2] || ''),
           honors: [],
         };
       });

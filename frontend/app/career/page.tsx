@@ -1178,9 +1178,9 @@ const ImportResultCard: React.FC<{
           )}
 
           {confidence?.bands && (
-            <div className="mt-2 grid grid-cols-5 gap-1.5">
-              {(['heading','sections','skills','experience','education'] as const).map((k) => {
-                const v = confidence.bands[k] ?? 0;
+            <div className="mt-2 grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+              {(['heading','sections','skills','languages','experience','education'] as const).map((k) => {
+                const v = (confidence.bands as any)[k] ?? 0;
                 const fill = v >= 80 ? 'bg-[#4F7563]' : v >= 60 ? 'bg-[#D9A441]' : 'bg-[#D96A6A]';
                 return (
                   <div key={k}>

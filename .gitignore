@@ -74,3 +74,6 @@ frontend/tsconfig.tsbuildinfo
 
 # Local scratch
 backend/phase12-test.ts
+
+# Tesseract OCR language data (downloaded at runtime)
+*.traineddata

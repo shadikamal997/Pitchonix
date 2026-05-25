@@ -9,6 +9,21 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { join } from 'path';
 import * as fs from 'fs';
 
+// Phase 43.0A — process-level resilience.
+//
+// Tesseract.js / pdf2pic / playwright run in worker threads that can throw
+// errors *outside* our try/catch boundaries (e.g. libpng CRC failures bubble
+// via Worker.emit('error') → process.nextTick(throw)). Without these
+// handlers, a single corrupt image kills the entire backend. Log and keep
+// the server alive instead.
+const bootstrapLogger = new Logger('Process');
+process.on('uncaughtException', (err) => {
+  bootstrapLogger.error(`[uncaughtException] ${err?.message || err}`, (err as any)?.stack);
+});
+process.on('unhandledRejection', (reason: any) => {
+  bootstrapLogger.error(`[unhandledRejection] ${reason?.message || reason}`, reason?.stack);
+});
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
