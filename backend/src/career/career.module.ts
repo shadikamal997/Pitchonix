@@ -9,6 +9,7 @@ import { CvAnalyzerService }  from './cv-analyzer.service';
 import {
   CvSnapshotService, CvVariantsService, CvBenchmarkService,
   CvInterviewReadinessService, CvExportValidationService,
+  CvTemplateInsightsService,
 } from './cv-pro.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UniversalConversionModule } from '../universal-conversion/universal-conversion.module';
@@ -24,12 +25,14 @@ import { BrandKitsModule }    from '../brand-kits/brand-kits.module';
     // Phase 42.4 PRO+
     CvSnapshotService, CvVariantsService, CvBenchmarkService,
     CvInterviewReadinessService, CvExportValidationService,
+    CvTemplateInsightsService,
   ],
   exports:     [
     CvProfilesService, CvDocumentsService, CvTemplatesService, CvImportService,
     CvExportService, CvAnalyzerService,
     CvSnapshotService, CvVariantsService, CvBenchmarkService,
     CvInterviewReadinessService, CvExportValidationService,
+    CvTemplateInsightsService,
   ],
 })
 export class CareerModule {}

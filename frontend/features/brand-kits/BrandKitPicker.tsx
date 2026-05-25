@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useMyBrandKits } from './useBrandKits';
 import api from '@/lib/api';
+import { BrandPreviewWall } from './BrandPreviewWall';
 
 // =============================================================================
 //  Phase 37.3A — BrandKitPicker (canonical)
@@ -260,6 +261,7 @@ const PickerBody: React.FC<{
   mode:         BrandKitPickerMode;
 }> = ({ items, loading, previewId, currentValue, onPreview, onClear, onApply, mode }) => {
   const [busy, setBusy] = useState(false);
+  const [wallKit, setWallKit] = useState<BrandKitLite | null>(null);
   const selectedKit = items.find((k) => k.id === previewId) || null;
 
   if (loading) {
@@ -346,6 +348,16 @@ const PickerBody: React.FC<{
         <span className="text-[10px] text-slate-500 inline-flex items-center gap-1">
           <Eye className="w-3 h-3" /> {selectedKit ? selectedKit.name : 'None'} — preview
         </span>
+        {selectedKit && (
+          <button
+            type="button"
+            onClick={() => setWallKit(selectedKit)}
+            className="h-8 px-2.5 text-xs font-semibold border border-slate-300 hover:bg-white text-slate-700 rounded inline-flex items-center gap-1"
+            title="Preview wall — see how this kit looks across CV / Resume / Cover Letter / Portfolio"
+          >
+            <Eye className="w-3 h-3" /> Preview wall
+          </button>
+        )}
         <button
           type="button"
           onClick={doApply}
@@ -356,6 +368,14 @@ const PickerBody: React.FC<{
           {mode === 'apply' ? 'Apply Brand Kit' : 'Use this kit'}
         </button>
       </div>
+      {/* Phase 42.5C — Brand Preview Wall (modal, opt-in via "Preview wall") */}
+      {wallKit && (
+        <BrandPreviewWall
+          kit={wallKit}
+          onCancel={() => setWallKit(null)}
+          onConfirm={async () => { setWallKit(null); await doApply(); }}
+        />
+      )}
     </div>
   );
 };

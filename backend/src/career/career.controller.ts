@@ -18,7 +18,7 @@ import { CvAnalyzerService, CvProfileSnapshot } from './cv-analyzer.service';
 import {
   CvSnapshotService, CvVariantsService, CvBenchmarkService,
   CvInterviewReadinessService, CvExportValidationService,
-  VariantPreset, CvSnapshotKind,
+  CvTemplateInsightsService, VariantPreset, CvSnapshotKind,
 } from './cv-pro.service';
 
 // =============================================================================
@@ -68,6 +68,7 @@ export class CareerController {
     private readonly benchmark: CvBenchmarkService,
     private readonly interview: CvInterviewReadinessService,
     private readonly preflight: CvExportValidationService,
+    private readonly tplInsights: CvTemplateInsightsService,
   ) {}
 
   // ─── Profile ────────────────────────────────────────────────────────────────
@@ -220,6 +221,16 @@ export class CareerController {
   @Get('templates/count')
   countTemplates() {
     return this.templates.countByDoctype();
+  }
+
+  @Get('templates/insights')
+  @ApiOperation({ summary: 'Phase 42.5A — 6-axis template performance radar (ATS / Visual / Executive / Creative / Readability / Print)' })
+  async templatesInsights(@Query('doctype') doctype?: CvDoctype) {
+    const list = await this.templates.list({ doctype: doctype || 'cv' });
+    const rows = Array.isArray(list) ? list : ((list as any)?.items || []);
+    return this.tplInsights.scoreMany(rows.map((t: any) => ({
+      id: t.id, name: t.name, category: t.category, layout: t.layout,
+    })));
   }
 
   // ===========================================================================

@@ -488,6 +488,162 @@ export class CvExportValidationService {
 }
 
 // =============================================================================
+//  Phase 42.5A — Template performance insights
+//
+//  Pure rule-based 6-axis scoring per template, derived from the template's
+//  layout knobs (atsSafe, columns, density, style, sidebar, icons, etc.).
+//  No magic — every score is a deterministic function of the seed metadata.
+// =============================================================================
+
+export interface TemplateInsightAxes {
+  ats:        number;
+  visual:     number;
+  executive:  number;
+  creative:   number;
+  readability: number;
+  print:      number;
+}
+
+export interface TemplateInsight {
+  id:        string;
+  name:      string;
+  category?: string;
+  axes:      TemplateInsightAxes;
+  /** Single-number balanced summary score (0..100). */
+  balanced:  number;
+  /** Which axis the template is strongest at. */
+  bestFor:   keyof TemplateInsightAxes;
+  badges:    string[];
+}
+
+@Injectable()
+export class CvTemplateInsightsService {
+  /**
+   * Score one template against the 6 axes. Accepts a denormalised "row"
+   * (id, name, category, layout) so the caller can pass either prisma rows
+   * or the seed library directly.
+   */
+  scoreOne(t: { id: string; name: string; category?: string | null; layout: any }): TemplateInsight {
+    const L = t.layout || {};
+    const axes: TemplateInsightAxes = {
+      ats:         this.scoreAts(L),
+      visual:      this.scoreVisual(L),
+      executive:   this.scoreExecutive(L, t.category),
+      creative:    this.scoreCreative(L, t.category),
+      readability: this.scoreReadability(L),
+      print:       this.scorePrint(L),
+    };
+    const balanced = Math.round((axes.ats + axes.visual + axes.executive + axes.creative + axes.readability + axes.print) / 6);
+    const bestFor = (Object.keys(axes) as Array<keyof TemplateInsightAxes>)
+      .reduce((best, k) => axes[k] > axes[best] ? k : best, 'balanced' as any);
+
+    const badges: string[] = [];
+    if (L.atsSafe)              badges.push('ATS-safe');
+    if (L.premium)              badges.push('Premium');
+    if (L.style === 'creative') badges.push('Creative');
+    if (L.style === 'timeline') badges.push('Timeline');
+    if (L.style === 'sidebar' || L.headerStyle === 'sidebar') badges.push('Sidebar');
+    if (L.photoShape && L.photoShape !== 'none') badges.push('Photo');
+
+    return {
+      id: t.id, name: t.name, category: t.category ?? undefined,
+      axes, balanced, bestFor, badges,
+    };
+  }
+
+  scoreMany(rows: Array<{ id: string; name: string; category?: string | null; layout: any }>): TemplateInsight[] {
+    return rows.map((r) => this.scoreOne(r));
+  }
+
+  // =========================================================================
+  //  Per-axis scoring functions
+  // =========================================================================
+
+  private scoreAts(L: any): number {
+    let s = 50;
+    if (L.atsSafe) s += 40;
+    if (L.columns === 1) s += 8; else s -= 6;
+    if (!L.icons) s += 4;
+    if (!L.photoShape || L.photoShape === 'none') s += 4;
+    if (!L.customCss) s += 4;
+    if (L.style === 'creative' || L.style === 'timeline') s -= 10;
+    if (L.headerStyle === 'sidebar') s -= 8;
+    return clamp(s);
+  }
+
+  private scoreVisual(L: any): number {
+    let s = 40;
+    if (L.customCss)               s += 18;
+    if (L.style === 'creative')    s += 18;
+    if (L.style === 'photo')       s += 12;
+    if (L.style === 'sidebar')     s += 10;
+    if (L.style === 'timeline')    s += 10;
+    if (L.icons)                   s += 8;
+    if (L.accentDividers)          s += 6;
+    if (L.premium)                 s += 4;
+    if (L.atsSafe)                 s -= 8;
+    if (L.columns === 1 && L.headerStyle === 'block') s -= 6;
+    return clamp(s);
+  }
+
+  private scoreExecutive(L: any, cat?: string | null): number {
+    let s = 40;
+    const headingFont = (L?.typography?.heading || '').toLowerCase();
+    if (/playfair|lora|garamond|georgia|merriweather|serif/.test(headingFont)) s += 22;
+    if (L.density === 'spacious')              s += 14;
+    if (L.style === 'classic')                 s += 10;
+    if (L.headerStyle === 'block')             s += 6;
+    if (cat === 'Executive' || cat === 'Corporate' || cat === 'Consulting') s += 16;
+    if (L.style === 'creative')                s -= 18;
+    if (L.icons)                               s -= 6;
+    if (L.photoShape && L.photoShape !== 'none') s -= 4;
+    return clamp(s);
+  }
+
+  private scoreCreative(L: any, cat?: string | null): number {
+    let s = 30;
+    if (cat === 'Creative' || cat === 'Designer') s += 22;
+    if (L.style === 'creative')                s += 18;
+    if (L.style === 'photo')                   s += 10;
+    if (L.style === 'sidebar')                 s += 8;
+    if (L.icons)                               s += 8;
+    if (L.customCss)                           s += 10;
+    if (L.accentDividers)                      s += 4;
+    if (L.atsSafe)                             s -= 14;
+    if (L.style === 'classic')                 s -= 10;
+    return clamp(s);
+  }
+
+  private scoreReadability(L: any): number {
+    let s = 60;
+    if (L.density === 'comfortable')           s += 14;
+    if (L.density === 'spacious')              s += 6;
+    if (L.density === 'compact')               s -= 8;
+    const bodyFont = (L?.typography?.body || '').toLowerCase();
+    if (/inter|roboto|sans|arial|helvetica/.test(bodyFont)) s += 10;
+    if (/playfair|garamond/.test(bodyFont))    s -= 6;     // serif body harder to skim
+    if (L.columns === 2)                       s -= 8;     // two-col harder for ATS skim
+    if (L.style === 'timeline')                s -= 4;
+    if (L.atsSafe)                             s += 4;
+    return clamp(s);
+  }
+
+  private scorePrint(L: any): number {
+    let s = 70;
+    if (L.atsSafe)                             s += 10;
+    if (L.customCss)                           s -= 6;
+    if (L.style === 'photo' || L.photoShape && L.photoShape !== 'none') s -= 4;
+    const accent = (L.accent || '').toLowerCase();
+    if (/#(fff|0+)/i.test(accent))             s -= 4;     // pure black/white reads thin in print
+    if (L.density === 'compact')               s -= 2;
+    if (L.icons)                               s -= 4;
+    return clamp(s);
+  }
+}
+
+function clamp(n: number): number { return Math.max(0, Math.min(100, Math.round(n))); }
+
+// =============================================================================
 //  Helpers
 // =============================================================================
 function capitalize(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }

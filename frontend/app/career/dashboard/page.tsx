@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Sparkles, TrendingUp, Briefcase, FileText, Trash2, Loader2,
-  BarChart3, Award, Clock, ChevronRight,
+  BarChart3, Award, Clock, ChevronRight, GitCompare,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { useCvProfile, useCvDocuments } from '@/features/career/hooks';
@@ -69,8 +69,12 @@ export default function CareerDashboardPage() {
         <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-purple-600" /> Career Intelligence Dashboard
         </h1>
+        <Link href="/career/dashboard/compare"
+          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold border border-purple-300 text-purple-700 hover:bg-purple-50 rounded">
+          <GitCompare className="w-3.5 h-3.5" /> Compare snapshots
+        </Link>
         <Link href="/career/analyze"
-          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded">
+          className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded">
           <Sparkles className="w-3.5 h-3.5" /> Analyze CV
         </Link>
       </header>
