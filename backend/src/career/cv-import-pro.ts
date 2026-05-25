@@ -393,6 +393,50 @@ export interface OcrProgressCallback {
 }
 
 // =============================================================================
+//  Phase 42.9B Item 4 — OCR language-pack warmup.
+//
+//  Pre-downloads the tesseract.js language models so that the first import
+//  in a session doesn't pay the 10-30s cold-download penalty.
+//
+//  Idempotent: tesseract.js caches packs in its worker filesystem on first
+//  download — subsequent calls are no-ops. Fire-and-forget; warmup is
+//  non-blocking and silent on failure (the worst case is a slow first
+//  import, which is the status quo).
+//
+//  Priority order per spec: ara > eng > fra > deu > ron > (ita / spa / nld / por)
+// =============================================================================
+
+let warmupInFlight: Promise<{ ok: boolean; loaded: string[] }> | null = null;
+
+export async function warmupOcrPacks(langs?: string[]): Promise<{ ok: boolean; loaded: string[] }> {
+  if (warmupInFlight) return warmupInFlight;
+  const targets = langs && langs.length ? langs : ['eng', 'ara', 'fra', 'deu', 'ron'];
+
+  warmupInFlight = (async () => {
+    let recognize: any;
+    try { recognize = (await import('tesseract.js')).recognize; }
+    catch { return { ok: false, loaded: [] }; }
+
+    // Use a 1x1 transparent PNG as the dummy image — tesseract still loads
+    // the language pack before "failing" to recognise anything.
+    const tiny = Buffer.from(
+      '89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da6300000000050001d8a32a070000000049454e44ae426082',
+      'hex'
+    );
+    const loaded: string[] = [];
+    for (const lang of targets) {
+      try { await recognize(tiny, lang); loaded.push(lang); }
+      catch { /* swallow per-lang failure */ }
+    }
+    return { ok: true, loaded };
+  })();
+
+  // Reset the in-flight slot once finished so a manual refresh works.
+  warmupInFlight.then(() => { warmupInFlight = null; }, () => { warmupInFlight = null; });
+  return warmupInFlight;
+}
+
+// =============================================================================
 //  Phase 42.9B — Pre-OCR language sampling.
 //
 //  Strategy:

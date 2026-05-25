@@ -158,37 +158,66 @@ export class CareerController {
     return p;
   }
 
-  // Phase 42.9A — Server-Sent Events stream for real-time progress.
-  // Frontend uses EventSource against this endpoint; falls back to polling
-  // (GET /import/progress/:jobId) when SSE fails (e.g. behind a proxy that
-  // buffers). Endpoint is @Public because EventSource cannot send Authorization
-  // headers — the jobId itself is an unguessable UUID (random 122 bits of
-  // entropy) and the in-memory tracker self-evicts after 30 minutes. The
-  // payload contains no PII, only progress phase/percent/page counters.
+  // Phase 42.9A + 42.9B Item 1 — Server-Sent Events stream for real-time progress.
+  //
+  //  Proxy-compatibility header set (verified against the common gotchas):
+  //    Content-Type: text/event-stream                — required by spec
+  //    Cache-Control: no-cache, no-transform          — defeats Nginx, ALB,
+  //                                                     Azure App Gateway,
+  //                                                     Cloudflare (and forbids
+  //                                                     content-rewriting middleboxes)
+  //    Connection: keep-alive                         — keeps the upstream open
+  //    X-Accel-Buffering: no                          — Nginx (& fork-derived
+  //                                                     proxies like OpenResty)
+  //    Pragma: no-cache                               — HTTP/1.0 caches still
+  //                                                     exist on some VPNs
+  //    Transfer-Encoding: chunked  (implicit via res.write)
+  //
+  //  Behaviour:
+  //    - sends current state immediately on connect so the client doesn't wait
+  //    - sends ":ka\n\n" comment heartbeat every 15s to defeat idle timeouts
+  //      (Cloudflare: 100s, ALB: 60s default, Nginx: 75s — 15s is safely
+  //      below all of them)
+  //    - emits "retry: 5000" so EventSource auto-reconnects after 5s when the
+  //      stream is killed by an intermediate proxy
+  //    - closes the connection cleanly on done / failed / cancelled
+  //
+  //  Endpoint is @Public because EventSource cannot send Authorization
+  //  headers. Authentication is via an unguessable 122-bit UUID jobId, the
+  //  in-memory tracker self-evicts after 30 minutes, and the payload contains
+  //  only progress phase/percent/page counters — no PII.
   @Public()
   @Get('profile/import/progress/:jobId/stream')
   importProgressStream(@Param('jobId') jobId: string, @Res() res: Response) {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no'); // disable proxy buffering
+    res.setHeader('Content-Type',      'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control',     'no-cache, no-store, no-transform, must-revalidate');
+    res.setHeader('Pragma',            'no-cache');
+    res.setHeader('Connection',        'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders?.();
+
+    // Tell the browser to retry after 5s if the stream is dropped mid-import
+    // (e.g. by a transient proxy hiccup).
+    res.write('retry: 5000\n\n');
 
     // Send the current state immediately so the client doesn't wait.
     const cur = this.progress.get(jobId);
     if (cur) res.write(`data: ${JSON.stringify(cur)}\n\n`);
 
     const unsub = this.progress.subscribe(jobId, (p) => {
-      res.write(`data: ${JSON.stringify(p)}\n\n`);
-      if (p.phase === 'done' || p.phase === 'failed' || p.phase === 'cancelled') {
-        // Brief delay so the final event is flushed before close.
-        setTimeout(() => { try { res.end(); } catch { /* */ } }, 50);
-      }
+      try {
+        res.write(`data: ${JSON.stringify(p)}\n\n`);
+        if (p.phase === 'done' || p.phase === 'failed' || p.phase === 'cancelled') {
+          // Brief delay so the final event is flushed before close.
+          setTimeout(() => { try { res.end(); } catch { /* */ } }, 50);
+        }
+      } catch { /* socket closed */ }
     });
 
-    // Heartbeat every 15s to keep the connection alive.
+    // Heartbeat every 15s to keep the connection alive past idle-timeout
+    // policies in common reverse proxies.
     const heartbeat = setInterval(() => {
-      try { res.write(':\n\n'); } catch { /* */ }
+      try { res.write(': ka\n\n'); } catch { /* */ }
     }, 15_000);
 
     // Clean up on client disconnect.
@@ -200,6 +229,22 @@ export class CareerController {
   @Post('profile/import/cancel/:jobId')
   importCancel(@Param('jobId') jobId: string) {
     return { ok: this.progress.cancel(jobId) };
+  }
+
+  // Phase 42.9B Item 4 — Background OCR pack warmup.
+  //
+  // Fire-and-forget endpoint the frontend hits when the user enters
+  // /career — pre-downloads tesseract.js language models so the first
+  // OCR import doesn't pay the 10-30s cold-start penalty. Returns
+  // immediately while the download happens in the background.
+  @Post('import/warmup')
+  async importWarmup(@Body() body: { langs?: string[] }) {
+    // Don't await — fire-and-forget so the request returns < 50 ms.
+    // tesseract.js caches packs per-worker so subsequent calls are no-ops.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { warmupOcrPacks } = await import('./cv-import-pro');
+    warmupOcrPacks(body?.langs).catch(() => { /* silent */ });
+    return { ok: true, scheduled: body?.langs || ['eng', 'ara', 'fra', 'deu', 'ron'] };
   }
 
   // ===========================================================================

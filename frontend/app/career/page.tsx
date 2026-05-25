@@ -39,6 +39,15 @@ export default function CareerWorkspacePage() {
   const params = useSearchParams();
   const [tab, setTab] = useState<Tab>('profile');
 
+  // Phase 42.9B Item 4 — OCR pack warmup on /career mount.
+  // Fire-and-forget; tesseract.js caches packs per-worker so this is a
+  // no-op on subsequent visits. Skipped silently if the user has no profile
+  // yet (warmup endpoint is auth-gated). The benefit is huge on slow
+  // networks — first scanned-PDF import skips the 10-30s cold-download.
+  useEffect(() => {
+    api.post('/career/import/warmup', { langs: ['eng', 'ara', 'fra', 'deu', 'ron'] }).catch(() => { /* silent */ });
+  }, []);
+
   // Phase 42 — auto-create when arriving via /career?create=cv|resume|...
   useEffect(() => {
     const wanted = params?.get('create');
