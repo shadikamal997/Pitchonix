@@ -165,6 +165,49 @@ function toTitleCase(s: string): string {
   }).join(' ');
 }
 
+// =============================================================================
+//  Phase 43.1C — Letter-spaced text collapse.
+//
+//  Many CV templates render section headings with CSS letter-spacing, which
+//  the PDF parser exposes as a literal space between every character. So
+//  "PROFILE" comes out as "P R O F I L E" and stops matching any heading
+//  dictionary entry. Same for "W O R K  E X P E R I E N C E", "S K I L L S",
+//  "L A N G U A G E S", and even the person's name "S H A D I  K A M A L".
+//
+//  Strategy: split a line by 2+ consecutive spaces (word boundaries in
+//  letter-spaced text); for each segment, if it's 3+ single-character
+//  tokens separated by single spaces, collapse them. Body text
+//  ("Responsive design", "API integration") is untouched because its
+//  tokens are multi-character.
+//
+//  Also normalises non-breaking / em / en spaces and strips zero-width
+//  characters that PDFs sometimes inject between letter-spaced glyphs.
+// =============================================================================
+export function collapseSpacedLetters(input: string): string {
+  if (!input) return input;
+  // Normalise common non-ASCII whitespace (NBSP, narrow NBSP, ideographic
+  // space, em/en space, etc.) to a plain ASCII space, and strip zero-width
+  // glyphs that some PDF extractors inject between letter-spaced characters.
+  const normalised = input
+    .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '');
+  if (!/ /.test(normalised)) return normalised;
+  // Split into "words" separated by 2+ spaces (the real word boundaries in
+  // letter-spaced text). Then collapse any run of 3+ single-char tokens.
+  return normalised
+    .split(/ {2,}/)
+    .map((segment) => {
+      const tokens = segment.split(/ /).filter(Boolean);
+      if (tokens.length >= 3 && tokens.every((t) => t.length === 1)) {
+        return tokens.join('');
+      }
+      return segment;
+    })
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 @Injectable()
 export class CvImportService {
   private readonly logger = new Logger(CvImportService.name);
@@ -298,10 +341,16 @@ export class CvImportService {
     for (const page of udm.pages) {
       const newNodes: any[] = [];
       for (const node of page.nodes) {
-        const t = (node as any).text || '';
+        // Phase 43.1C — collapse letter-spaced text BEFORE classification so
+        // "P R O F I L E" / "S K I L L S" / "L A N G U A G E S" /
+        // "W O R K  E X P E R I E N C E" / "S H A D I  K A M A L" all
+        // become single recognisable tokens. Without this, every section
+        // heading in CSS letter-spaced PDF templates was dumped into
+        // unknownHeadings[] and the entire scoring pipeline collapsed.
+        let t = collapseSpacedLetters((node as any).text || '');
         if (t) allLines.push(t);
         if (node.type === 'paragraph' && /[\r\n]/.test(t)) {
-          const lines = t.split(/[\r\n]+/).map((s: string) => s.trim()).filter(Boolean);
+          const lines = t.split(/[\r\n]+/).map((s: string) => collapseSpacedLetters(s.trim())).filter(Boolean);
           for (const line of lines) {
             // Promote heading-like lines, copy others as paragraphs.
             if (looksLikeHeading(line)) {
@@ -311,10 +360,11 @@ export class CvImportService {
             }
           }
         } else {
-          if (node.type === 'paragraph' && looksLikeHeading(t)) {
-            (node as any).type = 'heading';
+          const clone = { ...node, text: t };
+          if (clone.type === 'paragraph' && looksLikeHeading(t)) {
+            clone.type = 'heading';
           }
-          newNodes.push(node);
+          newNodes.push(clone);
         }
       }
       (page as any).nodes = newNodes;
@@ -556,7 +606,25 @@ export class CvImportService {
       unknownHeadings: unknownHeadings.slice(0, 20),
     };
 
-    if (debug) this.logger.log(`CV import: ${allLines.length} lines, ${detectedHeadings.length} headings, mapped=${JSON.stringify(extractedCounts)}, confidence=${confidence.overall} (${confidence.band})`);
+    // Phase 43.1C — always-on debug log so the runtime path is visible
+    // (regardless of NODE_ENV) without forcing the caller to dig into the
+    // `debug` payload. Useful for diagnosing "score = 9" reports from
+    // production CVs that don't match the dev fixture.
+    this.logger.log(
+      `[CV-IMPORT] file=${filename} lines=${allLines.length} ` +
+      `headings.detected=${detectedHeadings.length} headings.unknown=${unknownHeadings.length} ` +
+      `mapped=${JSON.stringify(extractedCounts)} ` +
+      `canonical=${JSON.stringify(canonicalCounts)} ` +
+      `detected=[${(confidence.detected || []).join(',')}] ` +
+      `bands=${JSON.stringify(confidence.bands)} ` +
+      `overall=${confidence.overall} band=${confidence.band} usedFallback=${usedFallback} usedOcr=${usedOcr}`
+    );
+    if (detectedHeadings.length > 0) {
+      this.logger.log(`[CV-IMPORT] detectedHeadings=${JSON.stringify(detectedHeadings.slice(0, 20))}`);
+    }
+    if (unknownHeadings.length > 0) {
+      this.logger.log(`[CV-IMPORT] unknownHeadings=${JSON.stringify(unknownHeadings.slice(0, 20))}`);
+    }
 
     // Phase 42.8E — persist any explicit mappings the caller passed so future
     // imports auto-apply them.
@@ -692,7 +760,9 @@ export class CvImportService {
 // =============================================================================
 
 function normaliseHeading(s: string): string {
-  return (s || '')
+  // Phase 43.1C — defensive collapse so "P R O F I L E" → "profile" even
+  // when called outside the main extraction pipeline.
+  return collapseSpacedLetters(s || '')
     .toLowerCase()
     .replace(/[:.\-–—\s]+$/, '')      // trailing punctuation / em-dashes / spaces
     .replace(/^[:.\-–—\s]+/, '')
