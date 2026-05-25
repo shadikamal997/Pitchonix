@@ -27,6 +27,8 @@ export default function CareerDashboardPage() {
   const { items: docs } = useCvDocuments('cv');
   const [snapshots, setSnapshots] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
+  // Phase 42.8G — Import history (separate from snapshot timeline).
+  const [imports, setImports] = useState<any[]>([]);
 
   const loadSnapshots = async () => {
     setBusy(true);
@@ -36,7 +38,11 @@ export default function CareerDashboardPage() {
     } catch { /* ignore */ }
     finally { setBusy(false); }
   };
-  useEffect(() => { loadSnapshots(); }, []);
+  const loadImports = async () => {
+    try { const { data } = await api.get('/career/import/history'); setImports(Array.isArray(data) ? data : []); }
+    catch { /* */ }
+  };
+  useEffect(() => { loadSnapshots(); loadImports(); }, []);
 
   const latestAnalysis  = snapshots.find((s) => s.kind === 'analysis');
   const latestBenchmark = snapshots.find((s) => s.kind === 'benchmark');
@@ -174,6 +180,40 @@ export default function CareerDashboardPage() {
           )}
         </Card>
 
+        {/* Phase 42.8G — Import history card */}
+        <Card title="Import history" icon={<FileText className="w-4 h-4 text-purple-600" />}>
+          {imports.length === 0 ? (
+            <EmptyHint text="No CV imports yet. Each upload from /career creates a record here." />
+          ) : (
+            <ul className="space-y-1">
+              {imports.slice(0, 15).map((s: any) => {
+                const ev = s.analysisJson || {};
+                const tone = ev.confidenceBand === 'excellent' ? 'bg-green-100 text-green-800'
+                  : ev.confidenceBand === 'good'     ? 'bg-blue-100 text-blue-800'
+                  : ev.confidenceBand === 'partial'  ? 'bg-amber-100 text-amber-800'
+                                                     : 'bg-red-100 text-red-800';
+                return (
+                  <li key={s.id} className="flex items-center gap-2 text-xs border border-slate-200 rounded px-2 py-1.5">
+                    <span className="font-mono text-[10px] uppercase bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{(ev.mimetype || '').split('/')[1] || 'file'}</span>
+                    <span className="flex-1 truncate">{s.label}</span>
+                    {s.score != null && <span className={`text-[10px] px-1 py-0.5 rounded ${tone}`}>{s.score} · {ev.confidenceBand || ''}</span>}
+                    {ev.ocrUsed && <span className="text-[10px] bg-blue-100 text-blue-800 px-1 py-0.5 rounded">OCR</span>}
+                    <span className="text-[10px] text-slate-400">{ev.durationMs ? `${(ev.durationMs/1000).toFixed(1)}s` : ''}</span>
+                    <span className="text-[10px] text-slate-400">{new Date(s.createdAt).toLocaleDateString()}</span>
+                    <button onClick={async () => {
+                      try { await api.delete(`/career/import/history/${s.id}`); setImports((x) => x.filter((y) => y.id !== s.id)); }
+                      catch (e: any) { setToast({ tone: 'error', msg: e?.response?.data?.message || 'Delete failed' }); }
+                    }}
+                      className="text-[11px] text-red-600 hover:underline inline-flex items-center gap-1">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+
         {/* Quick links */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <Link href="/career/analyze" className="block p-3 bg-white border border-slate-200 rounded hover:border-purple-400 hover:bg-purple-50/30">
@@ -196,6 +236,13 @@ export default function CareerDashboardPage() {
               <ChevronRight className="w-3 h-3 ml-auto text-slate-400" />
             </div>
             <p className="text-[11px] text-slate-500 mt-1">CV / Resume / Cover Letter / Portfolio workspace.</p>
+          </Link>
+          <Link href="/settings/cv-import-mappings" className="block p-3 bg-white border border-slate-200 rounded hover:border-purple-400 hover:bg-purple-50/30">
+            <div className="flex items-center gap-2 font-semibold">
+              <FileText className="w-4 h-4 text-purple-600" /> Import mappings
+              <ChevronRight className="w-3 h-3 ml-auto text-slate-400" />
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">Manage saved "Career Highlights → Experience" mappings.</p>
           </Link>
         </div>
       </div>

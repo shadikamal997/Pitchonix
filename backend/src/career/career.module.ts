@@ -11,6 +11,8 @@ import {
   CvInterviewReadinessService, CvExportValidationService,
   CvTemplateInsightsService,
 } from './cv-pro.service';
+import { ImportProgressTracker } from './cv-import-polish';
+import { CvMappingMemoryService } from './cv-mapping-memory.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UniversalConversionModule } from '../universal-conversion/universal-conversion.module';
 import { PptxImportModule }   from '../pptx-import/pptx-import.module';
@@ -26,6 +28,7 @@ import { BrandKitsModule }    from '../brand-kits/brand-kits.module';
     CvSnapshotService, CvVariantsService, CvBenchmarkService,
     CvInterviewReadinessService, CvExportValidationService,
     CvTemplateInsightsService,
+    ImportProgressTracker, CvMappingMemoryService,
   ],
   exports:     [
     CvProfilesService, CvDocumentsService, CvTemplatesService, CvImportService,
@@ -33,6 +36,7 @@ import { BrandKitsModule }    from '../brand-kits/brand-kits.module';
     CvSnapshotService, CvVariantsService, CvBenchmarkService,
     CvInterviewReadinessService, CvExportValidationService,
     CvTemplateInsightsService,
+    ImportProgressTracker, CvMappingMemoryService,
   ],
 })
 export class CareerModule {}

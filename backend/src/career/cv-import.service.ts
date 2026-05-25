@@ -8,6 +8,9 @@ import {
   findDuplicateSkills, findDuplicateExperiences, computeConfidence, runOcrOnPdf,
   type SectionKey, type ImportConfidence,
 } from './cv-import-pro';
+import { detectOcrLanguages, ImportProgressTracker, type ImportEvent } from './cv-import-polish';
+import { CvMappingMemoryService } from './cv-mapping-memory.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 // =============================================================================
 //  Phase 42L + 42M + 42.6 — CV import.
@@ -122,14 +125,23 @@ export class CvImportService {
     private readonly conversion: UniversalConversionService,
     private readonly profiles:   CvProfilesService,
     private readonly pptx:       PptxImportService,
+    private readonly progress:   ImportProgressTracker,
+    private readonly mappings:   CvMappingMemoryService,
+    private readonly prisma:     PrismaService,
   ) {}
 
   // ---------------------------------------------------------------------------
   //  DOCX / PDF / HTML / MD → CvProfile
   // ---------------------------------------------------------------------------
 
-  async importFromFile(profileId: string, buffer: Buffer, filename: string, mimetype?: string, opts?: { sectionMappings?: Record<string, SectionKey>; forceOcr?: boolean }): Promise<{ profile: CvProfileDto; warnings: string[]; debug?: any; confidence?: ImportConfidence; quality?: any }> {
+  async importFromFile(profileId: string, buffer: Buffer, filename: string, mimetype?: string, opts?: { sectionMappings?: Record<string, SectionKey>; forceOcr?: boolean; userId?: string; jobId?: string }): Promise<{ profile: CvProfileDto; warnings: string[]; debug?: any; confidence?: ImportConfidence; quality?: any }> {
     if (!buffer?.length) throw new BadRequestException('Empty file buffer');
+    const startedAt = Date.now();
+    const jobId = opts?.jobId;
+    const cancelCheck = () => !!(jobId && this.progress.isCancelled(jobId));
+    const setProgress = (patch: any) => { if (jobId) this.progress.update(jobId, patch); };
+
+    setProgress({ phase: 'extracting', percent: 5, message: 'Extracting text…' });
     const result = await this.conversion.convert({
       buffer, filename, mimetype, targetFormat: 'html',
     });
@@ -137,6 +149,7 @@ export class CvImportService {
     const warnings: string[] = [];
     let usedOcr = false;
     let ocrConfidence: number | null = null;
+    let ocrLangsUsed: string[] | undefined;
 
     // -----------------------------------------------------------------------
     //  Phase 42.7A — OCR fallback when text extraction is empty / sparse.
@@ -150,8 +163,27 @@ export class CvImportService {
     const shouldRunOcr = isPdf && (opts?.forceOcr || initialText.length < 200);
     if (shouldRunOcr) {
       try {
-        this.logger.log(`CV import: triggering OCR fallback (initial text=${initialText.length} chars)`);
-        const ocr = await runOcrOnPdf(buffer, { langs: ['eng', 'fra', 'deu', 'spa', 'ron', 'ita', 'nld', 'por', 'ara'].slice(0, 1), maxPages: 5 });
+        // Phase 42.8B — detect OCR languages from whatever text we got (or
+        // filename heuristics). When nothing's there, default to English.
+        const langs = detectOcrLanguages(initialText || filename);
+        ocrLangsUsed = langs;
+        this.logger.log(`CV import: triggering OCR fallback (initial=${initialText.length} chars, langs=${langs.join('+')})`);
+        setProgress({ phase: 'rendering', percent: 10, message: `Preparing OCR (${langs.join(', ')})…` });
+        const ocr = await runOcrOnPdf(buffer, {
+          langs,
+          maxPages: 5,
+          onProgress: (info) => setProgress({
+            phase: info.phase === 'recognising' ? 'ocr-page' : 'rendering',
+            percent: info.percent,
+            message: info.message,
+            page: info.page,
+            pagesTotal: info.pagesTotal,
+          }),
+          cancelCheck,
+        });
+        if (cancelCheck()) {
+          return this.cancelledResult(profileId, jobId, startedAt);
+        }
         if (ocr.text.length > 100) {
           usedOcr = true;
           ocrConfidence = ocr.pageConfidences.length > 0
@@ -192,6 +224,19 @@ export class CvImportService {
       }
     }
 
+    // Phase 42.8D — merge learned mappings (workspace memory) with any
+    // caller-supplied ones; caller-supplied wins on conflict.
+    let effectiveMappings: Record<string, SectionKey> = {};
+    let appliedAutoMappingKeys: string[] = [];
+    if (opts?.userId) {
+      try {
+        const learned = await this.mappings.forUser(opts.userId);
+        effectiveMappings = { ...(learned as any), ...(opts?.sectionMappings || {}) };
+      } catch { /* non-fatal */ }
+    } else if (opts?.sectionMappings) {
+      effectiveMappings = opts.sectionMappings as any;
+    }
+
     // Walk pages → collect section blocks anchored on heading text.
     const sections: Partial<Record<keyof CvProfileDto, string[]>> = {};
     const detectedHeadings: string[] = [];
@@ -207,8 +252,9 @@ export class CvImportService {
           const raw  = (node.text || '').trim();
           const norm = normaliseHeading(raw);
           detectedHeadings.push(raw);
-          // Phase 42.7C — caller can override mapping for previously-unknown headings.
-          const mapped: SectionKey | null = (opts?.sectionMappings && opts.sectionMappings[norm]) || null;
+          // Phase 42.7C + 42.8D — explicit user mapping OR learned workspace mapping.
+          const mapped: SectionKey | null = (effectiveMappings && effectiveMappings[norm]) || null;
+          if (mapped) appliedAutoMappingKeys.push(norm);
           // Phase 42.7B — multi-language classifier (EN + FR + DE + ES + RO + IT + NL + PT + AR).
           const key: SectionKey | null = mapped || classifyHeadingMultiLang(raw);
           if (key === 'summary') {
@@ -331,7 +377,62 @@ export class CvImportService {
 
     if (debug) this.logger.log(`CV import: ${allLines.length} lines, ${detectedHeadings.length} headings, mapped=${JSON.stringify(extractedCounts)}, confidence=${confidence.overall} (${confidence.band})`);
 
+    // Phase 42.8E — persist any explicit mappings the caller passed so future
+    // imports auto-apply them.
+    if (opts?.sectionMappings && opts.userId) {
+      try { await this.mappings.upsertMany(opts.userId, opts.sectionMappings as any); } catch { /* non-fatal */ }
+    }
+
+    // Phase 42.8C + 42.8G — persist the import event (analytics + history).
+    if (opts?.userId) {
+      const event: ImportEvent = {
+        filename, mimetype, bytes: buffer.length,
+        durationMs:          Date.now() - startedAt,
+        ocrUsed:             usedOcr,
+        ocrLangsUsed,
+        ocrAvgConfidence:    ocrConfidence,
+        confidenceOverall:   confidence.overall,
+        confidenceBand:      confidence.band,
+        detected:            confidence.detected as string[],
+        missing:             confidence.missing  as string[],
+        counts:              extractedCounts,
+        unknownHeadings:     unknownHeadings.slice(0, 20),
+        duplicatesCount:     { skills: dupSkills.length, experience: dupExp.length },
+        warnings,
+        appliedAutoMappings: appliedAutoMappingKeys,
+        failed:              false,
+      };
+      try {
+        await this.prisma.cvAnalysisSnapshot.create({
+          data: {
+            userId:      opts.userId,
+            profileId,
+            kind:        'import',
+            label:       filename,
+            score:       confidence.overall,
+            atsScore:    null,
+            analysisJson: event as any,
+            profileJson:  null,
+          },
+        });
+      } catch (e) { this.logger.warn(`Persist import event failed: ${(e as any)?.message || e}`); }
+    }
+
+    setProgress({ phase: 'done', percent: 100, message: 'Done', result: { ok: true, confidence: confidence.overall } });
     return { profile, warnings, debug, confidence, quality };
+  }
+
+  // -------------------------------------------------------------------------
+  //  Phase 42.8A — early-exit helper when the user cancels mid-OCR.
+  // -------------------------------------------------------------------------
+  private async cancelledResult(profileId: string, jobId: string | undefined, startedAt: number): Promise<any> {
+    if (jobId) this.progress.update(jobId, { phase: 'cancelled', percent: 0, message: 'Cancelled' });
+    const profile = await this.profiles.get(profileId);
+    return {
+      profile, warnings: ['Import cancelled by user.'], debug: undefined,
+      confidence: { overall: 0, band: 'review', bands: { heading: 0, sections: 0, skills: 0, experience: 0, education: 0 }, detected: [], missing: [] } as any,
+      quality: { score: 0, band: 'review', detected: [], missing: [], counts: {}, duplicates: { skills: [], experiences: [] }, ocr: { used: false }, usedFallback: false, unknownHeadings: [] },
+    };
   }
 
   // ---------------------------------------------------------------------------

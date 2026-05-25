@@ -377,6 +377,10 @@ function clamp(n: number) { return Math.max(0, Math.min(100, Math.round(n))); }
 //  42.7A — OCR helper (lazy-loaded so the cost is paid only when called)
 // =============================================================================
 
+export interface OcrProgressCallback {
+  (info: { phase: 'rendering' | 'recognising' | 'done'; page?: number; pagesTotal?: number; percent: number; message: string }): void;
+}
+
 /**
  * Try OCR on a PDF buffer.
  * Strategy:
@@ -385,9 +389,13 @@ function clamp(n: number) { return Math.max(0, Math.min(100, Math.round(n))); }
  *   3. Concatenate the text.
  *   4. Cleanup tmp dir.
  *
- * Returns the concatenated text + per-page confidence.
+ * Phase 42.8A — emits per-phase progress via the supplied callback.
+ * Phase 42.8H — accepts `cancelCheck()` which the loop calls between pages
+ *               and aborts early when it returns true.
+ *
+ * Returns the concatenated text + per-page confidence + langs used.
  */
-export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxPages?: number } = {}): Promise<{ text: string; pageConfidences: number[]; pagesRendered: number }> {
+export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxPages?: number; onProgress?: OcrProgressCallback; cancelCheck?: () => boolean } = {}): Promise<{ text: string; pageConfidences: number[]; pagesRendered: number; langsUsed: string[]; cancelled?: boolean }> {
   const { spawn } = await import('child_process');
   const fs       = await import('fs');
   const path     = await import('path');
@@ -397,6 +405,8 @@ export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxP
   const dir   = fs.mkdtempSync(path.join(os.tmpdir(), 'cv-ocr-'));
   const pdfPath = path.join(dir, `${crypto.randomUUID()}.pdf`);
   fs.writeFileSync(pdfPath, buffer);
+
+  opts.onProgress?.({ phase: 'rendering', percent: 5, message: 'Rendering PDF pages…' });
 
   // Rasterise — first 5 pages by default (OCR is slow).
   await new Promise<void>((resolve, reject) => {
@@ -412,8 +422,10 @@ export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxP
   const pages = fs.readdirSync(dir).filter((f) => f.startsWith('p-') && f.endsWith('.png')).sort();
   if (pages.length === 0) {
     try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ }
-    return { text: '', pageConfidences: [], pagesRendered: 0 };
+    return { text: '', pageConfidences: [], pagesRendered: 0, langsUsed: opts.langs || ['eng'] };
   }
+
+  opts.onProgress?.({ phase: 'rendering', percent: 15, pagesTotal: pages.length, message: `Rendered ${pages.length} page(s).` });
 
   // Lazy-import tesseract.js so the cold start path stays cheap.
   let recognize: any;
@@ -424,10 +436,35 @@ export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxP
   }
 
   const langs = (opts.langs || ['eng']).join('+');
-  const out: { text: string; pageConfidences: number[]; pagesRendered: number } = { text: '', pageConfidences: [], pagesRendered: 0 };
-  for (const page of pages) {
+  const out: { text: string; pageConfidences: number[]; pagesRendered: number; langsUsed: string[]; cancelled?: boolean } = {
+    text: '', pageConfidences: [], pagesRendered: 0, langsUsed: opts.langs || ['eng'],
+  };
+  for (let i = 0; i < pages.length; i++) {
+    if (opts.cancelCheck?.()) {
+      out.cancelled = true;
+      break;
+    }
+    const page = pages[i];
+    const base = 15 + Math.round((i / pages.length) * 75);
+    opts.onProgress?.({
+      phase: 'recognising', page: i + 1, pagesTotal: pages.length, percent: base,
+      message: `Analyzing page ${i + 1} of ${pages.length}…`,
+    });
     try {
-      const { data } = await recognize(path.join(dir, page), langs);
+      const { data } = await recognize(path.join(dir, page), langs, {
+        // Tesseract.js exposes a `logger` callback per chunk of work.
+        logger: (m: any) => {
+          if (typeof m?.progress !== 'number') return;
+          const pagePct = m.progress * (75 / pages.length);
+          opts.onProgress?.({
+            phase:    'recognising',
+            page:     i + 1,
+            pagesTotal: pages.length,
+            percent:  Math.min(90, Math.round(15 + (i / pages.length) * 75 + pagePct)),
+            message:  m.status ? `${m.status} (page ${i + 1}/${pages.length})` : `Analyzing page ${i + 1}…`,
+          });
+        },
+      });
       out.text += (data?.text || '') + '\n\n';
       if (typeof data?.confidence === 'number') out.pageConfidences.push(data.confidence);
       out.pagesRendered++;
@@ -436,6 +473,7 @@ export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxP
     }
   }
 
+  opts.onProgress?.({ phase: 'done', percent: 95, message: 'Finalising extraction…' });
   try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ }
   return out;
 }

@@ -132,7 +132,7 @@ interface ImportResult {
 }
 
 const ProfileTab: React.FC = () => {
-  const { profile, loading, patchPersonal, importFile, importLinkedIn } = useCvProfile();
+  const { profile, loading, patchPersonal, importFile, importLinkedIn, cancelImport } = useCvProfile();
   const [busy, setBusy] = useState(false);
   const [linkedinOpen, setLinkedinOpen] = useState(false);
   const [lastImport, setLastImport] = useState<ImportResult | null>(null);
@@ -144,10 +144,19 @@ const ProfileTab: React.FC = () => {
   if (!profile) return <div className="text-xs text-slate-500 italic">No profile.</div>;
   const p = profile.personal || {};
 
+  // Phase 42.8A — live progress state.
+  const [progress, setProgress] = useState<{ jobId: string; phase: string; percent: number; message: string; page?: number; pagesTotal?: number } | null>(null);
+
   const runImport = async (file: File, opts?: { forceOcr?: boolean; sectionMappings?: Record<string, string> }) => {
-    setBusy(true); setLastImport(null);
+    setBusy(true); setLastImport(null); setProgress(null);
+    const jobId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID ? (crypto as any).randomUUID() : `j-${Date.now()}`);
+    setProgress({ jobId, phase: 'queued', percent: 0, message: 'Queued' });
     try {
-      const res = await importFile(file, opts);
+      const res = await importFile(file, {
+        ...opts,
+        jobId,
+        onProgress: (p) => setProgress((prev) => ({ ...(prev || { jobId } as any), ...p })),
+      });
       const c: Record<string, number> = {};
       if (res?.profile) {
         c.Experience     = res.profile.experience?.length     || 0;
@@ -170,7 +179,11 @@ const ProfileTab: React.FC = () => {
         filename: file.name, warnings: [], counts: {},
         failedMessage: e?.response?.data?.message || e?.message || 'Import failed',
       });
-    } finally { setBusy(false); }
+    } finally { setBusy(false); setTimeout(() => setProgress(null), 1500); }
+  };
+
+  const onCancel = async () => {
+    if (progress?.jobId && cancelImport) await cancelImport(progress.jobId);
   };
 
   const onFile = async (file?: File) => {
@@ -249,6 +262,11 @@ const ProfileTab: React.FC = () => {
           Runs through Universal Conversion → maps sections onto your profile.
         </p>
 
+        {/* Phase 42.8A — live progress card while OCR runs */}
+        {busy && progress && progress.phase !== 'done' && (
+          <ImportProgressCard p={progress} onCancel={onCancel} />
+        )}
+
         {/* Phase 42.6 + 42.7 — inline import-result card (replaces window.alert) */}
         {lastImport && (
           <ImportResultCard
@@ -302,6 +320,57 @@ const ProfileTab: React.FC = () => {
 //  exports from their LinkedIn settings, (2) paste a public profile URL
 //  which the backend scrapes.
 // =============================================================================
+// =============================================================================
+//  Phase 42.8A — Live OCR / import progress card.
+//
+//  Polled state — phase + percent + page count + message. Shows a cancel
+//  button while phase is not done/failed/cancelled.
+// =============================================================================
+const ImportProgressCard: React.FC<{
+  p: { jobId: string; phase: string; percent: number; message: string; page?: number; pagesTotal?: number };
+  onCancel: () => void;
+}> = ({ p, onCancel }) => {
+  const phaseLabel = (() => {
+    switch (p.phase) {
+      case 'queued':       return 'Queued';
+      case 'extracting':   return 'Extracting text';
+      case 'rendering':    return 'Rendering pages';
+      case 'ocr-page':     return p.page && p.pagesTotal ? `OCR page ${p.page} of ${p.pagesTotal}` : 'OCR';
+      case 'classifying':  return 'Classifying sections';
+      case 'persisting':   return 'Saving';
+      case 'cancelled':    return 'Cancelled';
+      case 'failed':       return 'Failed';
+      default:             return p.phase;
+    }
+  })();
+  const v = Math.max(0, Math.min(100, p.percent || 0));
+  const elapsed = (Date.now() - (p as any).startedAt) / 1000;
+  return (
+    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+      <div className="flex items-center gap-2">
+        <Loader2 className="w-4 h-4 animate-spin text-blue-700" />
+        <div className="flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm font-bold text-blue-900">{phaseLabel}</div>
+            <button onClick={onCancel}
+              className="h-6 px-2 text-[11px] font-semibold border border-blue-300 hover:bg-white text-blue-700 rounded">
+              Cancel
+            </button>
+          </div>
+          <div className="text-[11px] text-blue-800 mt-0.5">{p.message}</div>
+          <div className="h-1.5 w-full bg-white/70 rounded-full overflow-hidden mt-1.5">
+            <div className="h-full bg-blue-600 transition-all" style={{ width: `${v}%` }} />
+          </div>
+          <div className="text-[10px] text-blue-700/80 mt-0.5 flex items-center justify-between">
+            <span>{v}%</span>
+            {p.pagesTotal && <span>{p.page || 0} / {p.pagesTotal} pages</span>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // =============================================================================
 //  Phase 42.6 + 42.7 — Import result card.
 //

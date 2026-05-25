@@ -20,6 +20,10 @@ import {
   CvInterviewReadinessService, CvExportValidationService,
   CvTemplateInsightsService, VariantPreset, CvSnapshotKind,
 } from './cv-pro.service';
+import { ImportProgressTracker } from './cv-import-polish';
+import { CvMappingMemoryService } from './cv-mapping-memory.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { isPlatformAdmin } from '../admin/admin.controller';
 
 // =============================================================================
 //  Phase 42 — Career documents API.
@@ -69,6 +73,9 @@ export class CareerController {
     private readonly interview: CvInterviewReadinessService,
     private readonly preflight: CvExportValidationService,
     private readonly tplInsights: CvTemplateInsightsService,
+    private readonly progress:    ImportProgressTracker,
+    private readonly mappingMem:  CvMappingMemoryService,
+    private readonly prisma:      PrismaService,
   ) {}
 
   // ─── Profile ────────────────────────────────────────────────────────────────
@@ -111,27 +118,137 @@ export class CareerController {
   }
 
   @Post('profile/:profileId/import/file')
-  @ApiOperation({ summary: 'Import an existing CV (DOCX/PDF/HTML/MD) into a profile (Phase 42L + 42.7)' })
+  @ApiOperation({ summary: 'Import an existing CV (DOCX/PDF/HTML/MD) into a profile (Phase 42L + 42.7 + 42.8)' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
-  importFile(
+  async importFile(
+    @GetUser() user: any,
     @Param('profileId') profileId: string,
     @UploadedFile() file: any,
     @Query('forceOcr') forceOcr?: string,
+    @Query('jobId') clientJobId?: string,
     @Body('sectionMappings') sectionMappingsRaw?: any,
   ) {
     if (!file?.buffer) throw new BadRequestException('Missing file (multipart field "file")');
-    // sectionMappings can arrive as a JSON string in multipart bodies.
     let sectionMappings: Record<string, any> | undefined;
     if (sectionMappingsRaw) {
-      try {
-        sectionMappings = typeof sectionMappingsRaw === 'string' ? JSON.parse(sectionMappingsRaw) : sectionMappingsRaw;
-      } catch { sectionMappings = undefined; }
+      try { sectionMappings = typeof sectionMappingsRaw === 'string' ? JSON.parse(sectionMappingsRaw) : sectionMappingsRaw; }
+      catch { sectionMappings = undefined; }
     }
-    return this.importer.importFromFile(profileId, file.buffer, file.originalname || 'cv', file.mimetype, {
+    // Phase 42.8A — accept a client-generated jobId so polling can start
+    // before the response settles. Fall back to a server-generated one.
+    const job = this.progress.newJob(clientJobId);
+    const result = await this.importer.importFromFile(profileId, file.buffer, file.originalname || 'cv', file.mimetype, {
       sectionMappings: sectionMappings as any,
       forceOcr:        forceOcr === '1' || forceOcr === 'true',
+      userId:          user.id,
+      jobId:           job.jobId,
     });
+    return { jobId: job.jobId, ...result };
+  }
+
+  // ===========================================================================
+  //  Phase 42.8A — Progress polling + cancel
+  // ===========================================================================
+  @Get('profile/import/progress/:jobId')
+  importProgress(@Param('jobId') jobId: string) {
+    const p = this.progress.get(jobId);
+    if (!p) throw new BadRequestException('Unknown jobId');
+    return p;
+  }
+
+  @Post('profile/import/cancel/:jobId')
+  importCancel(@Param('jobId') jobId: string) {
+    return { ok: this.progress.cancel(jobId) };
+  }
+
+  // ===========================================================================
+  //  Phase 42.8D + 42.8E — Section mapping memory CRUD
+  // ===========================================================================
+  @Get('import/mappings')
+  listMappings(@GetUser() user: any) { return this.mappingMem.list(user.id); }
+
+  @Patch('import/mappings/:id')
+  updateMapping(@GetUser() user: any, @Param('id') id: string, @Body() body: { targetSection?: string; autoApply?: boolean }) {
+    return this.mappingMem.update(user.id, id, body || {});
+  }
+
+  @Delete('import/mappings/:id')
+  removeMapping(@GetUser() user: any, @Param('id') id: string) {
+    return { ok: this.mappingMem.remove(user.id, id) };
+  }
+
+  @Delete('import/mappings')
+  removeAllMappings(@GetUser() user: any) {
+    return this.mappingMem.removeAll(user.id);
+  }
+
+  // ===========================================================================
+  //  Phase 42.8G — Import history (per-user) — reads CvAnalysisSnapshot rows
+  // ===========================================================================
+  @Get('import/history')
+  importHistory(@GetUser() user: any, @Query('limit') limit?: string) {
+    return this.prisma.cvAnalysisSnapshot.findMany({
+      where:   { userId: user.id, kind: 'import' },
+      orderBy: { createdAt: 'desc' },
+      take:    Math.max(1, Math.min(200, Number(limit || 50))),
+      select:  { id: true, label: true, score: true, atsScore: true, createdAt: true, analysisJson: true },
+    });
+  }
+
+  @Delete('import/history/:id')
+  deleteImportHistory(@GetUser() user: any, @Param('id') id: string) {
+    return this.prisma.cvAnalysisSnapshot.deleteMany({ where: { id, userId: user.id, kind: 'import' } });
+  }
+
+  // ===========================================================================
+  //  Phase 42.8C + 42.8K — Admin import analytics
+  // ===========================================================================
+  @Get('import/analytics')
+  async importAnalytics(@GetUser() user: any) {
+    if (!await isPlatformAdmin(this.prisma, user.id)) throw new BadRequestException('Admin only');
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60_000); // 30 days
+    const rows = await this.prisma.cvAnalysisSnapshot.findMany({
+      where: { kind: 'import', createdAt: { gte: since } },
+      select: { score: true, atsScore: true, analysisJson: true, createdAt: true },
+    });
+
+    const total = rows.length;
+    if (total === 0) {
+      return { total: 0, since: since.toISOString(), avgConfidence: 0, ocrUsage: 0, avgDurationMs: 0, missingSections: {}, unknownHeadings: {}, skillNormalisations: {}, failureRate: 0, daily: [] };
+    }
+
+    let confSum = 0, durSum = 0, ocrCount = 0, failed = 0;
+    const missingSections:    Record<string, number> = {};
+    const unknownHeadings:    Record<string, number> = {};
+    const langs:              Record<string, number> = {};
+    const dailyMap:           Record<string, number> = {};
+    for (const r of rows) {
+      const ev = (r.analysisJson || {}) as any;
+      confSum += r.score ?? ev.confidenceOverall ?? 0;
+      durSum  += ev.durationMs ?? 0;
+      if (ev.ocrUsed) ocrCount++;
+      if (ev.failed)  failed++;
+      for (const k of ev.missing  || []) missingSections[k] = (missingSections[k] || 0) + 1;
+      for (const k of ev.unknownHeadings || []) unknownHeadings[k] = (unknownHeadings[k] || 0) + 1;
+      for (const l of ev.ocrLangsUsed || []) langs[l] = (langs[l] || 0) + 1;
+      const day = new Date(r.createdAt).toISOString().slice(0, 10);
+      dailyMap[day] = (dailyMap[day] || 0) + 1;
+    }
+    const daily = Object.entries(dailyMap).sort(([a],[b]) => a.localeCompare(b)).map(([day, n]) => ({ day, n }));
+
+    return {
+      since:           since.toISOString(),
+      total,
+      avgConfidence:   Math.round(confSum / total),
+      ocrUsage:        Math.round((ocrCount / total) * 100),
+      avgDurationMs:   Math.round(durSum / total),
+      failureRate:     Math.round((failed / total) * 100),
+      missingSections: topN(missingSections, 8),
+      unknownHeadings: topN(unknownHeadings, 12),
+      langs:           topN(langs, 8),
+      daily,
+    };
   }
 
   // ─── Documents ──────────────────────────────────────────────────────────────
@@ -456,4 +573,8 @@ export class CareerController {
     });
     return { documentId: doc.id, profileId: transient.id };
   }
+}
+
+function topN(map: Record<string, number>, n: number) {
+  return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => ({ key: k, count: v }));
 }

@@ -96,19 +96,44 @@ export function useCvProfile() {
 
   const importFile = async (
     file: File,
-    opts?: { forceOcr?: boolean; sectionMappings?: Record<string, string> },
+    opts?: { forceOcr?: boolean; sectionMappings?: Record<string, string>; onProgress?: (p: any) => void; jobId?: string },
   ) => {
     if (!profile) return null;
     const form = new FormData();
     form.append('file', file);
     if (opts?.sectionMappings) form.append('sectionMappings', JSON.stringify(opts.sectionMappings));
-    const qs = opts?.forceOcr ? '?forceOcr=1' : '';
-    const { data } = await api.post<{ profile: CvProfileDto; warnings: string[]; debug?: any; confidence?: any; quality?: any }>(
-      `/career/profile/${profile.id}/import/file${qs}`, form,
-      { headers: { 'Content-Type': 'multipart/form-data' } },
-    );
-    setProfile(data.profile);
-    return data;
+    // Phase 42.8A — client-generated jobId so we can poll from t=0.
+    const jobId = opts?.jobId || (typeof crypto !== 'undefined' && (crypto as any).randomUUID ? (crypto as any).randomUUID() : `j-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const qs = `?jobId=${encodeURIComponent(jobId)}${opts?.forceOcr ? '&forceOcr=1' : ''}`;
+
+    let pollTimer: any = null;
+    const stopPolling = () => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
+    // Start polling immediately — backend creates the job at the moment
+    // the POST handler enters importFromFile, so the first GET (200ms
+    // after submit) almost always sees phase='extracting' or beyond.
+    pollTimer = setInterval(async () => {
+      try {
+        const { data } = await api.get(`/career/profile/import/progress/${jobId}`);
+        opts?.onProgress?.(data);
+        if (data.phase === 'done' || data.phase === 'failed' || data.phase === 'cancelled') stopPolling();
+      } catch { /* not yet registered or job evicted */ }
+    }, 500);
+
+    try {
+      const { data } = await api.post<{ jobId: string; profile: CvProfileDto; warnings: string[]; debug?: any; confidence?: any; quality?: any }>(
+        `/career/profile/${profile.id}/import/file${qs}`, form,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      );
+      setProfile(data.profile);
+      return { ...data, jobId };
+    } finally {
+      // Let the last progress tick land then stop.
+      setTimeout(stopPolling, 800);
+    }
+  };
+
+  const cancelImport = async (jobId: string) => {
+    try { await api.post(`/career/profile/import/cancel/${jobId}`); } catch { /* */ }
   };
 
   const importLinkedIn = async (payload: any) => {
@@ -120,7 +145,7 @@ export function useCvProfile() {
     return data;
   };
 
-  return { profile, loading, error, refresh, patchPersonal, addItem, updateItem, removeItem, reorder, importFile, importLinkedIn };
+  return { profile, loading, error, refresh, patchPersonal, addItem, updateItem, removeItem, reorder, importFile, importLinkedIn, cancelImport };
 }
 
 // ---------------------------------------------------------------------------

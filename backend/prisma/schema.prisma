@@ -1694,6 +1694,33 @@ model CvAnalysisSnapshot {
   @@map("cv_analysis_snapshots")
 }
 
+// =============================================================================
+//  Phase 42.8D + 42.8E — Persistent section-mapping memory.
+//
+//  Stores per-user "Career Highlights → experience" mappings so future
+//  imports auto-apply them. `count` powers the learning system — when a
+//  mapping is applied repeatedly the auto-apply kicks in even before the
+//  user explicitly saves it.
+// =============================================================================
+model CvSectionMappingMemory {
+  id              String   @id @default(uuid())
+  userId          String
+  /// Normalised source heading (lowercase, accent-stripped, no punctuation)
+  sourceHeading   String
+  /// Canonical CvProfile section key
+  targetSection   String
+  /// How many times the user has confirmed this mapping
+  count           Int      @default(1)
+  /// Whether this mapping should auto-apply on future imports
+  autoApply       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, sourceHeading])
+  @@index([userId])
+  @@map("cv_section_mapping_memory")
+}
+
 model CvTemplate {
   id            String   @id @default(uuid())
   /// 'cv' | 'resume' | 'coverLetter' | 'portfolio' — matches CvDocument.doctype

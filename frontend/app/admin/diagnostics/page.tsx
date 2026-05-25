@@ -83,6 +83,7 @@ export default function AdminDiagnosticsPage() {
           <PptxCertificationCard />
           <RoundTripCard />
           <StorageDiagnosticsCard />
+          <CvImportAnalyticsCard />
         </div>
       </div>
     </div>
@@ -312,6 +313,87 @@ const Metric: React.FC<{ label: string; value: any }> = ({ label, value }) => (
     <div className="text-sm font-semibold text-slate-900 font-mono truncate">{String(value)}</div>
   </div>
 );
+
+// =============================================================================
+//  Phase 42.8C + 42.8K — CV Import Analytics (admin-only).
+//  Aggregates over the last 30 days of CvAnalysisSnapshot rows (kind='import').
+// =============================================================================
+function CvImportAnalyticsCard() {
+  const [busy, setBusy] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [err,  setErr]  = useState<string | null>(null);
+
+  const refresh = async () => {
+    setBusy(true); setErr(null);
+    try { const r = await api.get('/career/import/analytics'); setData(r.data); }
+    catch (e: any) { setErr(e?.response?.data?.message || e?.message); }
+    finally { setBusy(false); }
+  };
+  useEffect(() => { refresh(); }, []);
+
+  return (
+    <Card title="CV import analytics" icon={<BarChart3 className="w-4 h-4" />} action={<RefreshButton busy={busy} onClick={refresh} />}>
+      {err && <ErrorBox text={err} />}
+      {!data && !err && !busy && <p className="text-xs text-slate-500 italic">Loading…</p>}
+      {data && data.total === 0 && (
+        <p className="text-xs text-slate-500 italic">No imports in the last 30 days yet.</p>
+      )}
+      {data && data.total > 0 && (
+        <div className="space-y-3 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <Metric label="Imports (30d)"   value={data.total} />
+            <Metric label="Avg confidence"  value={`${data.avgConfidence} / 100`} />
+            <Metric label="OCR usage"       value={`${data.ocrUsage}%`} />
+            <Metric label="Avg duration"    value={`${(data.avgDurationMs/1000).toFixed(1)}s`} />
+            <Metric label="Failure rate"    value={`${data.failureRate}%`} />
+          </div>
+          {data.missingSections?.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Most common missing sections</div>
+              <div className="flex flex-wrap gap-1">
+                {data.missingSections.map((r: any) => (
+                  <span key={r.key} className="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono">{r.key} × {r.count}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {data.unknownHeadings?.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Most common unknown headings</div>
+              <div className="flex flex-wrap gap-1">
+                {data.unknownHeadings.map((r: any) => (
+                  <span key={r.key} className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-mono">"{r.key}" × {r.count}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {data.langs?.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">OCR languages used</div>
+              <div className="flex flex-wrap gap-1">
+                {data.langs.map((r: any) => (
+                  <span key={r.key} className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-mono">{r.key} × {r.count}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {data.daily?.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Daily volume</div>
+              <div className="flex items-end gap-0.5 h-10">
+                {data.daily.map((d: any) => (
+                  <div key={d.day} title={`${d.day}: ${d.n}`}
+                    className="flex-1 bg-purple-400/70 rounded-t"
+                    style={{ height: `${Math.max(4, Math.min(40, d.n * 3))}px` }} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
 
 const RefreshButton: React.FC<{ busy: boolean; onClick: () => void }> = ({ busy, onClick }) => (
   <button onClick={onClick} disabled={busy}
