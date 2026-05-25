@@ -16,4 +16,5 @@ allowBuilds:
   prisma: true
   puppeteer: true
   sharp: true
+  tesseract.js: true
   unrs-resolver: true

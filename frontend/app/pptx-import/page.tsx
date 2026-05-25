@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, FileUp, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, FileUp, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { importPptx, parsePptx } from '@/features/pptx-editing/hooks';
 
 // =============================================================================
@@ -27,6 +27,9 @@ export default function PptxImportPage() {
   const [busy, setBusy] = useState<'parse' | 'import' | null>(null);
   const [report, setReport] = useState<any | null>(null);
   const [preview, setPreview] = useState<any | null>(null);
+  // Phase Audit Fix — inline error + imported-deck state (replaces alert/confirm).
+  const [error, setError] = useState<string | null>(null);
+  const [importedDeckId, setImportedDeckId] = useState<string | null>(null);
 
   const handleParse = async () => {
     if (!file) return;
@@ -35,8 +38,9 @@ export default function PptxImportPage() {
       const res = await parsePptx(file);
       setPreview(res);
       setReport(res?.report || null);
+      setError(null);
     } catch (e: any) {
-      alert(`Parse failed: ${e?.response?.data?.message || e?.message || e}`);
+      setError(`Parse failed: ${e?.response?.data?.message || e?.message || e}`);
     } finally { setBusy(null); }
   };
 
@@ -47,12 +51,13 @@ export default function PptxImportPage() {
       const res = await importPptx(file, projectId.trim());
       setReport((res as any)?.report || null);
       if ((res as any)?.deckId) {
-        if (window.confirm(`Imported deck ${(res as any).deckId}. Open editor?`)) {
-          router.push(`/editor/${(res as any).deckId}`);
-        }
+        // Phase Audit Fix — replace window.confirm() with inline "Imported"
+        // success banner that surfaces the Open-in-editor action.
+        setImportedDeckId((res as any).deckId);
       }
+      setError(null);
     } catch (e: any) {
-      alert(`Import failed: ${e?.response?.data?.message || e?.message || e}`);
+      setError(`Import failed: ${e?.response?.data?.message || e?.message || e}`);
     } finally { setBusy(null); }
   };
 
@@ -99,6 +104,32 @@ export default function PptxImportPage() {
             </button>
           </div>
         </section>
+
+        {/* Phase Audit Fix — inline error / success banners (replace alert/confirm) */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-900 text-xs rounded p-3 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="font-bold">Import error</div>
+              <div className="mt-0.5">{error}</div>
+            </div>
+            <button onClick={() => setError(null)} className="text-[10px] opacity-70 hover:opacity-100 underline">dismiss</button>
+          </div>
+        )}
+        {importedDeckId && (
+          <div className="bg-green-50 border border-green-200 text-green-900 text-xs rounded p-3 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <div className="flex-1">
+              <div className="font-bold">Imported successfully</div>
+              <div className="text-[11px]">Deck id <span className="font-mono">{importedDeckId}</span></div>
+            </div>
+            <button onClick={() => router.push(`/editor/${importedDeckId}`)}
+              className="h-7 px-2.5 text-[11px] font-semibold bg-green-600 hover:bg-green-700 text-white rounded">
+              Open editor →
+            </button>
+            <button onClick={() => setImportedDeckId(null)} className="text-[10px] opacity-70 hover:opacity-100 underline">dismiss</button>
+          </div>
+        )}
 
         {/* Phase 38.1J — import report */}
         {report && (

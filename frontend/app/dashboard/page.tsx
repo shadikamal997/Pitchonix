@@ -413,7 +413,7 @@ export default function DashboardPage() {
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform">
                   <div className="flex items-center gap-2 mb-2">
                     <Layers className="h-5 w-5 text-cyan-200" />
-                    <span className="text-white font-semibold">12 Slides</span>
+                    <span className="text-white font-semibold">Deck Builder</span>
                   </div>
                   <div className="text-green-200 text-sm">Ready to present</div>
                 </div>

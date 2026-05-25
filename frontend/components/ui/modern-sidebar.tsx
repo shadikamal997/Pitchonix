@@ -50,7 +50,9 @@ const navigationItems: NavigationItem[] = [
   // built out fully but invisible because they had no sidebar entry).
   { id: "convert", name: "Convert", icon: Shuffle, href: "/convert" },
   { id: "pptx-import", name: "Import .pptx", icon: Upload, href: "/pptx-import" },
-  { id: "export-templates", name: "Export Templates", icon: Download, href: "/export-templates" },
+  // Phase Audit Fix — /export-templates is a "Coming Soon" stub; hidden from
+  // sidebar until it ships real functionality. Page kept at the route so
+  // existing bookmarks still resolve.
   { id: "analytics", name: "Analytics", icon: BarChart2, href: "/analytics" },
   { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
   { id: "help", name: "Help & Support", icon: HelpCircle, href: "/help" },

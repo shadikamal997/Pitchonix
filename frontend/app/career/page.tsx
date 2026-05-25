@@ -791,6 +791,22 @@ const DocumentList: React.FC<{ doctype: CvDoctype; label: string }> = ({ doctype
                   className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
                   <Download className="w-3 h-3" /> DOCX
                 </button>
+                {/* Phase Audit Fix — parity with CV Builder (PPTX/HTML/MD) */}
+                <button onClick={async () => { setBusy(d.id); try { await exportDoc(d.id, 'pptx' as any, `${d.title}.pptx`); } finally { setBusy(null); } }}
+                  disabled={busy === d.id}
+                  className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+                  <Download className="w-3 h-3" /> PPTX
+                </button>
+                <button onClick={async () => { setBusy(d.id); try { await exportDoc(d.id, 'html' as any, `${d.title}.html`); } finally { setBusy(null); } }}
+                  disabled={busy === d.id}
+                  className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+                  <Download className="w-3 h-3" /> HTML
+                </button>
+                <button onClick={async () => { setBusy(d.id); try { await exportDoc(d.id, 'md' as any, `${d.title}.md`); } finally { setBusy(null); } }}
+                  disabled={busy === d.id}
+                  className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+                  <Download className="w-3 h-3" /> MD
+                </button>
                 <button onClick={() => duplicate(d.id)}
                   className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1">
                   <Copy className="w-3 h-3" />

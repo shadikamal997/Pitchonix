@@ -360,9 +360,14 @@ export default function SettingsPage() {
             <div className="flex items-center gap-3 mb-4">
               <Bell className="h-5 w-5 text-green-600" />
               <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
+              <span className="ml-2 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                Preview
+              </span>
             </div>
             <p className="text-sm text-gray-600 mb-4">
-              Manage your email notification preferences.
+              Manage your email notification preferences. Toggles save locally
+              today; email delivery becomes active once the notification
+              service is enabled for your workspace.
             </p>
             <div className="space-y-3 mb-4">
               <label className="flex items-center gap-3 cursor-pointer">

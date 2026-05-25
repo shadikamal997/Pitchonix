@@ -39,8 +39,11 @@ export default function ProjectsPage() {
       router.push('/login');
       return;
     }
-    fetchProjects(search, filter);
-  }, [_hasHydrated, user, router, fetchProjects]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Phase Audit Fix — auto-debounce search (250ms) so users don't need to
+    // press Enter. Mirrors the dashboard's UX.
+    const t = setTimeout(() => fetchProjects(search, filter), 250);
+    return () => clearTimeout(t);
+  }, [_hasHydrated, user, router, fetchProjects, search, filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFilterChange = (value: string) => {
     setFilter(value);
