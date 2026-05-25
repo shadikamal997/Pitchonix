@@ -53,8 +53,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'presentations',
     format: 'slides',
     color: 'from-blue-500 to-blue-600',
-    textColor: 'text-blue-600',
-    bgColor: 'bg-blue-50 hover:bg-blue-100',
+    textColor: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
   {
     id: 'sales_deck',
@@ -64,8 +64,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'presentations',
     format: 'slides',
     color: 'from-orange-500 to-orange-600',
-    textColor: 'text-orange-600',
-    bgColor: 'bg-orange-50 hover:bg-orange-100',
+    textColor: 'text-[#8c6210]',
+    bgColor: 'bg-[#FAEEDB] hover:bg-[#F5E1B7]',
   },
   {
     id: 'board_meeting_deck',
@@ -75,8 +75,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'presentations',
     format: 'slides',
     color: 'from-red-500 to-red-600',
-    textColor: 'text-red-600',
-    bgColor: 'bg-red-50 hover:bg-red-100',
+    textColor: 'text-[#9a3737]',
+    bgColor: 'bg-[#FCF1F1] hover:bg-[#F7E3E3]',
   },
   {
     id: 'training_presentation',
@@ -86,8 +86,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'presentations',
     format: 'slides',
     color: 'from-lime-500 to-lime-600',
-    textColor: 'text-lime-600',
-    bgColor: 'bg-lime-50 hover:bg-lime-100',
+    textColor: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
   {
     id: 'product_launch',
@@ -108,8 +108,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'presentations',
     format: 'slides',
     color: 'from-amber-500 to-amber-600',
-    textColor: 'text-amber-600',
-    bgColor: 'bg-amber-50 hover:bg-amber-100',
+    textColor: 'text-[#8c6210]',
+    bgColor: 'bg-[#FAEEDB] hover:bg-[#F5E1B7]',
   },
   
   // PDF DOCUMENTS
@@ -121,8 +121,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'pdf_documents',
     format: 'pdf',
     color: 'from-purple-500 to-purple-600',
-    textColor: 'text-purple-600',
-    bgColor: 'bg-purple-50 hover:bg-purple-100',
+    textColor: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
   {
     id: 'proposal',
@@ -132,8 +132,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'pdf_documents',
     format: 'pdf',
     color: 'from-green-500 to-green-600',
-    textColor: 'text-green-600',
-    bgColor: 'bg-green-50 hover:bg-green-100',
+    textColor: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
   {
     id: 'company_profile',
@@ -143,8 +143,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'pdf_documents',
     format: 'pdf',
     color: 'from-gray-700 to-gray-900',
-    textColor: 'text-gray-700',
-    bgColor: 'bg-gray-50 hover:bg-gray-100',
+    textColor: 'text-[#111111]',
+    bgColor: 'bg-[#EDEBE6] hover:bg-[#F1F0EC]',
   },
   {
     id: 'executive_summary',
@@ -154,8 +154,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'pdf_documents',
     format: 'pdf',
     color: 'from-indigo-500 to-indigo-600',
-    textColor: 'text-indigo-600',
-    bgColor: 'bg-indigo-50 hover:bg-indigo-100',
+    textColor: 'text-[#355846]',
+    bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
   {
     id: 'marketing_plan',
@@ -165,8 +165,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'pdf_documents',
     format: 'pdf',
     color: 'from-pink-500 to-pink-600',
-    textColor: 'text-pink-600',
-    bgColor: 'bg-pink-50 hover:bg-pink-100',
+    textColor: 'text-[#9a3737]',
+    bgColor: 'bg-[#FCF1F1] hover:bg-[#F7E3E3]',
   },
   {
     id: 'financial_projection',
@@ -176,8 +176,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'pdf_documents',
     format: 'pdf',
     color: 'from-emerald-500 to-emerald-600',
-    textColor: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 hover:bg-emerald-100',
+    textColor: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
   {
     id: 'case_study',
@@ -187,8 +187,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'pdf_documents',
     format: 'pdf',
     color: 'from-teal-500 to-teal-600',
-    textColor: 'text-teal-600',
-    bgColor: 'bg-teal-50 hover:bg-teal-100',
+    textColor: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
   {
     id: 'internal_report',
@@ -198,8 +198,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'pdf_documents',
     format: 'pdf',
     color: 'from-slate-500 to-slate-600',
-    textColor: 'text-slate-600',
-    bgColor: 'bg-slate-50 hover:bg-slate-100',
+    textColor: 'text-[#6B6B6B]',
+    bgColor: 'bg-[#EDEBE6] hover:bg-[#F1F0EC]',
   },
   {
     id: 'partnership_proposal',
@@ -220,8 +220,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'pdf_documents',
     format: 'pdf',
     color: 'from-indigo-500 to-indigo-600',
-    textColor: 'text-indigo-600',
-    bgColor: 'bg-indigo-50 hover:bg-indigo-100',
+    textColor: 'text-[#355846]',
+    bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
 
   // Phase 42 — CAREER DOCUMENTS (route directly to /career builder).
@@ -233,8 +233,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'career' as any,
     format: 'pdf',
     color: 'from-emerald-500 to-emerald-600',
-    textColor: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 hover:bg-emerald-100',
+    textColor: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
   {
     id: 'resume',
@@ -244,8 +244,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
     category: 'career' as any,
     format: 'pdf',
     color: 'from-teal-500 to-teal-600',
-    textColor: 'text-teal-600',
-    bgColor: 'bg-teal-50 hover:bg-teal-100',
+    textColor: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1] hover:bg-[#DDE8E1]',
   },
   {
     id: 'cover_letter',
@@ -289,8 +289,8 @@ const CATEGORIES = [
     icon: FileType,
     description: 'Professional PDF documents and reports',
     color: 'from-cyan-500 to-blue-600',
-    iconBg: 'bg-cyan-100',
-    iconColor: 'text-cyan-600',
+    iconBg: 'bg-[#DDE8E1]',
+    iconColor: 'text-[#4F7563]',
     borderColor: 'border-cyan-200',
     selectedBg: 'bg-gradient-to-br from-cyan-500 to-blue-600',
   },
@@ -301,8 +301,8 @@ const CATEGORIES = [
     icon: Briefcase,
     description: 'CV, Resume, Cover Letter, Portfolio',
     color: 'from-emerald-500 to-teal-600',
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
+    iconBg: 'bg-[#DDE8E1]',
+    iconColor: 'text-[#4F7563]',
     borderColor: 'border-emerald-200',
     selectedBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
   },
@@ -342,25 +342,25 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
         onClick={() => isCareer ? pickCareer(type.id) : onUpdate({ documentType: type.id })}
         className={`p-3 rounded-lg border text-left transition-all bg-white ${
           isSelected
-            ? 'border-green-600 ring-1 ring-green-600 shadow-md shadow-green-500/10'
-            : 'border-slate-200 hover:border-green-400 hover:shadow-sm'
+            ? 'border-[#4F7563] ring-1 ring-[#4F7563]/40 shadow-md shadow-green-500/10'
+            : 'border-[#E3E1DA] hover:border-green-400 hover:shadow-sm'
         }`}
       >
         <div className="flex items-start gap-2.5">
           <div className={`shrink-0 w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
             isSelected
               ? 'bg-gradient-to-br from-green-600 to-emerald-500'
-              : 'bg-slate-50 group-hover:bg-green-50'
+              : 'bg-[#EDEBE6] group-hover:bg-[#EEF5F1]'
           }`}>
-            <Icon className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-slate-600'}`} />
+            <Icon className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-[#6B6B6B]'}`} />
           </div>
           <div className="min-w-0 flex-1">
             <h4 className={`font-semibold text-sm leading-tight mb-0.5 ${
-              isSelected ? 'text-green-700' : 'text-slate-900'
+              isSelected ? 'text-[#355846]' : 'text-[#111111]'
             }`}>
               {type.name}
             </h4>
-            <p className="text-[11px] leading-snug text-slate-500 line-clamp-2">
+            <p className="text-[11px] leading-snug text-[#9A9A9A] line-clamp-2">
               {type.description}
             </p>
           </div>
@@ -372,8 +372,8 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold mb-1 text-slate-900">What would you like to create?</h2>
-        <p className="text-sm text-slate-500">Choose from 16 professional document types</p>
+        <h2 className="text-2xl font-bold mb-1 text-[#111111]">What would you like to create?</h2>
+        <p className="text-sm text-[#9A9A9A]">Choose from 16 professional document types</p>
       </div>
 
       {/* Presentations Category */}
@@ -383,8 +383,8 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
             <Layers className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900">Presentations</h3>
-            <p className="text-xs text-slate-500">Slide decks for pitches, sales, and meetings</p>
+            <h3 className="text-base font-bold text-[#111111]">Presentations</h3>
+            <p className="text-xs text-[#9A9A9A]">Slide decks for pitches, sales, and meetings</p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -399,8 +399,8 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
             <FileType className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900">PDF Studio</h3>
-            <p className="text-xs text-slate-500">Professional PDF documents and reports</p>
+            <h3 className="text-base font-bold text-[#111111]">PDF Studio</h3>
+            <p className="text-xs text-[#9A9A9A]">Professional PDF documents and reports</p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -415,8 +415,8 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
             <Briefcase className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900">Career Documents</h3>
-            <p className="text-xs text-slate-500">CV, Resume, Cover Letter, Portfolio — opens the career builder</p>
+            <h3 className="text-base font-bold text-[#111111]">Career Documents</h3>
+            <p className="text-xs text-[#9A9A9A]">CV, Resume, Cover Letter, Portfolio — opens the career builder</p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
@@ -426,7 +426,7 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
 
       {/* Selected Confirmation */}
       {selectedType && (
-        <div className="mt-6 p-3 rounded-lg bg-green-50 border border-green-200">
+        <div className="mt-6 p-3 rounded-lg bg-[#EEF5F1] border border-[#DDE8E1]">
           <div className="flex items-center gap-2.5">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-emerald-500 flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -437,7 +437,7 @@ export default function Step1DocumentType({ data, onUpdate }: Step1Props) {
               <p className="text-sm font-semibold text-green-900">
                 {selectedType.name}
               </p>
-              <p className="text-xs text-green-700">
+              <p className="text-xs text-[#355846]">
                 {selectedType.format === 'pdf' ? 'PDF Document' : 'Slide Presentation'} • {selectedType.description}
               </p>
             </div>

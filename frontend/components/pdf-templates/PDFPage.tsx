@@ -41,7 +41,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
       {/* Page Number */}
       {showPageNumber && pageNumber && (
         <div
-          className="absolute bottom-4 right-8 text-sm text-slate-400 font-medium"
+          className="absolute bottom-4 right-8 text-sm text-[#C9C6BD] font-medium"
           style={{ fontSize: '10pt' }}
         >
           {totalPages ? `${pageNumber} / ${totalPages}` : pageNumber}

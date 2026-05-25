@@ -61,7 +61,7 @@ export function ValidationIssueCard({ issue, onSlideClick, onDismiss }: Validati
             {/* Suggestion */}
             {issue.suggestion && (
               <div className="bg-white/50 rounded-md p-2 mb-3">
-                <p className="text-xs text-gray-700">
+                <p className="text-xs text-[#111111]">
                   <span className="font-semibold">Suggestion:</span> {issue.suggestion}
                 </p>
               </div>

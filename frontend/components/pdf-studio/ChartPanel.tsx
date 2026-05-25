@@ -54,7 +54,7 @@ function BarPreview({ data, color }: { data: ChartDataRow[]; color: string }) {
             className="w-full rounded-sm transition-all"
             style={{ height: `${(d.value / max) * 48}px`, background: color, opacity: 0.8 + i * 0.05 }}
           />
-          <span className="text-[8px] text-gray-500 truncate w-full text-center">{d.label}</span>
+          <span className="text-[8px] text-[#9A9A9A] truncate w-full text-center">{d.label}</span>
         </div>
       ))}
     </div>
@@ -118,7 +118,7 @@ function KpiPreview({ data, color }: { data: ChartDataRow[]; color: string }) {
       {data.slice(0, 4).map((d, i) => (
         <div key={i} className="rounded p-1.5 text-center" style={{ background: color + '18' }}>
           <div className="text-xs font-bold" style={{ color }}>{d.value}</div>
-          <div className="text-[8px] text-gray-500 truncate">{d.label}</div>
+          <div className="text-[8px] text-[#9A9A9A] truncate">{d.label}</div>
         </div>
       ))}
     </div>
@@ -154,10 +154,10 @@ function ChartEditor({ chart, onChange, onDelete }: {
   const removeRow = (i: number) => onChange({ ...chart, data: chart.data.filter((_, j) => j !== i) });
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+    <div className="border border-[#E3E1DA] rounded-xl overflow-hidden bg-white">
       {/* Preview */}
-      <div className="bg-gray-50 p-3 border-b border-gray-100">
-        <p className="text-[10px] font-semibold text-gray-400 mb-1 uppercase tracking-wide">{chart.title || 'Untitled'}</p>
+      <div className="bg-[#EDEBE6] p-3 border-b border-[#F1F0EC]">
+        <p className="text-[10px] font-semibold text-[#C9C6BD] mb-1 uppercase tracking-wide">{chart.title || 'Untitled'}</p>
         <ChartPreview chart={chart} />
       </div>
 
@@ -167,7 +167,7 @@ function ChartEditor({ chart, onChange, onDelete }: {
           value={chart.title}
           onChange={e => setField('title', e.target.value)}
           placeholder="Chart title..."
-          className="w-full text-xs font-medium border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-400"
+          className="w-full text-xs font-medium border border-[#E3E1DA] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#A8B9AE]"
         />
 
         {/* Type selector */}
@@ -178,8 +178,8 @@ function ChartEditor({ chart, onChange, onDelete }: {
               onClick={() => setField('type', ct.type)}
               className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg text-[9px] font-medium transition-all ${
                 chart.type === ct.type
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-[#4F7563] text-white'
+                  : 'bg-[#F1F0EC] text-[#6B6B6B] hover:bg-[#E3E1DA]'
               }`}
             >
               {ct.icon}
@@ -190,7 +190,7 @@ function ChartEditor({ chart, onChange, onDelete }: {
 
         {/* Color */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-gray-500 font-medium">Color:</span>
+          <span className="text-[10px] text-[#9A9A9A] font-medium">Color:</span>
           {CHART_COLORS.map(col => (
             <button
               key={col}
@@ -204,8 +204,8 @@ function ChartEditor({ chart, onChange, onDelete }: {
         {/* Data rows */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Data</span>
-            <button onClick={addRow} className="flex items-center gap-0.5 text-[10px] text-blue-600 hover:text-blue-800 font-medium">
+            <span className="text-[10px] text-[#9A9A9A] font-medium uppercase tracking-wide">Data</span>
+            <button onClick={addRow} className="flex items-center gap-0.5 text-[10px] text-[#4F7563] hover:text-[#263F34] font-medium">
               <Plus className="w-3 h-3" /> Add row
             </button>
           </div>
@@ -216,13 +216,13 @@ function ChartEditor({ chart, onChange, onDelete }: {
                   value={row.label}
                   onChange={e => setRowLabel(i, e.target.value)}
                   placeholder="Label"
-                  className="flex-1 text-[10px] border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-blue-300"
+                  className="flex-1 text-[10px] border border-[#E3E1DA] rounded px-2 py-1 focus:outline-none focus:border-[#A8B9AE]"
                 />
                 <input
                   type="number"
                   value={row.value}
                   onChange={e => setRowValue(i, e.target.value)}
-                  className="w-16 text-[10px] border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-blue-300 text-right"
+                  className="w-16 text-[10px] border border-[#E3E1DA] rounded px-2 py-1 focus:outline-none focus:border-[#A8B9AE] text-right"
                 />
                 <button onClick={() => removeRow(i)} className="text-gray-300 hover:text-red-400 transition-colors">
                   <X className="w-3 h-3" />
@@ -235,7 +235,7 @@ function ChartEditor({ chart, onChange, onDelete }: {
         {/* Delete chart */}
         <button
           onClick={onDelete}
-          className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all font-medium border border-red-100"
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-[#D96A6A] hover:text-[#7a2929] hover:bg-[#FCF1F1] rounded-lg transition-all font-medium border border-red-100"
         >
           <Trash2 className="w-3 h-3" />
           Remove chart
@@ -272,23 +272,23 @@ export function ChartPanel({ charts, onChange }: ChartPanelProps) {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Charts</p>
+      <p className="text-xs font-semibold text-[#9A9A9A] uppercase tracking-wide">Charts</p>
 
       {charts.length === 0 && (
-        <p className="text-[10px] text-gray-400 text-center py-2">No charts on this page yet.</p>
+        <p className="text-[10px] text-[#C9C6BD] text-center py-2">No charts on this page yet.</p>
       )}
 
       {charts.map(chart => (
         <div key={chart.id}>
           <button
             onClick={() => setExpandedId(expandedId === chart.id ? null : chart.id)}
-            className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+            className="w-full flex items-center justify-between p-2 rounded-lg bg-[#EDEBE6] hover:bg-[#F1F0EC] transition-colors text-left"
           >
             <div className="flex items-center gap-2">
               {CHART_TYPES.find(t => t.type === chart.type)?.icon}
-              <span className="text-xs font-medium text-gray-700 truncate max-w-[120px]">{chart.title || 'Untitled'}</span>
+              <span className="text-xs font-medium text-[#111111] truncate max-w-[120px]">{chart.title || 'Untitled'}</span>
             </div>
-            <span className="text-[10px] text-gray-400">{expandedId === chart.id ? '▲' : '▼'}</span>
+            <span className="text-[10px] text-[#C9C6BD]">{expandedId === chart.id ? '▲' : '▼'}</span>
           </button>
           {expandedId === chart.id && (
             <div className="mt-1">
@@ -308,7 +308,7 @@ export function ChartPanel({ charts, onChange }: ChartPanelProps) {
           <button
             key={ct.type}
             onClick={() => addChart(ct.type)}
-            className="flex items-center gap-1.5 p-2 rounded-lg border border-dashed border-gray-300 text-[10px] text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-medium"
+            className="flex items-center gap-1.5 p-2 rounded-lg border border-dashed border-[#C9C6BD] text-[10px] text-[#6B6B6B] hover:border-[#A8B9AE] hover:text-[#4F7563] hover:bg-[#EEF5F1] transition-all font-medium"
           >
             <Plus className="w-3 h-3" />
             {ct.label}

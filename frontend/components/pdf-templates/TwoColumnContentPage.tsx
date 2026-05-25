@@ -63,7 +63,7 @@ export const TwoColumnContentPage: React.FC<TwoColumnContentPageProps> = ({
               </h3>
             )}
             <div
-              className="text-slate-700 leading-relaxed"
+              className="text-[#111111] leading-relaxed"
               style={{
                 fontSize: '11pt',
                 lineHeight: '1.8',
@@ -78,7 +78,7 @@ export const TwoColumnContentPage: React.FC<TwoColumnContentPageProps> = ({
           </div>
 
           {/* Divider */}
-          <div className="absolute left-1/2 top-24 bottom-16 w-px bg-slate-200" />
+          <div className="absolute left-1/2 top-24 bottom-16 w-px bg-[#E3E1DA]" />
 
           {/* Right Column */}
           <div>
@@ -94,7 +94,7 @@ export const TwoColumnContentPage: React.FC<TwoColumnContentPageProps> = ({
               </h3>
             )}
             <div
-              className="text-slate-700 leading-relaxed"
+              className="text-[#111111] leading-relaxed"
               style={{
                 fontSize: '11pt',
                 lineHeight: '1.8',

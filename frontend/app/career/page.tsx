@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
@@ -36,6 +36,16 @@ const TABS: { id: Tab; label: string; icon: React.ComponentType<any> }[] = [
 ];
 
 export default function CareerWorkspacePage() {
+  // Phase Δ — wrap the body in Suspense because useSearchParams() requires it
+  // in Next.js 14 when prerendering. Keeps the route static-renderable.
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#EDEBE6]" />}>
+      <CareerWorkspaceBody />
+    </Suspense>
+  );
+}
+
+function CareerWorkspaceBody() {
   const router = useRouter();
   const params = useSearchParams();
   const [tab, setTab] = useState<Tab>('profile');
@@ -77,22 +87,22 @@ export default function CareerWorkspacePage() {
   const createError = params?.get('create_error');
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#EDEBE6]">
       {createError && (
-        <div className="bg-red-50 border-b border-red-200 text-red-800 text-xs px-6 py-2">
+        <div className="bg-[#FCF1F1] border-b border-[#F7E3E3] text-[#7a2929] text-xs px-6 py-2">
           Couldn't auto-create that document: {createError}.{' '}
           <button onClick={() => router.replace('/career')} className="underline">dismiss</button>
         </div>
       )}
-      <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
-        <Link href="/dashboard" className="text-xs text-slate-500 hover:text-slate-900">← Back</Link>
-        <div className="h-5 w-px bg-slate-200" />
-        <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <Briefcase className="w-4 h-4 text-slate-500" /> Career Documents
+      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
+        <Link href="/dashboard" className="text-xs text-[#9A9A9A] hover:text-[#111111]">← Back</Link>
+        <div className="h-5 w-px bg-[#E3E1DA]" />
+        <h1 className="text-base font-bold text-[#111111] flex items-center gap-2">
+          <Briefcase className="w-4 h-4 text-[#9A9A9A]" /> Career Documents
         </h1>
         {/* Phase 42.3R / 42.4G — CV Intelligence + Career Dashboard entry points */}
         <Link href="/career/dashboard"
-          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold border border-purple-300 text-purple-700 hover:bg-purple-50 rounded-md">
+          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold border border-[#A8B9AE] text-[#355846] hover:bg-[#EEF5F1] rounded-md">
           <Layout className="w-3.5 h-3.5" /> Dashboard
         </Link>
         <Link href="/career/analyze"
@@ -106,7 +116,7 @@ export default function CareerWorkspacePage() {
           {TABS.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setTab(id)}
               className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded transition-colors ${
-                tab === id ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                tab === id ? 'bg-[#EEF5F1] text-[#263F34]' : 'text-[#6B6B6B] hover:bg-[#F1F0EC] hover:text-[#111111]'
               }`}
             >
               <Icon className="w-3.5 h-3.5" /> {label}
@@ -114,7 +124,7 @@ export default function CareerWorkspacePage() {
           ))}
         </nav>
 
-        <main className="bg-white border border-slate-200 rounded-lg p-6 min-h-[60vh]">
+        <main className="bg-white border border-[#E3E1DA] rounded-lg p-6 min-h-[60vh]">
           {tab === 'profile'  && <ProfileTab />}
           {tab === 'cv'       && <DocumentList doctype="cv" label="CV" />}
           {tab === 'resume'   && <DocumentList doctype="resume" label="Resume" />}
@@ -151,7 +161,7 @@ const ProfileTab: React.FC = () => {
   // re-select it from disk.
   const [lastFile, setLastFile] = useState<File | null>(null);
   if (loading && !profile) return <Loader />;
-  if (!profile) return <div className="text-xs text-slate-500 italic">No profile.</div>;
+  if (!profile) return <div className="text-xs text-[#9A9A9A] italic">No profile.</div>;
   const p = profile.personal || {};
 
   // Phase 42.8A + 42.9A — live progress state (SSE-streamed, polling fallback).
@@ -205,7 +215,7 @@ const ProfileTab: React.FC = () => {
   return (
     <div className="space-y-5 max-w-2xl">
       <section>
-        <h2 className="text-sm font-bold text-slate-900 mb-3">Personal information</h2>
+        <h2 className="text-sm font-bold text-[#111111] mb-3">Personal information</h2>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Full name"  value={p.fullName ?? ''} onChange={(v) => patchPersonal({ fullName: v })} />
           <Field label="Headline"   value={p.headline ?? ''} onChange={(v) => patchPersonal({ headline: v })} />
@@ -217,14 +227,14 @@ const ProfileTab: React.FC = () => {
           <Field label="GitHub"     value={p.github ?? ''}   onChange={(v) => patchPersonal({ github: v })} />
         </div>
         <div className="mt-3">
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Summary</label>
+          <label className="block text-xs font-semibold text-[#111111] mb-1">Summary</label>
           <textarea value={p.summary ?? ''} onChange={(e) => patchPersonal({ summary: e.target.value })}
-            rows={4} className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded resize-none" />
+            rows={4} className="w-full px-2 py-1.5 text-sm border border-[#C9C6BD] rounded resize-none" />
         </div>
       </section>
 
       <section>
-        <h2 className="text-sm font-bold text-slate-900 mb-2">Section counts</h2>
+        <h2 className="text-sm font-bold text-[#111111] mb-2">Section counts</h2>
         <div className="grid grid-cols-3 gap-2 text-[11px]">
           {([
             ['Experience',    profile.experience.length],
@@ -237,21 +247,21 @@ const ProfileTab: React.FC = () => {
             ['Publications',  profile.publications.length],
             ['References',    profile.references.length],
           ] as [string, number][]).map(([label, n]) => (
-            <div key={label} className="border border-slate-200 rounded px-2 py-1.5">
-              <div className="text-[9px] uppercase tracking-wider text-slate-500">{label}</div>
+            <div key={label} className="border border-[#E3E1DA] rounded px-2 py-1.5">
+              <div className="text-[9px] uppercase tracking-wider text-[#9A9A9A]">{label}</div>
               <div className="text-lg font-bold">{n}</div>
             </div>
           ))}
         </div>
-        <p className="text-[11px] text-slate-500 italic mt-2">
+        <p className="text-[11px] text-[#9A9A9A] italic mt-2">
           Use the builder UI on each document to edit sections in detail.
         </p>
       </section>
 
       <section>
-        <h2 className="text-sm font-bold text-slate-900 mb-2">Import existing CV</h2>
+        <h2 className="text-sm font-bold text-[#111111] mb-2">Import existing CV</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <label className={`inline-flex items-center gap-2 px-3 py-2 border border-dashed border-slate-300 rounded cursor-pointer hover:bg-slate-50 text-xs ${busy ? 'opacity-60 pointer-events-none' : ''}`}>
+          <label className={`inline-flex items-center gap-2 px-3 py-2 border border-dashed border-[#C9C6BD] rounded cursor-pointer hover:bg-[#EDEBE6] text-xs ${busy ? 'opacity-60 pointer-events-none' : ''}`}>
             {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
             {busy ? 'Importing…' : 'Upload DOCX / PDF / MD / HTML'}
             <input type="file" className="hidden"
@@ -263,12 +273,12 @@ const ProfileTab: React.FC = () => {
           <button
             type="button"
             onClick={() => setLinkedinOpen(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-blue-300 rounded cursor-pointer hover:bg-blue-50 text-xs text-blue-700"
+            className="inline-flex items-center gap-2 px-3 py-2 border border-[#A8B9AE] rounded cursor-pointer hover:bg-[#EEF5F1] text-xs text-[#355846]"
           >
             <Upload className="w-3 h-3" /> Import from LinkedIn
           </button>
         </div>
-        <p className="text-[10px] text-slate-500 mt-1">
+        <p className="text-[10px] text-[#9A9A9A] mt-1">
           Runs through Universal Conversion → maps sections onto your profile.
         </p>
 
@@ -362,22 +372,22 @@ const ImportProgressCard: React.FC<{
   const v = Math.max(0, Math.min(100, p.percent || 0));
   const elapsed = (Date.now() - (p as any).startedAt) / 1000;
   return (
-    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+    <div className="mt-3 bg-[#EEF5F1] border border-[#DDE8E1] rounded-lg p-3">
       <div className="flex items-center gap-2">
-        <Loader2 className="w-4 h-4 animate-spin text-blue-700" />
+        <Loader2 className="w-4 h-4 animate-spin text-[#355846]" />
         <div className="flex-1">
           <div className="flex items-center justify-between gap-2">
-            <div className="text-sm font-bold text-blue-900">{phaseLabel}</div>
+            <div className="text-sm font-bold text-[#1A2D24]">{phaseLabel}</div>
             <button onClick={onCancel}
-              className="h-6 px-2 text-[11px] font-semibold border border-blue-300 hover:bg-white text-blue-700 rounded">
+              className="h-6 px-2 text-[11px] font-semibold border border-[#A8B9AE] hover:bg-white text-[#355846] rounded">
               Cancel
             </button>
           </div>
-          <div className="text-[11px] text-blue-800 mt-0.5">{p.message}</div>
+          <div className="text-[11px] text-[#263F34] mt-0.5">{p.message}</div>
           <div className="h-1.5 w-full bg-white/70 rounded-full overflow-hidden mt-1.5">
-            <div className="h-full bg-blue-600 transition-all" style={{ width: `${v}%` }} />
+            <div className="h-full bg-[#4F7563] transition-all" style={{ width: `${v}%` }} />
           </div>
-          <div className="text-[10px] text-blue-700/80 mt-0.5 flex items-center justify-between">
+          <div className="text-[10px] text-[#355846]/80 mt-0.5 flex items-center justify-between">
             <span>{v}%</span>
             {p.pagesTotal && <span>{p.page || 0} / {p.pagesTotal} pages</span>}
           </div>
@@ -414,9 +424,9 @@ const ImportResultCard: React.FC<{
   const showRecovery = !failed && (sparse || lowConfidence || (result.quality?.unknownHeadings || []).length > 0);
 
   const tone =
-    failed  ? 'bg-red-50 border-red-200 text-red-900' :
-    showRecovery ? 'bg-amber-50 border-amber-200 text-amber-900' :
-              'bg-green-50 border-green-200 text-green-900';
+    failed  ? 'bg-[#FCF1F1] border-[#F7E3E3] text-red-900' :
+    showRecovery ? 'bg-[#FAEEDB] border-[#F2DCAE] text-amber-900' :
+              'bg-[#EEF5F1] border-[#DDE8E1] text-[#1A2D24]';
 
   const [rawOpen, setRawOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
@@ -438,7 +448,7 @@ const ImportResultCard: React.FC<{
             </span>
             {confidence?.overall != null && <ConfidenceBadge value={confidence.overall} band={confidence.band} />}
             {result.quality?.ocr?.used && (
-              <span className="text-[9px] uppercase tracking-wide bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+              <span className="text-[9px] uppercase tracking-wide bg-[#DDE8E1] text-[#263F34] px-1.5 py-0.5 rounded">
                 OCR ({result.quality.ocr.avgConfidence ?? '?'}%)
               </span>
             )}
@@ -462,7 +472,7 @@ const ImportResultCard: React.FC<{
             <div className="mt-2 grid grid-cols-5 gap-1.5">
               {(['heading','sections','skills','experience','education'] as const).map((k) => {
                 const v = confidence.bands[k] ?? 0;
-                const fill = v >= 80 ? 'bg-green-600' : v >= 60 ? 'bg-amber-500' : 'bg-red-500';
+                const fill = v >= 80 ? 'bg-[#4F7563]' : v >= 60 ? 'bg-[#D9A441]' : 'bg-[#D96A6A]';
                 return (
                   <div key={k}>
                     <div className="flex items-center justify-between text-[9px] uppercase tracking-wide font-bold opacity-80">
@@ -484,14 +494,14 @@ const ImportResultCard: React.FC<{
                 <div className="text-[9px] uppercase tracking-wide font-bold opacity-80">Detected</div>
                 <div className="flex flex-wrap gap-1 mt-0.5">
                   {(result.quality.detected || []).map((s: string) =>
-                    <span key={s} className="bg-green-100 text-green-900 px-1 py-0.5 rounded font-mono text-[10px]">✓ {s}</span>)}
+                    <span key={s} className="bg-[#DDE8E1] text-[#1A2D24] px-1 py-0.5 rounded font-mono text-[10px]">✓ {s}</span>)}
                 </div>
               </div>
               <div>
                 <div className="text-[9px] uppercase tracking-wide font-bold opacity-80">Missing</div>
                 <div className="flex flex-wrap gap-1 mt-0.5">
                   {(result.quality.missing || []).map((s: string) =>
-                    <span key={s} className="bg-white/60 text-slate-600 px-1 py-0.5 rounded font-mono text-[10px]">⚠ {s}</span>)}
+                    <span key={s} className="bg-white/60 text-[#6B6B6B] px-1 py-0.5 rounded font-mono text-[10px]">⚠ {s}</span>)}
                 </div>
               </div>
             </div>
@@ -570,11 +580,11 @@ const ImportResultCard: React.FC<{
 };
 
 const ConfidenceBadge: React.FC<{ value: number; band?: string }> = ({ value, band }) => {
-  const tone = value >= 95 ? 'bg-green-600 text-white'
-             : value >= 80 ? 'bg-green-100 text-green-800'
-             : value >= 65 ? 'bg-amber-100 text-amber-800'
-             : value >= 45 ? 'bg-orange-100 text-orange-800'
-             :               'bg-red-100 text-red-800';
+  const tone = value >= 95 ? 'bg-[#4F7563] text-white'
+             : value >= 80 ? 'bg-[#DDE8E1] text-[#263F34]'
+             : value >= 65 ? 'bg-[#F5E1B7] text-amber-800'
+             : value >= 45 ? 'bg-[#F5E1B7] text-orange-800'
+             :               'bg-[#F7E3E3] text-[#7a2929]';
   return <span className={`text-[9px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded ${tone}`}>{value}/100 · {band || ''}</span>;
 };
 
@@ -582,10 +592,10 @@ const ConfidenceBadge: React.FC<{ value: number; band?: string }> = ({ value, ba
 const RawTextModal: React.FC<{ debug: any; onClose: () => void }> = ({ debug, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
     <div className="bg-white rounded-lg w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
-      <header className="px-4 py-2.5 border-b border-slate-200 flex items-center gap-2">
-        <Eye className="w-4 h-4 text-purple-600" />
+      <header className="px-4 py-2.5 border-b border-[#E3E1DA] flex items-center gap-2">
+        <Eye className="w-4 h-4 text-[#4F7563]" />
         <h2 className="text-sm font-bold">Extracted text preview</h2>
-        <button onClick={onClose} className="ml-auto text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
+        <button onClick={onClose} className="ml-auto text-[#C9C6BD] hover:text-[#111111]"><X className="w-4 h-4" /></button>
       </header>
       <div className="p-4 overflow-y-auto space-y-3">
         <div className="grid grid-cols-2 gap-3 text-[11px]">
@@ -611,28 +621,28 @@ const ManualMappingModal: React.FC<{
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-xl">
-        <header className="px-4 py-2.5 border-b border-slate-200 flex items-center gap-2">
-          <FileText className="w-4 h-4 text-purple-600" />
+        <header className="px-4 py-2.5 border-b border-[#E3E1DA] flex items-center gap-2">
+          <FileText className="w-4 h-4 text-[#4F7563]" />
           <h2 className="text-sm font-bold">Map unknown section headings</h2>
-          <button onClick={onCancel} className="ml-auto text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
+          <button onClick={onCancel} className="ml-auto text-[#C9C6BD] hover:text-[#111111]"><X className="w-4 h-4" /></button>
         </header>
         <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
-          <p className="text-[11px] text-slate-500 mb-2">Pick a target for each heading. Leave blank to skip. We'll re-run the import with these mappings.</p>
+          <p className="text-[11px] text-[#9A9A9A] mb-2">Pick a target for each heading. Leave blank to skip. We'll re-run the import with these mappings.</p>
           {unknownHeadings.map((h, i) => (
             <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs">
-              <div className="font-mono truncate bg-slate-50 border border-slate-200 rounded px-2 py-1">{h}</div>
-              <span className="text-slate-400">→</span>
+              <div className="font-mono truncate bg-[#EDEBE6] border border-[#E3E1DA] rounded px-2 py-1">{h}</div>
+              <span className="text-[#C9C6BD]">→</span>
               <select value={pick[normaliseClient(h)] || ''}
                 onChange={(e) => setPick((s) => ({ ...s, [normaliseClient(h)]: e.target.value }))}
-                className="h-7 px-2 border border-slate-300 rounded text-xs bg-white">
+                className="h-7 px-2 border border-[#C9C6BD] rounded text-xs bg-white">
                 <option value="">— skip —</option>
                 {targets.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
           ))}
         </div>
-        <footer className="px-4 py-2.5 border-t border-slate-200 flex items-center justify-end gap-2">
-          <button onClick={onCancel} className="h-7 px-2.5 text-xs font-semibold border border-slate-300 hover:bg-slate-50 rounded">Cancel</button>
+        <footer className="px-4 py-2.5 border-t border-[#E3E1DA] flex items-center justify-end gap-2">
+          <button onClick={onCancel} className="h-7 px-2.5 text-xs font-semibold border border-[#C9C6BD] hover:bg-[#EDEBE6] rounded">Cancel</button>
           <button onClick={() => onApply(Object.fromEntries(Object.entries(pick).filter(([_, v]) => v)))}
             className="h-7 px-2.5 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded">
             Re-import with mappings
@@ -687,54 +697,54 @@ const LinkedInImportModal: React.FC<{
       <div className="bg-white rounded-lg p-5 w-full max-w-lg">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Import from LinkedIn</h2>
-            <p className="text-[11px] text-slate-500 mt-0.5">Pulls your name, headline, experience, education and skills into the profile.</p>
+            <h2 className="text-base font-bold text-[#111111]">Import from LinkedIn</h2>
+            <p className="text-[11px] text-[#9A9A9A] mt-0.5">Pulls your name, headline, experience, education and skills into the profile.</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-lg leading-none">×</button>
+          <button onClick={onClose} className="text-[#C9C6BD] hover:text-[#111111] text-lg leading-none">×</button>
         </div>
 
-        <div className="flex gap-1 mb-3 border-b border-slate-200">
+        <div className="flex gap-1 mb-3 border-b border-[#E3E1DA]">
           <button onClick={() => setMode('url')}
-            className={`px-2 py-1.5 text-xs font-semibold border-b-2 ${mode === 'url' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500'}`}>
+            className={`px-2 py-1.5 text-xs font-semibold border-b-2 ${mode === 'url' ? 'border-[#4F7563] text-[#355846]' : 'border-transparent text-[#9A9A9A]'}`}>
             By URL
           </button>
           <button onClick={() => setMode('json')}
-            className={`px-2 py-1.5 text-xs font-semibold border-b-2 ${mode === 'json' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500'}`}>
+            className={`px-2 py-1.5 text-xs font-semibold border-b-2 ${mode === 'json' ? 'border-[#4F7563] text-[#355846]' : 'border-transparent text-[#9A9A9A]'}`}>
             Paste exported JSON
           </button>
         </div>
 
         {mode === 'url' ? (
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700">LinkedIn profile URL</label>
+            <label className="block text-xs font-semibold text-[#111111]">LinkedIn profile URL</label>
             <input value={url} onChange={(e) => setUrl(e.target.value)}
               placeholder="https://www.linkedin.com/in/your-handle"
-              className="w-full h-8 px-2 text-xs border border-slate-300 rounded" />
+              className="w-full h-8 px-2 text-xs border border-[#C9C6BD] rounded" />
           </div>
         ) : (
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700">Paste exported JSON</label>
+            <label className="block text-xs font-semibold text-[#111111]">Paste exported JSON</label>
             <textarea value={json} onChange={(e) => setJson(e.target.value)}
               rows={8}
               placeholder='{ "firstName": "...", "lastName": "...", "experience": [...] }'
-              className="w-full px-2 py-1.5 text-xs font-mono border border-slate-300 rounded resize-none" />
-            <p className="text-[10px] text-slate-500">
+              className="w-full px-2 py-1.5 text-xs font-mono border border-[#C9C6BD] rounded resize-none" />
+            <p className="text-[10px] text-[#9A9A9A]">
               Get this by going to LinkedIn → Settings → "Get a copy of your data" → Download.
             </p>
           </div>
         )}
 
         {formError && (
-          <div className="mt-3 bg-red-50 border border-red-200 text-red-800 text-[11px] rounded p-2">{formError}</div>
+          <div className="mt-3 bg-[#FCF1F1] border border-[#F7E3E3] text-[#7a2929] text-[11px] rounded p-2">{formError}</div>
         )}
-        <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
+        <div className="flex gap-2 mt-4 pt-3 border-t border-[#F1F0EC]">
           <button onClick={handleSubmit} disabled={submitting}
-            className="flex-1 h-8 px-3 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 inline-flex items-center justify-center gap-1">
+            className="flex-1 h-8 px-3 text-xs font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded disabled:opacity-50 inline-flex items-center justify-center gap-1">
             {submitting && <Loader2 className="w-3 h-3 animate-spin" />}
             Import
           </button>
           <button onClick={onClose}
-            className="h-8 px-3 text-xs font-semibold border border-slate-300 hover:bg-slate-50 text-slate-700 rounded">
+            className="h-8 px-3 text-xs font-semibold border border-[#C9C6BD] hover:bg-[#EDEBE6] text-[#111111] rounded">
             Cancel
           </button>
         </div>
@@ -761,62 +771,62 @@ const DocumentList: React.FC<{ doctype: CvDoctype; label: string }> = ({ doctype
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-slate-900">{label}s ({items.length})</h2>
-        <button onClick={createNew} className="h-7 px-2 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center gap-1">
+        <h2 className="text-sm font-bold text-[#111111]">{label}s ({items.length})</h2>
+        <button onClick={createNew} className="h-7 px-2 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center gap-1">
           <Plus className="w-3 h-3" /> New {label}
         </button>
       </div>
 
       {items.length === 0 ? (
-        <div className="text-sm text-slate-500 italic py-8 text-center border border-dashed border-slate-200 rounded">
+        <div className="text-sm text-[#9A9A9A] italic py-8 text-center border border-dashed border-[#E3E1DA] rounded">
           No {label.toLowerCase()}s yet. Click "New {label}" to start.
         </div>
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {items.map((d) => (
-            <li key={d.id} className="bg-white border border-slate-200 rounded p-3 space-y-1.5">
-              <div className="text-xs font-bold text-slate-900 truncate">{d.title}</div>
-              {d.variant && <div className="text-[10px] text-slate-500 truncate">variant: {d.variant}</div>}
-              <div className="text-[9px] text-slate-400 font-mono">{new Date(d.updatedAt).toLocaleString()}</div>
+            <li key={d.id} className="bg-white border border-[#E3E1DA] rounded p-3 space-y-1.5">
+              <div className="text-xs font-bold text-[#111111] truncate">{d.title}</div>
+              {d.variant && <div className="text-[10px] text-[#9A9A9A] truncate">variant: {d.variant}</div>}
+              <div className="text-[9px] text-[#C9C6BD] font-mono">{new Date(d.updatedAt).toLocaleString()}</div>
               <div className="flex flex-wrap gap-1 pt-1">
                 <Link href={`/career/builder/${d.id}`}
-                  className="flex-1 h-7 text-[10px] font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center justify-center gap-1">
+                  className="flex-1 h-7 text-[10px] font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center justify-center gap-1">
                   <ExternalLink className="w-3 h-3" /> Open
                 </Link>
                 <button onClick={async () => { setBusy(d.id); try { await exportDoc(d.id, 'pdf', `${d.title}.pdf`); } finally { setBusy(null); } }}
                   disabled={busy === d.id}
-                  className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+                  className="h-7 px-2 text-[10px] font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1 disabled:opacity-40">
                   {busy === d.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />} PDF
                 </button>
                 <button onClick={async () => { setBusy(d.id); try { await exportDoc(d.id, 'docx', `${d.title}.docx`); } finally { setBusy(null); } }}
                   disabled={busy === d.id}
-                  className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+                  className="h-7 px-2 text-[10px] font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1 disabled:opacity-40">
                   <Download className="w-3 h-3" /> DOCX
                 </button>
                 {/* Phase Audit Fix — parity with CV Builder (PPTX/HTML/MD) */}
                 <button onClick={async () => { setBusy(d.id); try { await exportDoc(d.id, 'pptx' as any, `${d.title}.pptx`); } finally { setBusy(null); } }}
                   disabled={busy === d.id}
-                  className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+                  className="h-7 px-2 text-[10px] font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1 disabled:opacity-40">
                   <Download className="w-3 h-3" /> PPTX
                 </button>
                 <button onClick={async () => { setBusy(d.id); try { await exportDoc(d.id, 'html' as any, `${d.title}.html`); } finally { setBusy(null); } }}
                   disabled={busy === d.id}
-                  className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+                  className="h-7 px-2 text-[10px] font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1 disabled:opacity-40">
                   <Download className="w-3 h-3" /> HTML
                 </button>
                 <button onClick={async () => { setBusy(d.id); try { await exportDoc(d.id, 'md' as any, `${d.title}.md`); } finally { setBusy(null); } }}
                   disabled={busy === d.id}
-                  className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+                  className="h-7 px-2 text-[10px] font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1 disabled:opacity-40">
                   <Download className="w-3 h-3" /> MD
                 </button>
                 <button onClick={() => duplicate(d.id)}
-                  className="h-7 px-2 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1">
+                  className="h-7 px-2 text-[10px] font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1">
                   <Copy className="w-3 h-3" />
                 </button>
                 <button onClick={async () => {
                   if (await confirm({ title: 'Delete document?', message: `"${d.title}" will be permanently removed.`, confirmLabel: 'Delete', tone: 'danger' })) remove(d.id);
                 }}
-                  className="h-7 px-2 text-[10px] font-semibold bg-red-50 text-red-700 rounded hover:bg-red-100">
+                  className="h-7 px-2 text-[10px] font-semibold bg-[#FCF1F1] text-[#7a2929] rounded hover:bg-[#F7E3E3]">
                   <Trash2 className="w-3 h-3" />
                 </button>
               </div>
@@ -842,9 +852,9 @@ const TemplatesTab: React.FC = () => {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-slate-900">Templates ({items.length})</h2>
+        <h2 className="text-sm font-bold text-[#111111]">Templates ({items.length})</h2>
         <select value={doctype} onChange={(e) => setDoctype((e.target.value as any) || '')}
-          className="h-7 px-2 text-xs border border-slate-300 rounded">
+          className="h-7 px-2 text-xs border border-[#C9C6BD] rounded">
           <option value="">All doctypes</option>
           <option value="cv">CV</option>
           <option value="resume">Resume</option>
@@ -855,12 +865,12 @@ const TemplatesTab: React.FC = () => {
       {loading && items.length === 0 && <Loader />}
       {Object.entries(groups).map(([cat, list]) => (
         <section key={cat}>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{cat} ({list.length})</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">{cat} ({list.length})</div>
           <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {list.map((t) => (
-              <li key={t.id} className="border border-slate-200 rounded p-3 hover:border-blue-400 transition-colors">
+              <li key={t.id} className="border border-[#E3E1DA] rounded p-3 hover:border-[#A8B9AE] transition-colors">
                 <div className="text-xs font-semibold">{t.name}</div>
-                <div className="text-[10px] text-slate-500 capitalize">{t.doctype}</div>
+                <div className="text-[10px] text-[#9A9A9A] capitalize">{t.doctype}</div>
                 <div className="mt-2 h-1 rounded" style={{ background: t.layout?.accent || '#E2E8F0' }} />
               </li>
             ))}
@@ -877,12 +887,12 @@ const TemplatesTab: React.FC = () => {
 
 const Field: React.FC<{ label: string; value: string; onChange: (v: string) => void }> = ({ label, value, onChange }) => (
   <label className="text-xs">
-    <span className="block font-semibold text-slate-700 mb-1">{label}</span>
+    <span className="block font-semibold text-[#111111] mb-1">{label}</span>
     <input value={value} onChange={(e) => onChange(e.target.value)}
-      className="w-full h-8 px-2 text-xs border border-slate-300 rounded" />
+      className="w-full h-8 px-2 text-xs border border-[#C9C6BD] rounded" />
   </label>
 );
 
 const Loader: React.FC = () => (
-  <div className="flex items-center gap-2 text-xs text-slate-500"><Loader2 className="w-3 h-3 animate-spin" /> Loading…</div>
+  <div className="flex items-center gap-2 text-xs text-[#9A9A9A]"><Loader2 className="w-3 h-3 animate-spin" /> Loading…</div>
 );

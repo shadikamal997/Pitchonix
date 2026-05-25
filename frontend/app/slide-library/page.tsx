@@ -33,48 +33,48 @@ export default function SlideLibraryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
-        <Link href="/dashboard" className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1">
+    <div className="min-h-screen bg-[#EDEBE6]">
+      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
+        <Link href="/dashboard" className="text-xs text-[#9A9A9A] hover:text-[#111111] flex items-center gap-1">
           <ArrowLeft className="w-3 h-3" /> Back
         </Link>
-        <div className="h-5 w-px bg-slate-200" />
-        <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-slate-500" /> Slide Library
+        <div className="h-5 w-px bg-[#E3E1DA]" />
+        <h1 className="text-base font-bold text-[#111111] flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-[#9A9A9A]" /> Slide Library
         </h1>
         <input
           value={deckId} onChange={(e) => setDeckId(e.target.value)} placeholder="Target deck id…"
-          className="ml-auto w-72 h-8 px-2 text-xs font-mono border border-slate-300 rounded"
+          className="ml-auto w-72 h-8 px-2 text-xs font-mono border border-[#C9C6BD] rounded"
         />
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-6">
-        {loading && <div className="text-xs text-slate-500">Loading…</div>}
+        {loading && <div className="text-xs text-[#9A9A9A]">Loading…</div>}
         {!loading && items.length === 0 && (
-          <div className="text-sm text-slate-500 italic">
+          <div className="text-sm text-[#9A9A9A] italic">
             No saved slides yet. From the editor inspector, save a slide or section to the library.
           </div>
         )}
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {items.map((it: ReusableSlideDTO) => (
-            <li key={it.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <li key={it.id} className="bg-white border border-[#E3E1DA] rounded-lg overflow-hidden">
               {it.thumbnail
-                ? <img src={it.thumbnail} alt="" className="w-full aspect-video object-cover bg-slate-100" />
-                : <div className="w-full aspect-video bg-slate-100 flex items-center justify-center text-slate-400 text-xs">No preview</div>}
+                ? <img src={it.thumbnail} alt="" className="w-full aspect-video object-cover bg-[#F1F0EC]" />
+                : <div className="w-full aspect-video bg-[#F1F0EC] flex items-center justify-center text-[#C9C6BD] text-xs">No preview</div>}
               <div className="p-3 space-y-1.5">
-                <div className="text-xs font-bold text-slate-900 truncate">{it.name}</div>
-                <div className="text-[10px] text-slate-500 truncate">{it.description}</div>
+                <div className="text-xs font-bold text-[#111111] truncate">{it.name}</div>
+                <div className="text-[10px] text-[#9A9A9A] truncate">{it.description}</div>
                 <div className="flex flex-wrap gap-1">
-                  <span className="text-[9px] font-mono uppercase bg-slate-100 text-slate-700 px-1 py-0.5 rounded">{it.kind}</span>
+                  <span className="text-[9px] font-mono uppercase bg-[#F1F0EC] text-[#111111] px-1 py-0.5 rounded">{it.kind}</span>
                   {it.tags?.slice(0, 3).map((t, i) => (
-                    <span key={i} className="text-[9px] bg-blue-50 text-blue-700 px-1 py-0.5 rounded">#{t}</span>
+                    <span key={i} className="text-[9px] bg-[#EEF5F1] text-[#355846] px-1 py-0.5 rounded">#{t}</span>
                   ))}
                 </div>
                 <div className="flex gap-1 pt-1">
                   <button
                     onClick={() => handleInsert(it.id)}
                     disabled={busy === it.id || !deckId.trim()}
-                    className="flex-1 h-7 text-[10px] font-semibold bg-blue-600 text-white rounded inline-flex items-center justify-center gap-1 hover:bg-blue-700 disabled:opacity-40"
+                    className="flex-1 h-7 text-[10px] font-semibold bg-[#4F7563] text-white rounded inline-flex items-center justify-center gap-1 hover:bg-[#355846] disabled:opacity-40"
                   >
                     <FileInput className="w-3 h-3" /> {busy === it.id ? 'Inserting…' : 'Insert'}
                   </button>
@@ -85,7 +85,7 @@ export default function SlideLibraryPage() {
                         catch (e: any) { toast.error(e?.response?.data?.message || e?.message || 'Delete failed'); }
                       }
                     }}
-                    className="h-7 px-2 text-[10px] font-semibold bg-red-50 text-red-700 rounded hover:bg-red-100"
+                    className="h-7 px-2 text-[10px] font-semibold bg-[#FCF1F1] text-[#7a2929] rounded hover:bg-[#F7E3E3]"
                   ><Trash2 className="w-3 h-3" /></button>
                 </div>
               </div>

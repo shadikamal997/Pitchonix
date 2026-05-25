@@ -33,11 +33,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-[#EDEBE6]">
       <ModernSidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <AppTopNav />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-[#EDEBE6]">{children}</main>
       </div>
     </div>
   );

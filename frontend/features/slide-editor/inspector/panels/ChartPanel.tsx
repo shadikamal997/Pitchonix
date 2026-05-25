@@ -240,7 +240,7 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
         <button
           type="button"
           onClick={() => set({ insight: generateInsights(c) })}
-          className="w-full mb-2 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-semibold rounded bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border border-purple-200 text-purple-800"
+          className="w-full mb-2 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-semibold rounded bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border border-[#DDE8E1] text-purple-800"
         >
           <Sparkles className="w-3 h-3" />
           Auto-detect insights
@@ -279,12 +279,12 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
         </Row>
         {c.insight?.annotations && c.insight.annotations.length > 0 && (
           <Row label="Annotations">
-            <div className="text-[10px] text-slate-500">
+            <div className="text-[10px] text-[#9A9A9A]">
               {c.insight.annotations.length} pinned ·{' '}
               <button
                 type="button"
                 onClick={() => set({ insight: { ...(c.insight || {}), annotations: undefined } })}
-                className="underline hover:text-slate-700"
+                className="underline hover:text-[#111111]"
               >
                 clear
               </button>
@@ -296,20 +296,20 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
       <PanelSection title={`Categories (${c.categories.length})`}>
         {c.categories.map((cat, i) => (
           <div key={i} className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono text-slate-400 w-4 text-right">{i + 1}</span>
+            <span className="text-[10px] font-mono text-[#C9C6BD] w-4 text-right">{i + 1}</span>
             <TextField value={cat} onChange={(v) => updateCategory(i, v)} placeholder="(empty)" />
             <div className="flex flex-col gap-0.5">
               <button onClick={() => moveCategory(i, -1)} disabled={i === 0}
-                className="w-5 h-3 flex items-center justify-center text-slate-400 hover:text-slate-700 disabled:opacity-30">
+                className="w-5 h-3 flex items-center justify-center text-[#C9C6BD] hover:text-[#111111] disabled:opacity-30">
                 <ChevronUp className="w-3 h-3" />
               </button>
               <button onClick={() => moveCategory(i, +1)} disabled={i === c.categories.length - 1}
-                className="w-5 h-3 flex items-center justify-center text-slate-400 hover:text-slate-700 disabled:opacity-30">
+                className="w-5 h-3 flex items-center justify-center text-[#C9C6BD] hover:text-[#111111] disabled:opacity-30">
                 <ChevronDown className="w-3 h-3" />
               </button>
             </div>
             <button onClick={() => removeCategory(i)}
-              className="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-red-600"
+              className="w-5 h-5 flex items-center justify-center text-[#C9C6BD] hover:text-[#9a3737]"
               title="Remove category">
               <X className="w-3 h-3" />
             </button>
@@ -318,7 +318,7 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
         <button
           type="button"
           onClick={addCategory}
-          className="w-full h-7 flex items-center justify-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 rounded mt-1"
+          className="w-full h-7 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#355846] bg-[#EEF5F1] hover:bg-[#DDE8E1] rounded mt-1"
         >
           <Plus className="w-3 h-3" /> Add category
         </button>
@@ -326,12 +326,12 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
 
       <PanelSection title={`Series (${c.series.length})${isSingleSeries ? ' — first only' : ''}`}>
         {c.series.map((s, si) => (
-          <div key={si} className="bg-slate-50 border border-slate-200 rounded p-2 space-y-1.5">
+          <div key={si} className="bg-[#EDEBE6] border border-[#E3E1DA] rounded p-2 space-y-1.5">
             <div className="flex items-center gap-1.5">
               <ColorField value={s.color || DEFAULT_PALETTE[si % DEFAULT_PALETTE.length]}
                           onChange={(v) => updateSeries(si, { color: v })} />
               <button onClick={() => removeSeries(si)}
-                className="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-red-600 flex-shrink-0"
+                className="w-5 h-5 flex items-center justify-center text-[#C9C6BD] hover:text-[#9a3737] flex-shrink-0"
                 title="Remove series">
                 <X className="w-3 h-3" />
               </button>
@@ -343,7 +343,7 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
           <button
             type="button"
             onClick={addSeries}
-            className="w-full h-7 flex items-center justify-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 rounded mt-1"
+            className="w-full h-7 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#355846] bg-[#EEF5F1] hover:bg-[#DDE8E1] rounded mt-1"
           >
             <Plus className="w-3 h-3" /> Add series
           </button>
@@ -352,7 +352,7 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
           <button
             type="button"
             onClick={addSeries}
-            className="w-full h-7 flex items-center justify-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 rounded mt-1"
+            className="w-full h-7 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#355846] bg-[#EEF5F1] hover:bg-[#DDE8E1] rounded mt-1"
           >
             <Plus className="w-3 h-3" /> Add series
           </button>
@@ -361,15 +361,15 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
 
       <PanelSection title="Data">
         {c.categories.length === 0 || c.series.length === 0 ? (
-          <p className="text-[11px] text-slate-400">Add at least one category and series.</p>
+          <p className="text-[11px] text-[#C9C6BD]">Add at least one category and series.</p>
         ) : (
           <div className="overflow-x-auto -mx-1.5">
             <table className="w-full text-[11px]">
               <thead>
                 <tr>
-                  <th className="text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1.5 pb-1">Cat ↓ / Series →</th>
+                  <th className="text-left text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider pl-1.5 pb-1">Cat ↓ / Series →</th>
                   {(isSingleSeries ? c.series.slice(0, 1) : c.series).map((s, si) => (
-                    <th key={si} className="text-left text-[10px] font-semibold text-slate-700 pb-1 pr-1.5">
+                    <th key={si} className="text-left text-[10px] font-semibold text-[#111111] pb-1 pr-1.5">
                       <span className="inline-flex items-center gap-1 truncate max-w-[80px]">
                         <span className="w-2 h-2 rounded-sm" style={{ background: s.color || DEFAULT_PALETTE[si % DEFAULT_PALETTE.length] }} />
                         {s.name}
@@ -381,7 +381,7 @@ export const ChartPanel: React.FC<Props> = ({ element, onPatch }) => {
               <tbody>
                 {c.categories.map((cat, ci) => (
                   <tr key={ci}>
-                    <td className="pr-1.5 py-0.5 pl-1.5 text-slate-600 truncate max-w-[80px]">{cat}</td>
+                    <td className="pr-1.5 py-0.5 pl-1.5 text-[#6B6B6B] truncate max-w-[80px]">{cat}</td>
                     {(isSingleSeries ? c.series.slice(0, 1) : c.series).map((s, si) => (
                       <td key={si} className="py-0.5 pr-1.5">
                         <NumberField

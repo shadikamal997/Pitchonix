@@ -101,16 +101,16 @@ export default function LivePreview({
   return (
     <div className={`flex flex-col bg-white rounded-xl shadow-sm overflow-hidden ${className}`}>
       {/* Header bar */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200 px-3 py-2 flex items-center justify-between">
+      <div className="flex-shrink-0 bg-white border-b border-[#E3E1DA] px-3 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Eye className="w-3.5 h-3.5 text-blue-600" />
-          <span className="text-xs font-semibold text-gray-700">Live Preview</span>
-          {loading && <Loader2 className="w-3 h-3 text-blue-500 animate-spin" />}
+          <Eye className="w-3.5 h-3.5 text-[#4F7563]" />
+          <span className="text-xs font-semibold text-[#111111]">Live Preview</span>
+          {loading && <Loader2 className="w-3 h-3 text-[#4F7563] animate-spin" />}
         </div>
 
         <div className="flex items-center gap-1">
           {!loading && (
-            <span className="text-[10px] text-gray-400 mr-1">
+            <span className="text-[10px] text-[#C9C6BD] mr-1">
               {lastUpdate.toLocaleTimeString()}
             </span>
           )}
@@ -118,7 +118,7 @@ export default function LivePreview({
             onClick={fetchPreview}
             disabled={loading}
             title="Refresh"
-            className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors disabled:opacity-40"
+            className="p-1 text-[#C9C6BD] hover:text-[#111111] hover:bg-[#F1F0EC] rounded transition-colors disabled:opacity-40"
           >
             <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -126,7 +126,7 @@ export default function LivePreview({
             <button
               onClick={onFullscreen}
               title="Fullscreen preview"
-              className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+              className="p-1 text-[#C9C6BD] hover:text-[#111111] hover:bg-[#F1F0EC] rounded transition-colors"
             >
               <Maximize2 className="w-3 h-3" />
             </button>
@@ -151,7 +151,7 @@ export default function LivePreview({
             <p className="text-xs text-gray-300 text-center">{error}</p>
             <button
               onClick={fetchPreview}
-              className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+              className="px-3 py-1.5 bg-[#4F7563] text-white rounded text-xs hover:bg-[#355846]"
             >
               Retry
             </button>
@@ -206,7 +206,7 @@ export default function LivePreview({
 
         {/* Refresh overlay (subsequent updates) */}
         {loading && previewHtml && (
-          <div className="sticky top-0 bg-blue-600/80 text-white text-[10px] text-center py-1 z-10">
+          <div className="sticky top-0 bg-[#4F7563]/80 text-white text-[10px] text-center py-1 z-10">
             <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
             Updating…
           </div>

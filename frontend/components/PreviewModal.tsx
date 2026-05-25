@@ -120,14 +120,14 @@ export default function PreviewModal({
         <div className="flex items-center gap-4">
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-[#C9C6BD] hover:text-white hover:bg-white/10 rounded-lg transition-colors"
             title="Close (Esc)"
           >
             <X className="w-5 h-5" />
           </button>
           <div>
             <h2 className="text-sm font-semibold text-white leading-none">{documentTitle}</h2>
-            <p className="text-[11px] text-gray-400 mt-0.5">{pageCount} page{pageCount !== 1 ? 's' : ''}</p>
+            <p className="text-[11px] text-[#C9C6BD] mt-0.5">{pageCount} page{pageCount !== 1 ? 's' : ''}</p>
           </div>
         </div>
 
@@ -188,7 +188,7 @@ export default function PreviewModal({
           {onExport && (
             <button
               onClick={() => onExport('pdf')}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-[#4F7563] hover:bg-[#4F7563] text-white text-sm font-medium rounded-lg transition-colors"
             >
               <Download className="w-4 h-4" />
               Export PDF
@@ -218,7 +218,7 @@ export default function PreviewModal({
             <p className="text-sm text-gray-300">{error}</p>
             <button
               onClick={fetchPreview}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+              className="px-4 py-2 bg-[#4F7563] text-white rounded-lg text-sm"
             >
               Retry
             </button>

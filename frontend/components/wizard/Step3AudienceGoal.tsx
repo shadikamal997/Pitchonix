@@ -102,13 +102,13 @@ export default function Step3AudienceGoal({ data, onUpdate, documentType = 'pitc
     <div className="space-y-8">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold mb-2">{title}</h2>
-        <p className="text-gray-600">{description}</p>
+        <p className="text-[#6B6B6B]">{description}</p>
       </div>
 
       {/* Audience Selection */}
       <div>
         <Label className="text-base mb-4 block">
-          Primary Audience <span className="text-red-500">*</span>
+          Primary Audience <span className="text-[#D96A6A]">*</span>
         </Label>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {audienceTypes.map((audience) => {
@@ -121,17 +121,17 @@ export default function Step3AudienceGoal({ data, onUpdate, documentType = 'pitc
                 onClick={() => onUpdate({ audience: audience.value })}
                 className={`p-4 rounded-lg border-2 transition-all text-left ${
                   isSelected
-                    ? 'border-blue-500 bg-blue-50 shadow-md'
-                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                    ? 'border-[#4F7563] bg-[#EEF5F1] shadow-md'
+                    : 'border-[#E3E1DA] hover:border-[#A8B9AE] hover:bg-[#EDEBE6]'
                 }`}
               >
                 <div className="flex items-start space-x-3">
-                  <Icon className={`h-5 w-5 mt-0.5 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <Icon className={`h-5 w-5 mt-0.5 ${isSelected ? 'text-[#4F7563]' : 'text-[#C9C6BD]'}`} />
                   <div>
-                    <p className={`font-semibold ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
+                    <p className={`font-semibold ${isSelected ? 'text-[#1A2D24]' : 'text-[#111111]'}`}>
                       {audience.label}
                     </p>
-                    <p className="text-sm text-gray-600">{audience.description}</p>
+                    <p className="text-sm text-[#6B6B6B]">{audience.description}</p>
                   </div>
                 </div>
               </button>
@@ -173,7 +173,7 @@ export default function Step3AudienceGoal({ data, onUpdate, documentType = 'pitc
       {/* Tone Selection */}
       <div>
         <Label className="text-base mb-4 block">
-          Communication Tone <span className="text-red-500">*</span>
+          Communication Tone <span className="text-[#D96A6A]">*</span>
         </Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {TONE_OPTIONS.map((tone) => {
@@ -185,14 +185,14 @@ export default function Step3AudienceGoal({ data, onUpdate, documentType = 'pitc
                 onClick={() => onUpdate({ tone: tone.value })}
                 className={`p-4 rounded-lg border-2 transition-all text-left ${
                   isSelected
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
+                    ? 'border-purple-500 bg-[#EEF5F1]'
+                    : 'border-[#E3E1DA] hover:border-[#A8B9AE] hover:bg-[#EDEBE6]'
                 }`}
               >
-                <p className={`font-semibold mb-1 ${isSelected ? 'text-purple-900' : 'text-gray-900'}`}>
+                <p className={`font-semibold mb-1 ${isSelected ? 'text-purple-900' : 'text-[#111111]'}`}>
                   {tone.label}
                 </p>
-                <p className="text-sm text-gray-600">{tone.description}</p>
+                <p className="text-sm text-[#6B6B6B]">{tone.description}</p>
               </button>
             );
           })}

@@ -168,9 +168,9 @@ export default function ExportDropdown({
 
       {/* Format Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-2xl border border-gray-200 z-20 overflow-hidden" role="menu">
-          <div className="p-2.5 border-b border-gray-100 bg-gray-50">
-            <h3 className="text-sm font-semibold text-gray-900">Export Format</h3>
+        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-2xl border border-[#E3E1DA] z-20 overflow-hidden" role="menu">
+          <div className="p-2.5 border-b border-[#F1F0EC] bg-[#EDEBE6]">
+            <h3 className="text-sm font-semibold text-[#111111]">Export Format</h3>
           </div>
           <div className="p-2">
             {EXPORT_FORMATS.map((format) => {
@@ -184,38 +184,38 @@ export default function ExportDropdown({
                   className={`
                     w-full p-2.5 rounded-lg text-left transition-all flex items-start gap-2.5
                     ${isSelected
-                      ? 'bg-blue-50 border-2 border-blue-200'
-                      : 'hover:bg-gray-50 border-2 border-transparent'
+                      ? 'bg-[#EEF5F1] border-2 border-[#DDE8E1]'
+                      : 'hover:bg-[#EDEBE6] border-2 border-transparent'
                     }
                   `}
                 >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                    <FormatIcon className={`w-4 h-4 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`} aria-hidden="true" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-[#DDE8E1]' : 'bg-[#F1F0EC]'}`}>
+                    <FormatIcon className={`w-4 h-4 ${isSelected ? 'text-[#4F7563]' : 'text-[#6B6B6B]'}`} aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`font-semibold text-sm ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>{format.label}</span>
-                      {isSelected && <span className="text-xs px-2 py-0.5 bg-blue-600 text-white rounded-full">Selected</span>}
+                      <span className={`font-semibold text-sm ${isSelected ? 'text-[#1A2D24]' : 'text-[#111111]'}`}>{format.label}</span>
+                      {isSelected && <span className="text-xs px-2 py-0.5 bg-[#4F7563] text-white rounded-full">Selected</span>}
                     </div>
-                    <p className="text-xs text-gray-600 mt-0.5">{format.description}</p>
-                    <p className="text-xs text-gray-400 mt-1">.{format.extension}</p>
+                    <p className="text-xs text-[#6B6B6B] mt-0.5">{format.description}</p>
+                    <p className="text-xs text-[#C9C6BD] mt-1">.{format.extension}</p>
                   </div>
                 </button>
               );
             })}
           </div>
-          <div className="p-2 border-t border-gray-100 bg-gray-50">
-            <p className="text-xs text-gray-500 text-center">Preserves content and structure</p>
+          <div className="p-2 border-t border-[#F1F0EC] bg-[#EDEBE6]">
+            <p className="text-xs text-[#9A9A9A] text-center">Preserves content and structure</p>
           </div>
         </div>
       )}
 
       {/* PDF Options Panel */}
       {showOptions && (
-        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-2xl border border-gray-200 z-20 overflow-hidden" role="dialog" aria-label="PDF export options">
-          <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gray-50">
-            <h3 className="text-sm font-semibold text-gray-900">PDF Export Options</h3>
-            <button onClick={() => setShowOptions(false)} aria-label="Close options" className="text-gray-400 hover:text-gray-700">
+        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-2xl border border-[#E3E1DA] z-20 overflow-hidden" role="dialog" aria-label="PDF export options">
+          <div className="flex items-center justify-between p-3 border-b border-[#F1F0EC] bg-[#EDEBE6]">
+            <h3 className="text-sm font-semibold text-[#111111]">PDF Export Options</h3>
+            <button onClick={() => setShowOptions(false)} aria-label="Close options" className="text-[#C9C6BD] hover:text-[#111111]">
               <XIcon className="w-4 h-4" />
             </button>
           </div>
@@ -223,7 +223,7 @@ export default function ExportDropdown({
           <div className="p-3 space-y-4">
             {/* Paper Size */}
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Paper Size</label>
+              <label className="block text-xs font-semibold text-[#6B6B6B] mb-1.5">Paper Size</label>
               <div className="grid grid-cols-4 gap-1">
                 {(['A4', 'Letter', 'A3', 'Legal'] as const).map(size => (
                   <button
@@ -231,8 +231,8 @@ export default function ExportDropdown({
                     onClick={() => setOptions(o => ({ ...o, paperSize: size }))}
                     className={`py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
                       options.paperSize === size
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        ? 'border-[#4F7563] bg-[#EEF5F1] text-[#355846]'
+                        : 'border-[#E3E1DA] text-[#6B6B6B] hover:bg-[#EDEBE6]'
                     }`}
                   >
                     {size}
@@ -243,7 +243,7 @@ export default function ExportDropdown({
 
             {/* Quality */}
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Export Quality</label>
+              <label className="block text-xs font-semibold text-[#6B6B6B] mb-1.5">Export Quality</label>
               <div className="grid grid-cols-3 gap-1">
                 {([
                   { id: 'standard', label: 'Standard' },
@@ -255,8 +255,8 @@ export default function ExportDropdown({
                     onClick={() => setOptions(o => ({ ...o, quality: q.id }))}
                     className={`py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
                       options.quality === q.id
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        ? 'border-[#4F7563] bg-[#EEF5F1] text-[#355846]'
+                        : 'border-[#E3E1DA] text-[#6B6B6B] hover:bg-[#EDEBE6]'
                     }`}
                   >
                     {q.label}
@@ -275,7 +275,7 @@ export default function ExportDropdown({
                   onChange={e => setWatermarkEnabled(e.target.checked)}
                   className="accent-blue-600"
                 />
-                <label htmlFor="wm-enable" className="text-xs font-semibold text-gray-600 cursor-pointer">Watermark</label>
+                <label htmlFor="wm-enable" className="text-xs font-semibold text-[#6B6B6B] cursor-pointer">Watermark</label>
               </div>
               {watermarkEnabled && (
                 <input
@@ -284,13 +284,13 @@ export default function ExportDropdown({
                   onChange={e => setWatermarkText(e.target.value)}
                   placeholder="e.g. DRAFT, CONFIDENTIAL"
                   maxLength={30}
-                  className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-800 outline-none focus:border-blue-400"
+                  className="w-full rounded-lg border border-[#E3E1DA] px-2.5 py-1.5 text-xs text-[#111111] outline-none focus:border-[#A8B9AE]"
                 />
               )}
             </div>
           </div>
 
-          <div className="p-3 border-t border-gray-100 bg-gray-50">
+          <div className="p-3 border-t border-[#F1F0EC] bg-[#EDEBE6]">
             <button
               onClick={() => handleExport(selectedFormat)}
               disabled={loading}

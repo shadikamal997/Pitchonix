@@ -90,35 +90,38 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   };
 
   const colors = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
-    warning: 'bg-amber-50 border-amber-200 text-amber-800',
+    success: 'bg-white border-[#DDE8E1] text-[#263F34]',
+    error:   'bg-white border-[#F7E3E3] text-[#9a3737]',
+    info:    'bg-white border-[#E3E1DA] text-[#111111]',
+    warning: 'bg-white border-[#FAEEDB] text-[#8c6210]',
   };
 
-  const iconColors = {
-    success: 'text-green-600',
-    error: 'text-red-600',
-    info: 'text-blue-600',
-    warning: 'text-amber-600',
+  const iconBg = {
+    success: 'bg-[#EEF5F1] text-[#4F7563]',
+    error:   'bg-[#F7E3E3] text-[#9a3737]',
+    info:    'bg-[#F7F6F2] text-[#111111]',
+    warning: 'bg-[#FAEEDB] text-[#8c6210]',
   };
 
   const Icon = icons[toast.type];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.3 }}
+      initial={{ opacity: 0, y: 24, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-      className={`pointer-events-auto flex w-96 items-start gap-3 rounded-lg border p-4 shadow-lg ${colors[toast.type]}`}
+      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+      className={`pointer-events-auto flex w-96 items-start gap-3 rounded-2xl border p-4 shadow-[0_20px_50px_rgba(38,63,52,0.10)] ${colors[toast.type]}`}
     >
-      <Icon className={`h-5 w-5 flex-shrink-0 ${iconColors[toast.type]}`} />
-      <p className="flex-1 text-sm font-medium">{toast.message}</p>
+      <div className={`flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0 ${iconBg[toast.type]}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <p className="flex-1 text-sm font-medium leading-snug pt-2">{toast.message}</p>
       <button
         onClick={onClose}
-        className="flex-shrink-0 rounded p-1 opacity-70 transition-opacity hover:opacity-100"
+        aria-label="Dismiss"
+        className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[#9A9A9A] hover:bg-[#F1F0EC] hover:text-[#111111] transition-colors"
       >
-        <X className="h-4 w-4" />
+        <X className="h-3.5 w-3.5" />
       </button>
     </motion.div>
   );

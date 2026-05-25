@@ -144,9 +144,9 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
             <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center animate-pulse">
               <Sparkles className="w-10 h-10 text-white" />
             </div>
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-green-600 mx-auto mb-6"></div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">Loading Premium Templates</h3>
-            <p className="text-lg text-slate-600">Preparing your creative workspace...</p>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#E3E1DA] border-t-green-600 mx-auto mb-6"></div>
+            <h3 className="text-2xl font-bold text-[#111111] mb-2">Loading Premium Templates</h3>
+            <p className="text-lg text-[#6B6B6B]">Preparing your creative workspace...</p>
           </div>
         </div>
       </div>
@@ -161,8 +161,8 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
             <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
               <X className="w-10 h-10 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-3">Unable to Load Templates</h3>
-            <p className="text-lg text-red-600 mb-8">{error}</p>
+            <h3 className="text-2xl font-bold text-[#111111] mb-3">Unable to Load Templates</h3>
+            <p className="text-lg text-[#9a3737] mb-8">{error}</p>
             <Button 
               onClick={fetchTemplates} 
               size="lg"
@@ -182,14 +182,14 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
         {/* Premium Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-200/50 mb-2">
-              <Sparkles className="w-3 h-3 text-green-600" />
-              <span className="text-xs font-semibold text-green-700">Premium Templates</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-[#DDE8E1]/50 mb-2">
+              <Sparkles className="w-3 h-3 text-[#4F7563]" />
+              <span className="text-xs font-semibold text-[#355846]">Premium Templates</span>
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-3xl font-bold text-[#111111] tracking-tight">
               Choose Your Template
             </h1>
-            <p className="text-sm text-slate-600 max-w-2xl">
+            <p className="text-sm text-[#6B6B6B] max-w-2xl">
               Professional, industry-specific templates crafted for success. Start creating in minutes.
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
             variant="outline"
             onClick={onCancel}
             size="sm"
-            className="flex items-center gap-1.5 border-slate-300 hover:bg-slate-50 px-4"
+            className="flex items-center gap-1.5 border-[#C9C6BD] hover:bg-[#EDEBE6] px-4"
           >
             <X className="w-3 h-3" />
             Create from Scratch
@@ -205,15 +205,15 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
         </div>
 
         {/* Premium Search Bar */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-xl shadow-md shadow-slate-200/50 p-3 mb-5 border border-slate-200/60">
+        <div className="bg-white/80 backdrop-blur-xl rounded-xl shadow-md shadow-slate-200/50 p-3 mb-5 border border-[#E3E1DA]/60">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#C9C6BD] w-4 h-4" />
             <Input
               type="text"
               placeholder="Search templates by name, industry, or tag..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 text-sm rounded-lg border-slate-200 focus:border-green-400 focus:ring-2 focus:ring-green-200 bg-white"
+              className="pl-10 pr-4 py-2 text-sm rounded-lg border-[#E3E1DA] focus:border-green-400 focus:ring-2 focus:ring-[#DDE8E1] bg-white"
             />
           </div>
         </div>
@@ -229,7 +229,7 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
               className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 font-semibold text-xs transition-all ${
                 selectedCategory === category.id
                   ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md shadow-green-500/30 border-0'
-                  : 'bg-white border-slate-200 text-slate-700 hover:border-green-300 hover:bg-green-50/50'
+                  : 'bg-white border-[#E3E1DA] text-[#111111] hover:border-[#A8B9AE] hover:bg-[#EEF5F1]/50'
               }`}
             >
               <category.icon className="w-3 h-3" />
@@ -240,14 +240,14 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
 
         {/* Templates Grid */}
         {filteredTemplates.length === 0 ? (
-          <div className="text-center py-32 bg-white/60 backdrop-blur-xl rounded-3xl border border-slate-200/60">
+          <div className="text-center py-32 bg-white/60 backdrop-blur-xl rounded-3xl border border-[#E3E1DA]/60">
             <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 flex items-center justify-center">
-              <Sparkles className="w-10 h-10 text-slate-400" />
+              <Sparkles className="w-10 h-10 text-[#C9C6BD]" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-3">
+            <h3 className="text-2xl font-bold text-[#111111] mb-3">
               No templates found
             </h3>
-            <p className="text-slate-600 mb-8 text-lg">
+            <p className="text-[#6B6B6B] mb-8 text-lg">
               Try adjusting your search or filters
             </p>
             <Button 
@@ -274,8 +274,8 @@ export default function TemplateGallery({ onSelectTemplate, onCancel }: Template
         {/* Premium Results Count */}
         {filteredTemplates.length > 0 && (
           <div className="mt-6 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 border border-slate-200">
-              <span className="text-xs font-semibold text-slate-700">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F1F0EC] border border-[#E3E1DA]">
+              <span className="text-xs font-semibold text-[#111111]">
                 {filteredTemplates.length} Premium Template{filteredTemplates.length !== 1 ? 's' : ''} Available
               </span>
             </div>

@@ -56,7 +56,7 @@ const Btn: React.FC<{ onClick: () => void; title: string; children: React.ReactN
     type="button"
     onClick={onClick}
     title={title}
-    className="w-7 h-6 flex items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+    className="w-7 h-6 flex items-center justify-center rounded text-[#6B6B6B] hover:bg-[#F1F0EC] hover:text-[#111111]"
   >
     {children}
   </button>

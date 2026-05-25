@@ -43,7 +43,7 @@ export const ChartPage: React.FC<ChartPageProps> = ({
             {title}
           </h1>
           {subtitle && (
-            <p className="text-slate-600" style={{ fontSize: '11pt' }}>
+            <p className="text-[#6B6B6B]" style={{ fontSize: '11pt' }}>
               {subtitle}
             </p>
           )}
@@ -54,7 +54,7 @@ export const ChartPage: React.FC<ChartPageProps> = ({
         </div>
 
         {/* Chart Container */}
-        <div className="flex-1 flex items-center justify-center bg-slate-50 rounded-xl p-8">
+        <div className="flex-1 flex items-center justify-center bg-[#EDEBE6] rounded-xl p-8">
           {chartImage ? (
             <img
               src={chartImage}
@@ -62,7 +62,7 @@ export const ChartPage: React.FC<ChartPageProps> = ({
               className="max-w-full max-h-full object-contain"
             />
           ) : (
-            <div className="text-center text-slate-400">
+            <div className="text-center text-[#C9C6BD]">
               <p style={{ fontSize: '12pt' }}>Chart will render here</p>
               <p className="text-sm mt-2" style={{ fontSize: '10pt' }}>
                 Type: {chartType}
@@ -75,7 +75,7 @@ export const ChartPage: React.FC<ChartPageProps> = ({
         {description && (
           <div className="mt-6">
             <p
-              className="text-slate-700 leading-relaxed"
+              className="text-[#111111] leading-relaxed"
               style={{ fontSize: '10pt', lineHeight: '1.6' }}
             >
               {description}

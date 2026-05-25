@@ -40,26 +40,26 @@ export default function HelpPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <div className="min-h-full bg-slate-50 p-8">
+    <div className="min-h-full bg-[#EDEBE6] p-8">
       <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Help & Support</h1>
-            <p className="text-gray-600">Guides, FAQs, and contact options for the Pitchonix platform</p>
+            <h1 className="text-3xl font-bold text-[#111111] mb-2">Help & Support</h1>
+            <p className="text-[#6B6B6B]">Guides, FAQs, and contact options for the Pitchonix platform</p>
           </div>
 
           <div className="space-y-6">
             {/* Getting Started */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-[#E3E1DA] p-6">
               <div className="flex items-start gap-4">
-                <div className="bg-green-100 rounded-lg p-3 flex-shrink-0">
-                  <Zap className="h-6 w-6 text-green-600" />
+                <div className="bg-[#DDE8E1] rounded-lg p-3 flex-shrink-0">
+                  <Zap className="h-6 w-6 text-[#4F7563]" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-semibold mb-2 text-gray-900">Getting Started</h2>
-                  <p className="text-gray-600 mb-4">
+                  <h2 className="text-xl font-semibold mb-2 text-[#111111]">Getting Started</h2>
+                  <p className="text-[#6B6B6B] mb-4">
                     New to Pitchonix? Start by creating a project via the <strong>Create New</strong> button in the sidebar. Choose a document type, fill in your business details, and let the AI generate a polished document in seconds.
                   </p>
-                  <ol className="list-decimal list-inside text-sm text-gray-700 space-y-1">
+                  <ol className="list-decimal list-inside text-sm text-[#111111] space-y-1">
                     <li>Click <strong>Create New</strong> in the left sidebar</li>
                     <li>Pick a document type (Pitch Deck, Business Plan, etc.)</li>
                     <li>Complete the guided form with your information</li>
@@ -71,18 +71,18 @@ export default function HelpPage() {
             </div>
 
             {/* Document Types */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-[#E3E1DA] p-6">
               <div className="flex items-start gap-4">
-                <div className="bg-cyan-100 rounded-lg p-3 flex-shrink-0">
-                  <FileText className="h-6 w-6 text-cyan-600" />
+                <div className="bg-[#DDE8E1] rounded-lg p-3 flex-shrink-0">
+                  <FileText className="h-6 w-6 text-[#4F7563]" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-semibold mb-2 text-gray-900">Supported Document Types</h2>
-                  <p className="text-gray-600 mb-3">Pitchonix supports a wide range of professional document types:</p>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-700">
+                  <h2 className="text-xl font-semibold mb-2 text-[#111111]">Supported Document Types</h2>
+                  <p className="text-[#6B6B6B] mb-3">Pitchonix supports a wide range of professional document types:</p>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-[#111111]">
                     {['Pitch Decks', 'Business Plans', 'Sales Decks', 'Business Proposals', 'Marketing Plans', 'Case Studies', 'Executive Summaries', 'Company Profiles', 'Financial Projections', 'Partnership Proposals', 'Visual One-Pagers', 'Product Flyers'].map((t) => (
                       <div key={t} className="flex items-center gap-1.5">
-                        <span className="text-green-500">•</span> {t}
+                        <span className="text-[#4F7563]">•</span> {t}
                       </div>
                     ))}
                   </div>
@@ -91,24 +91,24 @@ export default function HelpPage() {
             </div>
 
             {/* Contact Support */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-[#E3E1DA] p-6">
               <div className="flex items-start gap-4">
-                <div className="bg-orange-100 rounded-lg p-3 flex-shrink-0">
-                  <MessageCircle className="h-6 w-6 text-orange-600" />
+                <div className="bg-[#F5E1B7] rounded-lg p-3 flex-shrink-0">
+                  <MessageCircle className="h-6 w-6 text-[#8c6210]" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-semibold mb-2 text-gray-900">Contact Support</h2>
-                  <p className="text-gray-600 mb-4">Our support team is available to help with any issues.</p>
+                  <h2 className="text-xl font-semibold mb-2 text-[#111111]">Contact Support</h2>
+                  <p className="text-[#6B6B6B] mb-4">Our support team is available to help with any issues.</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-500 w-28">Email</span>
-                      <a href="mailto:support@pitchonix.com" className="text-orange-600 hover:underline flex items-center gap-1">
+                      <span className="text-[#9A9A9A] w-28">Email</span>
+                      <a href="mailto:support@pitchonix.com" className="text-[#8c6210] hover:underline flex items-center gap-1">
                         support@pitchonix.com <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-500 w-28">Response time</span>
-                      <span className="text-gray-900">Within 24 hours</span>
+                      <span className="text-[#9A9A9A] w-28">Response time</span>
+                      <span className="text-[#111111]">Within 24 hours</span>
                     </div>
                   </div>
                 </div>
@@ -120,16 +120,16 @@ export default function HelpPage() {
                 a teaser card for non-existent docs was misleading. */}
 
             {/* FAQ */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-[#E3E1DA] p-6">
               <div className="flex items-center gap-3 mb-5">
-                <HelpCircle className="h-6 w-6 text-green-600" />
-                <h2 className="text-xl font-semibold text-gray-900">Frequently Asked Questions</h2>
+                <HelpCircle className="h-6 w-6 text-[#4F7563]" />
+                <h2 className="text-xl font-semibold text-[#111111]">Frequently Asked Questions</h2>
               </div>
               <div className="space-y-5">
                 {FAQ.map(({ q, a }) => (
                   <div key={q}>
-                    <h3 className="font-semibold text-gray-900 mb-1">{q}</h3>
-                    <p className="text-sm text-gray-600">{a}</p>
+                    <h3 className="font-semibold text-[#111111] mb-1">{q}</h3>
+                    <p className="text-sm text-[#6B6B6B]">{a}</p>
                   </div>
                 ))}
               </div>

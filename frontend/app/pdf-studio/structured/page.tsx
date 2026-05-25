@@ -68,14 +68,14 @@ const DOCUMENT_TEMPLATES = [
 ];
 
 const colorClasses: Record<string, { bg: string; text: string; hover: string; icon: string }> = {
-  blue: { bg: 'bg-blue-50', text: 'text-blue-900', hover: 'hover:bg-blue-100', icon: 'text-blue-600' },
-  green: { bg: 'bg-green-50', text: 'text-green-900', hover: 'hover:bg-green-100', icon: 'text-green-600' },
-  purple: { bg: 'bg-purple-50', text: 'text-purple-900', hover: 'hover:bg-purple-100', icon: 'text-purple-600' },
-  orange: { bg: 'bg-orange-50', text: 'text-orange-900', hover: 'hover:bg-orange-100', icon: 'text-orange-600' },
-  pink: { bg: 'bg-pink-50', text: 'text-pink-900', hover: 'hover:bg-pink-100', icon: 'text-pink-600' },
-  yellow: { bg: 'bg-yellow-50', text: 'text-yellow-900', hover: 'hover:bg-yellow-100', icon: 'text-yellow-600' },
-  teal: { bg: 'bg-teal-50', text: 'text-teal-900', hover: 'hover:bg-teal-100', icon: 'text-teal-600' },
-  indigo: { bg: 'bg-indigo-50', text: 'text-indigo-900', hover: 'hover:bg-indigo-100', icon: 'text-indigo-600' },
+  blue: { bg: 'bg-[#EEF5F1]', text: 'text-[#1A2D24]', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#4F7563]' },
+  green: { bg: 'bg-[#EEF5F1]', text: 'text-[#1A2D24]', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#4F7563]' },
+  purple: { bg: 'bg-[#EEF5F1]', text: 'text-purple-900', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#4F7563]' },
+  orange: { bg: 'bg-[#FAEEDB]', text: 'text-orange-900', hover: 'hover:bg-[#F5E1B7]', icon: 'text-[#8c6210]' },
+  pink: { bg: 'bg-[#FCF1F1]', text: 'text-pink-900', hover: 'hover:bg-[#F7E3E3]', icon: 'text-[#9a3737]' },
+  yellow: { bg: 'bg-[#FAEEDB]', text: 'text-yellow-900', hover: 'hover:bg-[#F5E1B7]', icon: 'text-[#8c6210]' },
+  teal: { bg: 'bg-[#EEF5F1]', text: 'text-teal-900', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#4F7563]' },
+  indigo: { bg: 'bg-[#EEF5F1]', text: 'text-indigo-900', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#355846]' },
 };
 
 export default function StructuredDocumentsPage() {
@@ -135,15 +135,15 @@ export default function StructuredDocumentsPage() {
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/pdf-studio" className="text-gray-600 hover:text-gray-900">
+            <Link href="/pdf-studio" className="text-[#6B6B6B] hover:text-[#111111]">
               <ArrowLeft className="w-6 h-6" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <FileText className="w-6 h-6 text-green-500" />
+              <h1 className="text-2xl font-bold text-[#111111] flex items-center gap-2">
+                <FileText className="w-6 h-6 text-[#4F7563]" />
                 Structured Documents
               </h1>
-              <p className="text-sm text-gray-600">Professional business templates with guided creation</p>
+              <p className="text-sm text-[#6B6B6B]">Professional business templates with guided creation</p>
             </div>
           </div>
         </div>
@@ -174,10 +174,10 @@ export default function StructuredDocumentsPage() {
 
         {/* Alternative CTA */}
         <div className="mt-16 text-center bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-12">
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+          <h3 className="text-2xl font-bold text-[#111111] mb-4">
             Need a Document Right Now?
           </h3>
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+          <p className="text-[#6B6B6B] mb-6 max-w-2xl mx-auto">
             The Smart PDF Builder can handle any business document template you need. 
             Just paste your content (notes, outline, draft, or anything), and we'll 
             structure it into a professional document automatically.

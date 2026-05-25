@@ -68,7 +68,7 @@ export const MastersPanel: React.FC<Props> = ({ deckId }) => {
   return (
     <div className="text-xs">
       {error && (
-        <div className="px-3 py-2 bg-red-50 text-red-800 border-b border-red-100 text-[11px]">{error}</div>
+        <div className="px-3 py-2 bg-[#FCF1F1] text-[#7a2929] border-b border-red-100 text-[11px]">{error}</div>
       )}
 
       <PanelSection title="Deck-wide visibility">
@@ -84,7 +84,7 @@ export const MastersPanel: React.FC<Props> = ({ deckId }) => {
 
       <PanelSection title={`Masters (${masters.length})`}>
         {masters.length === 0 && !loading && (
-          <div className="text-[11px] text-slate-500 italic">No master elements yet.</div>
+          <div className="text-[11px] text-[#9A9A9A] italic">No master elements yet.</div>
         )}
         {masters.map((m) => (
           <MasterRow
@@ -104,8 +104,8 @@ export const MastersPanel: React.FC<Props> = ({ deckId }) => {
 
         <div className="pt-2">
           {addOpen ? (
-            <div className="space-y-1.5 bg-slate-50 border border-slate-200 rounded p-2">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Add master</div>
+            <div className="space-y-1.5 bg-[#EDEBE6] border border-[#E3E1DA] rounded p-2">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A]">Add master</div>
               <div className="grid grid-cols-2 gap-1">
                 {CORE_TYPES.map(({ type, label }) => (
                   <button
@@ -116,7 +116,7 @@ export const MastersPanel: React.FC<Props> = ({ deckId }) => {
                       setAddOpen(false);
                       if (created) setSelectedId(created.id);
                     }}
-                    className="h-7 text-[11px] bg-white hover:bg-slate-100 border border-slate-200 rounded px-2 text-left text-slate-700 truncate"
+                    className="h-7 text-[11px] bg-white hover:bg-[#F1F0EC] border border-[#E3E1DA] rounded px-2 text-left text-[#111111] truncate"
                   >
                     {label}
                   </button>
@@ -125,7 +125,7 @@ export const MastersPanel: React.FC<Props> = ({ deckId }) => {
               <button
                 type="button"
                 onClick={() => setAddOpen(false)}
-                className="w-full h-7 text-[11px] text-slate-500 hover:text-slate-700"
+                className="w-full h-7 text-[11px] text-[#9A9A9A] hover:text-[#111111]"
               >
                 Cancel
               </button>
@@ -134,7 +134,7 @@ export const MastersPanel: React.FC<Props> = ({ deckId }) => {
             <button
               type="button"
               onClick={() => setAddOpen(true)}
-              className="w-full flex items-center justify-center gap-1.5 h-7 text-[11px] bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded text-slate-700"
+              className="w-full flex items-center justify-center gap-1.5 h-7 text-[11px] bg-[#EDEBE6] hover:bg-[#F1F0EC] border border-[#E3E1DA] rounded text-[#111111]"
             >
               <Plus className="w-3 h-3" />
               Add master
@@ -166,13 +166,13 @@ const MasterRow: React.FC<{
 }> = ({ master, selected, onClick, onToggleVisible, onDelete }) => (
   <div
     className={`flex items-center gap-1.5 h-7 px-1.5 rounded border ${
-      selected ? 'bg-green-50 border-green-300' : 'bg-white border-slate-200 hover:bg-slate-50'
+      selected ? 'bg-[#EEF5F1] border-[#A8B9AE]' : 'bg-white border-[#E3E1DA] hover:bg-[#EDEBE6]'
     }`}
   >
     <button
       type="button"
       onClick={(e) => { e.stopPropagation(); onToggleVisible(); }}
-      className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-slate-400 hover:text-slate-700"
+      className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-[#C9C6BD] hover:text-[#111111]"
       title={master.visible ? 'Hide' : 'Show'}
     >
       {master.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
@@ -180,15 +180,15 @@ const MasterRow: React.FC<{
     <button
       type="button"
       onClick={onClick}
-      className="flex-1 text-left text-[11px] text-slate-800 truncate min-w-0"
+      className="flex-1 text-left text-[11px] text-[#111111] truncate min-w-0"
     >
       <span className="font-medium">{labelFor(master.type)}</span>
-      {master.name && <span className="text-slate-500"> — {master.name}</span>}
+      {master.name && <span className="text-[#9A9A9A]"> — {master.name}</span>}
     </button>
     <button
       type="button"
       onClick={(e) => { e.stopPropagation(); onDelete(); }}
-      className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-slate-400 hover:text-red-600"
+      className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-[#C9C6BD] hover:text-[#9a3737]"
       title="Delete"
     >
       <Trash2 className="w-3 h-3" />
@@ -240,7 +240,7 @@ const MasterInspector: React.FC<{
             <select
               value={data.format ?? 'pageOfTotal'}
               onChange={(e) => setData({ format: e.target.value })}
-              className="flex-1 h-7 bg-slate-50 border border-slate-200 rounded px-2 text-xs"
+              className="flex-1 h-7 bg-[#EDEBE6] border border-[#E3E1DA] rounded px-2 text-xs"
             >
               <option value="pageOfTotal">N / total</option>
               <option value="page">N</option>
@@ -275,7 +275,7 @@ const MasterInspector: React.FC<{
             value={master.sendToFront}
             onChange={(v) => onPatch({ sendToFront: v })}
           />
-          <span className="text-[10px] text-slate-500">{master.sendToFront ? 'On top of content' : 'Behind content'}</span>
+          <span className="text-[10px] text-[#9A9A9A]">{master.sendToFront ? 'On top of content' : 'Behind content'}</span>
         </Row>
       </PanelSection>
 
@@ -296,7 +296,7 @@ const ToggleSwitch: React.FC<{ value: boolean; onChange: (v: boolean) => void }>
     type="button"
     onClick={() => onChange(!value)}
     className={`relative inline-flex h-4 w-7 flex-shrink-0 items-center rounded-full transition ${
-      value ? 'bg-green-500' : 'bg-slate-300'
+      value ? 'bg-[#4F7563]' : 'bg-slate-300'
     }`}
   >
     <span className={`inline-block h-3 w-3 rounded-full bg-white shadow transition ${value ? 'translate-x-3.5' : 'translate-x-0.5'}`} />

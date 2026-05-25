@@ -174,36 +174,36 @@ export default function SettingsPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <div className="min-h-full bg-slate-50 p-8">
+    <div className="min-h-full bg-[#EDEBE6] p-8">
       <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-gray-900">Settings</h1>
+          <h1 className="text-3xl font-bold mb-8 text-[#111111]">Settings</h1>
 
           {/* Profile */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <div className="bg-white rounded-lg border border-[#E3E1DA] p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <User className="h-5 w-5 text-green-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Profile</h2>
+              <User className="h-5 w-5 text-[#4F7563]" />
+              <h2 className="text-xl font-semibold text-[#111111]">Profile</h2>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">Name</label>
+                <label className="block text-sm font-medium mb-2 text-[#111111]">Name</label>
                 <input
                   type="text"
-                  className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-[#E3E1DA] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">Email</label>
+                <label className="block text-sm font-medium mb-2 text-[#111111]">Email</label>
                 <input
                   type="email"
-                  className="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 cursor-not-allowed"
+                  className="w-full border border-[#E3E1DA] rounded-lg px-4 py-2 bg-[#EDEBE6] cursor-not-allowed"
                   value={email}
                   disabled
                 />
-                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                <p className="text-xs text-[#9A9A9A] mt-1">Email cannot be changed</p>
               </div>
               <Button onClick={handleSaveProfile} disabled={savingProfile}>
                 {savingProfile ? 'Saving...' : 'Save Changes'}
@@ -212,25 +212,25 @@ export default function SettingsPage() {
           </div>
 
           {/* Security */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <div className="bg-white rounded-lg border border-[#E3E1DA] p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <Shield className="h-5 w-5 text-green-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Security</h2>
+              <Shield className="h-5 w-5 text-[#4F7563]" />
+              <h2 className="text-xl font-semibold text-[#111111]">Security</h2>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">Current Password</label>
+                <label className="block text-sm font-medium mb-2 text-[#111111]">Current Password</label>
                 <div className="relative">
                   <input
                     type={showCurrent ? 'text' : 'password'}
-                    className="w-full border border-gray-200 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full border border-[#E3E1DA] rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Enter current password"
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-2.5 text-[#C9C6BD] hover:text-[#6B6B6B]"
                     onClick={() => setShowCurrent((v) => !v)}
                   >
                     {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -238,18 +238,18 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">New Password</label>
+                <label className="block text-sm font-medium mb-2 text-[#111111]">New Password</label>
                 <div className="relative">
                   <input
                     type={showNew ? 'text' : 'password'}
-                    className="w-full border border-gray-200 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full border border-[#E3E1DA] rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="At least 8 characters"
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-2.5 text-[#C9C6BD] hover:text-[#6B6B6B]"
                     onClick={() => setShowNew((v) => !v)}
                   >
                     {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -257,10 +257,10 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">Confirm New Password</label>
+                <label className="block text-sm font-medium mb-2 text-[#111111]">Confirm New Password</label>
                 <input
                   type="password"
-                  className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-[#E3E1DA] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repeat new password"
@@ -273,12 +273,12 @@ export default function SettingsPage() {
           </div>
 
           {/* Two-Factor Authentication */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <div className="bg-white rounded-lg border border-[#E3E1DA] p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <Smartphone className="h-5 w-5 text-green-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Two-Factor Authentication</h2>
+              <Smartphone className="h-5 w-5 text-[#4F7563]" />
+              <h2 className="text-xl font-semibold text-[#111111]">Two-Factor Authentication</h2>
               {twoFaEnabled && (
-                <span className="ml-auto flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                <span className="ml-auto flex items-center gap-1 text-xs font-medium text-[#4F7563] bg-[#EEF5F1] px-2 py-1 rounded-full">
                   <CheckCircle className="h-3.5 w-3.5" /> Enabled
                 </span>
               )}
@@ -286,18 +286,18 @@ export default function SettingsPage() {
 
             {twoFaEnabled ? (
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[#6B6B6B]">
                   Your account is protected with TOTP-based two-factor authentication.
                 </p>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#111111] mb-1">
                     Enter current 2FA code to disable
                   </label>
                   <input
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
-                    className="w-48 border border-gray-200 rounded-lg px-4 py-2 text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-48 border border-[#E3E1DA] rounded-lg px-4 py-2 text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40"
                     value={twoFaCode}
                     onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="000000"
@@ -309,26 +309,26 @@ export default function SettingsPage() {
               </div>
             ) : twoFaSetupData ? (
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[#6B6B6B]">
                   Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.), then enter the 6-digit code to confirm.
                 </p>
                 <img
                   src={twoFaSetupData.qrCode}
                   alt="2FA QR Code"
-                  className="w-48 h-48 border border-gray-200 rounded-lg"
+                  className="w-48 h-48 border border-[#E3E1DA] rounded-lg"
                 />
-                <p className="text-xs text-gray-500 font-mono break-all">
+                <p className="text-xs text-[#9A9A9A] font-mono break-all">
                   Or enter manually: {twoFaSetupData.secret}
                 </p>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#111111] mb-1">
                     Verification code
                   </label>
                   <input
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
-                    className="w-48 border border-gray-200 rounded-lg px-4 py-2 text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-48 border border-[#E3E1DA] rounded-lg px-4 py-2 text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40"
                     value={twoFaCode}
                     onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="000000"
@@ -345,7 +345,7 @@ export default function SettingsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[#6B6B6B]">
                   Add an extra layer of security to your account using a time-based one-time password.
                 </p>
                 <Button variant="outline" onClick={handleSetup2FA} disabled={twoFaLoading}>
@@ -356,15 +356,15 @@ export default function SettingsPage() {
           </div>
 
           {/* Notifications */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <div className="bg-white rounded-lg border border-[#E3E1DA] p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <Bell className="h-5 w-5 text-green-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
-              <span className="ml-2 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+              <Bell className="h-5 w-5 text-[#4F7563]" />
+              <h2 className="text-xl font-semibold text-[#111111]">Notifications</h2>
+              <span className="ml-2 text-[10px] font-bold uppercase tracking-wide bg-[#F5E1B7] text-amber-800 px-1.5 py-0.5 rounded">
                 Preview
               </span>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-[#6B6B6B] mb-4">
               Manage your email notification preferences. Toggles save locally
               today; email delivery becomes active once the notification
               service is enabled for your workspace.
@@ -377,7 +377,7 @@ export default function SettingsPage() {
                   checked={notifGeneration}
                   onChange={(e) => setNotifGeneration(e.target.checked)}
                 />
-                <span className="text-sm text-gray-700">Email me when generation completes</span>
+                <span className="text-sm text-[#111111]">Email me when generation completes</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -386,7 +386,7 @@ export default function SettingsPage() {
                   checked={notifQuality}
                   onChange={(e) => setNotifQuality(e.target.checked)}
                 />
-                <span className="text-sm text-gray-700">Email me quality score reports</span>
+                <span className="text-sm text-[#111111]">Email me quality score reports</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -395,7 +395,7 @@ export default function SettingsPage() {
                   checked={notifUpdates}
                   onChange={(e) => setNotifUpdates(e.target.checked)}
                 />
-                <span className="text-sm text-gray-700">Product updates and announcements</span>
+                <span className="text-sm text-[#111111]">Product updates and announcements</span>
               </label>
             </div>
             <Button onClick={handleSaveNotifications} disabled={savingNotifs} variant="outline">
@@ -404,12 +404,12 @@ export default function SettingsPage() {
           </div>
 
           {/* Danger Zone */}
-          <div className="bg-white rounded-lg border border-red-200 p-6">
+          <div className="bg-white rounded-lg border border-[#F7E3E3] p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Trash className="h-5 w-5 text-red-600" />
-              <h2 className="text-xl font-semibold text-red-600">Danger Zone</h2>
+              <Trash className="h-5 w-5 text-[#9a3737]" />
+              <h2 className="text-xl font-semibold text-[#9a3737]">Danger Zone</h2>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-[#6B6B6B] mb-4">
               Permanently delete your account and all associated data. This action cannot be undone.
             </p>
             <Button variant="destructive" onClick={handleDeleteAccount} disabled={deletingAccount}>

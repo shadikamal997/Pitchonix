@@ -59,9 +59,9 @@ export function ExtractedDataReview({
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 80) return 'text-green-600';
-    if (confidence >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    if (confidence >= 80) return 'text-[#4F7563]';
+    if (confidence >= 60) return 'text-[#8c6210]';
+    return 'text-[#9a3737]';
   };
 
   // Group fields by section
@@ -97,7 +97,7 @@ export function ExtractedDataReview({
             <Info className="w-4 h-4" />
             <AlertDescription>
               The AI has extracted {parsedDocument.metadata.words} words from your document.
-              Fields marked in <span className="text-green-600 font-semibold">green</span> have high confidence.
+              Fields marked in <span className="text-[#4F7563] font-semibold">green</span> have high confidence.
               Review and edit any fields that need adjustment before applying to your pitch deck.
             </AlertDescription>
           </Alert>

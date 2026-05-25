@@ -21,10 +21,10 @@ interface Props {
 }
 
 const VARIANT: Record<DeckReviewStatus, { label: string; cls: string; Icon: React.ComponentType<any> }> = {
-  draft:              { label: 'Draft',             cls: 'bg-slate-100 text-slate-700 border-slate-200 hover:border-slate-400',         Icon: FileText },
-  in_review:          { label: 'In review',         cls: 'bg-amber-50 text-amber-800 border-amber-300 hover:border-amber-500',          Icon: Send },
-  approved:           { label: 'Approved',          cls: 'bg-green-50 text-green-800 border-green-300 hover:border-green-500',          Icon: CheckCircle2 },
-  changes_requested:  { label: 'Changes requested', cls: 'bg-red-50 text-red-800 border-red-300 hover:border-red-500',                  Icon: AlertTriangle },
+  draft:              { label: 'Draft',             cls: 'bg-[#F1F0EC] text-[#111111] border-[#E3E1DA] hover:border-slate-400',         Icon: FileText },
+  in_review:          { label: 'In review',         cls: 'bg-[#FAEEDB] text-[#735008] border-amber-300 hover:border-amber-500',          Icon: Send },
+  approved:           { label: 'Approved',          cls: 'bg-[#EEF5F1] text-green-800 border-[#A8B9AE] hover:border-[#4F7563]',          Icon: CheckCircle2 },
+  changes_requested:  { label: 'Changes requested', cls: 'bg-[#FCF1F1] text-[#7a2929] border-[#F1D2D2] hover:border-red-500',                  Icon: AlertTriangle },
 };
 
 export const ReviewStatusBadge: React.FC<Props> = ({ status, onClick }) => {

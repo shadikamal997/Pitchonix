@@ -46,7 +46,7 @@ export const MetricsPage: React.FC<MetricsPageProps> = ({
             {title}
           </h1>
           {subtitle && (
-            <p className="text-slate-600" style={{ fontSize: '12pt' }}>
+            <p className="text-[#6B6B6B]" style={{ fontSize: '12pt' }}>
               {subtitle}
             </p>
           )}
@@ -61,11 +61,11 @@ export const MetricsPage: React.FC<MetricsPageProps> = ({
           {metrics.map((metric, index) => (
             <div
               key={index}
-              className="p-6 rounded-xl border-2 border-slate-100 bg-gradient-to-br from-white to-slate-50"
+              className="p-6 rounded-xl border-2 border-[#F1F0EC] bg-gradient-to-br from-white to-slate-50"
             >
               {/* Metric Label */}
               <p
-                className="text-slate-600 mb-2"
+                className="text-[#6B6B6B] mb-2"
                 style={{ fontSize: '10pt', fontWeight: 500 }}
               >
                 {metric.label}
@@ -89,10 +89,10 @@ export const MetricsPage: React.FC<MetricsPageProps> = ({
                   <span
                     className={`text-sm font-semibold ${
                       metric.changeType === 'positive'
-                        ? 'text-emerald-600'
+                        ? 'text-[#4F7563]'
                         : metric.changeType === 'negative'
-                        ? 'text-red-600'
-                        : 'text-slate-600'
+                        ? 'text-[#9a3737]'
+                        : 'text-[#6B6B6B]'
                     }`}
                     style={{ fontSize: '10pt' }}
                   >

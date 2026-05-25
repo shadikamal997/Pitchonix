@@ -48,14 +48,14 @@ interface Props {
 }
 
 const TYPE_TONE: Record<DeckVersionType, string> = {
-  AUTO_SAVE:        'bg-slate-100 text-slate-600',
-  MANUAL_SNAPSHOT:  'bg-blue-100  text-blue-700',
-  GENERATED:        'bg-green-100 text-green-700',
-  REGENERATED:      'bg-green-100 text-green-700',
+  AUTO_SAVE:        'bg-[#F1F0EC] text-[#6B6B6B]',
+  MANUAL_SNAPSHOT:  'bg-[#DDE8E1]  text-[#355846]',
+  GENERATED:        'bg-[#DDE8E1] text-[#355846]',
+  REGENERATED:      'bg-[#DDE8E1] text-[#355846]',
   RESTORED:         'bg-violet-100 text-violet-700',
-  FAMILY_CHANGED:   'bg-amber-100 text-amber-700',
-  TEMPLATE_CHANGED: 'bg-amber-100 text-amber-700',
-  EXPORTED:         'bg-cyan-100  text-cyan-700',
+  FAMILY_CHANGED:   'bg-[#F5E1B7] text-[#735008]',
+  TEMPLATE_CHANGED: 'bg-[#F5E1B7] text-[#735008]',
+  EXPORTED:         'bg-[#DDE8E1]  text-[#355846]',
   SAFETY:           'bg-rose-100  text-rose-700',
 };
 
@@ -147,7 +147,7 @@ export const VersionHistoryPanel: React.FC<Props> = ({ deckId, onPreview, toast,
         <button
           type="button"
           onClick={() => { setSaveName(''); setSaveDesc(''); setShowSaveModal(true); }}
-          className="w-full h-8 flex items-center justify-center gap-1.5 text-[11px] bg-blue-500 hover:bg-blue-600 text-white rounded"
+          className="w-full h-8 flex items-center justify-center gap-1.5 text-[11px] bg-[#4F7563] hover:bg-[#4F7563] text-white rounded"
         >
           <Save className="w-3 h-3" />
           Save version
@@ -157,9 +157,9 @@ export const VersionHistoryPanel: React.FC<Props> = ({ deckId, onPreview, toast,
 
       {/* Search + filter — only render when we actually have versions */}
       {v.versions.length > 0 && (
-        <div className="px-3 py-2 border-b border-slate-100 space-y-2">
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded h-7 px-2">
-            <Search className="w-3 h-3 text-slate-400" />
+        <div className="px-3 py-2 border-b border-[#F1F0EC] space-y-2">
+          <div className="flex items-center gap-1.5 bg-[#EDEBE6] border border-[#E3E1DA] rounded h-7 px-2">
+            <Search className="w-3 h-3 text-[#C9C6BD]" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -167,7 +167,7 @@ export const VersionHistoryPanel: React.FC<Props> = ({ deckId, onPreview, toast,
               className="flex-1 bg-transparent text-xs outline-none"
             />
             {query && (
-              <button type="button" onClick={() => setQuery('')} className="text-slate-400 hover:text-slate-700">
+              <button type="button" onClick={() => setQuery('')} className="text-[#C9C6BD] hover:text-[#111111]">
                 <X className="w-3 h-3" />
               </button>
             )}
@@ -182,7 +182,7 @@ export const VersionHistoryPanel: React.FC<Props> = ({ deckId, onPreview, toast,
                 className={`h-5 px-1.5 text-[10px] rounded ${
                   mode === m
                     ? 'bg-slate-800 text-white'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    : 'bg-[#EDEBE6] text-[#6B6B6B] hover:bg-[#F1F0EC] border border-[#E3E1DA]'
                 }`}
               >
                 {FILTER_MODE_LABEL[m]}
@@ -193,20 +193,20 @@ export const VersionHistoryPanel: React.FC<Props> = ({ deckId, onPreview, toast,
 
           {/* Compare selection bar */}
           {compareSelection.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded px-2 py-1">
-              <GitCompare className="w-3 h-3 text-blue-600" />
-              <span className="text-[10px] text-blue-700 flex-1 truncate">
+            <div className="flex items-center gap-1.5 bg-[#EEF5F1] border border-[#DDE8E1] rounded px-2 py-1">
+              <GitCompare className="w-3 h-3 text-[#4F7563]" />
+              <span className="text-[10px] text-[#355846] flex-1 truncate">
                 {compareSelection.length === 1 ? 'Pick a 2nd version' : `Compare "${compareSelection[0].name}" → "${compareSelection[1].name}"`}
               </span>
               {compareReady && (
                 <button type="button"
                   onClick={() => setDiffOpen(true)}
-                  className="h-5 px-1.5 text-[10px] bg-blue-600 hover:bg-blue-700 text-white rounded font-medium"
+                  className="h-5 px-1.5 text-[10px] bg-[#4F7563] hover:bg-[#355846] text-white rounded font-medium"
                 >
                   Compare
                 </button>
               )}
-              <button type="button" onClick={() => setCompareSelection([])} className="text-blue-400 hover:text-blue-700">
+              <button type="button" onClick={() => setCompareSelection([])} className="text-[#A8B9AE] hover:text-[#355846]">
                 <X className="w-3 h-3" />
               </button>
             </div>
@@ -214,12 +214,12 @@ export const VersionHistoryPanel: React.FC<Props> = ({ deckId, onPreview, toast,
         </div>
       )}
 
-      {v.error && <div className="px-3 py-2 bg-red-50 text-red-800 text-[11px]">{v.error}</div>}
+      {v.error && <div className="px-3 py-2 bg-[#FCF1F1] text-[#7a2929] text-[11px]">{v.error}</div>}
 
       {/* Timeline */}
       <div className="flex-1 overflow-y-auto">
         {v.loading && v.versions.length === 0 && (
-          <div className="px-3 py-4 text-[11px] text-slate-500 italic">Loading…</div>
+          <div className="px-3 py-4 text-[11px] text-[#9A9A9A] italic">Loading…</div>
         )}
 
         {/* Empty state (35.1L) */}
@@ -229,9 +229,9 @@ export const VersionHistoryPanel: React.FC<Props> = ({ deckId, onPreview, toast,
 
         {/* No matches state */}
         {!v.loading && v.versions.length > 0 && filtered.length === 0 && (
-          <div className="px-3 py-6 text-center text-[11px] text-slate-500">
+          <div className="px-3 py-6 text-center text-[11px] text-[#9A9A9A]">
             No versions match your search or filter.
-            <button type="button" onClick={() => { setQuery(''); setMode('all'); }} className="block mx-auto mt-1.5 text-blue-600 hover:text-blue-700">
+            <button type="button" onClick={() => { setQuery(''); setMode('all'); }} className="block mx-auto mt-1.5 text-[#4F7563] hover:text-[#355846]">
               Clear filters
             </button>
           </div>
@@ -267,7 +267,7 @@ export const VersionHistoryPanel: React.FC<Props> = ({ deckId, onPreview, toast,
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowSaveModal(false)}>
           <div className="bg-white rounded-lg shadow-xl w-80 p-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
-              <History className="w-4 h-4 text-blue-500" /> Save version
+              <History className="w-4 h-4 text-[#4F7563]" /> Save version
             </h3>
             <div className="space-y-2.5">
               <Row label="Name">
@@ -278,11 +278,11 @@ export const VersionHistoryPanel: React.FC<Props> = ({ deckId, onPreview, toast,
               </Row>
             </div>
             <div className="mt-4 flex justify-end gap-1.5">
-              <button type="button" onClick={() => setShowSaveModal(false)} className="h-7 px-3 text-[11px] bg-slate-100 hover:bg-slate-200 rounded">Cancel</button>
+              <button type="button" onClick={() => setShowSaveModal(false)} className="h-7 px-3 text-[11px] bg-[#F1F0EC] hover:bg-[#E3E1DA] rounded">Cancel</button>
               <button type="button"
                 disabled={!saveName.trim()}
                 onClick={saveManual}
-                className="h-7 px-3 text-[11px] bg-blue-500 hover:bg-blue-600 text-white rounded disabled:bg-slate-300"
+                className="h-7 px-3 text-[11px] bg-[#4F7563] hover:bg-[#4F7563] text-white rounded disabled:bg-slate-300"
               >
                 Save
               </button>
@@ -331,39 +331,39 @@ const VersionRow: React.FC<{
     month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric',
   });
   return (
-    <li className={`group border rounded p-2 ${selectedForCompare ? 'border-blue-400 bg-blue-50/40' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+    <li className={`group border rounded p-2 ${selectedForCompare ? 'border-[#A8B9AE] bg-[#EEF5F1]/40' : 'border-[#E3E1DA] bg-white hover:border-[#C9C6BD]'}`}>
       <div className="flex items-center gap-1.5">
         <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wide ${TYPE_TONE[row.type]}`}>
           {VERSION_TYPE_LABEL[row.type]}
         </span>
-        <span className="text-[10px] text-slate-400 flex-1 truncate">{date}</span>
+        <span className="text-[10px] text-[#C9C6BD] flex-1 truncate">{date}</span>
         {typeof row.qualityScore === 'number' && (
-          <span className="text-[10px] font-semibold text-slate-600">{row.qualityScore}</span>
+          <span className="text-[10px] font-semibold text-[#6B6B6B]">{row.qualityScore}</span>
         )}
       </div>
-      <div className="mt-1 text-[11px] font-medium text-slate-800 truncate">{row.name}</div>
+      <div className="mt-1 text-[11px] font-medium text-[#111111] truncate">{row.name}</div>
       {row.description && (
-        <div className="text-[10px] text-slate-500 truncate">{row.description}</div>
+        <div className="text-[10px] text-[#9A9A9A] truncate">{row.description}</div>
       )}
-      <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
+      <div className="mt-1 flex items-center gap-1 text-[10px] text-[#9A9A9A]">
         <span>{row.slideCount} slides</span>
         {row.familyId && <span>· {row.familyId}</span>}
       </div>
       <div className="mt-1.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button type="button" onClick={onPreview} title="Preview" className="h-5 px-1.5 text-[10px] bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded flex items-center gap-1">
+        <button type="button" onClick={onPreview} title="Preview" className="h-5 px-1.5 text-[10px] bg-[#EDEBE6] hover:bg-[#F1F0EC] border border-[#E3E1DA] rounded flex items-center gap-1">
           <Eye className="w-2.5 h-2.5" /> Preview
         </button>
         <button type="button" onClick={onRestore} title="Restore" className="h-5 px-1.5 text-[10px] bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded flex items-center gap-1">
           <RotateCcw className="w-2.5 h-2.5" /> Restore
         </button>
-        <button type="button" onClick={onToggleCompare} title="Add to compare" className={`h-5 px-1.5 text-[10px] border rounded flex items-center gap-1 ${selectedForCompare ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-slate-50 hover:bg-slate-100 border-slate-200'}`}>
+        <button type="button" onClick={onToggleCompare} title="Add to compare" className={`h-5 px-1.5 text-[10px] border rounded flex items-center gap-1 ${selectedForCompare ? 'bg-[#DDE8E1] text-[#355846] border-[#A8B9AE]' : 'bg-[#EDEBE6] hover:bg-[#F1F0EC] border-[#E3E1DA]'}`}>
           <GitCompare className="w-2.5 h-2.5" /> Compare
         </button>
         <div className="flex-1" />
-        <button type="button" onClick={onRename} title="Rename" className="h-5 w-5 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded text-slate-600">
+        <button type="button" onClick={onRename} title="Rename" className="h-5 w-5 flex items-center justify-center bg-[#EDEBE6] hover:bg-[#F1F0EC] border border-[#E3E1DA] rounded text-[#6B6B6B]">
           <Edit2 className="w-2.5 h-2.5" />
         </button>
-        <button type="button" onClick={onDelete} title="Delete" className="h-5 w-5 flex items-center justify-center bg-slate-50 hover:bg-red-50 border border-slate-200 rounded text-slate-400 hover:text-red-600">
+        <button type="button" onClick={onDelete} title="Delete" className="h-5 w-5 flex items-center justify-center bg-[#EDEBE6] hover:bg-[#FCF1F1] border border-[#E3E1DA] rounded text-[#C9C6BD] hover:text-[#9a3737]">
           <Trash2 className="w-2.5 h-2.5" />
         </button>
       </div>
@@ -373,17 +373,17 @@ const VersionRow: React.FC<{
 
 const EmptyState: React.FC<{ onSave: () => void }> = ({ onSave }) => (
   <div className="px-3 py-8 text-center">
-    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-blue-50 flex items-center justify-center">
-      <History className="w-5 h-5 text-blue-500" />
+    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-[#EEF5F1] flex items-center justify-center">
+      <History className="w-5 h-5 text-[#4F7563]" />
     </div>
-    <div className="text-[12px] font-medium text-slate-700">No versions yet</div>
-    <div className="text-[11px] text-slate-500 mt-1 max-w-[200px] mx-auto leading-relaxed">
+    <div className="text-[12px] font-medium text-[#111111]">No versions yet</div>
+    <div className="text-[11px] text-[#9A9A9A] mt-1 max-w-[200px] mx-auto leading-relaxed">
       Save a snapshot before risky edits, theme swaps, or sharing the deck with reviewers. Restore any version in one click.
     </div>
     <button
       type="button"
       onClick={onSave}
-      className="mt-3 h-7 px-3 text-[11px] bg-blue-500 hover:bg-blue-600 text-white rounded inline-flex items-center gap-1.5"
+      className="mt-3 h-7 px-3 text-[11px] bg-[#4F7563] hover:bg-[#4F7563] text-white rounded inline-flex items-center gap-1.5"
     >
       <Save className="w-3 h-3" /> Create snapshot
     </button>

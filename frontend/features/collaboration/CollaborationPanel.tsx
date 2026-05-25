@@ -29,15 +29,15 @@ export const CollaborationPanel: React.FC<Props> = ({
   const selectionByUser = new Map(selections.map((s) => [s.userId, s]));
 
   return (
-    <aside className="w-[300px] flex-shrink-0 border-l border-slate-200 bg-white flex flex-col h-full overflow-hidden">
-      <header className="h-11 flex items-center px-3 gap-2 border-b border-slate-200 flex-shrink-0">
-        <Users className="w-4 h-4 text-blue-600" />
+    <aside className="w-[300px] flex-shrink-0 border-l border-[#E3E1DA] bg-white flex flex-col h-full overflow-hidden">
+      <header className="h-11 flex items-center px-3 gap-2 border-b border-[#E3E1DA] flex-shrink-0">
+        <Users className="w-4 h-4 text-[#4F7563]" />
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-bold text-slate-900 truncate">Collaboration</div>
-          <div className="text-[10px] text-slate-500">{all.length} active</div>
+          <div className="text-xs font-bold text-[#111111] truncate">Collaboration</div>
+          <div className="text-[10px] text-[#9A9A9A]">{all.length} active</div>
         </div>
         <ConnectionPill state={state} />
-        <button onClick={onClose} className="p-1 rounded text-slate-500 hover:bg-slate-100" aria-label="Close">
+        <button onClick={onClose} className="p-1 rounded text-[#9A9A9A] hover:bg-[#F1F0EC]" aria-label="Close">
           <X className="w-4 h-4" />
         </button>
       </header>
@@ -46,14 +46,14 @@ export const CollaborationPanel: React.FC<Props> = ({
         {all.length === 0 ? (
           <div className="text-center pt-8">
             <Users className="w-7 h-7 text-slate-300 mx-auto mb-2" />
-            <p className="text-xs text-slate-500">You're the only one here.</p>
+            <p className="text-xs text-[#9A9A9A]">You're the only one here.</p>
           </div>
         ) : (
           all.map((u) => {
             const sel = selectionByUser.get(u.userId);
             const slideLabel = u.slideId && slideTitleById?.[u.slideId];
             return (
-              <article key={u.userId} className="rounded-lg border border-slate-200 bg-white p-2.5 flex items-start gap-2">
+              <article key={u.userId} className="rounded-lg border border-[#E3E1DA] bg-white p-2.5 flex items-start gap-2">
                 <div
                   className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 ring-2 ring-white"
                   style={{ background: u.color }}
@@ -61,16 +61,16 @@ export const CollaborationPanel: React.FC<Props> = ({
                   {(u.name || u.email || '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold text-slate-900 truncate flex items-center gap-1.5">
+                  <div className="text-xs font-semibold text-[#111111] truncate flex items-center gap-1.5">
                     {u.name || u.email}
-                    {you?.userId === u.userId && <span className="text-[9px] uppercase text-green-700">you</span>}
+                    {you?.userId === u.userId && <span className="text-[9px] uppercase text-[#355846]">you</span>}
                   </div>
-                  <div className="text-[10px] text-slate-500 truncate">
+                  <div className="text-[10px] text-[#9A9A9A] truncate">
                     {u.role && <span className="font-mono uppercase">{u.role}</span>}
                     {slideLabel && <> · {slideLabel}</>}
                     {!slideLabel && u.slideId && <> · slide</>}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
+                  <div className="text-[10px] text-[#C9C6BD] mt-0.5">
                     Active {relativeTime(new Date(u.lastSeen).toISOString())}
                   </div>
                   {sel && sel.elementIds.length > 0 && (
@@ -95,28 +95,28 @@ export const CollaborationPanel: React.FC<Props> = ({
 const ConnectionPill: React.FC<{ state: ConnectionState }> = ({ state }) => {
   if (state === 'forbidden') {
     return (
-      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 text-[9px] font-semibold uppercase">
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#FCF1F1] text-[#7a2929] text-[9px] font-semibold uppercase">
         <ShieldOff className="w-2.5 h-2.5" /> Forbidden
       </span>
     );
   }
   if (state === 'connected') {
     return (
-      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 text-[9px] font-semibold uppercase">
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#EEF5F1] text-[#355846] text-[9px] font-semibold uppercase">
         <Wifi className="w-2.5 h-2.5" /> Live
       </span>
     );
   }
   if (state === 'connecting' || state === 'reconnecting') {
     return (
-      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[9px] font-semibold uppercase">
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#FAEEDB] text-[#735008] text-[9px] font-semibold uppercase">
         <Loader2 className="w-2.5 h-2.5 animate-spin" />
         {state === 'connecting' ? 'Connecting' : 'Reconnecting'}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-50 text-slate-700 text-[9px] font-semibold uppercase">
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#EDEBE6] text-[#111111] text-[9px] font-semibold uppercase">
       <WifiOff className="w-2.5 h-2.5" /> Offline
     </span>
   );

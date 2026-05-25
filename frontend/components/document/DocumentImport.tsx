@@ -185,21 +185,21 @@ export function DocumentImport({ onImportComplete, onCancel }: DocumentImportPro
 
             {/* Status Messages */}
             {status === 'processing' && (
-              <div className="flex items-center space-x-2 text-sm text-blue-600">
+              <div className="flex items-center space-x-2 text-sm text-[#4F7563]">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Using AI to extract business information...</span>
               </div>
             )}
 
             {status === 'success' && (
-              <div className="flex items-center space-x-2 text-sm text-green-600">
+              <div className="flex items-center space-x-2 text-sm text-[#4F7563]">
                 <CheckCircle className="w-4 h-4" />
                 <span>Document processed successfully!</span>
               </div>
             )}
 
             {status === 'error' && (
-              <div className="flex items-center space-x-2 text-sm text-red-600">
+              <div className="flex items-center space-x-2 text-sm text-[#9a3737]">
                 <AlertCircle className="w-4 h-4" />
                 <span>Failed to process document. Please try again.</span>
               </div>

@@ -25,18 +25,18 @@ export const DeckVersionBadge: React.FC<Props> = ({ versions, onClick }) => {
   const latest = versions[0] || null;
   const count = versions.length;
   const summary = useMemo(() => {
-    if (!latest) return { tone: 'bg-slate-100 text-slate-600', icon: <History className="w-3 h-3" />, label: 'No versions' };
+    if (!latest) return { tone: 'bg-[#F1F0EC] text-[#6B6B6B]', icon: <History className="w-3 h-3" />, label: 'No versions' };
     switch (latest.type) {
       case 'MANUAL_SNAPSHOT':
-        return { tone: 'bg-blue-50 text-blue-700',     icon: <CheckCircle2 className="w-3 h-3" />, label: 'Saved' };
+        return { tone: 'bg-[#EEF5F1] text-[#355846]',     icon: <CheckCircle2 className="w-3 h-3" />, label: 'Saved' };
       case 'GENERATED':
       case 'REGENERATED':
-        return { tone: 'bg-green-50 text-green-700',   icon: <Sparkles    className="w-3 h-3" />, label: VERSION_TYPE_LABEL[latest.type] };
+        return { tone: 'bg-[#EEF5F1] text-[#355846]',   icon: <Sparkles    className="w-3 h-3" />, label: VERSION_TYPE_LABEL[latest.type] };
       case 'AUTO_SAVE':
       case 'SAFETY':
-        return { tone: 'bg-slate-100 text-slate-600',  icon: <CheckCircle2 className="w-3 h-3" />, label: 'Auto-saved' };
+        return { tone: 'bg-[#F1F0EC] text-[#6B6B6B]',  icon: <CheckCircle2 className="w-3 h-3" />, label: 'Auto-saved' };
       default:
-        return { tone: 'bg-slate-100 text-slate-700',  icon: <History     className="w-3 h-3" />, label: VERSION_TYPE_LABEL[latest.type] };
+        return { tone: 'bg-[#F1F0EC] text-[#111111]',  icon: <History     className="w-3 h-3" />, label: VERSION_TYPE_LABEL[latest.type] };
     }
   }, [latest]);
 
@@ -47,16 +47,16 @@ export const DeckVersionBadge: React.FC<Props> = ({ versions, onClick }) => {
       type="button"
       onClick={onClick}
       title={latest ? `${latest.name} · ${new Date(latest.createdAt).toLocaleString()}` : 'No versions yet'}
-      className={`h-7 inline-flex items-center gap-1.5 px-2 rounded border border-slate-200 hover:border-slate-300 text-[11px] ${summary.tone}`}
+      className={`h-7 inline-flex items-center gap-1.5 px-2 rounded border border-[#E3E1DA] hover:border-[#C9C6BD] text-[11px] ${summary.tone}`}
     >
       {summary.icon}
       <span className="font-medium">{summary.label}</span>
-      <span className="text-slate-400">·</span>
+      <span className="text-[#C9C6BD]">·</span>
       <span className="text-[10px]">{lastSavedLabel}</span>
       {count > 0 && (
         <>
-          <span className="text-slate-400">·</span>
-          <span className="text-[10px] text-slate-500">{count}</span>
+          <span className="text-[#C9C6BD]">·</span>
+          <span className="text-[10px] text-[#9A9A9A]">{count}</span>
         </>
       )}
     </button>

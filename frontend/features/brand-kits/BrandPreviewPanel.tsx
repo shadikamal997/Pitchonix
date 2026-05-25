@@ -18,7 +18,7 @@ import type { BrandKitDTO } from '@/types/brand-kit';
 interface Props { kit: BrandKitDTO | null }
 
 export const BrandPreviewPanel: React.FC<Props> = ({ kit }) => {
-  if (!kit) return <div className="text-xs text-slate-500 italic">No brand kit selected.</div>;
+  if (!kit) return <div className="text-xs text-[#9A9A9A] italic">No brand kit selected.</div>;
 
   const tokens = kit.tokens || {};
   const colors = tokens.colors || {};
@@ -37,7 +37,7 @@ export const BrandPreviewPanel: React.FC<Props> = ({ kit }) => {
     <div className="space-y-4">
       {/* Slides row: cover / content / chart */}
       <div>
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Presentation slides</div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1.5">Presentation slides</div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Cover slide */}
           <MockSurface label="Cover" aspectRatio="16/9" background={primary}>
@@ -60,7 +60,7 @@ export const BrandPreviewPanel: React.FC<Props> = ({ kit }) => {
               <div className="font-bold text-[12px] mb-1" style={{ color: primary, fontFamily: headingFont }}>
                 Quarterly review
               </div>
-              <div className="text-[9px] text-slate-600 leading-tight" style={{ fontFamily: bodyFont }}>
+              <div className="text-[9px] text-[#6B6B6B] leading-tight" style={{ fontFamily: bodyFont }}>
                 Body copy uses the brand body font and neutral text color for readability.
               </div>
               <div className="mt-2 flex gap-1">
@@ -92,8 +92,8 @@ export const BrandPreviewPanel: React.FC<Props> = ({ kit }) => {
 
       {/* Slides row: table / PDF / proposal */}
       <div>
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-          Tables &amp; documents <span className="text-slate-400 font-normal normal-case">(Phase 37.2F)</span>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1.5">
+          Tables &amp; documents <span className="text-[#C9C6BD] font-normal normal-case">(Phase 37.2F)</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Table slide */}
@@ -102,7 +102,7 @@ export const BrandPreviewPanel: React.FC<Props> = ({ kit }) => {
               <div className="text-[10px] font-bold mb-1" style={{ color: primary, fontFamily: headingFont }}>
                 Pricing tiers
               </div>
-              <div className="border border-slate-200 rounded overflow-hidden text-[8px] flex-1" style={{ fontFamily: bodyFont }}>
+              <div className="border border-[#E3E1DA] rounded overflow-hidden text-[8px] flex-1" style={{ fontFamily: bodyFont }}>
                 <div className="grid grid-cols-3" style={{ background: primary, color: '#fff' }}>
                   <div className="px-1.5 py-1 font-semibold">Plan</div>
                   <div className="px-1.5 py-1 font-semibold">Seats</div>
@@ -115,7 +115,7 @@ export const BrandPreviewPanel: React.FC<Props> = ({ kit }) => {
                 ].map((row, i) => (
                   <div
                     key={i}
-                    className="grid grid-cols-3 border-t border-slate-100"
+                    className="grid grid-cols-3 border-t border-[#F1F0EC]"
                     style={{ background: i % 2 ? '#F8FAFC' : '#FFFFFF', color: '#1F2937' }}
                   >
                     <div className="px-1.5 py-1" style={{ color: secondary, fontWeight: 600 }}>{row[0]}</div>
@@ -216,11 +216,11 @@ const MockSurface: React.FC<{
 }> = ({ background, aspectRatio, label, children }) => (
   <div className="flex flex-col gap-1">
     <div
-      className="relative w-full rounded-lg border border-slate-200 shadow-sm overflow-hidden"
+      className="relative w-full rounded-lg border border-[#E3E1DA] shadow-sm overflow-hidden"
       style={{ aspectRatio, background }}
     >
       {children}
     </div>
-    {label && <div className="text-[9px] text-slate-500 text-center">{label}</div>}
+    {label && <div className="text-[9px] text-[#9A9A9A] text-center">{label}</div>}
   </div>
 );

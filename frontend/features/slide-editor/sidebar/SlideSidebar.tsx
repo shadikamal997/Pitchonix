@@ -152,13 +152,13 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
   }, [menuOpen]);
 
   return (
-    <aside className="w-[220px] flex-shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col h-full">
+    <aside className="w-[220px] flex-shrink-0 bg-[#EDEBE6] border-r border-[#E3E1DA] flex flex-col h-full">
       {/* Header */}
-      <div className="h-9 flex items-center px-3 gap-2 border-b border-slate-200 bg-white">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+      <div className="h-9 flex items-center px-3 gap-2 border-b border-[#E3E1DA] bg-white">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[#6B6B6B]">
           Slides
         </span>
-        <span className="text-[10px] text-slate-400">{slides.length}</span>
+        <span className="text-[10px] text-[#C9C6BD]">{slides.length}</span>
         <div className="ml-auto flex items-center gap-1">
           <ViewToggle value={view} onChange={setView} />
         </div>
@@ -168,13 +168,13 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
       {slides.length > 6 && (
         <div className="px-3 pt-2 pb-1">
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#C9C6BD] pointer-events-none" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search slides…"
-              className="w-full h-7 pl-7 pr-2 text-xs bg-white border border-slate-200 rounded outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/30"
+              className="w-full h-7 pl-7 pr-2 text-xs bg-white border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:ring-1 focus:ring-[#4F7563]/40/30"
             />
           </div>
         </div>
@@ -183,10 +183,10 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
       {/* List */}
       <div className="flex-1 overflow-y-auto py-2 px-2">
         {api.loading && (
-          <div className="text-center text-xs text-slate-400 py-8">Loading…</div>
+          <div className="text-center text-xs text-[#C9C6BD] py-8">Loading…</div>
         )}
         {!api.loading && filtered.length === 0 && (
-          <div className="text-center text-xs text-slate-400 py-8">
+          <div className="text-center text-xs text-[#C9C6BD] py-8">
             {search ? 'No matches' : 'No slides yet'}
           </div>
         )}
@@ -231,7 +231,7 @@ export const SlideSidebar: React.FC<SlideSidebarProps> = ({
       </div>
 
       {/* Add button */}
-      <div className="p-2 border-t border-slate-200 bg-white">
+      <div className="p-2 border-t border-[#E3E1DA] bg-white">
         <button
           type="button"
           onClick={handleAdd}
@@ -281,11 +281,11 @@ const ThumbnailRow: React.FC<{
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       className={`group relative mb-2 rounded cursor-pointer transition-all ${
-        isActive ? 'ring-2 ring-green-600' : 'ring-1 ring-transparent hover:ring-slate-300'
+        isActive ? 'ring-2 ring-[#4F7563]/40' : 'ring-1 ring-transparent hover:ring-slate-300'
       } ${isDragTarget ? 'opacity-50' : ''}`}
     >
       <div className="flex items-start gap-1.5 px-1">
-        <span className="w-4 text-[10px] font-mono text-slate-400 mt-1 text-right flex-shrink-0">{index}</span>
+        <span className="w-4 text-[10px] font-mono text-[#C9C6BD] mt-1 text-right flex-shrink-0">{index}</span>
         <div className="flex-1 min-w-0">
           <SlideThumbnail slideId={slide.id} width={170} pageNumber={index} totalPages={total} />
           <div className="mt-1 flex items-center gap-1">
@@ -298,11 +298,11 @@ const ThumbnailRow: React.FC<{
                   if (e.key === 'Enter') onRenameCommit((e.target as HTMLInputElement).value);
                   if (e.key === 'Escape') onRenameCommit(slide.title);
                 }}
-                className="flex-1 h-5 bg-white border border-green-500 rounded px-1 text-[11px] outline-none focus:ring-1 focus:ring-green-500/30"
+                className="flex-1 h-5 bg-white border border-[#4F7563] rounded px-1 text-[11px] outline-none focus:ring-1 focus:ring-[#4F7563]/40/30"
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
-              <span className={`flex-1 min-w-0 text-[11px] font-medium truncate ${isActive ? 'text-green-700' : 'text-slate-700'}`}>
+              <span className={`flex-1 min-w-0 text-[11px] font-medium truncate ${isActive ? 'text-[#355846]' : 'text-[#111111]'}`}>
                 {slide.title}
               </span>
             )}
@@ -310,7 +310,7 @@ const ThumbnailRow: React.FC<{
               type="button"
               data-slide-menu-trigger
               onClick={(e) => { e.stopPropagation(); onMenuToggle(); }}
-              className="w-5 h-5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center flex-shrink-0"
+              className="w-5 h-5 rounded text-[#C9C6BD] hover:text-[#111111] hover:bg-[#F1F0EC] flex items-center justify-center flex-shrink-0"
               aria-label="Slide actions"
             >
               <MoreVertical className="w-3 h-3" />
@@ -322,7 +322,7 @@ const ThumbnailRow: React.FC<{
       {menuOpen && (
         <div
           data-slide-menu
-          className="absolute right-1 top-7 z-20 w-32 bg-white rounded-md shadow-xl border border-slate-200 overflow-hidden"
+          className="absolute right-1 top-7 z-20 w-32 bg-white rounded-md shadow-xl border border-[#E3E1DA] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           <MenuItem icon={<Pencil className="w-3 h-3" />} onClick={onDoubleClick} label="Rename" />
@@ -340,7 +340,7 @@ const MenuItem: React.FC<{
   <button
     type="button"
     onClick={onClick}
-    className={`w-full px-2 py-1.5 text-[11px] flex items-center gap-1.5 hover:bg-slate-50 ${danger ? 'text-red-600 hover:bg-red-50' : 'text-slate-700'}`}
+    className={`w-full px-2 py-1.5 text-[11px] flex items-center gap-1.5 hover:bg-[#EDEBE6] ${danger ? 'text-[#9a3737] hover:bg-[#FCF1F1]' : 'text-[#111111]'}`}
   >
     {icon}
     {label}
@@ -364,11 +364,11 @@ const OutlineRow: React.FC<{
     onClick={onClick}
     onDoubleClick={onDoubleClick}
     className={`mb-0.5 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-      isActive ? 'bg-green-50 ring-1 ring-green-200' : 'hover:bg-white'
+      isActive ? 'bg-[#EEF5F1] ring-1 ring-[#DDE8E1]' : 'hover:bg-white'
     }`}
   >
     <div className="flex items-baseline gap-2">
-      <span className="text-[10px] font-mono text-slate-400 w-5 text-right flex-shrink-0">{index}</span>
+      <span className="text-[10px] font-mono text-[#C9C6BD] w-5 text-right flex-shrink-0">{index}</span>
       <div className="flex-1 min-w-0">
         {isRenaming ? (
           <input
@@ -379,15 +379,15 @@ const OutlineRow: React.FC<{
               if (e.key === 'Enter') onRenameCommit((e.target as HTMLInputElement).value);
               if (e.key === 'Escape') onRenameCommit(slide.title);
             }}
-            className="w-full h-5 bg-white border border-green-500 rounded px-1 text-xs outline-none"
+            className="w-full h-5 bg-white border border-[#4F7563] rounded px-1 text-xs outline-none"
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <div className={`text-xs font-semibold truncate ${isActive ? 'text-green-700' : 'text-slate-800'}`}>
+          <div className={`text-xs font-semibold truncate ${isActive ? 'text-[#355846]' : 'text-[#111111]'}`}>
             {slide.title}
           </div>
         )}
-        <div className="text-[10px] text-slate-400 capitalize truncate">{slide.type.replace(/_/g, ' ')}</div>
+        <div className="text-[10px] text-[#C9C6BD] capitalize truncate">{slide.type.replace(/_/g, ' ')}</div>
       </div>
     </div>
   </div>
@@ -401,13 +401,13 @@ const ViewToggle: React.FC<{
   value: 'thumbnails' | 'outline';
   onChange: (v: 'thumbnails' | 'outline') => void;
 }> = ({ value, onChange }) => (
-  <div className="flex bg-slate-100 rounded p-0.5 gap-0.5">
+  <div className="flex bg-[#F1F0EC] rounded p-0.5 gap-0.5">
     <button
       type="button"
       title="Thumbnail view"
       onClick={() => onChange('thumbnails')}
       className={`w-6 h-5 flex items-center justify-center rounded transition-colors ${
-        value === 'thumbnails' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+        value === 'thumbnails' ? 'bg-white shadow-sm text-[#111111]' : 'text-[#9A9A9A] hover:text-[#111111]'
       }`}
     >
       <LayoutGrid className="w-3 h-3" />
@@ -417,7 +417,7 @@ const ViewToggle: React.FC<{
       title="Outline view"
       onClick={() => onChange('outline')}
       className={`w-6 h-5 flex items-center justify-center rounded transition-colors ${
-        value === 'outline' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+        value === 'outline' ? 'bg-white shadow-sm text-[#111111]' : 'text-[#9A9A9A] hover:text-[#111111]'
       }`}
     >
       <ListIcon className="w-3 h-3" />

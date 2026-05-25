@@ -127,10 +127,10 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#EDEBE6] flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading quality data...</p>
+          <RefreshCw className="h-12 w-12 animate-spin text-[#4F7563] mx-auto mb-4" />
+          <p className="text-[#6B6B6B]">Loading quality data...</p>
         </div>
       </div>
     );
@@ -138,12 +138,12 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
 
   if (error || !project) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#EDEBE6] flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="text-center py-12">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-gray-900 font-semibold mb-2">Failed to Load</p>
-            <p className="text-gray-600 mb-4">{error || 'Project not found'}</p>
+            <AlertCircle className="h-12 w-12 text-[#D96A6A] mx-auto mb-4" />
+            <p className="text-[#111111] font-semibold mb-2">Failed to Load</p>
+            <p className="text-[#6B6B6B] mb-4">{error || 'Project not found'}</p>
             <Link href="/dashboard">
               <Button>Back to Dashboard</Button>
             </Link>
@@ -155,12 +155,12 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
 
   if (project.decks.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#EDEBE6] flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="text-center py-12">
-            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-900 font-semibold mb-2">No Decks Available</p>
-            <p className="text-gray-600 mb-4">
+            <AlertCircle className="h-12 w-12 text-[#C9C6BD] mx-auto mb-4" />
+            <p className="text-[#111111] font-semibold mb-2">No Decks Available</p>
+            <p className="text-[#6B6B6B] mb-4">
               This project doesn't have any decks yet.
             </p>
             <Link href={`/projects/${project.id}`}>
@@ -173,9 +173,9 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#EDEBE6]">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
+      <header className="bg-[#EDEBE6]/85 backdrop-blur-md border-b border-[#E3E1DA]/60 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
@@ -186,8 +186,8 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
                 </Button>
               </Link>
               <div>
-                <h1 className="text-xl font-bold">Quality Dashboard</h1>
-                <p className="text-sm text-gray-600">{project.name}</p>
+                <h1 className="pn-h2">Quality Dashboard</h1>
+                <p className="text-sm text-[#6B6B6B]">{project.name}</p>
               </div>
             </div>
             <Button onClick={handleRefresh} disabled={refreshing} size="sm">
@@ -256,7 +256,7 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  <TrendingUp className="h-5 w-5 text-[#4F7563]" />
                   Recommendations
                 </CardTitle>
               </CardHeader>
@@ -265,12 +265,12 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
                   {qualityReport.recommendations.map((rec, index) => (
                     <div
                       key={index}
-                      className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200"
+                      className="flex items-start gap-3 p-3 bg-[#EEF5F1] rounded-2xl border border-[#DDE8E1]"
                     >
-                      <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                      <div className="w-6 h-6 bg-[#4F7563] text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
                         {index + 1}
                       </div>
-                      <p className="text-sm text-blue-900">{rec}</p>
+                      <p className="text-sm text-[#263F34]">{rec}</p>
                     </div>
                   ))}
                 </div>
@@ -316,8 +316,8 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
                   onClick={() => setActiveTab('overview')}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === 'overview'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                      ? 'border-[#4F7563] text-[#4F7563]'
+                      : 'border-transparent text-[#6B6B6B] hover:text-[#111111]'
                   }`}
                 >
                   Overview
@@ -326,8 +326,8 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
                   onClick={() => setActiveTab('trends')}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === 'trends'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                      ? 'border-[#4F7563] text-[#4F7563]'
+                      : 'border-transparent text-[#6B6B6B] hover:text-[#111111]'
                   }`}
                 >
                   Trends
@@ -336,8 +336,8 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
                   onClick={() => setActiveTab('history')}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === 'history'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                      ? 'border-[#4F7563] text-[#4F7563]'
+                      : 'border-transparent text-[#6B6B6B] hover:text-[#111111]'
                   }`}
                 >
                   History

@@ -89,7 +89,7 @@ const TextContentEdit: React.FC<Props> = ({ element, onPatch }) => {
         placeholder={placeholderFor(element.type)}
         rows={element.type === 'paragraph' || isQuote ? 5 : 2}
       />
-      <p className="text-[10px] text-slate-400 leading-snug">
+      <p className="text-[10px] text-[#C9C6BD] leading-snug">
         Tip: <span className="font-semibold">double-click</span> on the canvas to edit inline with formatting.
       </p>
 
@@ -161,19 +161,19 @@ const ListContentEdit: React.FC<Props> = ({ element, onPatch }) => {
     <PanelSection title={`${ordered ? 'Numbered' : 'Bullet'} list (${items.length} items)`}>
       {items.map((item, i) => (
         <div key={item.id} className="flex items-start gap-1.5">
-          <span className="text-[10px] font-mono text-slate-400 w-4 text-right pt-1.5">{i + 1}</span>
+          <span className="text-[10px] font-mono text-[#C9C6BD] w-4 text-right pt-1.5">{i + 1}</span>
           <TextField value={item.text} onChange={(v) => updateItem(i, v)} placeholder="(empty)" />
           <div className="flex flex-col gap-0.5 mt-0.5">
             <button onClick={() => moveItem(i, -1)} disabled={i === 0}
-              className="w-5 h-3 flex items-center justify-center text-slate-400 hover:text-slate-700 disabled:opacity-30">
+              className="w-5 h-3 flex items-center justify-center text-[#C9C6BD] hover:text-[#111111] disabled:opacity-30">
               <ChevronUp className="w-3 h-3" />
             </button>
             <button onClick={() => moveItem(i, +1)} disabled={i === items.length - 1}
-              className="w-5 h-3 flex items-center justify-center text-slate-400 hover:text-slate-700 disabled:opacity-30">
+              className="w-5 h-3 flex items-center justify-center text-[#C9C6BD] hover:text-[#111111] disabled:opacity-30">
               <ChevronDown className="w-3 h-3" />
             </button>
           </div>
-          <button onClick={() => removeItem(i)} className="w-5 h-5 mt-0.5 flex items-center justify-center text-slate-400 hover:text-red-600"
+          <button onClick={() => removeItem(i)} className="w-5 h-5 mt-0.5 flex items-center justify-center text-[#C9C6BD] hover:text-[#9a3737]"
                   title="Remove item">
             <X className="w-3 h-3" />
           </button>
@@ -182,7 +182,7 @@ const ListContentEdit: React.FC<Props> = ({ element, onPatch }) => {
       <button
         type="button"
         onClick={addItem}
-        className="w-full h-7 flex items-center justify-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 rounded mt-1"
+        className="w-full h-7 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#355846] bg-[#EEF5F1] hover:bg-[#DDE8E1] rounded mt-1"
       >
         <Plus className="w-3 h-3" /> Add item
       </button>
@@ -303,7 +303,7 @@ const ImageContentEdit: React.FC<Props> = ({ element, onPatch }) => {
           <button
             type="button"
             onClick={() => onPatch({ content: { ...c, filters: undefined } })}
-            className="w-full text-[10px] font-semibold text-slate-500 hover:text-slate-900 mt-1"
+            className="w-full text-[10px] font-semibold text-[#9A9A9A] hover:text-[#111111] mt-1"
           >
             Reset filters
           </button>
@@ -437,13 +437,13 @@ const PageNumberContentEdit: React.FC<Props> = ({ element, onPatch }) => {
 
 const JsonPreviewPanel: React.FC<{ element: SlideElementDTO }> = ({ element }) => (
   <PanelSection title={`${element.type} (read-only preview)`}>
-    <p className="text-[11px] text-slate-500 leading-relaxed">
+    <p className="text-[11px] text-[#9A9A9A] leading-relaxed">
       Detailed editor for <span className="font-semibold">{element.type}</span> elements lands in a later phase
       (chart→Phase 6, table→Phase 7, image→Phase 8, etc.). You can still move, resize, duplicate, and style this element today.
     </p>
     <details>
-      <summary className="text-[10px] font-semibold text-slate-500 cursor-pointer hover:text-slate-900">View raw data</summary>
-      <pre className="mt-2 text-[10px] bg-slate-50 border border-slate-200 rounded p-2 overflow-auto max-h-40 whitespace-pre-wrap break-all">
+      <summary className="text-[10px] font-semibold text-[#9A9A9A] cursor-pointer hover:text-[#111111]">View raw data</summary>
+      <pre className="mt-2 text-[10px] bg-[#EDEBE6] border border-[#E3E1DA] rounded p-2 overflow-auto max-h-40 whitespace-pre-wrap break-all">
         {JSON.stringify(element.content || {}, null, 2)}
       </pre>
     </details>

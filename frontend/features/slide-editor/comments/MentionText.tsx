@@ -20,12 +20,12 @@ interface Props {
 export const MentionText: React.FC<Props> = ({ content, muted }) => {
   const tokens = tokenizeMentions(content);
   return (
-    <span className={muted ? 'italic text-slate-400' : 'text-slate-800'}>
+    <span className={muted ? 'italic text-[#C9C6BD]' : 'text-[#111111]'}>
       {tokens.map((t, i) =>
         t.kind === 'mention' ? (
           <span
             key={i}
-            className="inline-flex items-center px-1 mx-0.5 rounded bg-blue-100 text-blue-800 font-semibold text-[12px]"
+            className="inline-flex items-center px-1 mx-0.5 rounded bg-[#DDE8E1] text-[#263F34] font-semibold text-[12px]"
             title={`@${t.displayName}`}
           >
             @{t.displayName}

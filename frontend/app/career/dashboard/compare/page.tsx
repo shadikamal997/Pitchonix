@@ -87,32 +87,32 @@ export default function SnapshotComparePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
-        <Link href="/career/dashboard" className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1">
+    <div className="min-h-screen bg-[#EDEBE6]">
+      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
+        <Link href="/career/dashboard" className="text-xs text-[#9A9A9A] hover:text-[#111111] flex items-center gap-1">
           <ArrowLeft className="w-3 h-3" /> Career dashboard
         </Link>
-        <div className="h-5 w-px bg-slate-200" />
-        <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <GitCompare className="w-4 h-4 text-purple-600" /> Snapshot comparison
+        <div className="h-5 w-px bg-[#E3E1DA]" />
+        <h1 className="text-base font-bold text-[#111111] flex items-center gap-2">
+          <GitCompare className="w-4 h-4 text-[#4F7563]" /> Snapshot comparison
         </h1>
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-5">
-        {err  && <div className="bg-red-50  border border-red-200  text-red-800  text-xs rounded p-3">{err}</div>}
-        {info && <div className="bg-green-50 border border-green-200 text-green-900 text-xs rounded p-3 flex items-center gap-2">{info}
+        {err  && <div className="bg-[#FCF1F1]  border border-[#F7E3E3]  text-[#7a2929]  text-xs rounded p-3">{err}</div>}
+        {info && <div className="bg-[#EEF5F1] border border-[#DDE8E1] text-[#1A2D24] text-xs rounded p-3 flex items-center gap-2">{info}
           <Link href="/career" className="underline ml-1">go to career →</Link>
         </div>}
 
         {/* Pickers + side-by-side score row */}
-        <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+        <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Picker label="Snapshot A (original)" value={aId} onChange={setAId} snapshots={snapshots} colour="red" />
             <Picker label="Snapshot B (improved)" value={bId} onChange={setBId} snapshots={snapshots} colour="green" />
           </div>
 
           {a && b && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-[#F1F0EC]">
               <ScoreBox snap={a} other={b} colour="red"   onRestore={() => restore(a)} busy={busy} />
               <ScoreBox snap={b} other={a} colour="green" onRestore={() => restore(b)} busy={busy} />
             </div>
@@ -124,7 +124,7 @@ export default function SnapshotComparePage() {
           <CvDiffEditor original={a.profileJson} improved={b.profileJson} />
         )}
         {(!a?.profileJson || !b?.profileJson) && (a || b) && (
-          <p className="text-xs text-slate-500 italic">
+          <p className="text-xs text-[#9A9A9A] italic">
             One or both snapshots have no profileJson payload (older analyses, or non-profile snapshot kinds). The diff editor only shows when both have a captured profile.
           </p>
         )}
@@ -137,12 +137,12 @@ const Picker: React.FC<{
   label: string; value: string; onChange: (v: string) => void;
   snapshots: SnapshotListItem[]; colour: 'red' | 'green';
 }> = ({ label, value, onChange, snapshots, colour }) => {
-  const c = colour === 'red'   ? 'border-red-200 bg-red-50/40'   : 'border-green-200 bg-green-50/40';
+  const c = colour === 'red'   ? 'border-[#F7E3E3] bg-[#FCF1F1]/40'   : 'border-[#DDE8E1] bg-[#EEF5F1]/40';
   return (
     <div className={`border rounded p-2.5 ${c}`}>
-      <div className="text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider font-bold text-[#6B6B6B] mb-1">{label}</div>
       <select value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full h-8 px-2 text-xs border border-slate-300 rounded bg-white">
+        className="w-full h-8 px-2 text-xs border border-[#C9C6BD] rounded bg-white">
         <option value="">— pick a snapshot —</option>
         {snapshots.map((s) => (
           <option key={s.id} value={s.id}>
@@ -160,7 +160,7 @@ const ScoreBox: React.FC<{
   snap: SnapshotFull; other: SnapshotFull; colour: 'red' | 'green';
   onRestore: () => void; busy: boolean;
 }> = ({ snap, other, colour, onRestore, busy }) => {
-  const c = colour === 'red' ? 'text-red-700' : 'text-green-700';
+  const c = colour === 'red' ? 'text-[#7a2929]' : 'text-[#355846]';
   const delta = (a?: number | null, b?: number | null) => {
     if (a == null || b == null) return '—';
     const d = (a as number) - (b as number);
@@ -168,11 +168,11 @@ const ScoreBox: React.FC<{
     return d > 0 ? `+${d}` : `${d}`;
   };
   return (
-    <div className="border border-slate-200 rounded p-2.5">
+    <div className="border border-[#E3E1DA] rounded p-2.5">
       <div className="flex items-center justify-between mb-1.5">
         <div className={`text-xs font-bold ${c}`}>{snap.label || `Snapshot ${new Date(snap.createdAt).toLocaleString()}`}</div>
         <button onClick={onRestore} disabled={busy || !snap.profileJson}
-          className="h-7 px-2 text-[11px] font-semibold border border-slate-300 hover:bg-slate-50 rounded inline-flex items-center gap-1 disabled:opacity-40"
+          className="h-7 px-2 text-[11px] font-semibold border border-[#C9C6BD] hover:bg-[#EDEBE6] rounded inline-flex items-center gap-1 disabled:opacity-40"
           title={!snap.profileJson ? 'No profile payload captured' : 'Restore this profile snapshot'}>
           {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} Restore
         </button>
@@ -180,7 +180,7 @@ const ScoreBox: React.FC<{
       <div className="grid grid-cols-2 gap-2 text-[11px]">
         <ScoreCell label="CV"          v={snap.score}    d={delta(snap.score, other.score)} />
         <ScoreCell label="ATS"         v={snap.atsScore} d={delta(snap.atsScore, other.atsScore)} />
-        <div className="col-span-2 text-[10px] text-slate-500 font-mono truncate">
+        <div className="col-span-2 text-[10px] text-[#9A9A9A] font-mono truncate">
           kind: {snap.kind} · {new Date(snap.createdAt).toLocaleString()}
         </div>
       </div>
@@ -189,11 +189,11 @@ const ScoreBox: React.FC<{
 };
 
 const ScoreCell: React.FC<{ label: string; v: number | null | undefined; d: string }> = ({ label, v, d }) => (
-  <div className="border border-slate-200 rounded px-1.5 py-1 bg-slate-50">
-    <div className="text-[9px] uppercase tracking-wide text-slate-500">{label}</div>
-    <div className="text-base font-bold text-slate-900">
+  <div className="border border-[#E3E1DA] rounded px-1.5 py-1 bg-[#EDEBE6]">
+    <div className="text-[9px] uppercase tracking-wide text-[#9A9A9A]">{label}</div>
+    <div className="text-base font-bold text-[#111111]">
       {v == null ? '—' : v}
-      <span className={`ml-1.5 text-[10px] ${d.startsWith('+') ? 'text-green-700' : d.startsWith('-') ? 'text-red-700' : 'text-slate-500'}`}>{d}</span>
+      <span className={`ml-1.5 text-[10px] ${d.startsWith('+') ? 'text-[#355846]' : d.startsWith('-') ? 'text-[#7a2929]' : 'text-[#9A9A9A]'}`}>{d}</span>
     </div>
   </div>
 );

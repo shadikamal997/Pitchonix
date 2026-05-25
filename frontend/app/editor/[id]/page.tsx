@@ -70,7 +70,7 @@ export default function LegacyEditorRedirect() {
           <p className="text-sm text-slate-600 mb-4">{error}</p>
           <button
             onClick={() => router.push('/projects')}
-            className="h-9 px-4 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded"
+            className="h-9 px-4 text-sm font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded"
           >
             Back to projects
           </button>

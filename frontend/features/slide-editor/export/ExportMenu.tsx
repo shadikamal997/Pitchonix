@@ -94,27 +94,27 @@ export const ExportMenu: React.FC<Props> = ({ deckId, deckTitle }) => {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-[280px] bg-white border border-slate-200 rounded-lg shadow-2xl z-50 overflow-hidden">
-          <div className="px-3 py-2 border-b border-slate-100">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Export deck</p>
-            <p className="text-[11px] text-slate-400 leading-snug mt-0.5">Element-level fidelity. Includes manifest.</p>
+        <div className="absolute right-0 top-full mt-2 w-[280px] bg-white border border-[#E3E1DA] rounded-lg shadow-2xl z-50 overflow-hidden">
+          <div className="px-3 py-2 border-b border-[#F1F0EC]">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A]">Export deck</p>
+            <p className="text-[11px] text-[#C9C6BD] leading-snug mt-0.5">Element-level fidelity. Includes manifest.</p>
           </div>
           {FORMATS.map(({ id, label, description, Icon }) => (
             <button
               key={id}
               type="button"
               onClick={() => handleExport(id)}
-              className="w-full flex items-start gap-2.5 px-3 py-2.5 hover:bg-slate-50 transition-colors text-left"
+              className="w-full flex items-start gap-2.5 px-3 py-2.5 hover:bg-[#EDEBE6] transition-colors text-left"
             >
-              <Icon className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+              <Icon className="w-4 h-4 text-[#4F7563] mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-slate-800">{label}</div>
-                <div className="text-[10px] text-slate-500 truncate">{description}</div>
+                <div className="text-xs font-semibold text-[#111111]">{label}</div>
+                <div className="text-[10px] text-[#9A9A9A] truncate">{description}</div>
               </div>
             </button>
           ))}
           {/* Phase 36.1J — PDF appendix toggle */}
-          <label className="flex items-center gap-2 px-3 py-2 border-t border-slate-100 cursor-pointer hover:bg-slate-50">
+          <label className="flex items-center gap-2 px-3 py-2 border-t border-[#F1F0EC] cursor-pointer hover:bg-[#EDEBE6]">
             <input
               type="checkbox"
               checked={withComments}
@@ -122,8 +122,8 @@ export const ExportMenu: React.FC<Props> = ({ deckId, deckTitle }) => {
               className="w-3.5 h-3.5"
             />
             <div className="flex-1">
-              <div className="text-[11px] font-semibold text-slate-800">Append comments to PDF</div>
-              <div className="text-[10px] text-slate-500">One card per thread, with status</div>
+              <div className="text-[11px] font-semibold text-[#111111]">Append comments to PDF</div>
+              <div className="text-[10px] text-[#9A9A9A]">One card per thread, with status</div>
             </div>
           </label>
         </div>
@@ -132,36 +132,36 @@ export const ExportMenu: React.FC<Props> = ({ deckId, deckTitle }) => {
       {(status.state === 'running' || status.state === 'success' || status.state === 'error') && (
         <div className="absolute right-0 top-full mt-2 w-[300px] z-40">
           {status.state === 'running' && (
-            <div className="bg-white border border-slate-200 rounded-lg shadow-xl px-3 py-2 flex items-center gap-2">
-              <Loader2 className="w-3.5 h-3.5 text-green-600 animate-spin" />
-              <span className="text-xs text-slate-700">Building {labelFor(status.format!)}…</span>
+            <div className="bg-white border border-[#E3E1DA] rounded-lg shadow-xl px-3 py-2 flex items-center gap-2">
+              <Loader2 className="w-3.5 h-3.5 text-[#4F7563] animate-spin" />
+              <span className="text-xs text-[#111111]">Building {labelFor(status.format!)}…</span>
             </div>
           )}
           {status.state === 'success' && (
-            <div className="bg-green-50 border border-green-200 rounded-lg shadow-xl px-3 py-2">
+            <div className="bg-[#EEF5F1] border border-[#DDE8E1] rounded-lg shadow-xl px-3 py-2">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-green-700" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#355846]" />
                 <span className="text-xs font-semibold text-green-900">{status.message}</span>
               </div>
               {status.manifest && (
                 <div className="text-[11px] text-green-800 mt-1 pl-5">
                   {status.manifest.slideCount} slide{status.manifest.slideCount === 1 ? '' : 's'} · {status.manifest.elementTotal} element{status.manifest.elementTotal === 1 ? '' : 's'}
-                  {status.manifest.warnings?.length ? <span className="block text-amber-700 mt-0.5">⚠ {status.manifest.warnings.length} warning(s)</span> : null}
+                  {status.manifest.warnings?.length ? <span className="block text-[#735008] mt-0.5">⚠ {status.manifest.warnings.length} warning(s)</span> : null}
                 </div>
               )}
             </div>
           )}
           {status.state === 'error' && (
-            <div className="bg-red-50 border border-red-200 rounded-lg shadow-xl px-3 py-2 flex items-start gap-2">
-              <AlertTriangle className="w-3.5 h-3.5 text-red-600 mt-0.5" />
+            <div className="bg-[#FCF1F1] border border-[#F7E3E3] rounded-lg shadow-xl px-3 py-2 flex items-start gap-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-[#9a3737] mt-0.5" />
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-semibold text-red-900">Export failed</div>
-                <div className="text-[11px] text-red-700">{status.message}</div>
+                <div className="text-[11px] text-[#7a2929]">{status.message}</div>
               </div>
               <button
                 type="button"
                 onClick={() => setStatus({ state: 'idle' })}
-                className="text-[11px] font-semibold text-red-700 hover:underline"
+                className="text-[11px] font-semibold text-[#7a2929] hover:underline"
               >
                 Dismiss
               </button>

@@ -44,7 +44,7 @@ export const ExecutiveSummaryPage: React.FC<ExecutiveSummaryPageProps> = ({
         <div className="flex-1 space-y-6">
           {/* Summary Text */}
           <div
-            className="text-slate-700 leading-relaxed"
+            className="text-[#111111] leading-relaxed"
             style={{
               fontSize: '11pt',
               lineHeight: '1.8',
@@ -77,7 +77,7 @@ export const ExecutiveSummaryPage: React.FC<ExecutiveSummaryPageProps> = ({
                       style={{ backgroundColor: brandColor }}
                     />
                     <p
-                      className="text-slate-700"
+                      className="text-[#111111]"
                       style={{ fontSize: '11pt', lineHeight: '1.6' }}
                     >
                       {highlight}

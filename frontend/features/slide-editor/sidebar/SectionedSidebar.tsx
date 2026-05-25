@@ -316,11 +316,11 @@ export const SectionedSidebar: React.FC<Props> = ({
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <aside className="w-[220px] flex-shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col h-full">
+    <aside className="w-[220px] flex-shrink-0 bg-[#EDEBE6] border-r border-[#E3E1DA] flex flex-col h-full">
       {/* Header */}
-      <div className="h-9 flex items-center px-3 gap-2 border-b border-slate-200 bg-white">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Slides</span>
-        <span className="text-[10px] text-slate-400">{slides.length}</span>
+      <div className="h-9 flex items-center px-3 gap-2 border-b border-[#E3E1DA] bg-white">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[#6B6B6B]">Slides</span>
+        <span className="text-[10px] text-[#C9C6BD]">{slides.length}</span>
         <div className="ml-auto flex items-center gap-1">
           {/* Phase 35-final-B Task 3 — hide destructive affordances in preview. */}
           {!readOnly && (
@@ -328,7 +328,7 @@ export const SectionedSidebar: React.FC<Props> = ({
               type="button"
               onClick={handleCreateSection}
               title="Add section"
-              className="p-1 rounded text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              className="p-1 rounded text-[#9A9A9A] hover:bg-[#F1F0EC] hover:text-[#111111]"
             >
               <FolderPlus className="w-3.5 h-3.5" />
             </button>
@@ -339,14 +339,14 @@ export const SectionedSidebar: React.FC<Props> = ({
 
       {/* Search */}
       {slides.length > 6 && (
-        <div className="px-3 pt-2 pb-1 bg-white border-b border-slate-200">
+        <div className="px-3 pt-2 pb-1 bg-white border-b border-[#E3E1DA]">
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#C9C6BD] pointer-events-none" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search slides…"
-              className="w-full h-7 pl-7 pr-2 text-xs bg-white border border-slate-200 rounded outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/30"
+              className="w-full h-7 pl-7 pr-2 text-xs bg-white border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:ring-1 focus:ring-[#4F7563]/40/30"
             />
           </div>
         </div>
@@ -354,20 +354,20 @@ export const SectionedSidebar: React.FC<Props> = ({
 
       {/* Bulk action bar — visible whenever 2+ selected (suppressed in preview). */}
       {!readOnly && selectedIds.size > 1 && (
-        <div className="px-2 py-1.5 border-b border-blue-200 bg-blue-50 text-[11px] font-semibold text-blue-800 flex items-center gap-2">
+        <div className="px-2 py-1.5 border-b border-[#DDE8E1] bg-[#EEF5F1] text-[11px] font-semibold text-[#263F34] flex items-center gap-2">
           <span>{selectedIds.size} selected</span>
           <div className="ml-auto flex items-center gap-1">
             <button onClick={handleBulkDuplicate} title="Duplicate"
-                    className="p-1 rounded hover:bg-blue-100">
+                    className="p-1 rounded hover:bg-[#DDE8E1]">
               <Copy className="w-3 h-3" />
             </button>
             <BulkMoveMenu sections={sections} onMove={handleBulkMoveToSection} />
             <button onClick={handleBulkDelete} title="Delete"
-                    className="p-1 rounded text-red-700 hover:bg-red-100">
+                    className="p-1 rounded text-[#7a2929] hover:bg-[#F7E3E3]">
               <Trash2 className="w-3 h-3" />
             </button>
             <button onClick={() => setSelectedIds(new Set(currentSlideId ? [currentSlideId] : []))}
-                    title="Clear" className="p-1 rounded text-slate-600 hover:bg-slate-100">
+                    title="Clear" className="p-1 rounded text-[#6B6B6B] hover:bg-[#F1F0EC]">
               ✕
             </button>
           </div>
@@ -376,9 +376,9 @@ export const SectionedSidebar: React.FC<Props> = ({
 
       {/* Virtualized list */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-2 py-2">
-        {deckApi.loading && <div className="text-center text-xs text-slate-400 py-8">Loading…</div>}
+        {deckApi.loading && <div className="text-center text-xs text-[#C9C6BD] py-8">Loading…</div>}
         {!deckApi.loading && rows.length === 0 && (
-          <div className="text-center text-xs text-slate-400 py-8">
+          <div className="text-center text-xs text-[#C9C6BD] py-8">
             {search ? 'No matches' : 'No slides yet'}
           </div>
         )}
@@ -397,7 +397,7 @@ export const SectionedSidebar: React.FC<Props> = ({
       </div>
 
       {/* Add button */}
-      <div className="p-2 border-t border-slate-200 bg-white">
+      <div className="p-2 border-t border-[#E3E1DA] bg-white">
         <button
           type="button"
           onClick={() => handleAdd(null)}
@@ -420,20 +420,20 @@ export const SectionedSidebar: React.FC<Props> = ({
       const Icon = row.isCollapsed ? Folder : FolderOpen;
       return (
         <div
-          className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 px-1 select-none"
+          className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#6B6B6B] px-1 select-none"
           style={{ height: SECTION_ROW_PX }}
         >
           {!isUnsectioned && (
             <button
               onClick={() => handleToggleCollapsed(row.section!.id)}
-              className="p-0.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-200"
+              className="p-0.5 rounded text-[#9A9A9A] hover:text-[#111111] hover:bg-[#E3E1DA]"
             >
               {row.isCollapsed
                 ? <ChevronRight className="w-3 h-3" />
                 : <ChevronDown  className="w-3 h-3" />}
             </button>
           )}
-          <Icon className={`w-3 h-3 ${isUnsectioned ? 'text-slate-400' : 'text-purple-600'} flex-shrink-0`} />
+          <Icon className={`w-3 h-3 ${isUnsectioned ? 'text-[#C9C6BD]' : 'text-[#4F7563]'} flex-shrink-0`} />
           {isRenaming ? (
             <input
               autoFocus
@@ -454,12 +454,12 @@ export const SectionedSidebar: React.FC<Props> = ({
               {name}
             </span>
           )}
-          <span className="text-slate-400">{row.count}</span>
+          <span className="text-[#C9C6BD]">{row.count}</span>
           {!isUnsectioned && (
             <button
               onClick={() => handleDeleteSection(row.section!.id)}
               title="Delete section"
-              className="p-0.5 rounded text-slate-400 hover:text-red-600 hover:bg-red-50"
+              className="p-0.5 rounded text-[#C9C6BD] hover:text-[#9a3737] hover:bg-[#FCF1F1]"
             >
               <Trash2 className="w-3 h-3" />
             </button>
@@ -476,7 +476,7 @@ export const SectionedSidebar: React.FC<Props> = ({
           type="button"
           onClick={() => handleAdd(row.sectionId)}
           disabled={busy}
-          className="w-full text-left flex items-center gap-1 px-2 text-[11px] text-slate-400 hover:text-green-700 hover:bg-green-50 rounded"
+          className="w-full text-left flex items-center gap-1 px-2 text-[11px] text-[#C9C6BD] hover:text-[#355846] hover:bg-[#EEF5F1] rounded"
           style={{ height: ADD_ROW_PX }}
         >
           <Plus className="w-3 h-3" /> Add slide
@@ -493,13 +493,13 @@ export const SectionedSidebar: React.FC<Props> = ({
           onClick={(e) => handleSlideClick(row.slide, e)}
           onDoubleClick={() => setRenamingId(row.slide.id)}
           className={`flex items-center gap-2 px-2 rounded cursor-pointer text-xs ${
-            isActive ? 'bg-green-50 text-green-800 font-semibold' :
-            isSelected ? 'bg-blue-50 text-blue-800' :
-            'text-slate-700 hover:bg-slate-100'
+            isActive ? 'bg-[#EEF5F1] text-green-800 font-semibold' :
+            isSelected ? 'bg-[#EEF5F1] text-[#263F34]' :
+            'text-[#111111] hover:bg-[#F1F0EC]'
           }`}
           style={{ height: OUTLINE_ROW_PX }}
         >
-          <span className="w-5 text-[10px] font-mono text-slate-400 text-right flex-shrink-0">{row.index}</span>
+          <span className="w-5 text-[10px] font-mono text-[#C9C6BD] text-right flex-shrink-0">{row.index}</span>
           {isRenaming ? (
             <input
               autoFocus
@@ -509,7 +509,7 @@ export const SectionedSidebar: React.FC<Props> = ({
                 if (e.key === 'Enter') handleRenameCommit(row.slide.id, (e.target as HTMLInputElement).value);
                 if (e.key === 'Escape') setRenamingId(null);
               }}
-              className="flex-1 h-5 px-1 text-xs rounded border border-green-500 outline-none"
+              className="flex-1 h-5 px-1 text-xs rounded border border-[#4F7563] outline-none"
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
@@ -528,14 +528,14 @@ export const SectionedSidebar: React.FC<Props> = ({
         onClick={(e) => handleSlideClick(row.slide, e)}
         onDoubleClick={() => setRenamingId(row.slide.id)}
         className={`group relative mb-2 rounded cursor-pointer transition-all ${
-          isActive    ? 'ring-2 ring-green-600'
-          : isSelected ? 'ring-2 ring-blue-500'
+          isActive    ? 'ring-2 ring-[#4F7563]/40'
+          : isSelected ? 'ring-2 ring-[#4F7563]/40'
           : 'ring-1 ring-transparent hover:ring-slate-300'
         }`}
         style={{ height: ROW_HEIGHT_PX - 6 /* mb-2 */ }}
       >
         <div className="flex items-start gap-1.5 px-1">
-          <span className="w-4 text-[10px] font-mono text-slate-400 mt-1 text-right flex-shrink-0">
+          <span className="w-4 text-[10px] font-mono text-[#C9C6BD] mt-1 text-right flex-shrink-0">
             {row.index}
           </span>
           <div className="flex-1 min-w-0">
@@ -550,11 +550,11 @@ export const SectionedSidebar: React.FC<Props> = ({
                     if (e.key === 'Enter') handleRenameCommit(row.slide.id, (e.target as HTMLInputElement).value);
                     if (e.key === 'Escape') setRenamingId(null);
                   }}
-                  className="flex-1 h-5 bg-white border border-green-500 rounded px-1 text-[11px] outline-none"
+                  className="flex-1 h-5 bg-white border border-[#4F7563] rounded px-1 text-[11px] outline-none"
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <span className={`flex-1 min-w-0 text-[11px] font-medium truncate ${isActive ? 'text-green-700' : 'text-slate-700'}`}>
+                <span className={`flex-1 min-w-0 text-[11px] font-medium truncate ${isActive ? 'text-[#355846]' : 'text-[#111111]'}`}>
                   {row.slide.title}
                 </span>
               )}
@@ -562,7 +562,7 @@ export const SectionedSidebar: React.FC<Props> = ({
                 type="button"
                 data-slide-menu-trigger
                 onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === row.slide.id ? null : row.slide.id); }}
-                className="w-5 h-5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center flex-shrink-0"
+                className="w-5 h-5 rounded text-[#C9C6BD] hover:text-[#111111] hover:bg-[#F1F0EC] flex items-center justify-center flex-shrink-0"
                 aria-label="Slide actions"
               >
                 <MoreVertical className="w-3 h-3" />
@@ -574,37 +574,37 @@ export const SectionedSidebar: React.FC<Props> = ({
         {menuOpen === row.slide.id && (
           <div
             data-slide-menu
-            className="absolute right-1 top-7 z-30 w-44 bg-white border border-slate-200 rounded-lg shadow-2xl overflow-hidden text-xs"
+            className="absolute right-1 top-7 z-30 w-44 bg-white border border-[#E3E1DA] rounded-lg shadow-2xl overflow-hidden text-xs"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => handleDuplicate(row.slide.id)}
-              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-slate-50 text-slate-700"
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[#EDEBE6] text-[#111111]"
             >
               <Copy className="w-3 h-3" /> Duplicate
             </button>
             <button
               onClick={() => { setMenuOpen(null); setRenamingId(row.slide.id); }}
-              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-slate-50 text-slate-700"
+              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-[#EDEBE6] text-[#111111]"
             >
               <Pencil className="w-3 h-3" /> Rename
             </button>
             {sections.length > 0 && (
-              <div className="border-t border-slate-100">
-                <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              <div className="border-t border-[#F1F0EC]">
+                <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-[#C9C6BD] tracking-wider">
                   Move to section
                 </div>
                 <button
                   onClick={() => handleAssignSection([row.slide.id], null)}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700"
+                  className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-[#EDEBE6] text-[#111111]"
                 >
-                  <Folder className="w-3 h-3 text-slate-400" /> Unsectioned
+                  <Folder className="w-3 h-3 text-[#C9C6BD]" /> Unsectioned
                 </button>
                 {sections.map((s) => (
                   <button
                     key={s.id}
                     onClick={() => handleAssignSection([row.slide.id], s.id)}
-                    className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700"
+                    className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-[#EDEBE6] text-[#111111]"
                   >
                     <Folder className="w-3 h-3 text-purple-500" /> {s.name}
                   </button>
@@ -613,7 +613,7 @@ export const SectionedSidebar: React.FC<Props> = ({
             )}
             <button
               onClick={() => handleDelete(row.slide.id)}
-              className="flex items-center gap-2 w-full px-3 py-2 border-t border-slate-100 text-red-700 hover:bg-red-50"
+              className="flex items-center gap-2 w-full px-3 py-2 border-t border-[#F1F0EC] text-[#7a2929] hover:bg-[#FCF1F1]"
             >
               <Trash2 className="w-3 h-3" /> Delete
             </button>
@@ -641,18 +641,18 @@ const BulkMoveMenu: React.FC<{ sections: Section[]; onMove: (id: string | null) 
   return (
     <div ref={ref} className="relative">
       <button onClick={() => setOpen((v) => !v)} title="Move to section"
-              className="p-1 rounded hover:bg-blue-100">
+              className="p-1 rounded hover:bg-[#DDE8E1]">
         <Folder className="w-3 h-3" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-2xl z-30 text-xs">
+        <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-[#E3E1DA] rounded-lg shadow-2xl z-30 text-xs">
           <button onClick={() => { setOpen(false); onMove(null); }}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700">
-            <Folder className="w-3 h-3 text-slate-400" /> Unsectioned
+                  className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-[#EDEBE6] text-[#111111]">
+            <Folder className="w-3 h-3 text-[#C9C6BD]" /> Unsectioned
           </button>
           {sections.map((s) => (
             <button key={s.id} onClick={() => { setOpen(false); onMove(s.id); }}
-                    className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-slate-50 text-slate-700">
+                    className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-[#EDEBE6] text-[#111111]">
               <Folder className="w-3 h-3 text-purple-500" /> {s.name}
             </button>
           ))}
@@ -667,14 +667,14 @@ const BulkMoveMenu: React.FC<{ sections: Section[]; onMove: (id: string | null) 
 // =============================================================================
 
 const ViewToggle: React.FC<{ value: 'thumbnails' | 'outline'; onChange: (v: 'thumbnails' | 'outline') => void }> = ({ value, onChange }) => (
-  <div className="flex items-center bg-slate-100 rounded p-0.5">
+  <div className="flex items-center bg-[#F1F0EC] rounded p-0.5">
     <button
       onClick={() => onChange('thumbnails')}
-      className={`px-1.5 h-5 text-[10px] font-semibold rounded ${value === 'thumbnails' ? 'bg-white text-slate-900 shadow' : 'text-slate-500'}`}
+      className={`px-1.5 h-5 text-[10px] font-semibold rounded ${value === 'thumbnails' ? 'bg-white text-[#111111] shadow' : 'text-[#9A9A9A]'}`}
     >Thumbs</button>
     <button
       onClick={() => onChange('outline')}
-      className={`px-1.5 h-5 text-[10px] font-semibold rounded ${value === 'outline' ? 'bg-white text-slate-900 shadow' : 'text-slate-500'}`}
+      className={`px-1.5 h-5 text-[10px] font-semibold rounded ${value === 'outline' ? 'bg-white text-[#111111] shadow' : 'text-[#9A9A9A]'}`}
     >Outline</button>
   </div>
 );

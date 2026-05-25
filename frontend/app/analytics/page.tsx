@@ -62,30 +62,30 @@ export default function AnalyticsPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <div className="min-h-full bg-slate-50 p-8">
+    <div className="min-h-full bg-[#EDEBE6] p-8">
       <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2 text-gray-900">Analytics</h1>
-          <p className="text-gray-500 mb-8 text-sm">Document views, exports, and share link activity across all your projects.</p>
+          <h1 className="text-3xl font-bold mb-2 text-[#111111]">Analytics</h1>
+          <p className="text-[#9A9A9A] mb-8 text-sm">Document views, exports, and share link activity across all your projects.</p>
 
           {loading ? (
-            <div className="flex items-center justify-center py-32 text-gray-400">Loading analytics…</div>
+            <div className="flex items-center justify-center py-32 text-[#C9C6BD]">Loading analytics…</div>
           ) : (
             <>
               {/* KPI Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <StatCard icon={<Eye className="h-5 w-5 text-green-600" />} label="Total Views" value={totalViews} />
-                <StatCard icon={<Download className="h-5 w-5 text-blue-600" />} label="Total Exports" value={totalExports} />
-                <StatCard icon={<Share2 className="h-5 w-5 text-emerald-600" />} label="Public Share Links" value={sharedCount} />
+                <StatCard icon={<Eye className="h-5 w-5 text-[#4F7563]" />} label="Total Views" value={totalViews} />
+                <StatCard icon={<Download className="h-5 w-5 text-[#4F7563]" />} label="Total Exports" value={totalExports} />
+                <StatCard icon={<Share2 className="h-5 w-5 text-[#4F7563]" />} label="Public Share Links" value={sharedCount} />
               </div>
 
               {/* Bar chart — views per project */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-                <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-green-600" />
+              <div className="bg-white rounded-xl border border-[#E3E1DA] p-6 mb-6">
+                <h2 className="text-base font-semibold text-[#111111] mb-4 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-[#4F7563]" />
                   Views &amp; Exports by Project (top 10)
                 </h2>
                 {trendData.length === 0 ? (
-                  <p className="text-sm text-gray-400">No data yet. Share your projects to start collecting analytics.</p>
+                  <p className="text-sm text-[#C9C6BD]">No data yet. Share your projects to start collecting analytics.</p>
                 ) : (
                   <ResponsiveContainer width="100%" height={260}>
                     <BarChart data={trendData} margin={{ top: 4, right: 8, left: -16, bottom: 40 }}>
@@ -102,15 +102,15 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Table — top projects by views */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-base font-semibold text-gray-900 mb-4">Top Projects by Views</h2>
+              <div className="bg-white rounded-xl border border-[#E3E1DA] p-6">
+                <h2 className="text-base font-semibold text-[#111111] mb-4">Top Projects by Views</h2>
                 {topByViews.length === 0 ? (
-                  <p className="text-sm text-gray-400">No projects yet.</p>
+                  <p className="text-sm text-[#C9C6BD]">No projects yet.</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-left text-gray-500 border-b border-gray-100">
+                        <tr className="text-left text-[#9A9A9A] border-b border-[#F1F0EC]">
                           <th className="pb-3 font-medium">Project</th>
                           <th className="pb-3 font-medium text-right">Views</th>
                           <th className="pb-3 font-medium text-right">Exports</th>
@@ -119,15 +119,15 @@ export default function AnalyticsPage() {
                       </thead>
                       <tbody>
                         {topByViews.map((p) => (
-                          <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                            <td className="py-3 text-gray-900 font-medium">{p.name}</td>
-                            <td className="py-3 text-right text-gray-700">{p.viewCount}</td>
-                            <td className="py-3 text-right text-gray-700">{p.exportCount}</td>
+                          <tr key={p.id} className="border-b border-gray-50 hover:bg-[#EDEBE6] transition-colors">
+                            <td className="py-3 text-[#111111] font-medium">{p.name}</td>
+                            <td className="py-3 text-right text-[#111111]">{p.viewCount}</td>
+                            <td className="py-3 text-right text-[#111111]">{p.exportCount}</td>
                             <td className="py-3 text-right">
                               {p.publicToken ? (
-                                <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium">Active</span>
+                                <span className="text-xs bg-[#EEF5F1] text-[#355846] px-2 py-0.5 rounded-full font-medium">Active</span>
                               ) : (
-                                <span className="text-xs text-gray-400">—</span>
+                                <span className="text-xs text-[#C9C6BD]">—</span>
                               )}
                             </td>
                           </tr>
@@ -146,11 +146,11 @@ export default function AnalyticsPage() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 flex items-center gap-4">
-      <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">{icon}</div>
+    <div className="bg-white rounded-xl border border-[#E3E1DA] p-6 flex items-center gap-4">
+      <div className="w-10 h-10 bg-[#EDEBE6] rounded-lg flex items-center justify-center">{icon}</div>
       <div>
-        <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
-        <div className="text-sm text-gray-500">{label}</div>
+        <div className="text-2xl font-bold text-[#111111]">{value.toLocaleString()}</div>
+        <div className="text-sm text-[#9A9A9A]">{label}</div>
       </div>
     </div>
   );

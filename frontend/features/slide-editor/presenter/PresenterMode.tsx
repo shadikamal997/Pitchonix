@@ -314,7 +314,7 @@ export const PresenterMode: React.FC<Props> = ({ slides, initialSlideId, onClose
         {/* Progress bar */}
         <div className="flex-1 h-1.5 bg-white/10 rounded overflow-hidden">
           <div
-            className="h-full bg-green-500 transition-all duration-300"
+            className="h-full bg-[#4F7563] transition-all duration-300"
             style={{ width: `${total === 0 ? 0 : ((index + 1) / total) * 100}%` }}
           />
         </div>
@@ -348,7 +348,7 @@ const IconButton: React.FC<React.PropsWithChildren<{ onClick: () => void; title:
     title={title}
     className={`w-7 h-7 flex items-center justify-center rounded transition-colors ${
       active
-        ? 'bg-green-500/20 text-green-300 ring-1 ring-green-400/40'
+        ? 'bg-[#4F7563]/20 text-green-300 ring-1 ring-green-400/40'
         : 'text-white/70 hover:bg-white/10 hover:text-white'
     }`}
   >

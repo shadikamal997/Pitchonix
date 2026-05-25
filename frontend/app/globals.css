@@ -7,26 +7,50 @@
 
 @layer base {
   :root {
+    /* ---------------------------------------------------------------
+     * Pitchonix Dashboard Design System tokens (Phase Δ — Soft Sage)
+     * Raw HEX values so non-Tailwind contexts can read them directly.
+     * --------------------------------------------------------------- */
+    --pn-page:           #EDEBE6;
+    --pn-surface:        #FFFFFF;
+    --pn-surface-soft:   #F7F6F2;
+    --pn-surface-muted:  #F1F0EC;
+    --pn-ink:            #111111;
+    --pn-ink-soft:       #6B6B6B;
+    --pn-ink-muted:      #9A9A9A;
+    --pn-line:           #E3E1DA;
+    --pn-sage:           #4F7563;
+    --pn-sage-dark:      #355846;
+    --pn-sage-deep:      #263F34;
+    --pn-sage-soft:      #DDE8E1;
+    --pn-sage-pale:      #EEF5F1;
+    --pn-ok-soft:        #E6F0EA;
+    --pn-warn:           #D9A441;
+    --pn-warn-soft:      #FAEEDB;
+    --pn-danger:         #D96A6A;
+    --pn-danger-soft:    #F7E3E3;
+
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
+    /* Primary now drives the sage accent across the design system. */
+    --primary: oklch(0.5 0.045 155);
     --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
+    --secondary: oklch(0.97 0.005 80);
     --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
+    --muted: oklch(0.97 0.005 80);
     --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
+    --accent: oklch(0.93 0.022 155);
+    --accent-foreground: oklch(0.27 0.05 155);
+    --destructive: oklch(0.68 0.16 25);
     --destructive-foreground: 210 40% 98%;
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --radius: 0.625rem;
+    --border: oklch(0.9 0.01 80);
+    --input: oklch(0.9 0.01 80);
+    --ring: oklch(0.6 0.04 155);
+    --radius: 0.875rem;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -84,7 +108,11 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background: var(--pn-page);
+    color: var(--pn-ink);
+    font-family: var(--font-sans), 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   html {
     @apply font-sans;
@@ -95,8 +123,224 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
+}
+
+/* ===================================================================
+ * Pitchonix Dashboard primitives (Phase Δ).
+ *
+ * Reusable class names so any page/component can adopt the new
+ * design language with a single className. All values use the
+ * tokens defined above.
+ * =================================================================== */
+@layer components {
+  .pn-page {
+    background: var(--pn-page);
+    color: var(--pn-ink);
+    min-height: 100vh;
+  }
+
+  .pn-card {
+    background: var(--pn-surface);
+    border: 1px solid rgba(227, 225, 218, 0.7);
+    border-radius: 1.5rem;
+    box-shadow: 0 20px 50px rgba(38, 63, 52, 0.06);
+  }
+
+  .pn-card-soft {
+    background: var(--pn-surface-soft);
+    border: 1px solid rgba(227, 225, 218, 0.6);
+    border-radius: 1.25rem;
+  }
+
+  .pn-card-flush {
+    background: var(--pn-surface);
+    border: 1px solid rgba(227, 225, 218, 0.7);
+    border-radius: 1.5rem;
+  }
+
+  .pn-pill {
+    border-radius: 999px;
+  }
+
+  .pn-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    background: var(--pn-surface);
+    border: 1px solid var(--pn-line);
+    border-radius: 14px;
+    color: var(--pn-ink);
+    font-size: 14px;
+    line-height: 22px;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  }
+  .pn-input::placeholder { color: var(--pn-ink-muted); }
+  .pn-input:focus {
+    outline: none;
+    border-color: var(--pn-sage);
+    box-shadow: 0 0 0 3px rgba(79, 117, 99, 0.15);
+  }
+
+  .pn-search-pill {
+    height: 56px;
+    border-radius: 999px;
+    background: var(--pn-surface);
+    border: none;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+    padding-left: 24px;
+    padding-right: 16px;
+    width: 100%;
+    color: var(--pn-ink);
+    font-size: 14px;
+  }
+  .pn-search-pill::placeholder { color: var(--pn-ink-muted); }
+  .pn-search-pill:focus { outline: none; box-shadow: 0 12px 30px rgba(0,0,0,0.08), 0 0 0 3px rgba(79,117,99,0.15); }
+
+  .pn-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 20px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 22px;
+    transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 100ms ease;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .pn-btn:active { transform: translateY(0.5px); }
+  .pn-btn[disabled], .pn-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .pn-btn-primary {
+    background: var(--pn-sage);
+    color: #ffffff;
+    box-shadow: 0 14px 30px rgba(79, 117, 99, 0.22);
+  }
+  .pn-btn-primary:hover { background: var(--pn-sage-dark); }
+
+  .pn-btn-secondary {
+    background: var(--pn-surface);
+    color: var(--pn-ink);
+    border: 1px solid var(--pn-line);
+  }
+  .pn-btn-secondary:hover { background: var(--pn-surface-soft); }
+
+  .pn-btn-dark {
+    background: var(--pn-ink-action, #111114);
+    color: #ffffff;
+  }
+  .pn-btn-dark:hover { background: #000000; }
+
+  .pn-btn-danger {
+    background: var(--pn-danger);
+    color: #ffffff;
+  }
+  .pn-btn-danger:hover { background: #c44d4d; }
+
+  .pn-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    background: var(--pn-surface);
+    color: var(--pn-ink);
+    border: none;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+    transition: background 150ms ease, box-shadow 150ms ease;
+  }
+  .pn-icon-btn:hover { background: var(--pn-surface-soft); }
+
+  .pn-icon-btn-sm {
+    width: 40px;
+    height: 40px;
+  }
+
+  .pn-icon-btn-dark {
+    background: var(--pn-ink-action, #111114);
+    color: #ffffff;
+  }
+  .pn-icon-btn-dark:hover { background: #000000; }
+
+  .pn-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0.01em;
+  }
+  .pn-badge-success { background: var(--pn-ok-soft); color: var(--pn-sage); }
+  .pn-badge-warn    { background: var(--pn-warn-soft); color: #8c6210; }
+  .pn-badge-danger  { background: var(--pn-danger-soft); color: #9a3737; }
+  .pn-badge-neutral { background: var(--pn-surface-muted); color: var(--pn-ink-soft); }
+
+  .pn-divider {
+    height: 1px;
+    background: var(--pn-line);
+    border: none;
+    margin: 0;
+  }
+
+  .pn-h1 {
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--pn-ink);
+  }
+  .pn-h2 {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 700;
+    color: var(--pn-ink);
+    letter-spacing: -0.01em;
+  }
+  .pn-h3 {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+    color: var(--pn-ink);
+  }
+  .pn-metric {
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--pn-ink);
+  }
+  .pn-body { font-size: 14px; line-height: 22px; color: var(--pn-ink); }
+  .pn-label {
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 500;
+    color: var(--pn-ink-soft);
+    letter-spacing: 0.02em;
+  }
+
+  .pn-skeleton {
+    background: linear-gradient(90deg, #F1F0EC 0%, #F7F6F2 50%, #F1F0EC 100%);
+    background-size: 200% 100%;
+    border-radius: 12px;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  .pn-icon-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: var(--pn-sage-pale);
+    color: var(--pn-sage);
   }
 }
 

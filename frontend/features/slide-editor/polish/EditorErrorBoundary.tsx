@@ -48,24 +48,24 @@ export class EditorErrorBoundary extends React.Component<Props, State> {
     }
 
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-50 p-6">
-        <div className="max-w-md w-full bg-white border border-red-200 rounded-xl shadow-xl overflow-hidden">
-          <header className="px-5 py-4 bg-red-50 border-b border-red-200 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+      <div className="h-screen w-screen flex items-center justify-center bg-[#EDEBE6] p-6">
+        <div className="max-w-md w-full bg-white border border-[#F7E3E3] rounded-xl shadow-xl overflow-hidden">
+          <header className="px-5 py-4 bg-[#FCF1F1] border-b border-[#F7E3E3] flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-[#9a3737] flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <h2 className="text-sm font-bold text-red-900">The editor hit an error</h2>
-              <p className="text-[11px] text-red-700 mt-0.5">Your work is auto-saved — refreshing usually restores it.</p>
+              <p className="text-[11px] text-[#7a2929] mt-0.5">Your work is auto-saved — refreshing usually restores it.</p>
             </div>
           </header>
           <div className="px-5 py-4">
-            <pre className="text-[11px] bg-slate-100 border border-slate-200 rounded p-3 overflow-x-auto whitespace-pre-wrap break-all">
+            <pre className="text-[11px] bg-[#F1F0EC] border border-[#E3E1DA] rounded p-3 overflow-x-auto whitespace-pre-wrap break-all">
               {this.state.error.message || String(this.state.error)}
             </pre>
             {this.props.contextLabel && (
-              <p className="text-[10px] text-slate-500 mt-2">Context: {this.props.contextLabel}</p>
+              <p className="text-[10px] text-[#9A9A9A] mt-2">Context: {this.props.contextLabel}</p>
             )}
           </div>
-          <footer className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center gap-2">
+          <footer className="px-5 py-3 border-t border-[#E3E1DA] bg-[#EDEBE6] flex items-center gap-2">
             <button
               type="button"
               onClick={this.reset}
@@ -76,7 +76,7 @@ export class EditorErrorBoundary extends React.Component<Props, State> {
             </button>
             <a
               href="/dashboard"
-              className="flex-1 px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded flex items-center justify-center gap-1.5"
+              className="flex-1 px-3 py-1.5 text-xs font-semibold bg-white border border-[#E3E1DA] hover:bg-[#F1F0EC] text-[#111111] rounded flex items-center justify-center gap-1.5"
             >
               <Home className="w-3.5 h-3.5" />
               Dashboard

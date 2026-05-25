@@ -118,16 +118,16 @@ const VISUAL_TEMPLATES = [
 ];
 
 const colorClasses: Record<string, { bg: string; text: string; hover: string; icon: string; badge: string }> = {
-  blue: { bg: 'bg-blue-50', text: 'text-blue-900', hover: 'hover:bg-blue-100', icon: 'text-blue-600', badge: 'bg-blue-500' },
-  purple: { bg: 'bg-purple-50', text: 'text-purple-900', hover: 'hover:bg-purple-100', icon: 'text-purple-600', badge: 'bg-purple-500' },
-  green: { bg: 'bg-green-50', text: 'text-green-900', hover: 'hover:bg-green-100', icon: 'text-green-600', badge: 'bg-green-500' },
-  orange: { bg: 'bg-orange-50', text: 'text-orange-900', hover: 'hover:bg-orange-100', icon: 'text-orange-600', badge: 'bg-orange-500' },
-  pink: { bg: 'bg-pink-50', text: 'text-pink-900', hover: 'hover:bg-pink-100', icon: 'text-pink-600', badge: 'bg-pink-500' },
-  indigo: { bg: 'bg-indigo-50', text: 'text-indigo-900', hover: 'hover:bg-indigo-100', icon: 'text-indigo-600', badge: 'bg-indigo-500' },
-  teal: { bg: 'bg-teal-50', text: 'text-teal-900', hover: 'hover:bg-teal-100', icon: 'text-teal-600', badge: 'bg-teal-500' },
-  cyan: { bg: 'bg-cyan-50', text: 'text-cyan-900', hover: 'hover:bg-cyan-100', icon: 'text-cyan-600', badge: 'bg-cyan-500' },
+  blue: { bg: 'bg-[#EEF5F1]', text: 'text-[#1A2D24]', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#4F7563]', badge: 'bg-[#4F7563]' },
+  purple: { bg: 'bg-[#EEF5F1]', text: 'text-purple-900', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#4F7563]', badge: 'bg-[#4F7563]' },
+  green: { bg: 'bg-[#EEF5F1]', text: 'text-[#1A2D24]', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#4F7563]', badge: 'bg-[#4F7563]' },
+  orange: { bg: 'bg-[#FAEEDB]', text: 'text-orange-900', hover: 'hover:bg-[#F5E1B7]', icon: 'text-[#8c6210]', badge: 'bg-[#D9A441]' },
+  pink: { bg: 'bg-[#FCF1F1]', text: 'text-pink-900', hover: 'hover:bg-[#F7E3E3]', icon: 'text-[#9a3737]', badge: 'bg-[#D96A6A]' },
+  indigo: { bg: 'bg-[#EEF5F1]', text: 'text-indigo-900', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#355846]', badge: 'bg-[#4F7563]' },
+  teal: { bg: 'bg-[#EEF5F1]', text: 'text-teal-900', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#4F7563]', badge: 'bg-[#4F7563]' },
+  cyan: { bg: 'bg-[#EEF5F1]', text: 'text-cyan-900', hover: 'hover:bg-[#DDE8E1]', icon: 'text-[#4F7563]', badge: 'bg-[#4F7563]' },
   rose: { bg: 'bg-rose-50', text: 'text-rose-900', hover: 'hover:bg-rose-100', icon: 'text-rose-600', badge: 'bg-rose-500' },
-  amber: { bg: 'bg-amber-50', text: 'text-amber-900', hover: 'hover:bg-amber-100', icon: 'text-amber-600', badge: 'bg-amber-500' },
+  amber: { bg: 'bg-[#FAEEDB]', text: 'text-amber-900', hover: 'hover:bg-[#F5E1B7]', icon: 'text-[#8c6210]', badge: 'bg-[#D9A441]' },
 };
 
 export default function VisualStudioPage() {
@@ -213,10 +213,10 @@ export default function VisualStudioPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50/30">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200">
+      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-[#E3E1DA]">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/pdf-studio" className="text-slate-600 hover:text-slate-900 transition-colors">
+            <Link href="/pdf-studio" className="text-[#6B6B6B] hover:text-[#111111] transition-colors">
               <ArrowLeft className="w-6 h-6" />
             </Link>
             <div className="flex-1">
@@ -225,8 +225,8 @@ export default function VisualStudioPage() {
                   <Palette className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-900">Visual Design Studio</h1>
-                  <p className="text-sm text-slate-600">Create stunning visual documents with modern layouts</p>
+                  <h1 className="text-2xl font-bold text-[#111111]">Visual Design Studio</h1>
+                  <p className="text-sm text-[#6B6B6B]">Create stunning visual documents with modern layouts</p>
                 </div>
               </div>
             </div>
@@ -242,14 +242,14 @@ export default function VisualStudioPage() {
           className="text-center mb-12"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-orange-100 to-pink-100 border border-orange-200 mb-6">
-            <Sparkles className="w-4 h-4 text-orange-600" />
+            <Sparkles className="w-4 h-4 text-[#8c6210]" />
             <span className="text-sm font-semibold text-orange-900">Canva-Style Visual Templates</span>
           </div>
           
-          <h2 className="text-5xl font-bold text-slate-900 mb-4">
+          <h2 className="text-5xl font-bold text-[#111111] mb-4">
             Choose Your Visual Template
           </h2>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+          <p className="text-xl text-[#6B6B6B] max-w-3xl mx-auto">
             Professional flyers, one-pagers, brochures, and marketing materials with image-driven layouts
           </p>
         </motion.div>
@@ -263,7 +263,7 @@ export default function VisualStudioPage() {
               className={`px-6 py-2.5 rounded-full font-medium transition-all ${
                 selectedCategory === category
                   ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white shadow-lg'
-                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                  : 'bg-white text-[#111111] hover:bg-[#F1F0EC] border border-[#E3E1DA]'
               }`}
             >
               {category}
@@ -288,10 +288,10 @@ export default function VisualStudioPage() {
                 <button
                   onClick={() => !isCreating && handleCreateDocument(template.id)}
                   disabled={!!creatingDocument}
-                  className="w-full text-left group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:border-slate-300 hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                  className="w-full text-left group bg-white rounded-2xl overflow-hidden border border-[#E3E1DA] hover:border-[#C9C6BD] hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                 >
                   {/* SVG Preview thumbnail */}
-                  <div className="relative bg-slate-50 overflow-hidden" style={{ height: 160 }}>
+                  <div className="relative bg-[#EDEBE6] overflow-hidden" style={{ height: 160 }}>
                     <TemplatePreview
                       templateId={template.id}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -312,9 +312,9 @@ export default function VisualStudioPage() {
                       <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${colors.bg}`}>
                         <Icon className={`w-3.5 h-3.5 ${colors.icon}`} />
                       </div>
-                      <span className="font-semibold text-slate-900 text-sm">{template.name}</span>
+                      <span className="font-semibold text-[#111111] text-sm">{template.name}</span>
                     </div>
-                    <p className="text-xs text-slate-500 leading-relaxed">{template.description}</p>
+                    <p className="text-xs text-[#9A9A9A] leading-relaxed">{template.description}</p>
                   </div>
                 </button>
               </motion.div>
@@ -327,22 +327,22 @@ export default function VisualStudioPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="mt-20 text-center bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-12 text-white relative overflow-hidden"
+          className="mt-20 text-center bg-[#263F34] rounded-[28px] p-10 text-white relative overflow-hidden"
         >
-          <div className="absolute top-20 right-20 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 left-20 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute -top-20 right-20 w-72 h-72 bg-[#4F7563]/30 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-20 left-20 w-64 h-64 bg-[#7A988A]/20 rounded-full blur-3xl"></div>
           
           <div className="relative z-10">
             <h3 className="text-3xl font-bold mb-4">
               Need Something Custom?
             </h3>
-            <p className="text-slate-300 mb-6 max-w-2xl mx-auto text-lg">
+            <p className="text-[#C9C6BD] mb-6 max-w-2xl mx-auto text-lg">
               Try the Smart PDF Builder for universal content support, or use Structured Documents for guided business templates.
             </p>
             <div className="flex items-center justify-center gap-4">
               <Link
                 href="/pdf-studio/smart-builder"
-                className="px-8 py-4 bg-white text-slate-900 font-semibold rounded-xl hover:bg-slate-100 transition-colors shadow-lg"
+                className="px-8 py-4 bg-white text-[#111111] font-semibold rounded-xl hover:bg-[#F1F0EC] transition-colors shadow-lg"
               >
                 Smart PDF Builder
               </Link>

@@ -37,25 +37,25 @@ export const WorkspaceSettingsPage: React.FC<{ workspaceId: string }> = ({ works
   const [inviteOpen, setInviteOpen] = useState(false);
 
   if (detail.loading && !detail.workspace) {
-    return <div className="p-6 text-sm text-slate-500">Loading workspace…</div>;
+    return <div className="p-6 text-sm text-[#9A9A9A]">Loading workspace…</div>;
   }
   if (detail.error) {
-    return <div className="p-6 text-sm text-red-600">{detail.error}</div>;
+    return <div className="p-6 text-sm text-[#9a3737]">{detail.error}</div>;
   }
   if (!detail.workspace) {
-    return <div className="p-6 text-sm text-slate-500">Workspace not found.</div>;
+    return <div className="p-6 text-sm text-[#9A9A9A]">Workspace not found.</div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
-        <Link href="/dashboard" className="text-xs text-slate-500 hover:text-slate-900">← Dashboard</Link>
-        <div className="h-5 w-px bg-slate-200" />
-        <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <Settings2 className="w-4 h-4 text-slate-500" />
+    <div className="min-h-screen bg-[#EDEBE6]">
+      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
+        <Link href="/dashboard" className="text-xs text-[#9A9A9A] hover:text-[#111111]">← Dashboard</Link>
+        <div className="h-5 w-px bg-[#E3E1DA]" />
+        <h1 className="text-base font-bold text-[#111111] flex items-center gap-2">
+          <Settings2 className="w-4 h-4 text-[#9A9A9A]" />
           {detail.workspace.name}
         </h1>
-        <span className="text-[11px] uppercase tracking-wide text-slate-400 font-mono">Settings</span>
+        <span className="text-[11px] uppercase tracking-wide text-[#C9C6BD] font-mono">Settings</span>
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-[200px_1fr] gap-6">
@@ -68,7 +68,7 @@ export const WorkspaceSettingsPage: React.FC<{ workspaceId: string }> = ({ works
         </nav>
 
         {/* Main panel */}
-        <main className="bg-white border border-slate-200 rounded-lg p-6">
+        <main className="bg-white border border-[#E3E1DA] rounded-lg p-6">
           {tab === 'general'  && <GeneralTab  detail={detail} />}
           {tab === 'members'  && <MembersTab  detail={detail} onInvite={() => setInviteOpen(true)} />}
           {tab === 'invites'  && <InvitesTab  detail={detail} onInvite={() => setInviteOpen(true)} />}
@@ -91,7 +91,7 @@ const TabButton: React.FC<{
   <button
     onClick={onClick}
     className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded transition-colors ${
-      active ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+      active ? 'bg-[#EEF5F1] text-[#263F34]' : 'text-[#6B6B6B] hover:bg-[#F1F0EC] hover:text-[#111111]'
     }`}
   >
     <Icon className="w-3.5 h-3.5" /> {label}
@@ -134,42 +134,42 @@ const GeneralTab: React.FC<{ detail: ReturnType<typeof useWorkspaceDetail> }> = 
   return (
     <div className="space-y-5 max-w-lg">
       <div>
-        <h2 className="text-sm font-bold text-slate-900 mb-3">General</h2>
-        <label className="block text-xs font-semibold text-slate-700 mb-1">Name</label>
+        <h2 className="text-sm font-bold text-[#111111] mb-3">General</h2>
+        <label className="block text-xs font-semibold text-[#111111] mb-1">Name</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={!editable}
-          className="w-full h-8 px-2 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:bg-slate-50 disabled:text-slate-500"
+          className="w-full h-8 px-2 text-sm border border-[#C9C6BD] rounded focus:outline-none focus:ring-2 focus:ring-[#4F7563]/30 disabled:bg-[#EDEBE6] disabled:text-[#9A9A9A]"
         />
       </div>
       <div>
-        <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+        <label className="block text-xs font-semibold text-[#111111] mb-1">Description</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           disabled={!editable}
           rows={3}
-          className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:bg-slate-50"
+          className="w-full px-2 py-1.5 text-sm border border-[#C9C6BD] rounded resize-none focus:outline-none focus:ring-2 focus:ring-[#4F7563]/30 disabled:bg-[#EDEBE6]"
         />
       </div>
       <div className="flex items-center gap-2">
         <button
           onClick={save}
           disabled={!editable || !dirty || busy}
-          className="px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 text-xs font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {busy ? 'Saving…' : 'Save changes'}
         </button>
-        {saved && <span className="text-xs text-green-700">Saved</span>}
+        {saved && <span className="text-xs text-[#355846]">Saved</span>}
       </div>
 
       {can('workspace.delete') && (
-        <div className="border-t border-slate-200 pt-5">
-          <h3 className="text-xs font-bold text-red-700 uppercase tracking-wide mb-2">Danger zone</h3>
+        <div className="border-t border-[#E3E1DA] pt-5">
+          <h3 className="text-xs font-bold text-[#7a2929] uppercase tracking-wide mb-2">Danger zone</h3>
           <button
             onClick={handleDelete}
-            className="px-3 py-1.5 text-xs font-semibold text-red-700 border border-red-300 hover:bg-red-50 rounded inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 text-xs font-semibold text-[#7a2929] border border-[#F1D2D2] hover:bg-[#FCF1F1] rounded inline-flex items-center gap-1.5"
           >
             <Trash2 className="w-3 h-3" /> Delete workspace
           </button>
@@ -191,24 +191,24 @@ const MembersTab: React.FC<{
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-slate-900">Members ({detail.members.length})</h2>
+        <h2 className="text-sm font-bold text-[#111111]">Members ({detail.members.length})</h2>
         {can('member.invite') && (
           <button
             onClick={onInvite}
-            className="px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 text-xs font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded inline-flex items-center gap-1.5"
           >
             <UserPlus className="w-3 h-3" /> Invite
           </button>
         )}
       </div>
 
-      <div className="border border-slate-200 rounded-lg overflow-hidden">
+      <div className="border border-[#E3E1DA] rounded-lg overflow-hidden">
         <table className="w-full">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-[#EDEBE6] border-b border-[#E3E1DA]">
             <tr>
-              <th className="text-left text-[10px] font-bold uppercase tracking-wide text-slate-500 px-3 py-2">Member</th>
-              <th className="text-left text-[10px] font-bold uppercase tracking-wide text-slate-500 px-3 py-2">Joined</th>
-              <th className="text-left text-[10px] font-bold uppercase tracking-wide text-slate-500 px-3 py-2">Role</th>
+              <th className="text-left text-[10px] font-bold uppercase tracking-wide text-[#9A9A9A] px-3 py-2">Member</th>
+              <th className="text-left text-[10px] font-bold uppercase tracking-wide text-[#9A9A9A] px-3 py-2">Joined</th>
+              <th className="text-left text-[10px] font-bold uppercase tracking-wide text-[#9A9A9A] px-3 py-2">Role</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -235,32 +235,32 @@ const MemberRow: React.FC<{
   const canTransfer = can('ownership.transfer') && !isOwner;
 
   return (
-    <tr className="hover:bg-slate-50">
+    <tr className="hover:bg-[#EDEBE6]">
       <td className="px-3 py-2">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full bg-[#4F7563] text-white text-xs font-bold flex items-center justify-center">
             {(member.user.name || member.user.email).charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <div className="text-xs font-semibold text-slate-900 truncate">{member.user.name || member.user.email}</div>
-            {member.user.name && <div className="text-[10px] text-slate-500 truncate">{member.user.email}</div>}
+            <div className="text-xs font-semibold text-[#111111] truncate">{member.user.name || member.user.email}</div>
+            {member.user.name && <div className="text-[10px] text-[#9A9A9A] truncate">{member.user.email}</div>}
           </div>
         </div>
       </td>
-      <td className="px-3 py-2 text-[11px] text-slate-500">{relativeTime(member.joinedAt)}</td>
+      <td className="px-3 py-2 text-[11px] text-[#9A9A9A]">{relativeTime(member.joinedAt)}</td>
       <td className="px-3 py-2">
         {canChange ? (
           <select
             value={member.role}
             onChange={(e) => detail.changeRole(member.id, e.target.value as WorkspaceRole)}
-            className="text-xs border border-slate-300 rounded px-1.5 py-0.5"
+            className="text-xs border border-[#C9C6BD] rounded px-1.5 py-0.5"
           >
             {(['admin', 'editor', 'reviewer', 'viewer'] as const).map((r) => (
               <option key={r} value={r}>{ROLE_LABEL[r]}</option>
             ))}
           </select>
         ) : (
-          <span className="text-xs font-semibold text-slate-700">{ROLE_LABEL[member.role]}</span>
+          <span className="text-xs font-semibold text-[#111111]">{ROLE_LABEL[member.role]}</span>
         )}
       </td>
       <td className="px-3 py-2 text-right">
@@ -272,7 +272,7 @@ const MemberRow: React.FC<{
                   await detail.transferOwnership(member.user.id);
                 }
               }}
-              className="px-2 py-0.5 text-[10px] font-semibold text-purple-700 hover:bg-purple-50 rounded"
+              className="px-2 py-0.5 text-[10px] font-semibold text-[#355846] hover:bg-[#EEF5F1] rounded"
             >
               Transfer
             </button>
@@ -284,7 +284,7 @@ const MemberRow: React.FC<{
                   await detail.removeMember(member.id);
                 }
               }}
-              className="p-1 rounded text-red-600 hover:bg-red-50"
+              className="p-1 rounded text-[#9a3737] hover:bg-[#FCF1F1]"
               title="Remove"
             >
               <X className="w-3 h-3" />
@@ -306,44 +306,44 @@ const InvitesTab: React.FC<{
 }> = ({ detail, onInvite }) => {
   const { can } = useWorkspaceContext();
   if (!can('member.invite')) {
-    return <div className="text-sm text-slate-500">You don't have permission to view invitations.</div>;
+    return <div className="text-sm text-[#9A9A9A]">You don't have permission to view invitations.</div>;
   }
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-slate-900">Pending invitations ({detail.invites.length})</h2>
+        <h2 className="text-sm font-bold text-[#111111]">Pending invitations ({detail.invites.length})</h2>
         <button
           onClick={onInvite}
-          className="px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded inline-flex items-center gap-1.5"
+          className="px-3 py-1.5 text-xs font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded inline-flex items-center gap-1.5"
         >
           <UserPlus className="w-3 h-3" /> Invite
         </button>
       </div>
       {detail.invites.length === 0 ? (
-        <div className="text-sm text-slate-500 italic">No pending invitations.</div>
+        <div className="text-sm text-[#9A9A9A] italic">No pending invitations.</div>
       ) : (
-        <div className="border border-slate-200 rounded-lg overflow-hidden">
+        <div className="border border-[#E3E1DA] rounded-lg overflow-hidden">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-[#EDEBE6] border-b border-[#E3E1DA]">
               <tr>
-                <th className="text-left text-[10px] font-bold uppercase tracking-wide text-slate-500 px-3 py-2">Email</th>
-                <th className="text-left text-[10px] font-bold uppercase tracking-wide text-slate-500 px-3 py-2">Role</th>
-                <th className="text-left text-[10px] font-bold uppercase tracking-wide text-slate-500 px-3 py-2">Sent</th>
-                <th className="text-left text-[10px] font-bold uppercase tracking-wide text-slate-500 px-3 py-2">Expires</th>
+                <th className="text-left text-[10px] font-bold uppercase tracking-wide text-[#9A9A9A] px-3 py-2">Email</th>
+                <th className="text-left text-[10px] font-bold uppercase tracking-wide text-[#9A9A9A] px-3 py-2">Role</th>
+                <th className="text-left text-[10px] font-bold uppercase tracking-wide text-[#9A9A9A] px-3 py-2">Sent</th>
+                <th className="text-left text-[10px] font-bold uppercase tracking-wide text-[#9A9A9A] px-3 py-2">Expires</th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {detail.invites.map((inv) => (
-                <tr key={inv.id} className="hover:bg-slate-50">
-                  <td className="px-3 py-2 text-xs font-semibold text-slate-900">{inv.email}</td>
+                <tr key={inv.id} className="hover:bg-[#EDEBE6]">
+                  <td className="px-3 py-2 text-xs font-semibold text-[#111111]">{inv.email}</td>
                   <td className="px-3 py-2 text-xs">{ROLE_LABEL[inv.role]}</td>
-                  <td className="px-3 py-2 text-[11px] text-slate-500">{relativeTime(inv.createdAt)}</td>
-                  <td className="px-3 py-2 text-[11px] text-slate-500">{new Date(inv.expiresAt).toLocaleDateString()}</td>
+                  <td className="px-3 py-2 text-[11px] text-[#9A9A9A]">{relativeTime(inv.createdAt)}</td>
+                  <td className="px-3 py-2 text-[11px] text-[#9A9A9A]">{new Date(inv.expiresAt).toLocaleDateString()}</td>
                   <td className="px-3 py-2 text-right">
                     <button
                       onClick={() => detail.revokeInvite(inv.id)}
-                      className="text-[10px] font-semibold text-red-700 hover:bg-red-50 px-2 py-0.5 rounded"
+                      className="text-[10px] font-semibold text-[#7a2929] hover:bg-[#FCF1F1] px-2 py-0.5 rounded"
                     >
                       Revoke
                     </button>
@@ -367,21 +367,21 @@ const ActivityTab: React.FC<{ workspaceId: string; canAudit: boolean }> = ({ wor
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-          <Activity className="w-3.5 h-3.5 text-slate-500" /> Activity feed
+        <h2 className="text-sm font-bold text-[#111111] mb-3 flex items-center gap-2">
+          <Activity className="w-3.5 h-3.5 text-[#9A9A9A]" /> Activity feed
         </h2>
         {loading ? (
-          <div className="text-xs text-slate-400">Loading…</div>
+          <div className="text-xs text-[#C9C6BD]">Loading…</div>
         ) : activity.length === 0 ? (
-          <div className="text-xs text-slate-500 italic">No activity yet.</div>
+          <div className="text-xs text-[#9A9A9A] italic">No activity yet.</div>
         ) : (
           <ul className="space-y-1.5">
             {activity.slice(0, 50).map((a) => (
               <li key={a.id} className="text-xs flex items-baseline gap-2">
-                <span className="text-[10px] text-slate-400 font-mono">{relativeTime(a.createdAt)}</span>
-                <span className="font-semibold text-slate-800">{a.actor?.name || a.actor?.email || 'system'}</span>
-                <span className="text-slate-500">{a.type.replace(/_/g, ' ')}</span>
-                {a.entity?.name && <span className="text-slate-700 italic">— {a.entity.name}</span>}
+                <span className="text-[10px] text-[#C9C6BD] font-mono">{relativeTime(a.createdAt)}</span>
+                <span className="font-semibold text-[#111111]">{a.actor?.name || a.actor?.email || 'system'}</span>
+                <span className="text-[#9A9A9A]">{a.type.replace(/_/g, ' ')}</span>
+                {a.entity?.name && <span className="text-[#111111] italic">— {a.entity.name}</span>}
               </li>
             ))}
           </ul>
@@ -390,19 +390,19 @@ const ActivityTab: React.FC<{ workspaceId: string; canAudit: boolean }> = ({ wor
 
       {canAudit && (
         <section>
-          <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-            <Shield className="w-3.5 h-3.5 text-amber-600" /> Audit log
+          <h2 className="text-sm font-bold text-[#111111] mb-3 flex items-center gap-2">
+            <Shield className="w-3.5 h-3.5 text-[#8c6210]" /> Audit log
           </h2>
           {audit.length === 0 ? (
-            <div className="text-xs text-slate-500 italic">No admin actions logged.</div>
+            <div className="text-xs text-[#9A9A9A] italic">No admin actions logged.</div>
           ) : (
             <ul className="space-y-1.5">
               {audit.slice(0, 50).map((a) => (
                 <li key={a.id} className="text-xs flex items-baseline gap-2">
-                  <span className="text-[10px] text-slate-400 font-mono">{relativeTime(a.createdAt)}</span>
-                  <span className="font-semibold text-slate-800">{a.actor?.name || a.actor?.email || 'system'}</span>
-                  <span className="text-amber-700">{a.action.replace(/_/g, ' ')}</span>
-                  {a.targetType && <span className="text-[10px] text-slate-400">{a.targetType}:{a.targetId?.slice(0, 8)}</span>}
+                  <span className="text-[10px] text-[#C9C6BD] font-mono">{relativeTime(a.createdAt)}</span>
+                  <span className="font-semibold text-[#111111]">{a.actor?.name || a.actor?.email || 'system'}</span>
+                  <span className="text-[#735008]">{a.action.replace(/_/g, ' ')}</span>
+                  {a.targetType && <span className="text-[10px] text-[#C9C6BD]">{a.targetType}:{a.targetId?.slice(0, 8)}</span>}
                 </li>
               ))}
             </ul>

@@ -57,13 +57,13 @@ export function QualityDimensionChart({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-          <p className="font-semibold text-gray-900">{data.dimension}</p>
-          <p className="text-sm text-gray-600 mb-2">{data.description}</p>
-          <p className="text-lg font-bold text-indigo-600">{data.value}/100</p>
-          <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="bg-white p-3 rounded-lg shadow-lg border border-[#E3E1DA]">
+          <p className="font-semibold text-[#111111]">{data.dimension}</p>
+          <p className="text-sm text-[#6B6B6B] mb-2">{data.description}</p>
+          <p className="text-lg font-bold text-[#355846]">{data.value}/100</p>
+          <div className="mt-2 h-2 bg-[#E3E1DA] rounded-full overflow-hidden">
             <div
-              className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+              className="h-full bg-[#4F7563] rounded-full transition-all duration-300"
               style={{ width: `${data.value}%` }}
             />
           </div>
@@ -98,11 +98,11 @@ export function QualityDimensionChart({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{title}</span>
-          <span className="text-sm font-normal text-gray-600">
-            Avg: <span className="font-semibold text-gray-900">{averageScore}</span>
+          <span className="text-sm font-normal text-[#6B6B6B]">
+            Avg: <span className="font-semibold text-[#111111]">{averageScore}</span>
           </span>
         </CardTitle>
-        {description && <p className="text-sm text-gray-600 mt-1">{description}</p>}
+        {description && <p className="text-sm text-[#6B6B6B] mt-1">{description}</p>}
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -148,9 +148,9 @@ export function QualityDimensionChart({
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: getColor(item.value) }}
                 />
-                <span className="text-sm text-gray-700">{item.dimension}</span>
+                <span className="text-sm text-[#111111]">{item.dimension}</span>
               </div>
-              <span className="text-sm font-semibold text-gray-900">{item.value}/100</span>
+              <span className="text-sm font-semibold text-[#111111]">{item.value}/100</span>
             </div>
           ))}
         </div>

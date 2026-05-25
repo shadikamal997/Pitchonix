@@ -78,24 +78,24 @@ export default function CareerDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#EDEBE6]">
       {toast && (
         <div className={`fixed top-4 right-4 z-50 max-w-sm border rounded-lg shadow-lg px-3 py-2 text-xs ${
-          toast.tone === 'error' ? 'bg-red-50 border-red-200 text-red-900' : 'bg-green-50 border-green-200 text-green-900'
+          toast.tone === 'error' ? 'bg-[#FCF1F1] border-[#F7E3E3] text-red-900' : 'bg-[#EEF5F1] border-[#DDE8E1] text-[#1A2D24]'
         }`}>
           {toast.msg}
         </div>
       )}
-      <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
-        <Link href="/career" className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1">
+      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
+        <Link href="/career" className="text-xs text-[#9A9A9A] hover:text-[#111111] flex items-center gap-1">
           <ArrowLeft className="w-3 h-3" /> Career
         </Link>
-        <div className="h-5 w-px bg-slate-200" />
-        <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-purple-600" /> Career Intelligence Dashboard
+        <div className="h-5 w-px bg-[#E3E1DA]" />
+        <h1 className="text-base font-bold text-[#111111] flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-[#4F7563]" /> Career Intelligence Dashboard
         </h1>
         <Link href="/career/dashboard/compare"
-          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold border border-purple-300 text-purple-700 hover:bg-purple-50 rounded">
+          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold border border-[#A8B9AE] text-[#355846] hover:bg-[#EEF5F1] rounded">
           <GitCompare className="w-3.5 h-3.5" /> Compare snapshots
         </Link>
         <Link href="/career/analyze"
@@ -115,7 +115,7 @@ export default function CareerDashboardPage() {
 
         {/* Benchmark + Variants */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card title="Benchmark vs industry" icon={<Award className="w-4 h-4 text-purple-600" />}>
+          <Card title="Benchmark vs industry" icon={<Award className="w-4 h-4 text-[#4F7563]" />}>
             {latestBenchmark?.analysisJson ? (
               <BenchmarkPanel report={latestBenchmark.analysisJson} />
             ) : (
@@ -123,17 +123,17 @@ export default function CareerDashboardPage() {
             )}
           </Card>
 
-          <Card title="Recent CV documents" icon={<FileText className="w-4 h-4 text-purple-600" />}>
+          <Card title="Recent CV documents" icon={<FileText className="w-4 h-4 text-[#4F7563]" />}>
             {docs.length === 0 ? (
               <EmptyHint text="No CV documents yet. Create one from /career or run a variant batch." />
             ) : (
               <ul className="space-y-1">
                 {docs.slice(0, 6).map((d: any) => (
-                  <li key={d.id} className="flex items-center gap-2 text-xs border border-slate-200 rounded px-2 py-1.5">
-                    <Briefcase className="w-3 h-3 text-slate-400" />
+                  <li key={d.id} className="flex items-center gap-2 text-xs border border-[#E3E1DA] rounded px-2 py-1.5">
+                    <Briefcase className="w-3 h-3 text-[#C9C6BD]" />
                     <span className="flex-1 truncate">{d.title}</span>
-                    {d.variant && <span className="text-[10px] bg-purple-100 text-purple-800 px-1 py-0.5 rounded">{d.variant}</span>}
-                    <Link href={`/career/builder/${d.id}`} className="text-[11px] text-blue-600 hover:underline">Open →</Link>
+                    {d.variant && <span className="text-[10px] bg-[#DDE8E1] text-purple-800 px-1 py-0.5 rounded">{d.variant}</span>}
+                    <Link href={`/career/builder/${d.id}`} className="text-[11px] text-[#4F7563] hover:underline">Open →</Link>
                   </li>
                 ))}
               </ul>
@@ -144,16 +144,16 @@ export default function CareerDashboardPage() {
         {/* Analysis history */}
         <Card
           title="Analysis history"
-          icon={<Clock className="w-4 h-4 text-purple-600" />}
+          icon={<Clock className="w-4 h-4 text-[#4F7563]" />}
           action={
             <div className="flex items-center gap-2">
               <button onClick={loadSnapshots} disabled={busy}
-                className="text-[11px] text-blue-600 hover:underline disabled:opacity-50 inline-flex items-center gap-1">
+                className="text-[11px] text-[#4F7563] hover:underline disabled:opacity-50 inline-flex items-center gap-1">
                 {busy && <Loader2 className="w-3 h-3 animate-spin" />} Refresh
               </button>
               {snapshots.length > 0 && (
                 <button onClick={wipeHistory}
-                  className="text-[11px] text-red-600 hover:underline inline-flex items-center gap-1">
+                  className="text-[11px] text-[#9a3737] hover:underline inline-flex items-center gap-1">
                   <Trash2 className="w-3 h-3" /> Delete all
                 </button>
               )}
@@ -165,15 +165,15 @@ export default function CareerDashboardPage() {
           ) : (
             <ul className="space-y-1">
               {snapshots.map((s) => (
-                <li key={s.id} className="flex items-center gap-2 text-xs border border-slate-200 rounded px-2 py-1.5">
-                  <span className="font-mono text-[10px] uppercase bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{s.kind}</span>
+                <li key={s.id} className="flex items-center gap-2 text-xs border border-[#E3E1DA] rounded px-2 py-1.5">
+                  <span className="font-mono text-[10px] uppercase bg-[#F1F0EC] text-[#6B6B6B] px-1.5 py-0.5 rounded">{s.kind}</span>
                   <span className="flex-1 truncate">{s.label || `Snapshot ${new Date(s.createdAt).toLocaleString()}`}</span>
-                  {s.score    != null && <span className="text-[10px] bg-blue-100 text-blue-800 px-1 py-0.5 rounded">CV {s.score}</span>}
-                  {s.atsScore != null && <span className="text-[10px] bg-green-100 text-green-800 px-1 py-0.5 rounded">ATS {s.atsScore}</span>}
-                  <span className="text-[10px] text-slate-400">{new Date(s.createdAt).toLocaleDateString()}</span>
-                  <Link href={`/career/analyze?restore=${s.id}`} className="text-[11px] text-blue-600 hover:underline">Restore →</Link>
+                  {s.score    != null && <span className="text-[10px] bg-[#DDE8E1] text-[#263F34] px-1 py-0.5 rounded">CV {s.score}</span>}
+                  {s.atsScore != null && <span className="text-[10px] bg-[#DDE8E1] text-[#263F34] px-1 py-0.5 rounded">ATS {s.atsScore}</span>}
+                  <span className="text-[10px] text-[#C9C6BD]">{new Date(s.createdAt).toLocaleDateString()}</span>
+                  <Link href={`/career/analyze?restore=${s.id}`} className="text-[11px] text-[#4F7563] hover:underline">Restore →</Link>
                   <button onClick={() => deleteSnapshot(s.id)}
-                    className="text-[11px] text-red-600 hover:underline inline-flex items-center gap-1">
+                    className="text-[11px] text-[#9a3737] hover:underline inline-flex items-center gap-1">
                     <Trash2 className="w-3 h-3" /> Delete
                   </button>
                 </li>
@@ -183,30 +183,30 @@ export default function CareerDashboardPage() {
         </Card>
 
         {/* Phase 42.8G — Import history card */}
-        <Card title="Import history" icon={<FileText className="w-4 h-4 text-purple-600" />}>
+        <Card title="Import history" icon={<FileText className="w-4 h-4 text-[#4F7563]" />}>
           {imports.length === 0 ? (
             <EmptyHint text="No CV imports yet. Each upload from /career creates a record here." />
           ) : (
             <ul className="space-y-1">
               {imports.slice(0, 15).map((s: any) => {
                 const ev = s.analysisJson || {};
-                const tone = ev.confidenceBand === 'excellent' ? 'bg-green-100 text-green-800'
-                  : ev.confidenceBand === 'good'     ? 'bg-blue-100 text-blue-800'
-                  : ev.confidenceBand === 'partial'  ? 'bg-amber-100 text-amber-800'
-                                                     : 'bg-red-100 text-red-800';
+                const tone = ev.confidenceBand === 'excellent' ? 'bg-[#DDE8E1] text-[#263F34]'
+                  : ev.confidenceBand === 'good'     ? 'bg-[#DDE8E1] text-[#263F34]'
+                  : ev.confidenceBand === 'partial'  ? 'bg-[#F5E1B7] text-amber-800'
+                                                     : 'bg-[#F7E3E3] text-[#7a2929]';
                 return (
-                  <li key={s.id} className="flex items-center gap-2 text-xs border border-slate-200 rounded px-2 py-1.5">
-                    <span className="font-mono text-[10px] uppercase bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{(ev.mimetype || '').split('/')[1] || 'file'}</span>
+                  <li key={s.id} className="flex items-center gap-2 text-xs border border-[#E3E1DA] rounded px-2 py-1.5">
+                    <span className="font-mono text-[10px] uppercase bg-[#F1F0EC] text-[#6B6B6B] px-1.5 py-0.5 rounded">{(ev.mimetype || '').split('/')[1] || 'file'}</span>
                     <span className="flex-1 truncate">{s.label}</span>
                     {s.score != null && <span className={`text-[10px] px-1 py-0.5 rounded ${tone}`}>{s.score} · {ev.confidenceBand || ''}</span>}
-                    {ev.ocrUsed && <span className="text-[10px] bg-blue-100 text-blue-800 px-1 py-0.5 rounded">OCR</span>}
-                    <span className="text-[10px] text-slate-400">{ev.durationMs ? `${(ev.durationMs/1000).toFixed(1)}s` : ''}</span>
-                    <span className="text-[10px] text-slate-400">{new Date(s.createdAt).toLocaleDateString()}</span>
+                    {ev.ocrUsed && <span className="text-[10px] bg-[#DDE8E1] text-[#263F34] px-1 py-0.5 rounded">OCR</span>}
+                    <span className="text-[10px] text-[#C9C6BD]">{ev.durationMs ? `${(ev.durationMs/1000).toFixed(1)}s` : ''}</span>
+                    <span className="text-[10px] text-[#C9C6BD]">{new Date(s.createdAt).toLocaleDateString()}</span>
                     <button onClick={async () => {
                       try { await api.delete(`/career/import/history/${s.id}`); setImports((x) => x.filter((y) => y.id !== s.id)); }
                       catch (e: any) { setToast({ tone: 'error', msg: e?.response?.data?.message || 'Delete failed' }); }
                     }}
-                      className="text-[11px] text-red-600 hover:underline inline-flex items-center gap-1">
+                      className="text-[11px] text-[#9a3737] hover:underline inline-flex items-center gap-1">
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </li>
@@ -218,33 +218,33 @@ export default function CareerDashboardPage() {
 
         {/* Quick links */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <Link href="/career/analyze" className="block p-3 bg-white border border-slate-200 rounded hover:border-purple-400 hover:bg-purple-50/30">
+          <Link href="/career/analyze" className="block p-3 bg-white border border-[#E3E1DA] rounded hover:border-purple-400 hover:bg-[#EEF5F1]/30">
             <div className="flex items-center gap-2 font-semibold">
-              <Sparkles className="w-4 h-4 text-purple-600" /> Improve Existing CV
-              <ChevronRight className="w-3 h-3 ml-auto text-slate-400" />
+              <Sparkles className="w-4 h-4 text-[#4F7563]" /> Improve Existing CV
+              <ChevronRight className="w-3 h-3 ml-auto text-[#C9C6BD]" />
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Upload → analyze → apply fixes → choose template → export.</p>
+            <p className="text-[11px] text-[#9A9A9A] mt-1">Upload → analyze → apply fixes → choose template → export.</p>
           </Link>
-          <Link href="/career?create=cv" className="block p-3 bg-white border border-slate-200 rounded hover:border-purple-400 hover:bg-purple-50/30">
+          <Link href="/career?create=cv" className="block p-3 bg-white border border-[#E3E1DA] rounded hover:border-purple-400 hover:bg-[#EEF5F1]/30">
             <div className="flex items-center gap-2 font-semibold">
-              <FileText className="w-4 h-4 text-purple-600" /> Create new CV
-              <ChevronRight className="w-3 h-3 ml-auto text-slate-400" />
+              <FileText className="w-4 h-4 text-[#4F7563]" /> Create new CV
+              <ChevronRight className="w-3 h-3 ml-auto text-[#C9C6BD]" />
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Blank document, pick a template, fill in the builder.</p>
+            <p className="text-[11px] text-[#9A9A9A] mt-1">Blank document, pick a template, fill in the builder.</p>
           </Link>
-          <Link href="/career" className="block p-3 bg-white border border-slate-200 rounded hover:border-purple-400 hover:bg-purple-50/30">
+          <Link href="/career" className="block p-3 bg-white border border-[#E3E1DA] rounded hover:border-purple-400 hover:bg-[#EEF5F1]/30">
             <div className="flex items-center gap-2 font-semibold">
-              <TrendingUp className="w-4 h-4 text-purple-600" /> All career docs
-              <ChevronRight className="w-3 h-3 ml-auto text-slate-400" />
+              <TrendingUp className="w-4 h-4 text-[#4F7563]" /> All career docs
+              <ChevronRight className="w-3 h-3 ml-auto text-[#C9C6BD]" />
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">CV / Resume / Cover Letter / Portfolio workspace.</p>
+            <p className="text-[11px] text-[#9A9A9A] mt-1">CV / Resume / Cover Letter / Portfolio workspace.</p>
           </Link>
-          <Link href="/settings/cv-import-mappings" className="block p-3 bg-white border border-slate-200 rounded hover:border-purple-400 hover:bg-purple-50/30">
+          <Link href="/settings/cv-import-mappings" className="block p-3 bg-white border border-[#E3E1DA] rounded hover:border-purple-400 hover:bg-[#EEF5F1]/30">
             <div className="flex items-center gap-2 font-semibold">
-              <FileText className="w-4 h-4 text-purple-600" /> Import mappings
-              <ChevronRight className="w-3 h-3 ml-auto text-slate-400" />
+              <FileText className="w-4 h-4 text-[#4F7563]" /> Import mappings
+              <ChevronRight className="w-3 h-3 ml-auto text-[#C9C6BD]" />
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Manage saved "Career Highlights → Experience" mappings.</p>
+            <p className="text-[11px] text-[#9A9A9A] mt-1">Manage saved "Career Highlights → Experience" mappings.</p>
           </Link>
         </div>
       </div>
@@ -259,10 +259,10 @@ export default function CareerDashboardPage() {
 const ScoreTile: React.FC<{ label: string; value?: number; tone: 'auto' | 'green' | 'amber' | 'red' }> = ({ label, value }) => {
   const v = typeof value === 'number' ? value : null;
   const t = v == null ? 'gray' : v >= 80 ? 'green' : v >= 60 ? 'amber' : 'red';
-  const colour = t === 'green' ? 'bg-green-50 border-green-200 text-green-700'
-              : t === 'amber' ? 'bg-amber-50 border-amber-200 text-amber-700'
-              : t === 'red'   ? 'bg-red-50 border-red-200 text-red-700'
-                              : 'bg-slate-50 border-slate-200 text-slate-500';
+  const colour = t === 'green' ? 'bg-[#EEF5F1] border-[#DDE8E1] text-[#355846]'
+              : t === 'amber' ? 'bg-[#FAEEDB] border-[#F2DCAE] text-[#735008]'
+              : t === 'red'   ? 'bg-[#FCF1F1] border-[#F7E3E3] text-[#7a2929]'
+                              : 'bg-[#EDEBE6] border-[#E3E1DA] text-[#9A9A9A]';
   return (
     <div className={`border rounded p-3 ${colour}`}>
       <div className="text-[10px] uppercase tracking-wide opacity-80">{label}</div>
@@ -274,11 +274,11 @@ const ScoreTile: React.FC<{ label: string; value?: number; tone: 'auto' | 'green
 };
 
 const Card: React.FC<{ title: string; icon?: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }> = ({ title, icon, action, children }) => (
-  <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+  <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         {icon}
-        <h2 className="text-sm font-bold text-slate-900">{title}</h2>
+        <h2 className="text-sm font-bold text-[#111111]">{title}</h2>
       </div>
       <div>{action}</div>
     </div>
@@ -287,7 +287,7 @@ const Card: React.FC<{ title: string; icon?: React.ReactNode; action?: React.Rea
 );
 
 const EmptyHint: React.FC<{ text: string }> = ({ text }) => (
-  <p className="text-[11px] text-slate-500 italic">{text}</p>
+  <p className="text-[11px] text-[#9A9A9A] italic">{text}</p>
 );
 
 const BenchmarkPanel: React.FC<{ report: any }> = ({ report }) => {
@@ -296,24 +296,24 @@ const BenchmarkPanel: React.FC<{ report: any }> = ({ report }) => {
     <div className="space-y-1.5">
       {(Object.values(bands) as any[]).map((b, i) => {
         const v = Math.max(0, Math.min(100, b.value));
-        const fill = b.band === 'top10' ? 'bg-green-500'
-                  : b.band === 'aboveAvg' ? 'bg-blue-500'
-                  : b.band === 'average' ? 'bg-amber-500'
-                                          : 'bg-red-500';
+        const fill = b.band === 'top10' ? 'bg-[#4F7563]'
+                  : b.band === 'aboveAvg' ? 'bg-[#4F7563]'
+                  : b.band === 'average' ? 'bg-[#D9A441]'
+                                          : 'bg-[#D96A6A]';
         return (
           <div key={i}>
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-slate-700">{b.metric}</span>
-              <span className="text-slate-500">{v}{b.unit === 'percent' ? '%' : ''} <span className="text-[10px] opacity-70">/ industry {b.industry} · top10 {b.top10}</span></span>
+              <span className="font-semibold text-[#111111]">{b.metric}</span>
+              <span className="text-[#9A9A9A]">{v}{b.unit === 'percent' ? '%' : ''} <span className="text-[10px] opacity-70">/ industry {b.industry} · top10 {b.top10}</span></span>
             </div>
-            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mt-0.5">
+            <div className="h-1.5 w-full bg-[#F1F0EC] rounded-full overflow-hidden mt-0.5">
               <div className={`h-full ${fill}`} style={{ width: `${v}%` }} />
             </div>
           </div>
         );
       })}
       {(report?.notes || []).map((n: string, i: number) => (
-        <p key={i} className="text-[11px] text-slate-500 italic mt-1">{n}</p>
+        <p key={i} className="text-[11px] text-[#9A9A9A] italic mt-1">{n}</p>
       ))}
     </div>
   );

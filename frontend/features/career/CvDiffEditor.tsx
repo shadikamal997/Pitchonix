@@ -91,31 +91,31 @@ export const CvDiffEditor: React.FC<Props> = ({ original, improved, onChange }) 
   }, [rows]);
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg">
+    <div className="bg-white border border-[#E3E1DA] rounded-lg">
       {/* Toolbar */}
-      <div className="px-4 py-2 border-b border-slate-100 flex items-center gap-3 bg-slate-50/60">
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-700">Before / After</div>
-        <div className="flex items-center gap-3 text-[11px] text-slate-600">
-          <span className="inline-flex items-center gap-1"><FilePlus  className="w-3 h-3 text-green-600" /> {summary.added} added</span>
-          <span className="inline-flex items-center gap-1"><FileMinus className="w-3 h-3 text-red-600"   /> {summary.removed} removed</span>
-          <span className="inline-flex items-center gap-1"><FileEdit  className="w-3 h-3 text-amber-600" /> {summary.modified} modified</span>
+      <div className="px-4 py-2 border-b border-[#F1F0EC] flex items-center gap-3 bg-[#EDEBE6]/60">
+        <div className="text-xs font-bold uppercase tracking-wider text-[#111111]">Before / After</div>
+        <div className="flex items-center gap-3 text-[11px] text-[#6B6B6B]">
+          <span className="inline-flex items-center gap-1"><FilePlus  className="w-3 h-3 text-[#4F7563]" /> {summary.added} added</span>
+          <span className="inline-flex items-center gap-1"><FileMinus className="w-3 h-3 text-[#9a3737]"   /> {summary.removed} removed</span>
+          <span className="inline-flex items-center gap-1"><FileEdit  className="w-3 h-3 text-[#8c6210]" /> {summary.modified} modified</span>
         </div>
         <div className="ml-auto flex items-center gap-1">
           <button onClick={() => setMode('side')}
-            className={`h-7 px-2 text-[11px] rounded inline-flex items-center gap-1 ${mode === 'side' ? 'bg-blue-600 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-100'}`}>
+            className={`h-7 px-2 text-[11px] rounded inline-flex items-center gap-1 ${mode === 'side' ? 'bg-[#4F7563] text-white' : 'border border-[#C9C6BD] text-[#6B6B6B] hover:bg-[#F1F0EC]'}`}>
             <Columns className="w-3 h-3" /> Side-by-side
           </button>
           <button onClick={() => setMode('unified')}
-            className={`h-7 px-2 text-[11px] rounded inline-flex items-center gap-1 ${mode === 'unified' ? 'bg-blue-600 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-100'}`}>
+            className={`h-7 px-2 text-[11px] rounded inline-flex items-center gap-1 ${mode === 'unified' ? 'bg-[#4F7563] text-white' : 'border border-[#C9C6BD] text-[#6B6B6B] hover:bg-[#F1F0EC]'}`}>
             <AlignLeft className="w-3 h-3" /> Unified
           </button>
-          <span className="h-5 w-px bg-slate-200 mx-1" />
+          <span className="h-5 w-px bg-[#E3E1DA] mx-1" />
           <button onClick={acceptAll}
-            className="h-7 px-2 text-[11px] font-semibold bg-green-600 hover:bg-green-700 text-white rounded inline-flex items-center gap-1">
+            className="h-7 px-2 text-[11px] font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded inline-flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" /> Accept all
           </button>
           <button onClick={rejectAll}
-            className="h-7 px-2 text-[11px] font-semibold border border-red-300 text-red-700 hover:bg-red-50 rounded inline-flex items-center gap-1">
+            className="h-7 px-2 text-[11px] font-semibold border border-[#F1D2D2] text-[#7a2929] hover:bg-[#FCF1F1] rounded inline-flex items-center gap-1">
             <X className="w-3 h-3" /> Reject all
           </button>
         </div>
@@ -139,7 +139,7 @@ export const CvDiffEditor: React.FC<Props> = ({ original, improved, onChange }) 
           />
         ))}
         {rows.length === 0 && (
-          <div className="text-center py-12 text-xs text-slate-500 italic">No differences.</div>
+          <div className="text-center py-12 text-xs text-[#9A9A9A] italic">No differences.</div>
         )}
       </div>
     </div>
@@ -164,24 +164,24 @@ const SectionBlock: React.FC<{
   const hasChanges = changed.length > 0;
 
   return (
-    <section className="border border-slate-200 rounded">
-      <header className="flex items-center justify-between px-3 py-1.5 bg-slate-50 border-b border-slate-200">
-        <button onClick={onToggle} className="text-xs font-bold text-slate-800 inline-flex items-center gap-2">
+    <section className="border border-[#E3E1DA] rounded">
+      <header className="flex items-center justify-between px-3 py-1.5 bg-[#EDEBE6] border-b border-[#E3E1DA]">
+        <button onClick={onToggle} className="text-xs font-bold text-[#111111] inline-flex items-center gap-2">
           <span className="w-3 inline-block text-center">{collapsed ? '▸' : '▾'}</span>
           {section}
-          <span className="text-[10px] text-slate-500 font-normal">({changed.length} changed)</span>
+          <span className="text-[10px] text-[#9A9A9A] font-normal">({changed.length} changed)</span>
         </button>
         {hasChanges && (
           <div className="flex items-center gap-1">
-            <button onClick={onAcceptSection} className="h-6 px-1.5 text-[10px] font-semibold text-green-700 hover:bg-green-50 rounded">Accept section</button>
-            <button onClick={onRejectSection} className="h-6 px-1.5 text-[10px] font-semibold text-red-700 hover:bg-red-50 rounded">Reject section</button>
+            <button onClick={onAcceptSection} className="h-6 px-1.5 text-[10px] font-semibold text-[#355846] hover:bg-[#EEF5F1] rounded">Accept section</button>
+            <button onClick={onRejectSection} className="h-6 px-1.5 text-[10px] font-semibold text-[#7a2929] hover:bg-[#FCF1F1] rounded">Reject section</button>
           </div>
         )}
       </header>
       {!collapsed && (
         <div>
           {changed.length === 0 ? (
-            <div className="px-3 py-2 text-[11px] text-slate-400 italic">no changes</div>
+            <div className="px-3 py-2 text-[11px] text-[#C9C6BD] italic">no changes</div>
           ) : changed.map((r) =>
             mode === 'side'
               ? <SideRow key={r.id} row={r} onAccept={onAccept} onReject={onReject} />
@@ -194,19 +194,19 @@ const SectionBlock: React.FC<{
 };
 
 const SideRow: React.FC<{ row: DiffRow; onAccept: (r: DiffRow) => void; onReject: (r: DiffRow) => void }> = ({ row, onAccept, onReject }) => (
-  <div className="grid grid-cols-[120px_1fr_1fr_80px] gap-2 px-3 py-2 border-b border-slate-100 text-[11px]">
-    <div className="text-slate-500 font-mono">{row.field}</div>
-    <div className={`p-1.5 rounded ${row.status === 'added' ? 'bg-slate-100 text-slate-400 italic' : 'bg-red-50 text-red-900'}`}>
+  <div className="grid grid-cols-[120px_1fr_1fr_80px] gap-2 px-3 py-2 border-b border-[#F1F0EC] text-[11px]">
+    <div className="text-[#9A9A9A] font-mono">{row.field}</div>
+    <div className={`p-1.5 rounded ${row.status === 'added' ? 'bg-[#F1F0EC] text-[#C9C6BD] italic' : 'bg-[#FCF1F1] text-red-900'}`}>
       {renderValue(row.original) || <span className="italic opacity-50">—</span>}
     </div>
-    <div className={`p-1.5 rounded ${row.status === 'removed' ? 'bg-slate-100 text-slate-400 italic' : 'bg-green-50 text-green-900'}`}>
+    <div className={`p-1.5 rounded ${row.status === 'removed' ? 'bg-[#F1F0EC] text-[#C9C6BD] italic' : 'bg-[#EEF5F1] text-green-900'}`}>
       {renderValue(row.improved) || <span className="italic opacity-50">—</span>}
     </div>
     <div className="flex items-center justify-end gap-0.5">
-      <button title="Accept" onClick={() => onAccept(row)} className="h-6 w-6 inline-flex items-center justify-center text-green-700 hover:bg-green-50 rounded">
+      <button title="Accept" onClick={() => onAccept(row)} className="h-6 w-6 inline-flex items-center justify-center text-[#355846] hover:bg-[#EEF5F1] rounded">
         <CheckCircle2 className="w-3.5 h-3.5" />
       </button>
-      <button title="Reject" onClick={() => onReject(row)} className="h-6 w-6 inline-flex items-center justify-center text-red-700 hover:bg-red-50 rounded">
+      <button title="Reject" onClick={() => onReject(row)} className="h-6 w-6 inline-flex items-center justify-center text-[#7a2929] hover:bg-[#FCF1F1] rounded">
         <X className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -214,19 +214,19 @@ const SideRow: React.FC<{ row: DiffRow; onAccept: (r: DiffRow) => void; onReject
 );
 
 const UnifiedRow: React.FC<{ row: DiffRow; onAccept: (r: DiffRow) => void; onReject: (r: DiffRow) => void }> = ({ row, onAccept, onReject }) => (
-  <div className="px-3 py-1.5 border-b border-slate-100 text-[11px] font-mono">
-    <div className="text-slate-500 mb-1">{row.section}.{row.field}</div>
+  <div className="px-3 py-1.5 border-b border-[#F1F0EC] text-[11px] font-mono">
+    <div className="text-[#9A9A9A] mb-1">{row.section}.{row.field}</div>
     {row.status !== 'added' && (
-      <div className="pl-3 border-l-2 border-red-400 text-red-800 bg-red-50/60 py-1 pr-2">- {renderValue(row.original) || '∅'}</div>
+      <div className="pl-3 border-l-2 border-red-400 text-[#7a2929] bg-[#FCF1F1]/60 py-1 pr-2">- {renderValue(row.original) || '∅'}</div>
     )}
     {row.status !== 'removed' && (
-      <div className="pl-3 border-l-2 border-green-400 text-green-800 bg-green-50/60 py-1 pr-2">+ {renderValue(row.improved) || '∅'}</div>
+      <div className="pl-3 border-l-2 border-green-400 text-green-800 bg-[#EEF5F1]/60 py-1 pr-2">+ {renderValue(row.improved) || '∅'}</div>
     )}
     <div className="flex items-center justify-end gap-0.5 mt-1">
-      <button onClick={() => onAccept(row)} className="h-5 px-1 text-[10px] text-green-700 hover:bg-green-50 rounded inline-flex items-center gap-1">
+      <button onClick={() => onAccept(row)} className="h-5 px-1 text-[10px] text-[#355846] hover:bg-[#EEF5F1] rounded inline-flex items-center gap-1">
         <CheckCircle2 className="w-3 h-3" /> Accept
       </button>
-      <button onClick={() => onReject(row)} className="h-5 px-1 text-[10px] text-red-700 hover:bg-red-50 rounded inline-flex items-center gap-1">
+      <button onClick={() => onReject(row)} className="h-5 px-1 text-[10px] text-[#7a2929] hover:bg-[#FCF1F1] rounded inline-flex items-center gap-1">
         <X className="w-3 h-3" /> Reject
       </button>
     </div>

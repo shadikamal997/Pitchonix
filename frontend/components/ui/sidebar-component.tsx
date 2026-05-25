@@ -500,7 +500,7 @@ function MenuItem({
     >
       <div
         className={`rounded-lg cursor-pointer transition-all duration-500 flex items-center relative ${
-          item.isActive ? "bg-green-50 text-green-700" : "hover:bg-neutral-100"
+          item.isActive ? "bg-[#EEF5F1] text-[#355846]" : "hover:bg-neutral-100"
         } ${isCollapsed ? "w-10 min-w-10 h-10 justify-center p-4" : "w-full h-10 px-4 py-2"}`}
         style={{ transitionTimingFunction: softSpringEasing }}
         onClick={handleClick}
@@ -514,7 +514,7 @@ function MenuItem({
           }`}
           style={{ transitionTimingFunction: softSpringEasing }}
         >
-          <div className={`text-[14px] leading-[20px] truncate ${item.isActive ? "font-medium text-green-700" : "text-neutral-900"}`}>
+          <div className={`text-[14px] leading-[20px] truncate ${item.isActive ? "font-medium text-[#355846]" : "text-neutral-900"}`}>
             {item.label}
           </div>
         </div>
@@ -686,7 +686,7 @@ function DetailSidebar({
             </div>
             <button
               type="button"
-              className="size-8 rounded-md flex items-center justify-center hover:bg-neutral-100 text-neutral-600 hover:text-red-600 transition-colors"
+              className="size-8 rounded-md flex items-center justify-center hover:bg-neutral-100 text-neutral-600 hover:text-[#9a3737] transition-colors"
               aria-label="Logout"
               title="Logout"
               onClick={onLogout}

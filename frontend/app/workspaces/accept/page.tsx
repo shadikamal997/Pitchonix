@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, XCircle, Loader2, Building2 } from 'lucide-react';
@@ -24,6 +24,14 @@ type State =
   | { kind: 'auth-required' };
 
 export default function AcceptInvitePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#EDEBE6]" />}>
+      <AcceptInviteBody />
+    </Suspense>
+  );
+}
+
+function AcceptInviteBody() {
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get('token');
@@ -59,23 +67,23 @@ export default function AcceptInvitePage() {
   }, [token, refresh, setCurrentWorkspaceId]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-lg p-6 text-center">
-        <Building2 className="w-8 h-8 text-blue-600 mx-auto mb-3" />
+    <div className="min-h-screen flex items-center justify-center bg-[#EDEBE6] p-4">
+      <div className="w-full max-w-md bg-white border border-[#E3E1DA] rounded-xl shadow-lg p-6 text-center">
+        <Building2 className="w-8 h-8 text-[#4F7563] mx-auto mb-3" />
         {state.kind === 'pending' && (
           <>
-            <h1 className="text-base font-bold text-slate-900 mb-2">Accepting invitation…</h1>
-            <Loader2 className="w-5 h-5 animate-spin text-slate-400 mx-auto" />
+            <h1 className="text-base font-bold text-[#111111] mb-2">Accepting invitation…</h1>
+            <Loader2 className="w-5 h-5 animate-spin text-[#C9C6BD] mx-auto" />
           </>
         )}
         {state.kind === 'success' && (
           <>
-            <CheckCircle2 className="w-6 h-6 text-green-600 mx-auto mb-1" />
-            <h1 className="text-base font-bold text-slate-900 mb-2">You're in!</h1>
-            <p className="text-sm text-slate-600 mb-4">You've joined the workspace.</p>
+            <CheckCircle2 className="w-6 h-6 text-[#4F7563] mx-auto mb-1" />
+            <h1 className="text-base font-bold text-[#111111] mb-2">You're in!</h1>
+            <p className="text-sm text-[#6B6B6B] mb-4">You've joined the workspace.</p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="px-3 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded"
+              className="px-3 py-2 text-xs font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded"
             >
               Go to dashboard
             </button>
@@ -83,11 +91,11 @@ export default function AcceptInvitePage() {
         )}
         {state.kind === 'auth-required' && (
           <>
-            <h1 className="text-base font-bold text-slate-900 mb-2">Sign in to continue</h1>
-            <p className="text-sm text-slate-600 mb-4">You need to be logged in to accept this invitation.</p>
+            <h1 className="text-base font-bold text-[#111111] mb-2">Sign in to continue</h1>
+            <p className="text-sm text-[#6B6B6B] mb-4">You need to be logged in to accept this invitation.</p>
             <Link
               href="/login"
-              className="inline-block px-3 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded"
+              className="inline-block px-3 py-2 text-xs font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded"
             >
               Sign in
             </Link>
@@ -95,12 +103,12 @@ export default function AcceptInvitePage() {
         )}
         {state.kind === 'error' && (
           <>
-            <XCircle className="w-6 h-6 text-red-600 mx-auto mb-1" />
-            <h1 className="text-base font-bold text-slate-900 mb-2">Invitation problem</h1>
-            <p className="text-sm text-slate-600 mb-4">{state.message}</p>
+            <XCircle className="w-6 h-6 text-[#9a3737] mx-auto mb-1" />
+            <h1 className="text-base font-bold text-[#111111] mb-2">Invitation problem</h1>
+            <p className="text-sm text-[#6B6B6B] mb-4">{state.message}</p>
             <Link
               href="/dashboard"
-              className="inline-block px-3 py-2 text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-800 rounded"
+              className="inline-block px-3 py-2 text-xs font-semibold bg-[#E3E1DA] hover:bg-slate-300 text-[#111111] rounded"
             >
               Back to dashboard
             </Link>

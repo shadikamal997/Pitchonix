@@ -276,11 +276,11 @@ export function StoryTransformer({ content, onTransformed, contentType, context 
                       <Card key={i} className="p-3">
                         <div className="space-y-2">
                           <div>
-                            <span className="text-xs font-medium text-red-600">Before:</span>
+                            <span className="text-xs font-medium text-[#9a3737]">Before:</span>
                             <p className="text-sm text-muted-foreground italic">{improvement.before}</p>
                           </div>
                           <div>
-                            <span className="text-xs font-medium text-green-600">After:</span>
+                            <span className="text-xs font-medium text-[#4F7563]">After:</span>
                             <p className="text-sm">{improvement.after}</p>
                           </div>
                           <p className="text-xs text-muted-foreground">

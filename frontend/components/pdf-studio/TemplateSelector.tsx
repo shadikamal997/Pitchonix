@@ -39,43 +39,43 @@ const CATEGORY_INFO = {
   business_core: {
     label: 'Business Core',
     icon: FileText,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
+    color: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1]',
+    borderColor: 'border-[#DDE8E1]',
   },
   analytics: {
     label: 'Analytics & Data',
     icon: BarChart3,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
+    color: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1]',
+    borderColor: 'border-[#DDE8E1]',
   },
   sales_client: {
     label: 'Sales & Client',
     icon: Users,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200',
+    color: 'text-[#4F7563]',
+    bgColor: 'bg-[#EEF5F1]',
+    borderColor: 'border-[#DDE8E1]',
   },
   strategy: {
     label: 'Strategy & Planning',
     icon: Target,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50',
+    color: 'text-[#8c6210]',
+    bgColor: 'bg-[#FAEEDB]',
     borderColor: 'border-orange-200',
   },
   product_tech: {
     label: 'Product & Tech',
     icon: Code,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50',
+    color: 'text-[#355846]',
+    bgColor: 'bg-[#EEF5F1]',
     borderColor: 'border-indigo-200',
   },
   brand_content: {
     label: 'Brand & Content',
     icon: Sparkles,
-    color: 'text-pink-600',
-    bgColor: 'bg-pink-50',
+    color: 'text-[#9a3737]',
+    bgColor: 'bg-[#FCF1F1]',
     borderColor: 'border-pink-200',
   },
 };
@@ -171,12 +171,12 @@ export default function TemplateSelector({
         className={`group w-full overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition-all duration-200 ${
           isSelected
             ? 'border-teal-500 shadow-teal-100 ring-4 ring-teal-100'
-            : 'border-gray-200 hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-xl'
+            : 'border-[#E3E1DA] hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-xl'
         }`}
       >
         {/* Visual Preview */}
         <div className="relative p-2.5 pb-0">
-          <div className={`relative aspect-[16/9] overflow-hidden rounded-2xl ${categoryInfo?.bgColor || 'bg-gray-50'} p-3.5`}>
+          <div className={`relative aspect-[16/9] overflow-hidden rounded-2xl ${categoryInfo?.bgColor || 'bg-[#EDEBE6]'} p-3.5`}>
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-5">
               <div className="absolute top-2 left-2 w-16 h-16 border-2 border-current rounded transform -rotate-6"></div>
@@ -184,7 +184,7 @@ export default function TemplateSelector({
             </div>
 
             {/* Icon */}
-            <CategoryIcon className={`absolute inset-0 m-auto w-12 h-12 ${categoryInfo?.color || 'text-gray-400'} opacity-80`} />
+            <CategoryIcon className={`absolute inset-0 m-auto w-12 h-12 ${categoryInfo?.color || 'text-[#C9C6BD]'} opacity-80`} />
 
             {/* Selection Badge */}
             {isSelected && (
@@ -208,7 +208,7 @@ export default function TemplateSelector({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-sm font-black leading-tight text-gray-950">{template.name}</div>
-              <div className="mt-1 line-clamp-2 text-xs leading-relaxed text-gray-500">{template.description}</div>
+              <div className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#9A9A9A]">{template.description}</div>
             </div>
             <span className="shrink-0 rounded-full bg-gray-950 px-2.5 py-1 text-[10px] font-bold text-white">
               {categoryInfo?.label.split(' ')[0] || 'Template'}
@@ -219,7 +219,7 @@ export default function TemplateSelector({
           {template.features && template.features.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {template.features.slice(0, 3).map((feature, idx) => (
-                <span key={idx} className="rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-[10px] font-semibold text-gray-600">
+                <span key={idx} className="rounded-full border border-[#E3E1DA] bg-[#EDEBE6] px-2 py-1 text-[10px] font-semibold text-[#6B6B6B]">
                   {feature}
                 </span>
               ))}
@@ -227,9 +227,9 @@ export default function TemplateSelector({
           )}
 
           {/* Footer */}
-          <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
-              <Sparkles className="h-3.5 w-3.5 text-teal-600" />
+          <div className="mt-3 flex items-center justify-between border-t border-[#F1F0EC] pt-3">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[#9A9A9A]">
+              <Sparkles className="h-3.5 w-3.5 text-[#4F7563]" />
               {template.features?.length || 0} features
             </span>
             <span className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
@@ -249,14 +249,14 @@ export default function TemplateSelector({
       <div className="space-y-4">
         {/* Header */}
         <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <FileText className="h-5 w-5 text-gray-700" />
+          <h2 className="text-xl font-bold text-[#111111] flex items-center gap-2">
+            <FileText className="h-5 w-5 text-[#111111]" />
             Choose Template
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-[#9A9A9A] mt-0.5">
             Select a professional design • 20 templates available
             {autoSelectedTemplate && (
-              <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+              <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-[#EEF5F1] text-[#355846]">
                 <Sparkles className="w-3 h-3 mr-0.5" />
                 AI Suggested
               </span>
@@ -265,13 +265,13 @@ export default function TemplateSelector({
         </div>
 
         {/* Search */}
-        <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
-          <Search className="h-4 w-4 shrink-0 text-gray-400" />
+        <div className="flex items-center gap-2 rounded-xl border border-[#E3E1DA] bg-[#EDEBE6] px-3 py-2.5">
+          <Search className="h-4 w-4 shrink-0 text-[#C9C6BD]" />
           <input
             value={query}
             onChange={event => setQuery(event.target.value)}
             placeholder="Search templates by name, category, or feature..."
-            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400"
+            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#111111] outline-none placeholder:text-[#C9C6BD]"
           />
         </div>
 
@@ -284,7 +284,7 @@ export default function TemplateSelector({
               className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all ${
                 activeCategory === category
                   ? 'bg-gray-950 text-white shadow-sm'
-                  : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                  : 'border border-[#E3E1DA] bg-white text-[#6B6B6B] hover:border-[#C9C6BD] hover:bg-[#EDEBE6]'
               }`}
             >
               {category}
@@ -294,10 +294,10 @@ export default function TemplateSelector({
 
         {/* Results Counter */}
         <div className="flex items-center justify-between px-1">
-          <div className="text-xs font-bold text-gray-500">
+          <div className="text-xs font-bold text-[#9A9A9A]">
             {visibleTemplates.length} professional {visibleTemplates.length === 1 ? 'template' : 'templates'}
           </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-bold text-teal-700">
+          <div className="flex items-center gap-1.5 rounded-full bg-[#EEF5F1] px-2.5 py-1 text-[11px] font-bold text-[#355846]">
             <Sparkles className="h-3.5 w-3.5" />
             Premium designs
           </div>
@@ -312,9 +312,9 @@ export default function TemplateSelector({
 
         {/* Empty State */}
         {visibleTemplates.length === 0 && (
-          <div className="rounded-3xl border border-dashed border-gray-300 bg-white p-8 text-center">
-            <div className="text-sm font-bold text-gray-900">No matching templates</div>
-            <div className="mt-1 text-xs text-gray-500">Try another category or search term.</div>
+          <div className="rounded-3xl border border-dashed border-[#C9C6BD] bg-white p-8 text-center">
+            <div className="text-sm font-bold text-[#111111]">No matching templates</div>
+            <div className="mt-1 text-xs text-[#9A9A9A]">Try another category or search term.</div>
           </div>
         )}
       </div>
@@ -328,8 +328,8 @@ export default function TemplateSelector({
         onClick={onToggle}
         className={`group flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-sm transition-all ${
           selectedTemplate
-            ? 'border-teal-500 bg-teal-50 text-teal-800 shadow-teal-100'
-            : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md'
+            ? 'border-teal-500 bg-[#EEF5F1] text-teal-800 shadow-teal-100'
+            : 'border-[#E3E1DA] bg-white text-[#111111] hover:border-[#C9C6BD] hover:bg-[#EDEBE6] hover:shadow-md'
         }`}
         title="Templates"
       >
@@ -350,10 +350,10 @@ export default function TemplateSelector({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute right-0 top-full z-50 mt-3 flex h-[min(74vh,650px)] w-[min(calc(100vw-2rem),920px)] flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_20px_64px_rgba(15,23,42,0.20)]"
+            className="absolute right-0 top-full z-50 mt-3 flex h-[min(74vh,650px)] w-[min(calc(100vw-2rem),920px)] flex-col overflow-hidden rounded-3xl border border-[#E3E1DA] bg-white shadow-[0_20px_64px_rgba(15,23,42,0.20)]"
           >
             {/* Header */}
-            <div className="shrink-0 border-b border-gray-100 bg-white/95 px-4 pb-3 pt-4 backdrop-blur">
+            <div className="shrink-0 border-b border-[#F1F0EC] bg-white/95 px-4 pb-3 pt-4 backdrop-blur">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -362,7 +362,7 @@ export default function TemplateSelector({
                     </span>
                     <div>
                       <div className="text-sm font-black leading-tight text-gray-950">Templates</div>
-                      <div className="text-xs font-medium text-gray-500">20 professional designs</div>
+                      <div className="text-xs font-medium text-[#9A9A9A]">20 professional designs</div>
                     </div>
                   </div>
                 </div>
@@ -370,14 +370,14 @@ export default function TemplateSelector({
                   {selectedTemplate && onClear && (
                     <button
                       onClick={onClear}
-                      className="rounded-full border border-gray-200 px-3 py-1.5 text-[11px] font-bold text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50"
+                      className="rounded-full border border-[#E3E1DA] px-3 py-1.5 text-[11px] font-bold text-[#6B6B6B] transition-colors hover:border-[#C9C6BD] hover:bg-[#EDEBE6]"
                     >
                       Clear
                     </button>
                   )}
                   <button
                     onClick={onToggle}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E3E1DA] text-[#9A9A9A] transition-colors hover:bg-[#EDEBE6] hover:text-[#111111]"
                     aria-label="Close Templates"
                   >
                     <X className="h-4 w-4" />
@@ -386,13 +386,13 @@ export default function TemplateSelector({
               </div>
 
               {/* Search */}
-              <div className="mt-3 flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2">
-                <Search className="h-4 w-4 shrink-0 text-gray-400" />
+              <div className="mt-3 flex items-center gap-2 rounded-2xl border border-[#E3E1DA] bg-[#EDEBE6] px-3 py-2">
+                <Search className="h-4 w-4 shrink-0 text-[#C9C6BD]" />
                 <input
                   value={query}
                   onChange={event => setQuery(event.target.value)}
                   placeholder="Search templates"
-                  className="min-w-0 flex-1 bg-transparent text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400"
+                  className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#111111] outline-none placeholder:text-[#C9C6BD]"
                 />
               </div>
 
@@ -405,7 +405,7 @@ export default function TemplateSelector({
                     className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all ${
                       activeCategory === category
                         ? 'bg-gray-950 text-white shadow-sm'
-                        : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                        : 'border border-[#E3E1DA] bg-white text-[#6B6B6B] hover:border-[#C9C6BD] hover:bg-[#EDEBE6]'
                     }`}
                   >
                     {category}
@@ -417,10 +417,10 @@ export default function TemplateSelector({
             {/* Templates Grid */}
             <div className="min-h-0 flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-white px-3.5 py-3.5">
               <div className="mb-3 flex items-center justify-between px-1">
-                <div className="text-xs font-bold text-gray-500">
+                <div className="text-xs font-bold text-[#9A9A9A]">
                   {visibleTemplates.length} professional {visibleTemplates.length === 1 ? 'template' : 'templates'}
                 </div>
-                <div className="flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-bold text-teal-700">
+                <div className="flex items-center gap-1.5 rounded-full bg-[#EEF5F1] px-2.5 py-1 text-[11px] font-bold text-[#355846]">
                   <Sparkles className="h-3.5 w-3.5" />
                   Premium designs
                 </div>
@@ -433,9 +433,9 @@ export default function TemplateSelector({
               </div>
 
               {visibleTemplates.length === 0 && (
-                <div className="col-span-2 rounded-3xl border border-dashed border-gray-300 bg-white p-8 text-center">
-                  <div className="text-sm font-bold text-gray-900">No matching templates</div>
-                  <div className="mt-1 text-xs text-gray-500">Try another category or search term.</div>
+                <div className="col-span-2 rounded-3xl border border-dashed border-[#C9C6BD] bg-white p-8 text-center">
+                  <div className="text-sm font-bold text-[#111111]">No matching templates</div>
+                  <div className="mt-1 text-xs text-[#9A9A9A]">Try another category or search term.</div>
                 </div>
               )}
             </div>

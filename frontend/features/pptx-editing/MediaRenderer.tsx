@@ -62,8 +62,8 @@ export const MediaRenderer: React.FC<Props> = ({ content, elementType, presentin
 
   if (kind === 'audio' && c.src) {
     return (
-      <div className={`w-full h-full flex items-center gap-2 bg-slate-100 rounded px-3 ${className || ''}`}>
-        <Music className="w-5 h-5 text-slate-500 flex-shrink-0" />
+      <div className={`w-full h-full flex items-center gap-2 bg-[#F1F0EC] rounded px-3 ${className || ''}`}>
+        <Music className="w-5 h-5 text-[#9A9A9A] flex-shrink-0" />
         <audio
           src={c.src}
           controls={c.controls ?? true}
@@ -81,7 +81,7 @@ export const MediaRenderer: React.FC<Props> = ({ content, elementType, presentin
 
   // Fallback: legacy placeholder.
   return (
-    <div className={`w-full h-full flex flex-col items-center justify-center bg-slate-100 rounded border border-slate-200 ${className || ''}`}>
+    <div className={`w-full h-full flex flex-col items-center justify-center bg-[#F1F0EC] rounded border border-[#E3E1DA] ${className || ''}`}>
       {c.posterUrl
         ? <img src={c.posterUrl} alt="" className="w-full h-full object-cover rounded" />
         : <PlaceholderIcon kind={kind} />}
@@ -106,5 +106,5 @@ function pickKind(c: MediaContent, elementType?: string): 'video' | 'audio' | 'g
 
 const PlaceholderIcon: React.FC<{ kind: 'video' | 'audio' | 'gif' }> = ({ kind }) => {
   const Icon = kind === 'audio' ? Music : kind === 'gif' ? ImageIcon : Play;
-  return <Icon className="w-8 h-8 text-slate-400" />;
+  return <Icon className="w-8 h-8 text-[#C9C6BD]" />;
 };

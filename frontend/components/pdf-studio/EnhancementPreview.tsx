@@ -31,16 +31,16 @@ export function EnhancementPreview({
     <div className="space-y-6">
       {/* Summary */}
       {improvement !== undefined && (
-        <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6">
+        <div className="bg-[#EEF5F1] border-2 border-[#DDE8E1] rounded-xl p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <Check className="w-6 h-6 text-green-600" />
+            <div className="w-10 h-10 bg-[#DDE8E1] rounded-full flex items-center justify-center">
+              <Check className="w-6 h-6 text-[#4F7563]" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-green-900">
                 Content Enhanced Successfully!
               </h3>
-              <p className="text-sm text-green-700">
+              <p className="text-sm text-[#355846]">
                 {improvement.toFixed(1)}% improvement in quality
               </p>
             </div>
@@ -53,7 +53,7 @@ export function EnhancementPreview({
                 {fixedIssues.map((issue, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1 bg-white text-green-800 text-xs font-medium rounded-full border border-green-200"
+                    className="px-3 py-1 bg-white text-green-800 text-xs font-medium rounded-full border border-[#DDE8E1]"
                   >
                     <Check className="w-3 h-3 inline mr-1" />
                     {issue}
@@ -68,31 +68,31 @@ export function EnhancementPreview({
       {/* Before/After Comparison */}
       {enhancedContent && (
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6">
+          <div className="bg-[#FCF1F1] border-2 border-[#F7E3E3] rounded-xl p-6">
             <h4 className="font-semibold text-red-900 mb-3 flex items-center gap-2">
-              <span className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center text-xs">
+              <span className="w-6 h-6 bg-[#F7E3E3] rounded-full flex items-center justify-center text-xs">
                 1
               </span>
               Original Content
             </h4>
-            <div className="bg-white p-4 rounded-lg border border-red-200 max-h-60 overflow-y-auto">
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+            <div className="bg-white p-4 rounded-lg border border-[#F7E3E3] max-h-60 overflow-y-auto">
+              <p className="text-sm text-[#111111] whitespace-pre-wrap">
                 {originalContent.substring(0, 500)}
                 {originalContent.length > 500 && '...'}
               </p>
             </div>
           </div>
 
-          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6">
+          <div className="bg-[#EEF5F1] border-2 border-[#DDE8E1] rounded-xl p-6">
             <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
-              <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs">
+              <span className="w-6 h-6 bg-[#DDE8E1] rounded-full flex items-center justify-center text-xs">
                 2
               </span>
               Enhanced Content
-              <ArrowRight className="w-4 h-4 ml-auto text-green-600" />
+              <ArrowRight className="w-4 h-4 ml-auto text-[#4F7563]" />
             </h4>
-            <div className="bg-white p-4 rounded-lg border border-green-200 max-h-60 overflow-y-auto">
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+            <div className="bg-white p-4 rounded-lg border border-[#DDE8E1] max-h-60 overflow-y-auto">
+              <p className="text-sm text-[#111111] whitespace-pre-wrap">
                 {enhancedContent.substring(0, 500)}
                 {enhancedContent.length > 500 && '...'}
               </p>
@@ -104,25 +104,25 @@ export function EnhancementPreview({
       {/* Structured Sections */}
       {sections && sections.length > 0 && (
         <div className="bg-white border-2 border-blue-100 rounded-xl p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">
+          <h4 className="font-semibold text-[#111111] mb-4">
             Structured Sections ({sections.length})
           </h4>
           <div className="space-y-3">
             {sections.map((section, index) => (
               <div
                 key={index}
-                className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                className="border border-[#E3E1DA] rounded-lg p-4 hover:border-[#A8B9AE] transition-colors"
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-semibold">
+                  <span className="w-6 h-6 bg-[#DDE8E1] text-[#4F7563] rounded-full flex items-center justify-center text-xs font-semibold">
                     {index + 1}
                   </span>
-                  <h5 className="font-semibold text-gray-900">{section.title}</h5>
-                  <span className="ml-auto px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                  <h5 className="font-semibold text-[#111111]">{section.title}</h5>
+                  <span className="ml-auto px-2 py-1 bg-[#F1F0EC] text-[#6B6B6B] text-xs rounded">
                     {section.type}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 line-clamp-2 pl-9">
+                <p className="text-sm text-[#6B6B6B] line-clamp-2 pl-9">
                   {section.content}
                 </p>
               </div>

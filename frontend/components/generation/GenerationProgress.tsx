@@ -62,14 +62,14 @@ export default function GenerationProgress({ jobId, onComplete, onError }: Gener
     <Card className="p-6 space-y-6">
       {/* Connection Status */}
       {!connected && !error && (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex items-center gap-2 text-sm text-[#9A9A9A]">
           <Loader2 className="w-4 h-4 animate-spin" />
           <span>Connecting to server...</span>
         </div>
       )}
 
       {error && (
-        <div className="flex items-center gap-2 text-sm text-red-600">
+        <div className="flex items-center gap-2 text-sm text-[#9a3737]">
           <XCircle className="w-4 h-4" />
           <span>{error}</span>
         </div>
@@ -81,7 +81,7 @@ export default function GenerationProgress({ jobId, onComplete, onError }: Gener
           <span className="font-medium">
             {progress?.message || 'Preparing generation...'}
           </span>
-          <span className="text-gray-500">
+          <span className="text-[#9A9A9A]">
             {progress?.progress || 0}%
           </span>
         </div>
@@ -107,30 +107,30 @@ export default function GenerationProgress({ jobId, onComplete, onError }: Gener
               <StageIcon
                 className={`w-5 h-5 flex-shrink-0 ${
                   isError
-                    ? 'text-red-500'
+                    ? 'text-[#D96A6A]'
                     : isCompleted
                     ? 'text-green-500'
                     : isCurrent
-                    ? 'text-blue-500 animate-spin'
+                    ? 'text-[#4F7563] animate-spin'
                     : 'text-gray-300'
                 }`}
               />
               <span
                 className={`text-sm font-medium ${
                   isError
-                    ? 'text-red-600'
+                    ? 'text-[#9a3737]'
                     : isCompleted
-                    ? 'text-green-600'
+                    ? 'text-[#4F7563]'
                     : isCurrent
-                    ? 'text-blue-600'
-                    : 'text-gray-400'
+                    ? 'text-[#4F7563]'
+                    : 'text-[#C9C6BD]'
                 }`}
               >
                 {stage.label}
               </span>
               
               {isCurrent && progress?.details && (
-                <span className="text-xs text-gray-500 ml-auto">
+                <span className="text-xs text-[#9A9A9A] ml-auto">
                   {progress.details.totalSlides && `${progress.details.totalSlides} slides`}
                   {progress.details.currentSlide && ` · Slide ${progress.details.currentSlide}`}
                 </span>
@@ -142,18 +142,18 @@ export default function GenerationProgress({ jobId, onComplete, onError }: Gener
 
       {/* Error Message */}
       {progress?.stage === 'error' && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="p-4 bg-[#FCF1F1] border border-[#F7E3E3] rounded-lg">
           <div className="flex items-start gap-3">
-            <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <XCircle className="w-5 h-5 text-[#D96A6A] flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-sm font-medium text-red-800">
+              <p className="text-sm font-medium text-[#7a2929]">
                 Generation Failed
               </p>
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-[#9a3737]">
                 {progress.message}
               </p>
               {progress.details?.error && (
-                <p className="text-xs text-red-500 font-mono mt-2">
+                <p className="text-xs text-[#D96A6A] font-mono mt-2">
                   {progress.details.error}
                 </p>
               )}
@@ -164,7 +164,7 @@ export default function GenerationProgress({ jobId, onComplete, onError }: Gener
 
       {/* Success Message */}
       {progress?.stage === 'complete' && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div className="p-4 bg-[#EEF5F1] border border-[#DDE8E1] rounded-lg">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-green-500" />
             <div className="space-y-1">
@@ -172,7 +172,7 @@ export default function GenerationProgress({ jobId, onComplete, onError }: Gener
                 {progress.message}
               </p>
               {progress.details?.totalSlides && (
-                <p className="text-sm text-green-600">
+                <p className="text-sm text-[#4F7563]">
                   Generated {progress.details.totalSlides} slides successfully
                 </p>
               )}
@@ -183,7 +183,7 @@ export default function GenerationProgress({ jobId, onComplete, onError }: Gener
 
       {/* Job ID (for debugging) */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="text-xs text-gray-400 font-mono">
+        <div className="text-xs text-[#C9C6BD] font-mono">
           Job ID: {jobId}
         </div>
       )}

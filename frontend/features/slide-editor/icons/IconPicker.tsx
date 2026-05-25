@@ -81,17 +81,17 @@ export const IconPicker: React.FC<Props> = ({ value, onChange }) => {
   return (
     <div className="space-y-1.5">
       <div className="relative">
-        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#C9C6BD] pointer-events-none" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search icons…"
-          className="w-full h-7 pl-7 pr-2 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/30"
+          className="w-full h-7 pl-7 pr-2 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:ring-1 focus:ring-[#4F7563]/40/30"
         />
       </div>
 
-      <div className="grid grid-cols-6 gap-1 max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded p-1.5">
+      <div className="grid grid-cols-6 gap-1 max-h-48 overflow-y-auto bg-[#EDEBE6] border border-[#E3E1DA] rounded p-1.5">
         {filtered.map((name) => {
           const I = (Lucide as any)[name] as LucideIcon;
           const isSel = value === name;
@@ -103,8 +103,8 @@ export const IconPicker: React.FC<Props> = ({ value, onChange }) => {
               onClick={() => onChange(name)}
               className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
                 isSel
-                  ? 'bg-green-600 text-white shadow-sm'
-                  : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-800 border border-transparent'
+                  ? 'bg-[#4F7563] text-white shadow-sm'
+                  : 'bg-white text-[#6B6B6B] hover:bg-[#EEF5F1] hover:text-green-800 border border-transparent'
               }`}
             >
               <I className="w-4 h-4" />
@@ -112,11 +112,11 @@ export const IconPicker: React.FC<Props> = ({ value, onChange }) => {
           );
         })}
         {filtered.length === 0 && (
-          <p className="col-span-6 py-3 text-center text-[10px] text-slate-400">No icons match "{query}"</p>
+          <p className="col-span-6 py-3 text-center text-[10px] text-[#C9C6BD]">No icons match "{query}"</p>
         )}
       </div>
 
-      <p className="text-[10px] text-slate-400">Selected: <span className="font-mono">{value || '(none)'}</span></p>
+      <p className="text-[10px] text-[#C9C6BD]">Selected: <span className="font-mono">{value || '(none)'}</span></p>
     </div>
   );
 };

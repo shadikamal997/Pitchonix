@@ -69,21 +69,21 @@ export function A4Preview({
 
   return (
     <SectionErrorBoundary sectionName="A4 Preview">
-      <div className="flex flex-col h-full bg-gray-100 dark:bg-gray-900">
+      <div className="flex flex-col h-full bg-[#F1F0EC] dark:bg-gray-900">
         {/* Toolbar */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-800 border-b border-[#E3E1DA] dark:border-gray-700 p-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-[#111111] dark:text-white">
               {title}
             </h3>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-sm text-[#9A9A9A] dark:text-[#C9C6BD]">
               A4 (210 × 297mm)
             </span>
           </div>
 
           <div className="flex items-center gap-2">
             {/* Zoom Controls */}
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-[#F1F0EC] dark:bg-gray-700 rounded-lg p-1">
               <Button
                 variant="ghost"
                 size="icon"
@@ -95,7 +95,7 @@ export function A4Preview({
               </Button>
               <button
                 onClick={handleResetZoom}
-                className="px-3 py-1 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                className="px-3 py-1 text-sm font-medium hover:bg-[#E3E1DA] dark:hover:bg-gray-600 rounded"
               >
                 {zoom}%
               </button>
@@ -177,13 +177,13 @@ export function A4Preview({
 
               {/* Render HTML content from RichTextEditor */}
               <div
-                className="prose max-w-none text-gray-700"
+                className="prose max-w-none text-[#111111]"
                 dangerouslySetInnerHTML={{ __html: DOMPurify ? DOMPurify.sanitize(content || '') : (content || '') }}
               />
 
               {/* Footer */}
               {brandKit?.contact && (
-                <div className="mt-16 pt-8 border-t border-gray-200 text-sm text-gray-500">
+                <div className="mt-16 pt-8 border-t border-[#E3E1DA] text-sm text-[#9A9A9A]">
                   <div className="flex justify-between">
                     {brandKit.contact.email && (
                       <span>{brandKit.contact.email}</span>
@@ -199,7 +199,7 @@ export function A4Preview({
         </div>
 
         {/* Page Info */}
-        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 text-center text-xs text-gray-500 dark:text-gray-400">
+        <div className="bg-white dark:bg-gray-800 border-t border-[#E3E1DA] dark:border-gray-700 p-2 text-center text-xs text-[#9A9A9A] dark:text-[#C9C6BD]">
           Live Preview · {wordCount} {wordCount === 1 ? 'word' : 'words'}
         </div>
       </div>

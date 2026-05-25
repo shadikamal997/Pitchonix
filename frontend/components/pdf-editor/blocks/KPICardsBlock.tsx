@@ -72,11 +72,11 @@ export function KPICardsBlock({
   const getTrendColor = (trend?: string) => {
     switch (trend) {
       case 'up':
-        return 'text-green-600 bg-green-50';
+        return 'text-[#4F7563] bg-[#EEF5F1]';
       case 'down':
-        return 'text-red-600 bg-red-50';
+        return 'text-[#9a3737] bg-[#FCF1F1]';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-[#6B6B6B] bg-[#EDEBE6]';
     }
   };
 
@@ -95,7 +95,7 @@ export function KPICardsBlock({
     <div className="w-full py-8">
       {title && (
         <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold text-slate-900">{title}</h3>
+          <h3 className="text-2xl font-bold text-[#111111]">{title}</h3>
         </div>
       )}
 
@@ -106,19 +106,19 @@ export function KPICardsBlock({
           return (
             <div
               key={item.id}
-              className="bg-white border-2 border-slate-200 rounded-2xl p-6 hover:border-green-300 hover:shadow-lg transition-all"
+              className="bg-white border-2 border-[#E3E1DA] rounded-2xl p-6 hover:border-[#A8B9AE] hover:shadow-lg transition-all"
             >
               {/* Icon */}
               <div className="w-12 h-12 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl flex items-center justify-center mb-4">
-                {IconComponent && <IconComponent className="h-6 w-6 text-green-600" />}
+                {IconComponent && <IconComponent className="h-6 w-6 text-[#4F7563]" />}
               </div>
 
               {/* Label */}
-              <p className="text-sm font-semibold text-slate-600 mb-2">{item.label}</p>
+              <p className="text-sm font-semibold text-[#6B6B6B] mb-2">{item.label}</p>
 
               {/* Value */}
               <div className="flex items-end justify-between">
-                <h4 className="text-3xl font-bold text-slate-900">{item.value}</h4>
+                <h4 className="text-3xl font-bold text-[#111111]">{item.value}</h4>
 
                 {/* Change Badge */}
                 {item.change !== undefined && (

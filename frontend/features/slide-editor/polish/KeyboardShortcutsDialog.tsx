@@ -93,24 +93,24 @@ export const KeyboardShortcutsDialog: React.FC<Props> = ({ open, onClose }) => {
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
       >
-        <header className="h-12 border-b border-slate-200 px-4 flex items-center gap-3 flex-shrink-0">
-          <Keyboard className="w-4 h-4 text-green-600" />
-          <h2 id="kbd-dialog-title" className="text-sm font-bold text-slate-900">Keyboard shortcuts</h2>
-          <button onClick={onClose} className="ml-auto p-1 rounded text-slate-500 hover:bg-slate-100" aria-label="Close shortcuts">
+        <header className="h-12 border-b border-[#E3E1DA] px-4 flex items-center gap-3 flex-shrink-0">
+          <Keyboard className="w-4 h-4 text-[#4F7563]" />
+          <h2 id="kbd-dialog-title" className="text-sm font-bold text-[#111111]">Keyboard shortcuts</h2>
+          <button onClick={onClose} className="ml-auto p-1 rounded text-[#9A9A9A] hover:bg-[#F1F0EC]" aria-label="Close shortcuts">
             <X className="w-4 h-4" />
           </button>
         </header>
         <div className="flex-1 overflow-y-auto p-5 grid grid-cols-2 gap-x-6 gap-y-5">
           {GROUPS.map((g) => (
             <section key={g.title}>
-              <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">{g.title}</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-2">{g.title}</h3>
               <ul className="space-y-1.5">
                 {g.items.map((it, i) => (
                   <li key={i} className="flex items-start justify-between gap-3 text-xs">
-                    <span className="text-slate-700 flex-1 min-w-0">{it.desc}</span>
+                    <span className="text-[#111111] flex-1 min-w-0">{it.desc}</span>
                     <span className="flex items-center gap-1 flex-shrink-0">
                       {it.keys.map((k, j) => (
-                        <kbd key={j} className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-700">
+                        <kbd key={j} className="px-1.5 py-0.5 bg-[#F1F0EC] border border-[#E3E1DA] rounded text-[10px] font-mono text-[#111111]">
                           {k}
                         </kbd>
                       ))}
@@ -121,8 +121,8 @@ export const KeyboardShortcutsDialog: React.FC<Props> = ({ open, onClose }) => {
             </section>
           ))}
         </div>
-        <footer className="h-10 border-t border-slate-200 px-4 flex items-center text-[11px] text-slate-500 flex-shrink-0">
-          Press <kbd className="mx-1 px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded font-mono">Esc</kbd> to close.
+        <footer className="h-10 border-t border-[#E3E1DA] px-4 flex items-center text-[11px] text-[#9A9A9A] flex-shrink-0">
+          Press <kbd className="mx-1 px-1.5 py-0.5 bg-[#F1F0EC] border border-[#E3E1DA] rounded font-mono">Esc</kbd> to close.
         </footer>
       </div>
     </div>

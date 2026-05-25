@@ -162,13 +162,13 @@ export default function ThemePicker({ selectedTheme, onThemeChange, onClose }: T
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#F1F0EC]">
         <div className="flex items-center gap-2">
           <div
             className="w-5 h-5 rounded-full ring-2 ring-white ring-offset-1 ring-offset-gray-100 shadow"
             style={{ background: `linear-gradient(135deg, ${selected.primary}, ${selected.secondary})` }}
           />
-          <span className="text-sm font-semibold text-gray-900">Theme</span>
+          <span className="text-sm font-semibold text-[#111111]">Theme</span>
           <span
             className="text-xs px-2 py-0.5 rounded-full font-medium text-white"
             style={{ background: selected.primary }}
@@ -177,7 +177,7 @@ export default function ThemePicker({ selectedTheme, onThemeChange, onClose }: T
           </span>
         </div>
         {onClose && (
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors">
+          <button onClick={onClose} className="p-1 text-[#C9C6BD] hover:text-[#6B6B6B] rounded transition-colors">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -190,7 +190,7 @@ export default function ThemePicker({ selectedTheme, onThemeChange, onClose }: T
           className={`px-2.5 py-1 text-xs font-medium rounded-full transition-all ${
             activeCategory === null
               ? 'bg-gray-900 text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              : 'bg-[#F1F0EC] text-[#6B6B6B] hover:bg-[#E3E1DA]'
           }`}
         >
           All
@@ -202,7 +202,7 @@ export default function ThemePicker({ selectedTheme, onThemeChange, onClose }: T
             className={`px-2.5 py-1 text-xs font-medium rounded-full transition-all ${
               activeCategory === cat
                 ? 'bg-gray-900 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-[#F1F0EC] text-[#6B6B6B] hover:bg-[#E3E1DA]'
             }`}
           >
             {cat}
@@ -222,7 +222,7 @@ export default function ThemePicker({ selectedTheme, onThemeChange, onClose }: T
                 className={`relative group text-left rounded-xl border-2 overflow-hidden transition-all duration-200 ${
                   isSelected
                     ? 'border-gray-900 shadow-md scale-[1.02]'
-                    : 'border-transparent hover:border-gray-200 hover:shadow-sm'
+                    : 'border-transparent hover:border-[#E3E1DA] hover:shadow-sm'
                 }`}
               >
                 {/* Color preview bar */}
@@ -242,7 +242,7 @@ export default function ThemePicker({ selectedTheme, onThemeChange, onClose }: T
                 {/* Theme info */}
                 <div className="p-2 bg-white">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-900 truncate pr-1">
+                    <span className="text-xs font-semibold text-[#111111] truncate pr-1">
                       {theme.name}
                     </span>
                     {isSelected && (
@@ -254,7 +254,7 @@ export default function ThemePicker({ selectedTheme, onThemeChange, onClose }: T
                       </div>
                     )}
                   </div>
-                  <span className="text-[10px] text-gray-400 leading-tight block mt-0.5">
+                  <span className="text-[10px] text-[#C9C6BD] leading-tight block mt-0.5">
                     {theme.category}
                   </span>
                 </div>
@@ -272,8 +272,8 @@ export default function ThemePicker({ selectedTheme, onThemeChange, onClose }: T
       </div>
 
       {/* Footer: color swatches for selected */}
-      <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
-        <p className="text-[10px] text-gray-500 mb-2 font-medium uppercase tracking-wide">
+      <div className="px-4 py-3 border-t border-[#F1F0EC] bg-[#EDEBE6]">
+        <p className="text-[10px] text-[#9A9A9A] mb-2 font-medium uppercase tracking-wide">
           Selected palette
         </p>
         <div className="flex items-center gap-2">
@@ -285,7 +285,7 @@ export default function ThemePicker({ selectedTheme, onThemeChange, onClose }: T
               title={color}
             />
           ))}
-          <span className="text-xs text-gray-500 ml-1">{selected.name}</span>
+          <span className="text-xs text-[#9A9A9A] ml-1">{selected.name}</span>
         </div>
       </div>
     </div>

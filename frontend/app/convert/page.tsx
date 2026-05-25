@@ -86,22 +86,22 @@ export default function ConvertPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#EDEBE6]">
       {/* tab state — top-level "Convert" wizard vs. "History" / "Batch" / "Diagnostics" */}
-      <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
-        <Link href="/dashboard" className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1">
+      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
+        <Link href="/dashboard" className="text-xs text-[#9A9A9A] hover:text-[#111111] flex items-center gap-1">
           <ArrowLeft className="w-3 h-3" /> Back
         </Link>
-        <div className="h-5 w-px bg-slate-200" />
-        <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <ShuffleIcon className="w-4 h-4 text-slate-500" /> Document Conversion
+        <div className="h-5 w-px bg-[#E3E1DA]" />
+        <h1 className="text-base font-bold text-[#111111] flex items-center gap-2">
+          <ShuffleIcon className="w-4 h-4 text-[#9A9A9A]" /> Document Conversion
         </h1>
       </header>
 
       <div className="max-w-3xl mx-auto px-6 py-6 space-y-5">
         {/* Phase Ω.1 — top-level tabs surface batch / history / diagnostics
             which were all backend-only previously. */}
-        <div className="flex items-center gap-1 border-b border-slate-200 mb-1">
+        <div className="flex items-center gap-1 border-b border-[#E3E1DA] mb-1">
           {([
             { id: 'wizard',      label: 'Convert'      },
             { id: 'batch',       label: 'Batch'        },
@@ -111,7 +111,7 @@ export default function ConvertPage() {
             <button
               key={t.id}
               onClick={() => setTopTab(t.id)}
-              className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${topTab === t.id ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+              className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${topTab === t.id ? 'border-[#4F7563] text-[#355846]' : 'border-transparent text-[#9A9A9A] hover:text-[#111111]'}`}
             >
               {t.label}
             </button>
@@ -127,22 +127,22 @@ export default function ConvertPage() {
         <div className="flex items-center gap-2 text-[11px]">
           {(['upload', 'format', 'options', 'preview', 'convert'] as Step[]).map((s, i, all) => (
             <React.Fragment key={s}>
-              <div className={`px-2 py-1 rounded ${step === s ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+              <div className={`px-2 py-1 rounded ${step === s ? 'bg-[#4F7563] text-white' : 'bg-[#F1F0EC] text-[#6B6B6B]'}`}>
                 {i + 1}. {s}
               </div>
-              {i < all.length - 1 && <ChevronRight className="w-3 h-3 text-slate-300" />}
+              {i < all.length - 1 && <ChevronRight className="w-3 h-3 text-[#C9C6BD]" />}
             </React.Fragment>
           ))}
         </div>
 
-        {error && <div className="bg-red-50 border border-red-200 text-red-800 text-xs rounded p-3">{error}</div>}
+        {error && <div className="bg-[#FCF1F1] border border-[#F7E3E3] text-[#7a2929] text-xs rounded p-3">{error}</div>}
 
         {step === 'upload' && (
-          <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+          <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
             <h2 className="text-sm font-bold">1. Choose a file</h2>
-            <label className="flex items-center gap-2 border border-dashed border-slate-300 rounded p-6 cursor-pointer hover:bg-slate-50">
-              <FileUp className="w-4 h-4 text-slate-500" />
-              <span className="text-xs text-slate-600">{file ? file.name : 'Click to pick a PPTX / PDF / DOCX / XLSX / HTML / MD / TXT / RTF / CSV file'}</span>
+            <label className="flex items-center gap-2 border border-dashed border-[#C9C6BD] rounded p-6 cursor-pointer hover:bg-[#EDEBE6]">
+              <FileUp className="w-4 h-4 text-[#9A9A9A]" />
+              <span className="text-xs text-[#6B6B6B]">{file ? file.name : 'Click to pick a PPTX / PDF / DOCX / XLSX / HTML / MD / TXT / RTF / CSV file'}</span>
               <input type="file" className="hidden"
                 accept=".pptx,.potx,.pdf,.docx,.doc,.odt,.rtf,.txt,.md,.markdown,.html,.htm,.csv,.xlsx,.xls,.ods"
                 onChange={(e) => setFile(e.target.files?.[0] || null)} />
@@ -150,13 +150,13 @@ export default function ConvertPage() {
             <button
               onClick={() => file && setStep('format')}
               disabled={!file}
-              className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-40"
+              className="px-3 py-1.5 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] disabled:opacity-40"
             >Next →</button>
           </section>
         )}
 
         {step === 'format' && (
-          <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+          <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
             <h2 className="text-sm font-bold">2. Output format</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {OUTPUTS.map((o) => (
@@ -164,30 +164,30 @@ export default function ConvertPage() {
                   key={o.value}
                   onClick={() => setTarget(o.value)}
                   className={`p-3 text-left border rounded transition-colors ${
-                    target === o.value ? 'bg-blue-50 border-blue-400 text-blue-800' : 'bg-white border-slate-200 hover:bg-slate-50'
+                    target === o.value ? 'bg-[#EEF5F1] border-[#A8B9AE] text-[#263F34]' : 'bg-white border-[#E3E1DA] hover:bg-[#EDEBE6]'
                   }`}
                 >
                   <div className="text-xs font-semibold">{o.label}</div>
-                  <div className="text-[10px] text-slate-500">{o.desc}</div>
+                  <div className="text-[10px] text-[#9A9A9A]">{o.desc}</div>
                 </button>
               ))}
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setStep('upload')} className="px-3 py-1.5 text-xs font-semibold border border-slate-300 rounded hover:bg-slate-50">← Back</button>
-              <button onClick={() => setStep('options')} className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700">Next →</button>
+              <button onClick={() => setStep('upload')} className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">← Back</button>
+              <button onClick={() => setStep('options')} className="px-3 py-1.5 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846]">Next →</button>
             </div>
           </section>
         )}
 
         {step === 'options' && (
-          <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+          <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
             <h2 className="text-sm font-bold">3. Options</h2>
 
             {/* Phase 37.3G — Brand Kit picker (replaces the old paste-a-UUID input) */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-700">Brand Kit</span>
-                <span className="text-[10px] text-slate-400">(optional)</span>
+                <span className="text-xs font-semibold text-[#111111]">Brand Kit</span>
+                <span className="text-[10px] text-[#C9C6BD]">(optional)</span>
                 {brandKitId && <BrandKitBadge kitId={brandKitId} />}
               </div>
               <BrandKitPicker
@@ -196,16 +196,16 @@ export default function ConvertPage() {
                 emptyLabel="Choose Brand Kit"
                 onSelect={(id) => setBrandKitId(id || '')}
               />
-              <p className="text-[10px] text-slate-500">
+              <p className="text-[10px] text-[#9A9A9A]">
                 When set, the converted output (PPTX / PDF / DOCX / HTML) uses
                 the kit's colors, fonts, and logo. Leave empty to keep the
                 source document's existing styling.
               </p>
             </div>
 
-            <div className="flex gap-2 pt-2 border-t border-slate-100">
-              <button onClick={() => setStep('format')} className="px-3 py-1.5 text-xs font-semibold border border-slate-300 rounded hover:bg-slate-50">← Back</button>
-              <button onClick={goPreview} disabled={busy} className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-40 inline-flex items-center gap-1">
+            <div className="flex gap-2 pt-2 border-t border-[#F1F0EC]">
+              <button onClick={() => setStep('format')} className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">← Back</button>
+              <button onClick={goPreview} disabled={busy} className="px-3 py-1.5 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] disabled:opacity-40 inline-flex items-center gap-1">
                 {busy && <Loader2 className="w-3 h-3 animate-spin" />} Preview →
               </button>
             </div>
@@ -213,13 +213,13 @@ export default function ConvertPage() {
         )}
 
         {step === 'preview' && preview && (
-          <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+          <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
             <h2 className="text-sm font-bold flex items-center gap-2">
               4. Preview
-              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${preview.report.overall >= 80 ? 'bg-green-100 text-green-800' : preview.report.overall >= 60 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${preview.report.overall >= 80 ? 'bg-[#DDE8E1] text-[#263F34]' : preview.report.overall >= 60 ? 'bg-[#F5E1B7] text-amber-800' : 'bg-[#F7E3E3] text-[#7a2929]'}`}>
                 {preview.report.overall}% fidelity
               </span>
-              <span className="text-[10px] text-slate-500">· format: {preview.format} · {preview.durationMs}ms</span>
+              <span className="text-[10px] text-[#9A9A9A]">· format: {preview.format} · {preview.durationMs}ms</span>
             </h2>
 
             {/* Phase Ω.2 — fidelity sub-scores (text/layout/image/chart/table)
@@ -227,20 +227,20 @@ export default function ConvertPage() {
                 the rolled-up overall %. Now visible as labelled progress bars. */}
             {preview.report.fidelity && (
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Fidelity breakdown</div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">Fidelity breakdown</div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                   {(['text','layout','image','chart','table'] as const).map((k) => {
                     const v = Math.round(((preview.report.fidelity as any)[k] ?? 0) as number);
                     const tone = v >= 80 ? 'green' : v >= 60 ? 'amber' : 'red';
-                    const fill = tone === 'green' ? 'bg-green-500' : tone === 'amber' ? 'bg-amber-500' : 'bg-red-500';
-                    const badge = tone === 'green' ? 'bg-green-100 text-green-800' : tone === 'amber' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800';
+                    const fill = tone === 'green' ? 'bg-[#4F7563]' : tone === 'amber' ? 'bg-[#D9A441]' : 'bg-[#D96A6A]';
+                    const badge = tone === 'green' ? 'bg-[#DDE8E1] text-[#263F34]' : tone === 'amber' ? 'bg-[#F5E1B7] text-amber-800' : 'bg-[#F7E3E3] text-[#7a2929]';
                     return (
-                      <div key={k} className="border border-slate-200 rounded p-2">
+                      <div key={k} className="border border-[#E3E1DA] rounded p-2">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-600">{k}</span>
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-[#6B6B6B]">{k}</span>
                           <span className={`text-[10px] font-bold px-1 py-0.5 rounded ${badge}`}>{v}%</span>
                         </div>
-                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-[#F1F0EC] rounded-full overflow-hidden">
                           <div className={`h-full ${fill}`} style={{ width: `${v}%` }} />
                         </div>
                       </div>
@@ -257,22 +257,22 @@ export default function ConvertPage() {
             </div>
 
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Pages ({preview.pages.length})</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">Pages ({preview.pages.length})</div>
               <ul className="space-y-0.5 max-h-48 overflow-auto">
                 {preview.pages.map((p: any, i: number) => (
-                  <li key={i} className="text-xs text-slate-700 border-b border-slate-100 py-1">
-                    <span className="font-mono text-slate-400 mr-1.5">#{i + 1}</span>
-                    {p.title || <span className="text-slate-400">(untitled)</span>}
-                    <span className="text-slate-400 ml-2">{p.nodes} nodes</span>
-                    {p.notes && <span className="text-[10px] text-blue-600 ml-1">+ notes</span>}
+                  <li key={i} className="text-xs text-[#111111] border-b border-[#F1F0EC] py-1">
+                    <span className="font-mono text-[#C9C6BD] mr-1.5">#{i + 1}</span>
+                    {p.title || <span className="text-[#C9C6BD]">(untitled)</span>}
+                    <span className="text-[#C9C6BD] ml-2">{p.nodes} nodes</span>
+                    {p.notes && <span className="text-[10px] text-[#4F7563] ml-1">+ notes</span>}
                   </li>
                 ))}
               </ul>
             </div>
 
             <div className="flex gap-2">
-              <button onClick={() => setStep('options')} className="px-3 py-1.5 text-xs font-semibold border border-slate-300 rounded hover:bg-slate-50">← Back</button>
-              <button onClick={doConvert} disabled={busy} className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-40 inline-flex items-center gap-1">
+              <button onClick={() => setStep('options')} className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">← Back</button>
+              <button onClick={doConvert} disabled={busy} className="px-3 py-1.5 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] disabled:opacity-40 inline-flex items-center gap-1">
                 {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
                 Convert & download
               </button>
@@ -281,12 +281,12 @@ export default function ConvertPage() {
         )}
 
         {step === 'convert' && (
-          <section className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-            <CheckCircle2 className="w-10 h-10 text-green-600 mx-auto mb-2" />
-            <div className="text-sm font-bold text-green-900">Conversion complete</div>
-            <div className="text-xs text-green-700 mt-1">Your file has been downloaded.</div>
+          <section className="bg-[#EEF5F1] border border-[#DDE8E1] rounded-lg p-6 text-center">
+            <CheckCircle2 className="w-10 h-10 text-[#4F7563] mx-auto mb-2" />
+            <div className="text-sm font-bold text-[#1A2D24]">Conversion complete</div>
+            <div className="text-xs text-[#355846] mt-1">Your file has been downloaded.</div>
             <button onClick={() => { setStep('upload'); setFile(null); setPreview(null); }}
-              className="mt-3 px-3 py-1.5 text-xs font-semibold bg-green-700 text-white rounded hover:bg-green-800">
+              className="mt-3 px-3 py-1.5 text-xs font-semibold bg-[#355846] text-white rounded hover:bg-green-800">
               Convert another
             </button>
           </section>
@@ -342,13 +342,13 @@ const BatchPanel: React.FC<{
   };
 
   return (
-    <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+    <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
       <h2 className="text-sm font-bold">Batch conversion</h2>
-      <p className="text-[10px] text-slate-500">Convert multiple files at once with the same target format and brand kit.</p>
+      <p className="text-[10px] text-[#9A9A9A]">Convert multiple files at once with the same target format and brand kit.</p>
 
-      <label className="flex items-center gap-2 border border-dashed border-slate-300 rounded p-4 cursor-pointer hover:bg-slate-50">
-        <FileUp className="w-4 h-4 text-slate-500" />
-        <span className="text-xs text-slate-600">
+      <label className="flex items-center gap-2 border border-dashed border-[#C9C6BD] rounded p-4 cursor-pointer hover:bg-[#EDEBE6]">
+        <FileUp className="w-4 h-4 text-[#9A9A9A]" />
+        <span className="text-xs text-[#6B6B6B]">
           {files.length === 0 ? 'Pick one or more files (PPTX / PDF / DOCX / etc.)' : `${files.length} file(s) selected`}
         </span>
         <input type="file" multiple className="hidden"
@@ -359,40 +359,40 @@ const BatchPanel: React.FC<{
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {OUTPUTS.map((o) => (
           <button key={o.value} onClick={() => setTarget(o.value)}
-            className={`p-2 text-left border rounded transition-colors ${target === o.value ? 'bg-blue-50 border-blue-400 text-blue-800' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+            className={`p-2 text-left border rounded transition-colors ${target === o.value ? 'bg-[#EEF5F1] border-[#A8B9AE] text-[#263F34]' : 'bg-white border-[#E3E1DA] hover:bg-[#EDEBE6]'}`}>
             <div className="text-xs font-semibold">{o.label}</div>
-            <div className="text-[10px] text-slate-500">{o.desc}</div>
+            <div className="text-[10px] text-[#9A9A9A]">{o.desc}</div>
           </button>
         ))}
       </div>
 
-      <div className="space-y-1.5 pt-2 border-t border-slate-100">
+      <div className="space-y-1.5 pt-2 border-t border-[#F1F0EC]">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-slate-700">Brand Kit</span>
+          <span className="text-xs font-semibold text-[#111111]">Brand Kit</span>
           {brandKitId && <BrandKitBadge kitId={brandKitId} />}
         </div>
         <BrandKitPicker mode="select" value={brandKitId || null} emptyLabel="Choose Brand Kit"
           onSelect={(id) => setBrandKitId(id || '')} />
       </div>
 
-      {err && <div className="bg-red-50 border border-red-200 text-red-800 text-xs rounded p-2">{err}</div>}
+      {err && <div className="bg-[#FCF1F1] border border-[#F7E3E3] text-[#7a2929] text-xs rounded p-2">{err}</div>}
 
       <button onClick={submit} disabled={busy || files.length === 0}
-        className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-40 inline-flex items-center gap-1">
+        className="px-3 py-1.5 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] disabled:opacity-40 inline-flex items-center gap-1">
         {busy && <Loader2 className="w-3 h-3 animate-spin" />} Start batch
       </button>
 
       {job && (
-        <div className="mt-2 p-3 bg-slate-50 border border-slate-200 rounded">
+        <div className="mt-2 p-3 bg-[#EDEBE6] border border-[#E3E1DA] rounded">
           <div className="text-xs font-semibold mb-1">Job {job.id} — {job.status} · {job.done}/{job.total}</div>
           {job.results?.length > 0 && (
             <ul className="space-y-0.5 text-[11px]">
               {job.results.map((r: any, i: number) => (
                 <li key={i} className="flex items-center gap-2">
-                  {r.ok ? <CheckCircle2 className="w-3 h-3 text-green-600" /> : <AlertTriangle className="w-3 h-3 text-red-600" />}
+                  {r.ok ? <CheckCircle2 className="w-3 h-3 text-[#4F7563]" /> : <AlertTriangle className="w-3 h-3 text-[#9a3737]" />}
                   <span className="truncate">{r.filename}</span>
-                  {r.overall != null && <span className="text-slate-500">· {r.overall}%</span>}
-                  {r.error && <span className="text-red-600">· {r.error}</span>}
+                  {r.overall != null && <span className="text-[#9A9A9A]">· {r.overall}%</span>}
+                  {r.error && <span className="text-[#9a3737]">· {r.error}</span>}
                 </li>
               ))}
             </ul>
@@ -445,49 +445,49 @@ const HistoryPanel: React.FC = () => {
   };
 
   return (
-    <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+    <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold">Conversion history</h2>
         <button onClick={refresh} disabled={busy}
-          className="text-[11px] text-blue-600 hover:underline disabled:opacity-50 inline-flex items-center gap-1">
+          className="text-[11px] text-[#4F7563] hover:underline disabled:opacity-50 inline-flex items-center gap-1">
           {busy && <Loader2 className="w-3 h-3 animate-spin" />} Refresh
         </button>
       </div>
-      {err && <div className="bg-red-50 border border-red-200 text-red-800 text-xs rounded p-2">{err}</div>}
+      {err && <div className="bg-[#FCF1F1] border border-[#F7E3E3] text-[#7a2929] text-xs rounded p-2">{err}</div>}
       {restoredId && (
-        <div className="bg-green-50 border border-green-200 text-green-900 text-xs rounded p-2 inline-flex items-center gap-2">
+        <div className="bg-[#EEF5F1] border border-[#DDE8E1] text-[#1A2D24] text-xs rounded p-2 inline-flex items-center gap-2">
           <CheckCircle2 className="w-3 h-3" /> Restored conversion <span className="font-mono">{restoredId}</span>
         </div>
       )}
       {items.length === 0 && !busy && (
-        <p className="text-xs text-slate-500 italic">No past conversions yet.</p>
+        <p className="text-xs text-[#9A9A9A] italic">No past conversions yet.</p>
       )}
       <ul className="space-y-1">
         {items.map((it: any) => (
-          <li key={it.id} className="flex items-center gap-2 text-xs p-2 border border-slate-200 rounded hover:bg-slate-50">
-            <span className="font-mono text-[10px] uppercase text-slate-500">{it.format || it.targetFormat}</span>
+          <li key={it.id} className="flex items-center gap-2 text-xs p-2 border border-[#E3E1DA] rounded hover:bg-[#EDEBE6]">
+            <span className="font-mono text-[10px] uppercase text-[#9A9A9A]">{it.format || it.targetFormat}</span>
             <span className="flex-1 truncate">{it.filename || it.title || it.id}</span>
-            <span className="text-[10px] text-slate-400">{it.createdAt ? new Date(it.createdAt).toLocaleString() : ''}</span>
+            <span className="text-[10px] text-[#C9C6BD]">{it.createdAt ? new Date(it.createdAt).toLocaleString() : ''}</span>
             <button onClick={() => showLineage(it.id)}
-              className="text-[10px] text-blue-600 hover:underline">Lineage</button>
+              className="text-[10px] text-[#4F7563] hover:underline">Lineage</button>
             <button onClick={() => restore(it.id)}
-              className="text-[10px] text-slate-700 hover:underline">Restore</button>
+              className="text-[10px] text-[#111111] hover:underline">Restore</button>
           </li>
         ))}
       </ul>
       {chain && (
-        <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded">
+        <div className="mt-3 p-3 bg-[#EDEBE6] border border-[#E3E1DA] rounded">
           <div className="text-xs font-bold mb-1">Lineage</div>
           <ul className="space-y-0.5 text-[11px] font-mono">
             {chain.map((c: any, i: number) => (
               <li key={i} className="flex items-center gap-2">
-                <span className="text-slate-500">{c.format || c.targetFormat || '?'}</span>
+                <span className="text-[#9A9A9A]">{c.format || c.targetFormat || '?'}</span>
                 <span className="truncate">{c.filename || c.id}</span>
               </li>
             ))}
           </ul>
           <button onClick={() => setChain(null)}
-            className="mt-2 text-[10px] text-blue-600 hover:underline">Close</button>
+            className="mt-2 text-[10px] text-[#4F7563] hover:underline">Close</button>
         </div>
       )}
     </section>
@@ -514,30 +514,30 @@ const DiagnosticsPanel: React.FC = () => {
   React.useEffect(() => { refresh(); }, []);
 
   return (
-    <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+    <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold">Storage diagnostics</h2>
         <button onClick={refresh} disabled={busy}
-          className="text-[11px] text-blue-600 hover:underline disabled:opacity-50 inline-flex items-center gap-1">
+          className="text-[11px] text-[#4F7563] hover:underline disabled:opacity-50 inline-flex items-center gap-1">
           {busy && <Loader2 className="w-3 h-3 animate-spin" />} Refresh
         </button>
       </div>
-      {err && <div className="bg-red-50 border border-red-200 text-red-800 text-xs rounded p-2">{err}</div>}
+      {err && <div className="bg-[#FCF1F1] border border-[#F7E3E3] text-[#7a2929] text-xs rounded p-2">{err}</div>}
       {diag && (
-        <pre className="text-[11px] font-mono bg-slate-50 border border-slate-200 rounded p-2 overflow-auto">
+        <pre className="text-[11px] font-mono bg-[#EDEBE6] border border-[#E3E1DA] rounded p-2 overflow-auto">
 {JSON.stringify(diag, null, 2)}
         </pre>
       )}
-      {!diag && !err && !busy && <p className="text-xs text-slate-500 italic">Loading…</p>}
+      {!diag && !err && !busy && <p className="text-xs text-[#9A9A9A] italic">Loading…</p>}
     </section>
   );
 };
 
 const Col: React.FC<{ title: string; tone: 'green' | 'amber' | 'red'; rows: Array<{ kind: string; count: number; note?: string }> }> = ({ title, tone, rows }) => {
   const tones = {
-    green: 'border-green-200 bg-green-50 text-green-900',
-    amber: 'border-amber-200 bg-amber-50 text-amber-900',
-    red:   'border-red-200 bg-red-50 text-red-900',
+    green: 'border-[#DDE8E1] bg-[#EEF5F1] text-[#1A2D24]',
+    amber: 'border-[#F2DCAE] bg-[#FAEEDB] text-amber-900',
+    red:   'border-[#F7E3E3] bg-[#FCF1F1] text-red-900',
   } as const;
   return (
     <div className={`border rounded p-2 ${tones[tone]}`}>

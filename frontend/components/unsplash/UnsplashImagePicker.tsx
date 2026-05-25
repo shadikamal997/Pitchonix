@@ -82,7 +82,7 @@ export function UnsplashImagePicker({ onSelect, onClose }: UnsplashImagePickerPr
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-8 max-w-md">
           <h3 className="text-lg font-semibold mb-4">Unsplash Integration Not Configured</h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-[#6B6B6B] mb-4">
             Stock image search requires an Unsplash API key. Please configure it in your environment variables.
           </p>
           <Button onClick={onClose}>Close</Button>
@@ -97,9 +97,9 @@ export function UnsplashImagePicker({ onSelect, onClose }: UnsplashImagePickerPr
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
-            <ImageIcon className="w-5 h-5 text-blue-600" />
+            <ImageIcon className="w-5 h-5 text-[#4F7563]" />
             <h2 className="text-xl font-semibold">Stock Images</h2>
-            <span className="text-sm text-gray-500">by Unsplash</span>
+            <span className="text-sm text-[#9A9A9A]">by Unsplash</span>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -110,7 +110,7 @@ export function UnsplashImagePicker({ onSelect, onClose }: UnsplashImagePickerPr
         <div className="p-4 border-b">
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#C9C6BD]" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -129,15 +129,15 @@ export function UnsplashImagePicker({ onSelect, onClose }: UnsplashImagePickerPr
           {loading && images.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
-                <p className="text-gray-600">Loading images...</p>
+                <div className="animate-spin w-8 h-8 border-4 border-[#4F7563] border-t-transparent rounded-full mx-auto mb-4" />
+                <p className="text-[#6B6B6B]">Loading images...</p>
               </div>
             </div>
           ) : images.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">No images found. Try a different search term.</p>
+                <p className="text-[#6B6B6B]">No images found. Try a different search term.</p>
               </div>
             </div>
           ) : (
@@ -146,7 +146,7 @@ export function UnsplashImagePicker({ onSelect, onClose }: UnsplashImagePickerPr
                 <button
                   key={image.id}
                   onClick={() => handleImageSelect(image)}
-                  className="group relative aspect-square overflow-hidden rounded-lg bg-gray-100 hover:ring-2 hover:ring-blue-500 transition-all"
+                  className="group relative aspect-square overflow-hidden rounded-lg bg-[#F1F0EC] hover:ring-2 hover:ring-[#4F7563]/40 transition-all"
                 >
                   <img
                     src={image.thumbnailUrl}
@@ -167,14 +167,14 @@ export function UnsplashImagePicker({ onSelect, onClose }: UnsplashImagePickerPr
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t bg-gray-50">
-          <p className="text-xs text-gray-600 text-center">
+        <div className="p-4 border-t bg-[#EDEBE6]">
+          <p className="text-xs text-[#6B6B6B] text-center">
             Photos provided by{' '}
             <a
               href="https://unsplash.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-[#4F7563] hover:underline"
             >
               Unsplash
             </a>

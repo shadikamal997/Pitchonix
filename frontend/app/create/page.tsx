@@ -262,8 +262,8 @@ export default function CreateWizardPageWrapper() {
       fallback={
         <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="relative">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600" />
-            <div className="absolute inset-0 rounded-full border-2 border-green-200 animate-pulse" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4F7563]" />
+            <div className="absolute inset-0 rounded-full border-2 border-[#DDE8E1] animate-pulse" />
           </div>
         </div>
       }
@@ -608,34 +608,34 @@ function CreateWizardPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Modern Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+      <header className="sticky top-0 z-50 bg-white border-b border-[#E3E1DA] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
+                <Button variant="ghost" size="sm" className="text-[#6B6B6B] hover:text-[#111111]">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Exit
                 </Button>
               </Link>
-              <div className="h-8 w-px bg-slate-200" />
+              <div className="h-8 w-px bg-[#E3E1DA]" />
               <div>
-                <h1 className="text-lg font-bold text-slate-900">
+                <h1 className="text-lg font-bold text-[#111111]">
                   {wizardData.companyName || 'Create New Project'}
                 </h1>
-                <p className="text-xs text-slate-600">Step-by-step wizard</p>
+                <p className="text-xs text-[#6B6B6B]">Step-by-step wizard</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-100">
-                <div className="w-2 h-2 rounded-full bg-green-600 animate-pulse" />
-                <span className="text-xs font-medium text-green-700">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#EEF5F1] border border-green-100">
+                <div className="w-2 h-2 rounded-full bg-[#4F7563] animate-pulse" />
+                <span className="text-xs font-medium text-[#355846]">
                   Step {currentStep} of {STEPS.length}
                 </span>
               </div>
             </div>
           </div>
-          <div className="h-1 bg-slate-100">
+          <div className="h-1 bg-[#F1F0EC]">
             <div 
               className="h-full bg-gradient-to-r from-green-600 to-emerald-500 transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
@@ -658,7 +658,7 @@ function CreateWizardPage() {
                           ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-emerald-500/30'
                           : currentStep === step.id
                           ? 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-green-500/30 scale-110'
-                          : 'bg-white border-2 border-slate-200 text-slate-400'
+                          : 'bg-white border-2 border-[#E3E1DA] text-[#C9C6BD]'
                       }`}
                     >
                       {currentStep > step.id ? <Check className="h-6 w-6" /> : step.id}
@@ -666,12 +666,12 @@ function CreateWizardPage() {
                     <div className="mt-3 text-center hidden md:block">
                       <p
                         className={`text-sm font-semibold ${
-                          currentStep >= step.id ? 'text-slate-900' : 'text-slate-500'
+                          currentStep >= step.id ? 'text-[#111111]' : 'text-[#9A9A9A]'
                         }`}
                       >
                         {step.title}
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5">{step.description}</p>
+                      <p className="text-xs text-[#9A9A9A] mt-0.5">{step.description}</p>
                     </div>
                   </div>
                   {index < STEPS.length - 1 && (
@@ -680,7 +680,7 @@ function CreateWizardPage() {
                         className={`h-1 w-full rounded-full transition-all ${
                           currentStep > step.id 
                             ? 'bg-gradient-to-r from-emerald-500 to-emerald-600' 
-                            : 'bg-slate-200'
+                            : 'bg-[#E3E1DA]'
                         }`}
                       />
                     </div>
@@ -717,7 +717,7 @@ function CreateWizardPage() {
           )}
 
           {/* Step Content Card */}
-          <div className="rounded-2xl bg-white border border-slate-200 shadow-lg overflow-hidden">
+          <div className="rounded-2xl bg-white border border-[#E3E1DA] shadow-lg overflow-hidden">
             <div className="p-8 md:p-12">
               {renderStep()}
             </div>
@@ -730,7 +730,7 @@ function CreateWizardPage() {
               onClick={handleBack}
               disabled={currentStep === 1}
               size="lg"
-              className="rounded-xl border-slate-200 hover:border-green-300 hover:bg-green-50"
+              className="rounded-xl border-[#E3E1DA] hover:border-[#A8B9AE] hover:bg-[#EEF5F1]"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -749,11 +749,11 @@ function CreateWizardPage() {
             ) : (
               <div className="flex flex-col items-end gap-3">
                 {generateError && (
-                  <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-red-600 text-xs font-bold">!</span>
+                  <div className="rounded-xl bg-[#FCF1F1] border border-[#F7E3E3] px-4 py-3 flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-[#F7E3E3] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-[#9a3737] text-xs font-bold">!</span>
                     </div>
-                    <p className="text-sm text-red-800 font-medium">{generateError}</p>
+                    <p className="text-sm text-[#7a2929] font-medium">{generateError}</p>
                   </div>
                 )}
                 <Button

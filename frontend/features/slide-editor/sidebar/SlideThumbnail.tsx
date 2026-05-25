@@ -107,7 +107,7 @@ export const SlideThumbnail: React.FC<Props> = ({ slideId, width, pageNumber, to
 
   if (error) {
     return (
-      <div style={{ width, height }} className="bg-red-50 border border-red-200 rounded flex items-center justify-center text-[10px] text-red-600">
+      <div style={{ width, height }} className="bg-[#FCF1F1] border border-[#F7E3E3] rounded flex items-center justify-center text-[10px] text-[#9a3737]">
         Error
       </div>
     );
@@ -115,7 +115,7 @@ export const SlideThumbnail: React.FC<Props> = ({ slideId, width, pageNumber, to
 
   if (!elements) {
     return (
-      <div style={{ width, height }} className="bg-slate-100 border border-slate-200 rounded animate-pulse" />
+      <div style={{ width, height }} className="bg-[#F1F0EC] border border-[#E3E1DA] rounded animate-pulse" />
     );
   }
 
@@ -124,7 +124,7 @@ export const SlideThumbnail: React.FC<Props> = ({ slideId, width, pageNumber, to
 
   return (
     <div
-      className="border border-slate-200 rounded shadow-sm overflow-hidden"
+      className="border border-[#E3E1DA] rounded shadow-sm overflow-hidden"
       style={{ width, height, position: 'relative', ...backgroundStyle(background, themeTokens) }}
     >
       <div

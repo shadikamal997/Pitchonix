@@ -82,12 +82,12 @@ export default function ShareProjectModal({ projectId, isOpen, onClose }: Props)
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#F1F0EC]">
           <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-green-600" />
-            <h2 className="font-semibold text-gray-900">Share project</h2>
+            <Users className="w-5 h-5 text-[#4F7563]" />
+            <h2 className="font-semibold text-[#111111]">Share project</h2>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-700 transition-colors">
+          <button onClick={onClose} className="p-1 rounded-lg text-[#C9C6BD] hover:text-[#111111] transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -95,20 +95,20 @@ export default function ShareProjectModal({ projectId, isOpen, onClose }: Props)
         <div className="p-6 space-y-5">
           {/* Invite form */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Invite by email</label>
+            <label className="block text-sm font-medium text-[#111111] mb-2">Invite by email</label>
             <div className="flex gap-2">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="colleague@example.com"
-                className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="flex-1 border border-[#E3E1DA] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40 focus:border-transparent"
                 onKeyDown={(e) => e.key === 'Enter' && invite()}
               />
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                className="border border-[#E3E1DA] rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40 bg-white"
               >
                 {ROLES.map((r) => (
                   <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -117,40 +117,40 @@ export default function ShareProjectModal({ projectId, isOpen, onClose }: Props)
               <button
                 onClick={invite}
                 disabled={inviting || !email.trim()}
-                className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1 px-3 py-2 bg-[#4F7563] text-white rounded-xl text-sm font-medium hover:bg-[#355846] disabled:opacity-50 transition-colors"
               >
                 {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                 Invite
               </button>
             </div>
-            {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
-            {success && <p className="text-xs text-green-600 mt-1.5">{success}</p>}
+            {error && <p className="text-xs text-[#D96A6A] mt-1.5">{error}</p>}
+            {success && <p className="text-xs text-[#4F7563] mt-1.5">{success}</p>}
           </div>
 
           {/* Members list */}
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">
-              Members {members.length > 0 && <span className="text-gray-400 font-normal">({members.length})</span>}
+            <p className="text-sm font-medium text-[#111111] mb-2">
+              Members {members.length > 0 && <span className="text-[#C9C6BD] font-normal">({members.length})</span>}
             </p>
             {loading ? (
               <div className="flex justify-center py-4">
-                <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                <Loader2 className="w-5 h-5 text-[#C9C6BD] animate-spin" />
               </div>
             ) : members.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-4">No members yet. Invite someone above.</p>
+              <p className="text-sm text-[#C9C6BD] text-center py-4">No members yet. Invite someone above.</p>
             ) : (
               <div className="space-y-2 max-h-56 overflow-y-auto">
                 {members.map((m) => (
-                  <div key={m.id} className="flex items-center justify-between px-3 py-2.5 bg-gray-50 rounded-xl">
+                  <div key={m.id} className="flex items-center justify-between px-3 py-2.5 bg-[#EDEBE6] rounded-xl">
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{m.user.name || m.user.email}</p>
-                      {m.user.name && <p className="text-xs text-gray-500">{m.user.email}</p>}
+                      <p className="text-sm font-medium text-[#111111]">{m.user.name || m.user.email}</p>
+                      {m.user.name && <p className="text-xs text-[#9A9A9A]">{m.user.email}</p>}
                     </div>
                     <div className="flex items-center gap-2">
                       <select
                         value={m.role}
                         onChange={(e) => updateRole(m.user.id, e.target.value)}
-                        className="text-xs border border-gray-200 rounded-lg px-1.5 py-1 bg-white focus:outline-none"
+                        className="text-xs border border-[#E3E1DA] rounded-lg px-1.5 py-1 bg-white focus:outline-none"
                       >
                         {ROLES.map((r) => (
                           <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -158,7 +158,7 @@ export default function ShareProjectModal({ projectId, isOpen, onClose }: Props)
                       </select>
                       <button
                         onClick={() => removeMember(m.user.id)}
-                        className="p-1 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+                        className="p-1 rounded-lg text-[#C9C6BD] hover:text-[#D96A6A] transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

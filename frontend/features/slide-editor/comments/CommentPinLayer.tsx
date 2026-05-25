@@ -65,7 +65,7 @@ export const CommentPinLayer: React.FC<Props> = ({
             className={`absolute z-[60] flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold text-white ring-2 ring-white shadow-lg pointer-events-auto transition-transform hover:scale-110 ${
               resolved
                 ? 'bg-slate-400 shadow-slate-400/40 opacity-70'
-                : 'bg-amber-500 shadow-amber-500/50 hover:bg-amber-600'
+                : 'bg-[#D9A441] shadow-amber-500/50 hover:bg-amber-600'
             }`}
             style={{
               // anchorX/Y are already in 0..100% of stage; offset by half-pin.

@@ -88,62 +88,62 @@ export const SmartArtEditor: React.FC<Props> = ({ elementId }) => {
   };
   const changeKind = (kind: string) => op(() => api.post(`/smartart/${elementId}/layout`, { kind }));
 
-  if (!content) return <div className="p-3 text-xs text-slate-500 italic">{error || 'Loading SmartArt…'}</div>;
+  if (!content) return <div className="p-3 text-xs text-[#9A9A9A] italic">{error || 'Loading SmartArt…'}</div>;
 
   return (
     <div className="p-3 space-y-3">
-      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#6B6B6B]">
         <Layers className="w-3 h-3" /> SmartArt
         <select
           value={content.kind}
           onChange={(e) => changeKind(e.target.value)}
           disabled={busy}
-          className="ml-auto h-6 px-1.5 text-[10px] border border-slate-300 rounded"
+          className="ml-auto h-6 px-1.5 text-[10px] border border-[#C9C6BD] rounded"
         >
           {KIND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <button onClick={reload} disabled={busy} title="Refresh"
-          className="p-1 text-slate-500 hover:bg-slate-100 rounded">
+          className="p-1 text-[#9A9A9A] hover:bg-[#F1F0EC] rounded">
           <RefreshCw className="w-3 h-3" />
         </button>
       </div>
 
-      {error && <div className="text-[10px] text-red-600">{error}</div>}
+      {error && <div className="text-[10px] text-[#9a3737]">{error}</div>}
 
       <div className="grid grid-cols-2 gap-3">
         {/* Node list */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A]">
             <span>Nodes ({content.nodes.length})</span>
             <button onClick={addRoot} disabled={busy}
-              className="h-5 px-1.5 text-[9px] font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center gap-0.5">
+              className="h-5 px-1.5 text-[9px] font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center gap-0.5">
               <Plus className="w-2.5 h-2.5" /> Root
             </button>
           </div>
           <ul className="space-y-1">
             {content.nodes.map((n, i) => (
-              <li key={n.id} className="border border-slate-200 rounded p-1.5 space-y-1">
+              <li key={n.id} className="border border-[#E3E1DA] rounded p-1.5 space-y-1">
                 <div className="flex items-center gap-1">
                   <input
                     value={n.text}
                     onChange={(e) => rename(n.id, e.target.value)}
                     disabled={busy}
-                    className="flex-1 h-6 px-1 text-[11px] border-0 bg-transparent border-b border-transparent focus:border-slate-300 outline-none"
+                    className="flex-1 h-6 px-1 text-[11px] border-0 bg-transparent border-b border-transparent focus:border-[#C9C6BD] outline-none"
                   />
                   <button onClick={() => move(n.id, -1)} disabled={busy || i === 0} title="Move up"
-                    className="p-0.5 text-slate-500 hover:bg-slate-100 rounded disabled:opacity-30">
+                    className="p-0.5 text-[#9A9A9A] hover:bg-[#F1F0EC] rounded disabled:opacity-30">
                     <Move className="w-2.5 h-2.5 rotate-180" />
                   </button>
                   <button onClick={() => move(n.id, 1)} disabled={busy || i === content.nodes.length - 1} title="Move down"
-                    className="p-0.5 text-slate-500 hover:bg-slate-100 rounded disabled:opacity-30">
+                    className="p-0.5 text-[#9A9A9A] hover:bg-[#F1F0EC] rounded disabled:opacity-30">
                     <Move className="w-2.5 h-2.5" />
                   </button>
                   <button onClick={() => addChild(n.id)} disabled={busy} title="Add child"
-                    className="p-0.5 text-blue-600 hover:bg-blue-50 rounded">
+                    className="p-0.5 text-[#4F7563] hover:bg-[#EEF5F1] rounded">
                     <Plus className="w-2.5 h-2.5" />
                   </button>
                   <button onClick={() => remove(n.id)} disabled={busy} title="Remove"
-                    className="p-0.5 text-red-600 hover:bg-red-50 rounded">
+                    className="p-0.5 text-[#9a3737] hover:bg-[#FCF1F1] rounded">
                     <Trash2 className="w-2.5 h-2.5" />
                   </button>
                 </div>
@@ -155,10 +155,10 @@ export const SmartArtEditor: React.FC<Props> = ({ elementId }) => {
                           value={c.text}
                           onChange={(e) => rename(c.id, e.target.value)}
                           disabled={busy}
-                          className="flex-1 h-5 px-1 text-[10px] border-0 bg-transparent border-b border-transparent focus:border-slate-300 outline-none"
+                          className="flex-1 h-5 px-1 text-[10px] border-0 bg-transparent border-b border-transparent focus:border-[#C9C6BD] outline-none"
                         />
                         <button onClick={() => remove(c.id)} disabled={busy}
-                          className="p-0.5 text-red-600 hover:bg-red-50 rounded">
+                          className="p-0.5 text-[#9a3737] hover:bg-[#FCF1F1] rounded">
                           <Trash2 className="w-2.5 h-2.5" />
                         </button>
                       </li>
@@ -172,8 +172,8 @@ export const SmartArtEditor: React.FC<Props> = ({ elementId }) => {
 
         {/* Live shape preview */}
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Preview</div>
-          <svg viewBox="0 0 100 56.25" className="w-full aspect-video bg-slate-50 border border-slate-200 rounded">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">Preview</div>
+          <svg viewBox="0 0 100 56.25" className="w-full aspect-video bg-[#EDEBE6] border border-[#E3E1DA] rounded">
             {content.shapes.map((s, i) => (
               <g key={i}>
                 <rect
@@ -187,10 +187,10 @@ export const SmartArtEditor: React.FC<Props> = ({ elementId }) => {
               </g>
             ))}
           </svg>
-          <div className="text-[9px] text-slate-400 italic mt-1">
+          <div className="text-[9px] text-[#C9C6BD] italic mt-1">
             Deterministic layout — change kind to re-flow.
             {content.preserved && (
-              <span className="block text-amber-600">Preserved OOXML attached (round-trip safe).</span>
+              <span className="block text-[#8c6210]">Preserved OOXML attached (round-trip safe).</span>
             )}
           </div>
         </div>

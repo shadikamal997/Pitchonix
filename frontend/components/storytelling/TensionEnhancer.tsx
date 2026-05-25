@@ -151,7 +151,7 @@ export function TensionEnhancer({
               <Label>Emotional Words Added</Label>
               <div className="flex flex-wrap gap-2">
                 {enhancement.emotionalWords.map((word, i) => (
-                  <Badge key={i} variant="outline" className="text-orange-600">
+                  <Badge key={i} variant="outline" className="text-[#8c6210]">
                     {word}
                   </Badge>
                 ))}
@@ -163,11 +163,11 @@ export function TensionEnhancer({
           <div className="space-y-2">
             <Label>Original vs. Enhanced</Label>
             <div className="grid gap-3">
-              <Card className="p-3 bg-red-50 dark:bg-red-950/20">
+              <Card className="p-3 bg-[#FCF1F1] dark:bg-red-950/20">
                 <p className="text-xs text-muted-foreground mb-1">Original (Low Tension)</p>
                 <p className="text-sm">{enhancement.originalContent}</p>
               </Card>
-              <Card className="p-3 bg-green-50 dark:bg-green-950/20">
+              <Card className="p-3 bg-[#EEF5F1] dark:bg-green-950/20">
                 <p className="text-xs text-muted-foreground mb-1">Enhanced (High Tension)</p>
                 <p className="text-sm">{enhancement.enhancedContent}</p>
               </Card>

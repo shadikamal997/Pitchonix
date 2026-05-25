@@ -24,15 +24,15 @@ export default function ExportTemplatesPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <div className="min-h-full bg-slate-50 p-8">
+    <div className="min-h-full bg-[#EDEBE6] p-8">
       <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Export Templates</h1>
-            <p className="text-gray-500 mt-1">Customisable layouts for PowerPoint and PDF exports</p>
+            <h1 className="text-3xl font-bold text-[#111111]">Export Templates</h1>
+            <p className="text-[#9A9A9A] mt-1">Customisable layouts for PowerPoint and PDF exports</p>
           </div>
 
           {/* Coming soon banner */}
-          <div className="bg-green-600 rounded-2xl p-8 text-white mb-8 flex items-center gap-6">
+          <div className="bg-[#4F7563] rounded-2xl p-8 text-white mb-8 flex items-center gap-6">
             <div className="flex-shrink-0">
               <Clock className="h-12 w-12 text-green-200" />
             </div>
@@ -48,13 +48,13 @@ export default function ExportTemplatesPage() {
           {/* Feature preview cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {COMING_SOON_FEATURES.map(({ icon: Icon, title, description }) => (
-              <div key={title} className="bg-white border border-gray-200 rounded-xl p-6 flex gap-4 items-start">
-                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon className="h-5 w-5 text-green-600" />
+              <div key={title} className="bg-white border border-[#E3E1DA] rounded-xl p-6 flex gap-4 items-start">
+                <div className="w-10 h-10 bg-[#EEF5F1] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Icon className="h-5 w-5 text-[#4F7563]" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
-                  <p className="text-sm text-gray-500">{description}</p>
+                  <h3 className="font-semibold text-[#111111] mb-1">{title}</h3>
+                  <p className="text-sm text-[#9A9A9A]">{description}</p>
                 </div>
               </div>
             ))}

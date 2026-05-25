@@ -63,15 +63,15 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4F7563]"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-sm text-red-600">{error}</p>
+      <div className="p-4 bg-[#FCF1F1] border border-[#F7E3E3] rounded-lg">
+        <p className="text-sm text-[#9a3737]">{error}</p>
       </div>
     );
   }
@@ -92,8 +92,8 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
           />
         </svg>
-        <h3 className="text-sm font-medium text-gray-900 mb-1">No History Yet</h3>
-        <p className="text-sm text-gray-600">
+        <h3 className="text-sm font-medium text-[#111111] mb-1">No History Yet</h3>
+        <p className="text-sm text-[#6B6B6B]">
           Quality checks will appear here once performed.
         </p>
       </div>
@@ -105,26 +105,26 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
       {/* Statistics Summary */}
       {statistics && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <p className="text-xs text-blue-600 font-medium mb-1">Average Score</p>
-            <p className="text-2xl font-bold text-blue-900">
+          <div className="p-4 bg-[#EEF5F1] rounded-lg">
+            <p className="text-xs text-[#4F7563] font-medium mb-1">Average Score</p>
+            <p className="text-2xl font-bold text-[#1A2D24]">
               {statistics.averageScore.toFixed(1)}
             </p>
           </div>
-          <div className="p-4 bg-green-50 rounded-lg">
-            <p className="text-xs text-green-600 font-medium mb-1">Pass Rate</p>
+          <div className="p-4 bg-[#EEF5F1] rounded-lg">
+            <p className="text-xs text-[#4F7563] font-medium mb-1">Pass Rate</p>
             <p className="text-2xl font-bold text-green-900">
               {(statistics.passRate * 100).toFixed(0)}%
             </p>
           </div>
-          <div className="p-4 bg-purple-50 rounded-lg">
-            <p className="text-xs text-purple-600 font-medium mb-1">Total Checks</p>
+          <div className="p-4 bg-[#EEF5F1] rounded-lg">
+            <p className="text-xs text-[#4F7563] font-medium mb-1">Total Checks</p>
             <p className="text-2xl font-bold text-purple-900">
               {statistics.totalChecks}
             </p>
           </div>
-          <div className="p-4 bg-amber-50 rounded-lg">
-            <p className="text-xs text-amber-600 font-medium mb-1">Current Streak</p>
+          <div className="p-4 bg-[#FAEEDB] rounded-lg">
+            <p className="text-xs text-[#8c6210] font-medium mb-1">Current Streak</p>
             <p className="text-2xl font-bold text-amber-900">
               {statistics.currentStreak}
             </p>
@@ -133,13 +133,13 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
       )}
 
       {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-white border border-[#E3E1DA] rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-[#EDEBE6]">
               <tr>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-xs font-medium text-[#9A9A9A] uppercase tracking-wider cursor-pointer hover:bg-[#F1F0EC]"
                   onClick={() => handleSort('version')}
                 >
                   <div className="flex items-center">
@@ -162,7 +162,7 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-xs font-medium text-[#9A9A9A] uppercase tracking-wider cursor-pointer hover:bg-[#F1F0EC]"
                   onClick={() => handleSort('createdAt')}
                 >
                   <div className="flex items-center">
@@ -185,7 +185,7 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-xs font-medium text-[#9A9A9A] uppercase tracking-wider cursor-pointer hover:bg-[#F1F0EC]"
                   onClick={() => handleSort('overallScore')}
                 >
                   <div className="flex items-center">
@@ -207,19 +207,19 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
                     )}
                   </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#9A9A9A] uppercase tracking-wider">
                   Grade
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#9A9A9A] uppercase tracking-wider">
                   Dimensions
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#9A9A9A] uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#9A9A9A] uppercase tracking-wider">
                   Trigger
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#9A9A9A] uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -227,11 +227,11 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
             <tbody className="bg-white divide-y divide-gray-200">
               {sortedHistory.map((entry) => (
                 <>
-                  <tr key={entry.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={entry.id} className="hover:bg-[#EDEBE6]">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#111111]">
                       v{entry.version}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#6B6B6B]">
                       {new Date(entry.createdAt).toLocaleString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -240,7 +240,7 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
                         minute: '2-digit',
                       })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#111111]">
                       {entry.overallScore.toFixed(1)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -254,7 +254,7 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
                         {entry.grade}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#6B6B6B]">
                       <div className="flex space-x-2">
                         <span title="Content">{entry.contentScore.toFixed(0)}</span>
                         <span title="Visual">{entry.visualScore.toFixed(0)}</span>
@@ -266,15 +266,15 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded ${
                           entry.validationPassed
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-[#DDE8E1] text-green-800'
+                            : 'bg-[#F7E3E3] text-[#7a2929]'
                         }`}
                       >
                         {entry.validationPassed ? 'Pass' : 'Fail'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded capitalize">
+                      <span className="px-2 py-1 text-xs font-medium bg-[#F1F0EC] text-[#111111] rounded capitalize">
                         {entry.trigger}
                       </span>
                     </td>
@@ -283,7 +283,7 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
                         onClick={() =>
                           setExpandedRow(expandedRow === entry.id ? null : entry.id)
                         }
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-[#4F7563] hover:text-[#263F34]"
                       >
                         {expandedRow === entry.id ? 'Collapse' : 'Details'}
                       </button>
@@ -293,11 +293,11 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
                   {/* Expanded Row */}
                   {expandedRow === entry.id && (
                     <tr>
-                      <td colSpan={8} className="px-6 py-4 bg-gray-50">
+                      <td colSpan={8} className="px-6 py-4 bg-[#EDEBE6]">
                         <div className="space-y-4">
                           {/* Dimension Details */}
                           <div>
-                            <h4 className="text-sm font-medium text-gray-900 mb-2">
+                            <h4 className="text-sm font-medium text-[#111111] mb-2">
                               Dimension Scores
                             </h4>
                             <div className="grid grid-cols-4 gap-4">
@@ -308,7 +308,7 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
                                 { label: 'Export', value: entry.exportScore, color: '#3b82f6' },
                               ].map((dim) => (
                                 <div key={dim.label} className="bg-white p-3 rounded">
-                                  <p className="text-xs text-gray-600 mb-1">{dim.label}</p>
+                                  <p className="text-xs text-[#6B6B6B] mb-1">{dim.label}</p>
                                   <p className="text-lg font-semibold" style={{ color: dim.color }}>
                                     {dim.value.toFixed(1)}
                                   </p>
@@ -319,25 +319,25 @@ export function QualityHistoryTable({ deckId }: QualityHistoryTableProps) {
 
                           {/* Validation Issues */}
                           <div>
-                            <h4 className="text-sm font-medium text-gray-900 mb-2">
+                            <h4 className="text-sm font-medium text-[#111111] mb-2">
                               Validation Issues
                             </h4>
                             <div className="grid grid-cols-3 gap-4">
                               <div className="bg-white p-3 rounded">
-                                <p className="text-xs text-red-600 mb-1">Errors</p>
+                                <p className="text-xs text-[#9a3737] mb-1">Errors</p>
                                 <p className="text-lg font-semibold text-red-900">
                                   {entry.errorCount}
                                 </p>
                               </div>
                               <div className="bg-white p-3 rounded">
-                                <p className="text-xs text-amber-600 mb-1">Warnings</p>
+                                <p className="text-xs text-[#8c6210] mb-1">Warnings</p>
                                 <p className="text-lg font-semibold text-amber-900">
                                   {entry.warningCount}
                                 </p>
                               </div>
                               <div className="bg-white p-3 rounded">
-                                <p className="text-xs text-blue-600 mb-1">Info</p>
-                                <p className="text-lg font-semibold text-blue-900">
+                                <p className="text-xs text-[#4F7563] mb-1">Info</p>
+                                <p className="text-lg font-semibold text-[#1A2D24]">
                                   {entry.infoCount}
                                 </p>
                               </div>

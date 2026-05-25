@@ -112,14 +112,14 @@ export function EditorToolbar({
       <div className="flex items-center gap-4 p-2 overflow-x-auto">
         {/* Text Group */}
         <div className="flex items-center gap-1 border-r pr-4">
-          <span className="text-xs font-medium text-gray-500 mr-2">Text</span>
+          <span className="text-xs font-medium text-[#9A9A9A] mr-2">Text</span>
           
           {/* Font Family */}
           <select
             value={currentStyles.fontFamily || 'Inter'}
             onChange={(e) => onStyleChange({ fontFamily: e.target.value as FontFamily })}
             disabled={disabled}
-            className="px-2 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            className="px-2 py-1 text-sm border rounded hover:bg-[#EDEBE6] disabled:opacity-50"
           >
             {FONT_FAMILIES.map((font) => (
               <option key={font} value={font}>
@@ -133,7 +133,7 @@ export function EditorToolbar({
             value={currentStyles.fontSize || 1.0}
             onChange={(e) => onStyleChange({ fontSize: parseFloat(e.target.value) })}
             disabled={disabled}
-            className="px-2 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            className="px-2 py-1 text-sm border rounded hover:bg-[#EDEBE6] disabled:opacity-50"
           >
             {FONT_SIZES.map(({ label, value }) => (
               <option key={value} value={value}>
@@ -188,7 +188,7 @@ export function EditorToolbar({
             value={currentStyles.textTransform || 'none'}
             onChange={(e) => onStyleChange({ textTransform: e.target.value as any })}
             disabled={disabled}
-            className="px-2 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            className="px-2 py-1 text-sm border rounded hover:bg-[#EDEBE6] disabled:opacity-50"
           >
             {TEXT_TRANSFORMS.map(({ label, value }) => (
               <option key={value} value={value}>
@@ -200,14 +200,14 @@ export function EditorToolbar({
 
         {/* Paragraph Group */}
         <div className="flex items-center gap-1 border-r pr-4">
-          <span className="text-xs font-medium text-gray-500 mr-2">Paragraph</span>
+          <span className="text-xs font-medium text-[#9A9A9A] mr-2">Paragraph</span>
 
           {/* Heading Level */}
           <select
             value={currentStyles.headingLevel || 'body'}
             onChange={(e) => onStyleChange({ headingLevel: e.target.value as HeadingLevel })}
             disabled={disabled}
-            className="px-2 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            className="px-2 py-1 text-sm border rounded hover:bg-[#EDEBE6] disabled:opacity-50"
           >
             {HEADING_LEVELS.map(({ label, value }) => (
               <option key={value} value={value}>
@@ -279,7 +279,7 @@ export function EditorToolbar({
 
         {/* Block Actions */}
         <div className="flex items-center gap-1 border-r pr-4">
-          <span className="text-xs font-medium text-gray-500 mr-2">Block</span>
+          <span className="text-xs font-medium text-[#9A9A9A] mr-2">Block</span>
           
           <ToolbarButton
             icon={<Copy size={16} />}
@@ -316,7 +316,7 @@ export function EditorToolbar({
                 e.target.value = '';
               }
             }}
-            className="px-3 py-1.5 text-sm border rounded bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+            className="px-3 py-1.5 text-sm border rounded bg-[#4F7563] text-white hover:bg-[#4F7563] cursor-pointer"
           >
             <option value="">+ Add Block</option>
             {BLOCK_TYPES.map(({ label, type, icon }) => (
@@ -353,8 +353,8 @@ function ToolbarButton({ icon, active, onClick, disabled, tooltip }: ToolbarButt
       disabled={disabled}
       title={tooltip}
       className={`
-        p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed
-        ${active ? 'bg-blue-100 text-blue-600' : 'text-gray-700'}
+        p-1.5 rounded hover:bg-[#F1F0EC] disabled:opacity-50 disabled:cursor-not-allowed
+        ${active ? 'bg-[#DDE8E1] text-[#4F7563]' : 'text-[#111111]'}
       `}
     >
       {icon}

@@ -31,8 +31,8 @@ export default function StructuredDataStep({ documentType, structured, onUpdate 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Business data</h2>
-        <p className="text-sm text-slate-600 mt-1">
+        <h2 className="text-2xl font-bold text-[#111111]">Business data</h2>
+        <p className="text-sm text-[#6B6B6B] mt-1">
           Structured entries unlock visual blocks (KPI cards, pricing cards, timelines…).
           Every field is optional but completing them dramatically improves your deck.
         </p>
@@ -57,18 +57,18 @@ export default function StructuredDataStep({ documentType, structured, onUpdate 
 function Section({ title, hint, count, children }: { title: string; hint?: string; count?: number; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-slate-50">
+    <div className="rounded-xl border border-[#E3E1DA] bg-white shadow-sm">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-[#EDEBE6]">
         <div className="flex items-center gap-3">
-          {open ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />}
-          <h3 className="font-semibold text-slate-900">{title}</h3>
+          {open ? <ChevronDown className="w-4 h-4 text-[#9A9A9A]" /> : <ChevronRight className="w-4 h-4 text-[#9A9A9A]" />}
+          <h3 className="font-semibold text-[#111111]">{title}</h3>
           {count !== undefined && count > 0 && (
-            <span className="text-xs font-semibold rounded-full bg-green-100 text-green-700 px-2 py-0.5">
+            <span className="text-xs font-semibold rounded-full bg-[#DDE8E1] text-[#355846] px-2 py-0.5">
               {count}
             </span>
           )}
         </div>
-        {hint && <span className="text-xs text-slate-500 hidden sm:block">{hint}</span>}
+        {hint && <span className="text-xs text-[#9A9A9A] hidden sm:block">{hint}</span>}
       </button>
       {open && <div className="px-5 pb-5 space-y-3">{children}</div>}
     </div>
@@ -123,7 +123,7 @@ function MarketSection({ market, onChange }: { market: MarketSizingEntry; onChan
         <LabeledInput label="Region"       value={market.region     ?? ''} onChange={(v) => onChange({ ...market, region: v })}     placeholder="Global / US / EU" />
       </div>
       <div>
-        <div className="text-xs font-medium text-slate-700 mb-1">Market drivers (one per line)</div>
+        <div className="text-xs font-medium text-[#111111] mb-1">Market drivers (one per line)</div>
         <textarea className={inputCls + ' min-h-[60px]'} placeholder="Driver 1&#10;Driver 2"
           value={drivers.join('\n')}
           onChange={(e) => onChange({ ...market, drivers: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) })} />
@@ -140,7 +140,7 @@ function PricingSection({ tiers, onChange }: { tiers: PricingTierEntry[]; onChan
   return (
     <Section title="Pricing tiers" hint="Each tier renders as a pricing card" count={tiers.length}>
       {tiers.map((t, i) => (
-        <div key={i} className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+        <div key={i} className="rounded-lg border border-[#E3E1DA] bg-[#EDEBE6] p-3 space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
             <input className={inputCls + ' sm:col-span-4'} placeholder="Tier name (Starter / Pro / Enterprise)"
               value={t.name} onChange={(e) => onChange(replace(tiers, i, { ...t, name: e.target.value }))} />
@@ -170,7 +170,7 @@ function RoadmapSection({ phases, onChange }: { phases: RoadmapPhaseEntry[]; onC
   return (
     <Section title="Roadmap phases" hint="Renders as timeline + roadmap blocks" count={phases.length}>
       {phases.map((p, i) => (
-        <div key={i} className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+        <div key={i} className="rounded-lg border border-[#E3E1DA] bg-[#EDEBE6] p-3 space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
             <input className={inputCls + ' sm:col-span-5'} placeholder="Phase title (e.g. Launch in 3 cities)"
               value={p.phase} onChange={(e) => onChange(replace(phases, i, { ...p, phase: e.target.value }))} />
@@ -198,7 +198,7 @@ function TeamSection({ members, onChange }: { members: TeamMemberEntry[]; onChan
   return (
     <Section title="Team members" hint="Generates team cards" count={members.length}>
       {members.map((m, i) => (
-        <div key={i} className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+        <div key={i} className="rounded-lg border border-[#E3E1DA] bg-[#EDEBE6] p-3 space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
             <input className={inputCls + ' sm:col-span-4'} placeholder="Name"
               value={m.name} onChange={(e) => onChange(replace(members, i, { ...m, name: e.target.value }))} />
@@ -228,7 +228,7 @@ function CompetitorSection({ comps, onChange }: { comps: CompetitorEntry[]; onCh
   return (
     <Section title="Competitors" hint="Generates comparison matrix" count={comps.length}>
       {comps.map((c, i) => (
-        <div key={i} className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+        <div key={i} className="rounded-lg border border-[#E3E1DA] bg-[#EDEBE6] p-3 space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
             <input className={inputCls + ' sm:col-span-11'} placeholder="Competitor name"
               value={c.name} onChange={(e) => onChange(replace(comps, i, { ...c, name: e.target.value }))} />
@@ -263,7 +263,7 @@ function FundingSection({ funding, onChange }: { funding: FundingDataEntry; onCh
         <LabeledInput label="Runway"     value={funding.runway    ?? ''} onChange={(v) => onChange({ ...funding, runway: v })}    placeholder="18 months" />
       </div>
       <div className="space-y-2">
-        <div className="text-xs font-medium text-slate-700">Use of funds</div>
+        <div className="text-xs font-medium text-[#111111]">Use of funds</div>
         {allocs.map((a: FundingAllocationEntry, i) => (
           <div key={i} className="grid grid-cols-1 sm:grid-cols-12 gap-2">
             <input className={inputCls + ' sm:col-span-6'} placeholder="Category (Engineering / Marketing)"
@@ -294,7 +294,7 @@ function FundingSection({ funding, onChange }: { funding: FundingDataEntry; onCh
 function SWOTSection({ swot, onChange }: { swot: SWOTEntry; onChange: (v: SWOTEntry) => void }) {
   const list = (label: keyof SWOTEntry, placeholder: string) => (
     <div>
-      <div className="text-xs font-medium text-slate-700 mb-1 capitalize">{label}</div>
+      <div className="text-xs font-medium text-[#111111] mb-1 capitalize">{label}</div>
       <textarea className={inputCls + ' min-h-[80px]'} placeholder={`${placeholder} (one per line)`}
         value={(swot[label] || []).join('\n')}
         onChange={(e) => onChange({ ...swot, [label]: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) })} />
@@ -316,14 +316,14 @@ function SWOTSection({ swot, onChange }: { swot: SWOTEntry; onChange: (v: SWOTEn
 //  Generic helpers
 // =============================================================================
 
-const inputCls = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100';
-const addCls   = 'inline-flex items-center text-sm font-medium text-green-700 hover:text-green-800 px-2 py-1 rounded-md hover:bg-green-50';
-const delCls   = 'inline-flex items-center justify-center text-slate-500 hover:text-red-600 rounded-lg border border-slate-200 hover:border-red-200 hover:bg-red-50 px-2 py-1';
+const inputCls = 'rounded-lg border border-[#C9C6BD] bg-white px-3 py-2 text-sm text-[#111111] placeholder:text-[#C9C6BD] focus:outline-none focus:border-[#4F7563] focus:ring-2 focus:ring-green-100';
+const addCls   = 'inline-flex items-center text-sm font-medium text-[#355846] hover:text-green-800 px-2 py-1 rounded-md hover:bg-[#EEF5F1]';
+const delCls   = 'inline-flex items-center justify-center text-[#9A9A9A] hover:text-[#9a3737] rounded-lg border border-[#E3E1DA] hover:border-[#F7E3E3] hover:bg-[#FCF1F1] px-2 py-1';
 
 function LabeledInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <div>
-      <div className="text-xs font-medium text-slate-700 mb-1">{label}</div>
+      <div className="text-xs font-medium text-[#111111] mb-1">{label}</div>
       <input className={inputCls + ' w-full'} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
     </div>
   );

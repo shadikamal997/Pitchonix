@@ -10,11 +10,11 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   variant = 'default',
   ...props
 }) => {
-  const baseClasses = 'animate-pulse bg-gray-200 dark:bg-gray-700';
+  const baseClasses = 'pn-skeleton';
 
   const variantClasses = {
-    default: 'rounded-md',
-    card: 'rounded-xl h-48',
+    default: 'rounded-xl',
+    card: 'rounded-3xl h-48',
     text: 'rounded h-4',
     circular: 'rounded-full',
   };
@@ -29,7 +29,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 
 export const ProjectCardSkeleton: React.FC = () => {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-md">
+    <div className="pn-card p-6">
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
           <Skeleton variant="circular" className="w-12 h-12" />

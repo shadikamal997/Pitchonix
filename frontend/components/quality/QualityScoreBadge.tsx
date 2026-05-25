@@ -84,18 +84,18 @@ export function QualityScoreBadge({
           <div className="flex-1">
             <div className="flex items-baseline gap-2">
               <motion.span
-                className={`${styles.scoreText} font-bold text-gray-900`}
+                className={`${styles.scoreText} font-bold text-[#111111]`}
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
                 {displayScore}
               </motion.span>
-              <span className={`${styles.labelText} text-gray-500`}>/100</span>
+              <span className={`${styles.labelText} text-[#9A9A9A]`}>/100</span>
             </div>
 
             <div className="flex items-center gap-2 mt-1">
-              <p className={`${styles.labelText} text-gray-600 font-medium`}>
+              <p className={`${styles.labelText} text-[#6B6B6B] font-medium`}>
                 Quality Score
               </p>
               {showTrend && previousScore && trend !== 0 && (
@@ -147,27 +147,27 @@ export function QualityScoreBadge({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="mt-4 pt-4 border-t border-[#E3E1DA]">
                   <div className="grid grid-cols-2 gap-3">
                     <DimensionBar
                       label="Content"
                       value={dimensions.content}
-                      color="bg-blue-500"
+                      color="bg-[#4F7563]"
                     />
                     <DimensionBar
                       label="Visual"
                       value={dimensions.visual}
-                      color="bg-purple-500"
+                      color="bg-[#4F7563]"
                     />
                     <DimensionBar
                       label="AI"
                       value={dimensions.aiEnhancement}
-                      color="bg-indigo-500"
+                      color="bg-[#4F7563]"
                     />
                     <DimensionBar
                       label="Export"
                       value={dimensions.exportReadiness}
-                      color="bg-green-500"
+                      color="bg-[#4F7563]"
                     />
                   </div>
                 </div>
@@ -202,10 +202,10 @@ function DimensionBar({ label, value, color }: DimensionBarProps) {
   return (
     <div>
       <div className="flex justify-between items-center mb-1">
-        <span className="text-xs text-gray-600">{label}</span>
-        <span className="text-xs font-semibold text-gray-900">{value}</span>
+        <span className="text-xs text-[#6B6B6B]">{label}</span>
+        <span className="text-xs font-semibold text-[#111111]">{value}</span>
       </div>
-      <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-[#E3E1DA] rounded-full overflow-hidden">
         <motion.div
           className={`h-full ${color} rounded-full`}
           initial={{ width: 0 }}

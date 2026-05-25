@@ -23,48 +23,48 @@ export default function MastersPage() {
   const confirm = useConfirm();
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
-        <Link href="/dashboard" className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1">
+    <div className="min-h-screen bg-[#EDEBE6]">
+      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
+        <Link href="/dashboard" className="text-xs text-[#9A9A9A] hover:text-[#111111] flex items-center gap-1">
           <ArrowLeft className="w-3 h-3" /> Back
         </Link>
-        <div className="h-5 w-px bg-slate-200" />
-        <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <Layers className="w-4 h-4 text-slate-500" /> Slide Masters
+        <div className="h-5 w-px bg-[#E3E1DA]" />
+        <h1 className="text-base font-bold text-[#111111] flex items-center gap-2">
+          <Layers className="w-4 h-4 text-[#9A9A9A]" /> Slide Masters
         </h1>
         <input value={deckId} onChange={(e) => setDeckId(e.target.value)} placeholder="deck-uuid"
-          className="ml-auto w-72 h-8 px-2 text-xs font-mono border border-slate-300 rounded" />
+          className="ml-auto w-72 h-8 px-2 text-xs font-mono border border-[#C9C6BD] rounded" />
         <button
           onClick={() => create({ name: 'New master', layoutType: 'body' })}
           disabled={!deckId}
-          className="h-8 px-2 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center gap-1 disabled:opacity-40"
+          className="h-8 px-2 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center gap-1 disabled:opacity-40"
         >
           <Plus className="w-3 h-3" /> New master
         </button>
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-6">
-        {!deckId && <div className="text-sm text-slate-500 italic">Paste a deck id to view its masters.</div>}
-        {deckId && loading && items.length === 0 && <div className="text-xs text-slate-500">Loading…</div>}
+        {!deckId && <div className="text-sm text-[#9A9A9A] italic">Paste a deck id to view its masters.</div>}
+        {deckId && loading && items.length === 0 && <div className="text-xs text-[#9A9A9A]">Loading…</div>}
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {items.map((m) => (
-            <li key={m.id} className="bg-white border border-slate-200 rounded-lg p-3 space-y-1.5">
+            <li key={m.id} className="bg-white border border-[#E3E1DA] rounded-lg p-3 space-y-1.5">
               <input
                 value={m.name}
                 onChange={(e) => update(m.id, { name: e.target.value })}
-                className="w-full text-xs font-bold text-slate-900 bg-transparent border-b border-transparent focus:border-slate-300 outline-none"
+                className="w-full text-xs font-bold text-[#111111] bg-transparent border-b border-transparent focus:border-[#C9C6BD] outline-none"
               />
               <select
                 value={m.layoutType}
                 onChange={(e) => update(m.id, { layoutType: e.target.value as any })}
-                className="w-full h-7 px-1.5 text-[11px] border border-slate-300 rounded"
+                className="w-full h-7 px-1.5 text-[11px] border border-[#C9C6BD] rounded"
               >
                 {['cover', 'body', 'divider', 'appendix', 'custom'].map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
-              <div className="text-[9px] text-slate-400 font-mono truncate">{m.id}</div>
+              <div className="text-[9px] text-[#C9C6BD] font-mono truncate">{m.id}</div>
               <div className="flex gap-1 pt-1">
                 <button onClick={() => duplicate(m.id)} title="Duplicate"
-                  className="flex-1 h-7 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center justify-center gap-1"
+                  className="flex-1 h-7 text-[10px] font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center justify-center gap-1"
                 ><Copy className="w-3 h-3" /> Copy</button>
                 <button
                   onClick={async () => {
@@ -74,7 +74,7 @@ export default function MastersPage() {
                     finally { setActiveId(null); }
                   }}
                   disabled={activeId === m.id}
-                  className="flex-1 h-7 text-[10px] font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center justify-center gap-1 disabled:opacity-40"
+                  className="flex-1 h-7 text-[10px] font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center justify-center gap-1 disabled:opacity-40"
                 ><Link2 className="w-3 h-3" /> Apply</button>
                 <button onClick={async () => {
                   if (await confirm({ title: 'Delete master?', message: `"${m.name}" will be removed.`, confirmLabel: 'Delete', tone: 'danger' })) {
@@ -82,7 +82,7 @@ export default function MastersPage() {
                     catch (e: any) { toast.error(e?.response?.data?.message || e?.message || 'Delete failed'); }
                   }
                 }}
-                  className="h-7 px-2 text-[10px] font-semibold bg-red-50 text-red-700 rounded hover:bg-red-100"
+                  className="h-7 px-2 text-[10px] font-semibold bg-[#FCF1F1] text-[#7a2929] rounded hover:bg-[#F7E3E3]"
                 ><Trash2 className="w-3 h-3" /></button>
               </div>
             </li>

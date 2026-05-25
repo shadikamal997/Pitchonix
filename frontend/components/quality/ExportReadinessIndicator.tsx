@@ -83,8 +83,8 @@ export function ExportReadinessIndicator({
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
-            <RefreshCw className="w-5 h-5 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-600">Checking readiness...</span>
+            <RefreshCw className="w-5 h-5 animate-spin text-[#C9C6BD]" />
+            <span className="ml-2 text-[#6B6B6B]">Checking readiness...</span>
           </div>
         </CardContent>
       </Card>
@@ -110,20 +110,20 @@ export function ExportReadinessIndicator({
         icon: <CheckCircle2 className="w-8 h-8 text-green-500" />,
         title: 'Ready to Export',
         message: 'Your presentation meets all requirements and is ready for export.',
-        color: 'text-green-700',
-        bgColor: 'bg-green-50',
-        borderColor: 'border-green-200',
+        color: 'text-[#355846]',
+        bgColor: 'bg-[#EEF5F1]',
+        borderColor: 'border-[#DDE8E1]',
         badgeVariant: 'default' as const,
       };
     }
     if (readiness.blockers.length > 0) {
       return {
-        icon: <XCircle className="w-8 h-8 text-red-500" />,
+        icon: <XCircle className="w-8 h-8 text-[#D96A6A]" />,
         title: 'Not Ready',
         message: `${readiness.blockers.length} blocker${readiness.blockers.length !== 1 ? 's' : ''} must be fixed before exporting.`,
-        color: 'text-red-700',
-        bgColor: 'bg-red-50',
-        borderColor: 'border-red-200',
+        color: 'text-[#7a2929]',
+        bgColor: 'bg-[#FCF1F1]',
+        borderColor: 'border-[#F7E3E3]',
         badgeVariant: 'destructive' as const,
       };
     }
@@ -131,9 +131,9 @@ export function ExportReadinessIndicator({
       icon: <AlertTriangle className="w-8 h-8 text-yellow-500" />,
       title: 'Warning',
       message: 'Export is possible but not recommended. Please review the quality report.',
-      color: 'text-yellow-700',
-      bgColor: 'bg-yellow-50',
-      borderColor: 'border-yellow-200',
+      color: 'text-[#735008]',
+      bgColor: 'bg-[#FAEEDB]',
+      borderColor: 'border-[#F2DCAE]',
       badgeVariant: 'secondary' as const,
     };
   };
@@ -180,20 +180,20 @@ export function ExportReadinessIndicator({
           </motion.div>
 
           {/* Quality Metrics */}
-          <div className="grid grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-2 gap-6 p-4 bg-[#EDEBE6] rounded-lg">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Quality Score</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {readiness.qualityScore}<span className="text-xl text-gray-500">/100</span>
+              <p className="text-sm font-medium text-[#6B6B6B] mb-2">Quality Score</p>
+              <p className="text-3xl font-bold text-[#111111]">
+                {readiness.qualityScore}<span className="text-xl text-[#9A9A9A]">/100</span>
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">Validation</p>
+              <p className="text-sm font-medium text-[#6B6B6B] mb-2">Validation</p>
               <p className="text-2xl font-bold">
                 {readiness.validationPassed ? (
-                  <span className="text-green-600 flex items-center gap-2">✓ Passed</span>
+                  <span className="text-[#4F7563] flex items-center gap-2">✓ Passed</span>
                 ) : (
-                  <span className="text-red-600 flex items-center gap-2">✗ Failed</span>
+                  <span className="text-[#9a3737] flex items-center gap-2">✗ Failed</span>
                 )}
               </p>
             </div>
@@ -202,12 +202,12 @@ export function ExportReadinessIndicator({
           {/* Blockers Preview */}
           {readiness.blockers.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">
+              <p className="text-sm font-medium text-[#111111] mb-2">
                 {readiness.blockers.length} Blocker{readiness.blockers.length !== 1 ? 's' : ''}:
               </p>
               <div className="space-y-1">
                 {readiness.blockers.slice(0, 3).map((blocker, index) => (
-                  <div key={index} className="flex items-start gap-2 text-sm text-red-700">
+                  <div key={index} className="flex items-start gap-2 text-sm text-[#7a2929]">
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span>{blocker}</span>
                   </div>
@@ -257,9 +257,9 @@ export function ExportReadinessIndicator({
           </DialogHeader>
           <div className="max-h-96 overflow-y-auto space-y-2">
             {readiness.blockers.map((blocker, index) => (
-              <div key={index} className="flex items-start gap-2 p-2 bg-red-50 rounded border border-red-200">
-                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                <span className="text-sm text-red-700">{blocker}</span>
+              <div key={index} className="flex items-start gap-2 p-2 bg-[#FCF1F1] rounded border border-[#F7E3E3]">
+                <AlertCircle className="w-4 h-4 text-[#D96A6A] flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-[#7a2929]">{blocker}</span>
               </div>
             ))}
           </div>

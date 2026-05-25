@@ -39,14 +39,14 @@ export function ComparisonTableBlock({
     if (typeof value === 'boolean') {
       return value ? (
         <div className="flex justify-center">
-          <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
-            <Check className="h-4 w-4 text-green-600" />
+          <div className="w-7 h-7 rounded-full bg-[#DDE8E1] flex items-center justify-center">
+            <Check className="h-4 w-4 text-[#4F7563]" />
           </div>
         </div>
       ) : (
         <div className="flex justify-center">
-          <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center">
-            <X className="h-4 w-4 text-red-600" />
+          <div className="w-7 h-7 rounded-full bg-[#F7E3E3] flex items-center justify-center">
+            <X className="h-4 w-4 text-[#9a3737]" />
           </div>
         </div>
       );
@@ -55,8 +55,8 @@ export function ComparisonTableBlock({
     if (value === 'partial') {
       return (
         <div className="flex justify-center">
-          <div className="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center">
-            <Minus className="h-4 w-4 text-yellow-600" />
+          <div className="w-7 h-7 rounded-full bg-[#F5E1B7] flex items-center justify-center">
+            <Minus className="h-4 w-4 text-[#8c6210]" />
           </div>
         </div>
       );
@@ -64,7 +64,7 @@ export function ComparisonTableBlock({
 
     return (
       <div className="flex justify-center">
-        <span className="text-sm font-semibold text-slate-700">{value}</span>
+        <span className="text-sm font-semibold text-[#111111]">{value}</span>
       </div>
     );
   };
@@ -73,16 +73,16 @@ export function ComparisonTableBlock({
     <div className="w-full py-8">
       {title && (
         <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold text-slate-900">{title}</h3>
+          <h3 className="text-2xl font-bold text-[#111111]">{title}</h3>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border-2 border-slate-200 shadow-lg">
+      <div className="overflow-hidden rounded-2xl border-2 border-[#E3E1DA] shadow-lg">
         <table className="w-full">
           {/* Header */}
           <thead>
-            <tr className="bg-slate-50 border-b-2 border-slate-200">
-              <th className="py-4 px-6 text-left text-sm font-bold text-slate-700 w-1/3">
+            <tr className="bg-[#EDEBE6] border-b-2 border-[#E3E1DA]">
+              <th className="py-4 px-6 text-left text-sm font-bold text-[#111111] w-1/3">
                 Feature
               </th>
               {columns.map((column, index) => (
@@ -90,8 +90,8 @@ export function ComparisonTableBlock({
                   key={index}
                   className={`py-4 px-6 text-center text-sm font-bold ${
                     index === highlightColumn
-                      ? 'bg-green-600 text-white border-x-2 border-green-700'
-                      : 'text-slate-700'
+                      ? 'bg-[#4F7563] text-white border-x-2 border-green-700'
+                      : 'text-[#111111]'
                   }`}
                 >
                   {column}
@@ -108,11 +108,11 @@ export function ComparisonTableBlock({
             {items.map((item, rowIndex) => (
               <tr
                 key={rowIndex}
-                className={`border-b border-slate-100 ${
-                  rowIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'
+                className={`border-b border-[#F1F0EC] ${
+                  rowIndex % 2 === 0 ? 'bg-white' : 'bg-[#EDEBE6]/50'
                 }`}
               >
-                <td className="py-4 px-6 text-sm font-semibold text-slate-700">
+                <td className="py-4 px-6 text-sm font-semibold text-[#111111]">
                   {item.feature}
                 </td>
                 {item.values.map((value, colIndex) => (
@@ -120,7 +120,7 @@ export function ComparisonTableBlock({
                     key={colIndex}
                     className={`py-4 px-6 ${
                       colIndex === highlightColumn
-                        ? 'bg-green-50/50 border-x-2 border-green-100'
+                        ? 'bg-[#EEF5F1]/50 border-x-2 border-green-100'
                         : ''
                     }`}
                   >

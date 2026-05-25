@@ -80,8 +80,8 @@ export function FeatureGridBlock({
       {/* Header */}
       {title && (
         <div className="text-center mb-10">
-          <h3 className="text-3xl font-bold text-slate-900 mb-2">{title}</h3>
-          {subtitle && <p className="text-sm text-slate-600">{subtitle}</p>}
+          <h3 className="text-3xl font-bold text-[#111111] mb-2">{title}</h3>
+          {subtitle && <p className="text-sm text-[#6B6B6B]">{subtitle}</p>}
         </div>
       )}
 
@@ -93,20 +93,20 @@ export function FeatureGridBlock({
           return (
             <div
               key={feature.id}
-              className="group bg-white border-2 border-slate-200 rounded-2xl p-6 hover:border-green-400 hover:shadow-xl transition-all cursor-pointer"
+              className="group bg-white border-2 border-[#E3E1DA] rounded-2xl p-6 hover:border-green-400 hover:shadow-xl transition-all cursor-pointer"
             >
               {/* Icon */}
               <div className="w-14 h-14 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-gradient-to-br group-hover:from-green-100 group-hover:to-emerald-100 transition-all">
-                <IconComponent className="h-7 w-7 text-green-600" />
+                <IconComponent className="h-7 w-7 text-[#4F7563]" />
               </div>
 
               {/* Title */}
-              <h4 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-green-700 transition-colors">
+              <h4 className="text-lg font-bold text-[#111111] mb-2 group-hover:text-[#355846] transition-colors">
                 {feature.title}
               </h4>
 
               {/* Description */}
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm text-[#6B6B6B] leading-relaxed">
                 {feature.description}
               </p>
             </div>

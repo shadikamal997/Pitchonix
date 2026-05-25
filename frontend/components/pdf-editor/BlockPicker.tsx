@@ -145,31 +145,31 @@ export function BlockPicker({ isOpen, onClose, onSelectBlock }: BlockPickerProps
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200 bg-slate-50">
+        <div className="px-6 py-5 border-b border-[#E3E1DA] bg-[#EDEBE6]">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Insert Block</h2>
-              <p className="text-sm text-slate-600 mt-1">
+              <h2 className="text-2xl font-bold text-[#111111]">Insert Block</h2>
+              <p className="text-sm text-[#6B6B6B] mt-1">
                 Choose a block to add to your document
               </p>
             </div>
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition-colors"
+              className="w-10 h-10 rounded-full bg-white border border-[#E3E1DA] flex items-center justify-center hover:bg-[#F1F0EC] transition-colors"
             >
-              <X className="h-5 w-5 text-slate-600" />
+              <X className="h-5 w-5 text-[#6B6B6B]" />
             </button>
           </div>
 
           {/* Search */}
-          <div className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl">
-            <Search className="h-5 w-5 text-slate-400" />
+          <div className="flex items-center gap-2 px-4 py-3 bg-white border border-[#E3E1DA] rounded-xl">
+            <Search className="h-5 w-5 text-[#C9C6BD]" />
             <input
               type="text"
               placeholder="Search blocks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
+              className="flex-1 bg-transparent text-sm font-medium text-[#111111] outline-none placeholder:text-[#C9C6BD]"
             />
           </div>
 
@@ -181,8 +181,8 @@ export function BlockPicker({ isOpen, onClose, onSelectBlock }: BlockPickerProps
                 onClick={() => setActiveCategory(category.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                   activeCategory === category.id
-                    ? 'bg-green-600 text-white shadow-md'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    ? 'bg-[#4F7563] text-white shadow-md'
+                    : 'bg-white text-[#6B6B6B] border border-[#E3E1DA] hover:bg-[#EDEBE6]'
                 }`}
               >
                 {category.name}
@@ -203,18 +203,18 @@ export function BlockPicker({ isOpen, onClose, onSelectBlock }: BlockPickerProps
                     onSelectBlock(block);
                     onClose();
                   }}
-                  className="group bg-white border-2 border-slate-200 rounded-2xl p-6 hover:border-green-400 hover:shadow-xl transition-all text-left"
+                  className="group bg-white border-2 border-[#E3E1DA] rounded-2xl p-6 hover:border-green-400 hover:shadow-xl transition-all text-left"
                 >
                   <div className="w-12 h-12 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:from-green-100 group-hover:to-emerald-100 transition-all">
-                    <IconComponent className="h-6 w-6 text-green-600" />
+                    <IconComponent className="h-6 w-6 text-[#4F7563]" />
                   </div>
-                  <h3 className="text-base font-bold text-slate-900 mb-1 group-hover:text-green-700 transition-colors">
+                  <h3 className="text-base font-bold text-[#111111] mb-1 group-hover:text-[#355846] transition-colors">
                     {block.name}
                   </h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <p className="text-sm text-[#6B6B6B] leading-relaxed">
                     {block.description}
                   </p>
-                  <div className="mt-3 inline-block px-2.5 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600 capitalize">
+                  <div className="mt-3 inline-block px-2.5 py-1 rounded-full bg-[#F1F0EC] text-xs font-semibold text-[#6B6B6B] capitalize">
                     {block.category}
                   </div>
                 </button>
@@ -225,10 +225,10 @@ export function BlockPicker({ isOpen, onClose, onSelectBlock }: BlockPickerProps
           {filteredBlocks.length === 0 && (
             <div className="text-center py-12">
               <Layout className="h-16 w-16 mx-auto mb-4 text-slate-300" />
-              <h3 className="text-lg font-bold text-slate-900 mb-2">
+              <h3 className="text-lg font-bold text-[#111111] mb-2">
                 No blocks found
               </h3>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-[#6B6B6B]">
                 Try adjusting your search or category filter
               </p>
             </div>

@@ -76,14 +76,14 @@ export const GuidesOverlay: React.FC<GuidesOverlayProps> = ({
       {/* Top + left rulers */}
       {showRulers && (
         <>
-          <div className="absolute left-0 right-0 top-0 h-3 border-b border-slate-300/60 bg-slate-50/70 pointer-events-auto flex">
+          <div className="absolute left-0 right-0 top-0 h-3 border-b border-[#C9C6BD]/60 bg-[#EDEBE6]/70 pointer-events-auto flex">
             {Array.from({ length: 11 }, (_, i) => (
-              <div key={i} className="flex-1 relative border-r border-slate-300/40 text-[7px] text-slate-500 px-0.5">{i * 10}</div>
+              <div key={i} className="flex-1 relative border-r border-[#C9C6BD]/40 text-[7px] text-[#9A9A9A] px-0.5">{i * 10}</div>
             ))}
           </div>
-          <div className="absolute top-0 bottom-0 left-0 w-3 border-r border-slate-300/60 bg-slate-50/70 pointer-events-auto flex flex-col">
+          <div className="absolute top-0 bottom-0 left-0 w-3 border-r border-[#C9C6BD]/60 bg-[#EDEBE6]/70 pointer-events-auto flex flex-col">
             {Array.from({ length: 11 }, (_, i) => (
-              <div key={i} className="flex-1 relative border-b border-slate-300/40 text-[7px] text-slate-500 text-center">{i * 10}</div>
+              <div key={i} className="flex-1 relative border-b border-[#C9C6BD]/40 text-[7px] text-[#9A9A9A] text-center">{i * 10}</div>
             ))}
           </div>
         </>
@@ -109,10 +109,10 @@ export const GuidesOverlay: React.FC<GuidesOverlayProps> = ({
           title={`Guide ${g.axis.toUpperCase()} ${g.pos.toFixed(0)}%`}
         >
           <div className="absolute -top-3 -left-3 hidden hover:flex items-center gap-0.5">
-            <button onClick={() => toggleLock(g.id)} className="p-0.5 bg-white border border-slate-300 rounded text-slate-600 hover:bg-slate-50">
+            <button onClick={() => toggleLock(g.id)} className="p-0.5 bg-white border border-[#C9C6BD] rounded text-[#6B6B6B] hover:bg-[#EDEBE6]">
               {g.locked ? <Lock className="w-2.5 h-2.5" /> : <Unlock className="w-2.5 h-2.5" />}
             </button>
-            <button onClick={() => removeGuide(g.id)} className="p-0.5 bg-white border border-red-200 rounded text-red-600 hover:bg-red-50">
+            <button onClick={() => removeGuide(g.id)} className="p-0.5 bg-white border border-[#F7E3E3] rounded text-[#9a3737] hover:bg-[#FCF1F1]">
               <Trash2 className="w-2.5 h-2.5" />
             </button>
           </div>
@@ -122,10 +122,10 @@ export const GuidesOverlay: React.FC<GuidesOverlayProps> = ({
       {/* Add-guide controls (top-right corner) */}
       {showGuides && (
         <div className="absolute top-4 right-2 flex gap-1 pointer-events-auto">
-          <button onClick={() => addGuide('x')} className="h-6 px-1.5 text-[9px] font-semibold bg-white border border-slate-300 text-slate-700 rounded hover:bg-slate-50 inline-flex items-center gap-0.5">
+          <button onClick={() => addGuide('x')} className="h-6 px-1.5 text-[9px] font-semibold bg-white border border-[#C9C6BD] text-[#111111] rounded hover:bg-[#EDEBE6] inline-flex items-center gap-0.5">
             <Plus className="w-2.5 h-2.5" /> V guide
           </button>
-          <button onClick={() => addGuide('y')} className="h-6 px-1.5 text-[9px] font-semibold bg-white border border-slate-300 text-slate-700 rounded hover:bg-slate-50 inline-flex items-center gap-0.5">
+          <button onClick={() => addGuide('y')} className="h-6 px-1.5 text-[9px] font-semibold bg-white border border-[#C9C6BD] text-[#111111] rounded hover:bg-[#EDEBE6] inline-flex items-center gap-0.5">
             <Plus className="w-2.5 h-2.5" /> H guide
           </button>
         </div>

@@ -51,7 +51,7 @@ export function ChartBlock({
           return (
             <div key={index} className="flex-1 flex flex-col items-center gap-3">
               <div className="w-full flex flex-col items-center justify-end flex-1">
-                <span className="text-sm font-bold text-slate-700 mb-2">{formatValue(item.value)}</span>
+                <span className="text-sm font-bold text-[#111111] mb-2">{formatValue(item.value)}</span>
                 <div
                   className="w-full rounded-t-xl transition-all hover:opacity-80 cursor-pointer"
                   style={{
@@ -60,7 +60,7 @@ export function ChartBlock({
                   }}
                 />
               </div>
-              <span className="text-sm font-semibold text-slate-600">{item.label}</span>
+              <span className="text-sm font-semibold text-[#6B6B6B]">{item.label}</span>
             </div>
           );
         })}
@@ -123,7 +123,7 @@ export function ChartBlock({
         {/* X-Axis Labels */}
         <div className="flex justify-between mt-2">
           {data.map((item, index) => (
-            <span key={index} className="text-sm font-semibold text-slate-600">
+            <span key={index} className="text-sm font-semibold text-[#6B6B6B]">
               {item.label}
             </span>
           ))}
@@ -184,8 +184,8 @@ export function ChartBlock({
                     style={{ backgroundColor: item.color || `hsl(${index * 60}, 70%, 60%)` }}
                   />
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-700">{item.label}</p>
-                    <p className="text-xs text-slate-500">{formatValue(item.value)} ({percentage}%)</p>
+                    <p className="text-sm font-semibold text-[#111111]">{item.label}</p>
+                    <p className="text-xs text-[#9A9A9A]">{formatValue(item.value)} ({percentage}%)</p>
                   </div>
                 </div>
               );
@@ -199,23 +199,23 @@ export function ChartBlock({
   const getIcon = () => {
     switch (type) {
       case 'bar':
-        return <BarChart3 className="h-6 w-6 text-green-600" />;
+        return <BarChart3 className="h-6 w-6 text-[#4F7563]" />;
       case 'line':
-        return <TrendingUp className="h-6 w-6 text-blue-600" />;
+        return <TrendingUp className="h-6 w-6 text-[#4F7563]" />;
       case 'pie':
       case 'donut':
-        return <PieChart className="h-6 w-6 text-purple-600" />;
+        return <PieChart className="h-6 w-6 text-[#4F7563]" />;
     }
   };
 
   return (
-    <div className="w-full py-8 bg-white border-2 border-slate-200 rounded-2xl p-8">
+    <div className="w-full py-8 bg-white border-2 border-[#E3E1DA] rounded-2xl p-8">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         {getIcon()}
         <div>
-          {title && <h3 className="text-xl font-bold text-slate-900">{title}</h3>}
-          {subtitle && <p className="text-sm text-slate-600">{subtitle}</p>}
+          {title && <h3 className="text-xl font-bold text-[#111111]">{title}</h3>}
+          {subtitle && <p className="text-sm text-[#6B6B6B]">{subtitle}</p>}
         </div>
       </div>
 

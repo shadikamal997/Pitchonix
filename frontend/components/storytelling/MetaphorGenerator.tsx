@@ -66,9 +66,9 @@ export function MetaphorGenerator({
   };
 
   const getEffectivenessColor = (score: number) => {
-    if (score >= 8) return 'bg-green-500';
-    if (score >= 6) return 'bg-yellow-500';
-    return 'bg-orange-500';
+    if (score >= 8) return 'bg-[#4F7563]';
+    if (score >= 6) return 'bg-[#D9A441]';
+    return 'bg-[#D9A441]';
   };
 
   return (

@@ -93,26 +93,26 @@ export default function NotificationBell() {
     <div className="relative" ref={panelRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+        className="relative flex items-center justify-center w-10 h-10 rounded-full bg-white text-[#111111] hover:bg-[#F7F6F2] shadow-[0_8px_18px_rgba(0,0,0,0.04)] transition-colors"
         aria-label="Notifications"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-4.5 h-4.5" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-[#D96A6A] text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none ring-2 ring-white">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.15)] border border-[#E3E1DA]/60 z-50 overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <h3 className="font-semibold text-sm text-gray-900">Notifications</h3>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#F1F0EC]">
+            <h3 className="font-semibold text-sm text-[#111111]">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-xs text-green-600 hover:text-green-800 font-medium flex items-center gap-1"
+                className="text-xs text-[#4F7563] hover:text-[#355846] font-semibold flex items-center gap-1"
               >
                 <CheckCheck className="w-3 h-3" /> Mark all read
               </button>
@@ -120,39 +120,39 @@ export default function NotificationBell() {
           </div>
 
           {/* List */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+          <div className="max-h-80 overflow-y-auto divide-y divide-[#F1F0EC]">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                <Loader2 className="w-5 h-5 text-[#9A9A9A] animate-spin" />
               </div>
             ) : notifications.length === 0 ? (
-              <div className="py-8 text-center text-sm text-gray-400">No notifications yet</div>
+              <div className="py-8 text-center text-sm text-[#9A9A9A]">No notifications yet</div>
             ) : (
               notifications.map((n) => (
                 <div
                   key={n.id}
-                  className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${!n.read ? 'bg-green-50/40' : ''}`}
+                  className={`flex items-start gap-3 px-4 py-3 hover:bg-[#F7F6F2] transition-colors ${!n.read ? 'bg-[#EEF5F1]/50' : ''}`}
                 >
                   {!n.read && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2 flex-shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#4F7563] mt-2 flex-shrink-0" />
                   )}
                   <div className={`flex-1 min-w-0 ${n.read ? 'ml-3.5' : ''}`}>
-                    <p className="text-xs font-semibold text-gray-800 leading-snug">{n.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5 leading-snug">{n.message}</p>
-                    <p className="text-[10px] text-gray-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                    <p className="text-xs font-semibold text-[#111111] leading-snug">{n.title}</p>
+                    <p className="text-xs text-[#6B6B6B] mt-0.5 leading-snug">{n.message}</p>
+                    <p className="text-[10px] text-[#9A9A9A] mt-1">{new Date(n.createdAt).toLocaleString()}</p>
                     {n.link && (
-                      <Link href={n.link} className="text-[10px] text-green-600 hover:underline mt-0.5 inline-block">
+                      <Link href={n.link} className="text-[10px] text-[#4F7563] hover:underline mt-0.5 inline-block font-semibold">
                         View →
                       </Link>
                     )}
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {!n.read && (
-                      <button onClick={() => markRead(n.id)} title="Mark read" className="p-1 rounded hover:bg-gray-200 text-gray-400 transition-colors">
+                      <button onClick={() => markRead(n.id)} title="Mark read" className="p-1 rounded-full hover:bg-[#EEF5F1] text-[#9A9A9A] hover:text-[#4F7563] transition-colors">
                         <Check className="w-3 h-3" />
                       </button>
                     )}
-                    <button onClick={() => deleteNotification(n.id)} title="Delete" className="p-1 rounded hover:bg-gray-200 text-gray-400 transition-colors">
+                    <button onClick={() => deleteNotification(n.id)} title="Delete" className="p-1 rounded-full hover:bg-[#F7E3E3]/60 text-[#9A9A9A] hover:text-[#9a3737] transition-colors">
                       <X className="w-3 h-3" />
                     </button>
                   </div>

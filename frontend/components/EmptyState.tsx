@@ -34,14 +34,14 @@ export default function EmptyState({
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
         className="mb-6 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 p-6"
       >
-        <Icon className="h-12 w-12 text-purple-600" />
+        <Icon className="h-12 w-12 text-[#4F7563]" />
       </motion.div>
 
       <motion.h3
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="mb-2 text-xl font-semibold text-gray-900"
+        className="mb-2 text-xl font-semibold text-[#111111]"
       >
         {title}
       </motion.h3>
@@ -50,7 +50,7 @@ export default function EmptyState({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="mb-6 max-w-sm text-sm text-gray-600"
+        className="mb-6 max-w-sm text-sm text-[#6B6B6B]"
       >
         {description}
       </motion.p>

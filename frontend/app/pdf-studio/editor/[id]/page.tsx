@@ -1208,7 +1208,7 @@ export default function PdfEditorPage() {
                               <div className="text-[11px] font-medium text-gray-900 truncate">{displayTitle || `Page ${index + 1}`}</div>
                               <div className="flex items-center gap-1 text-[9px] text-gray-400 capitalize">
                                 <span>{page.pageType}</span>
-                                {selectedProTemplateId && <span className="rounded bg-teal-50 px-1 font-bold text-teal-700">{proArchetype}</span>}
+                                {selectedProTemplateId && <span className="rounded bg-[#EEF5F1] px-1 font-bold text-[#355846]">{proArchetype}</span>}
                                 {density.problem && <AlertTriangle className="w-2.5 h-2.5 text-amber-500" />}
                               </div>
                             </div>
@@ -1216,7 +1216,7 @@ export default function PdfEditorPage() {
                               <button
                                 onClick={e => { e.stopPropagation(); handleDuplicatePage(page.id); }}
                                 title="Duplicate"
-                                className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-blue-600 hover:bg-[#EEF5F1] transition-colors"
                               >
                                 <Copy className="w-3 h-3" />
                               </button>

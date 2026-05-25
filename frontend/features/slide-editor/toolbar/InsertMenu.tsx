@@ -184,10 +184,10 @@ export const InsertMenu: React.FC<Props> = ({ onInsert }) => {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-2 w-[260px] bg-white border border-slate-200 rounded-lg shadow-2xl z-50 max-h-[420px] overflow-y-auto">
+        <div className="absolute left-0 top-full mt-2 w-[260px] bg-white border border-[#E3E1DA] rounded-lg shadow-2xl z-50 max-h-[420px] overflow-y-auto">
           {SECTIONS.map((sec) => (
-            <div key={sec.label} className="py-1.5 border-b border-slate-100 last:border-b-0">
-              <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{sec.label}</div>
+            <div key={sec.label} className="py-1.5 border-b border-[#F1F0EC] last:border-b-0">
+              <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">{sec.label}</div>
               <div className="grid grid-cols-3 gap-0.5 px-1.5">
                 {sec.items.map((it) => {
                   const Icon = it.icon;
@@ -196,7 +196,7 @@ export const InsertMenu: React.FC<Props> = ({ onInsert }) => {
                       key={`${it.type}-${it.label}`}
                       type="button"
                       onClick={() => { onInsert(it.default()); setOpen(false); }}
-                      className="flex flex-col items-center gap-1 py-2 rounded text-slate-700 hover:bg-green-50 hover:text-green-800 transition-colors"
+                      className="flex flex-col items-center gap-1 py-2 rounded text-[#111111] hover:bg-[#EEF5F1] hover:text-green-800 transition-colors"
                       title={it.label}
                     >
                       <Icon className="w-3.5 h-3.5" />

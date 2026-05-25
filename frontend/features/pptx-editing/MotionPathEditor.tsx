@@ -73,17 +73,17 @@ export const MotionPathEditor: React.FC<Props> = ({ value, onChange }) => {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#6B6B6B]">
         <Spline className="w-3 h-3" /> Motion path
         <div className="ml-auto flex gap-0.5">
           {(['line', 'curve', 'custom'] as const).map((m) => (
             <button key={m} onClick={() => { setMode(m); commit(pts.length ? pts : [{ x: 0, y: 0 }]); }}
               className={`px-1.5 h-6 text-[10px] font-semibold rounded ${
-                mode === m ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                mode === m ? 'bg-[#4F7563] text-white' : 'bg-[#F1F0EC] text-[#111111] hover:bg-[#E3E1DA]'
               }`}
             >{m}</button>
           ))}
-          <button onClick={reset} title="Reset path" className="p-1 text-red-600 hover:bg-red-50 rounded">
+          <button onClick={reset} title="Reset path" className="p-1 text-[#9a3737] hover:bg-[#FCF1F1] rounded">
             <Trash2 className="w-3 h-3" />
           </button>
         </div>
@@ -93,7 +93,7 @@ export const MotionPathEditor: React.FC<Props> = ({ value, onChange }) => {
         ref={svgRef}
         viewBox="0 0 100 56.25"
         onClick={onClickCanvas}
-        className="w-full aspect-video bg-slate-50 border border-slate-200 rounded cursor-crosshair"
+        className="w-full aspect-video bg-[#EDEBE6] border border-[#E3E1DA] rounded cursor-crosshair"
       >
         {/* Grid */}
         {[10, 20, 30, 40, 50, 60, 70, 80, 90].map((g) => (
@@ -120,7 +120,7 @@ export const MotionPathEditor: React.FC<Props> = ({ value, onChange }) => {
         ))}
       </svg>
 
-      <div className="flex items-center gap-1 text-[9px] text-slate-500 font-mono">
+      <div className="flex items-center gap-1 text-[9px] text-[#9A9A9A] font-mono">
         <Pencil className="w-2.5 h-2.5" />
         <span>{value || buildPath(mode, pts)}</span>
       </div>

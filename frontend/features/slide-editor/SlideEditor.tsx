@@ -798,71 +798,71 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   // ── Save status pill ──────────────────────────────────────────────────────
   const SaveStatus = () => {
     if (api$.saveStatus === 'saving')
-      return <span className="text-xs text-slate-500 flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" />Saving…</span>;
+      return <span className="text-xs text-[#9A9A9A] flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" />Saving…</span>;
     if (api$.saveStatus === 'error')
-      return <span className="text-xs text-red-600 flex items-center gap-1.5"><AlertCircle className="w-3 h-3" />Save failed</span>;
+      return <span className="text-xs text-[#9a3737] flex items-center gap-1.5"><AlertCircle className="w-3 h-3" />Save failed</span>;
     if (api$.saveStatus === 'dirty')
-      return <span className="text-xs text-amber-600 flex items-center gap-1.5"><Save className="w-3 h-3" />Unsaved changes</span>;
-    return <span className="text-xs text-green-700 flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3" />Saved</span>;
+      return <span className="text-xs text-[#8c6210] flex items-center gap-1.5"><Save className="w-3 h-3" />Unsaved changes</span>;
+    return <span className="text-xs text-[#355846] flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3" />Saved</span>;
   };
 
   if (loadingSlide) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+      <div className="min-h-screen flex items-center justify-center bg-[#F1F0EC]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#4F7563]" />
       </div>
     );
   }
   if (!slide) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 flex-col gap-3">
-        <p className="text-slate-700">Slide not found.</p>
-        <Link href={`/projects/${projectId}`} className="text-sm text-green-700 hover:underline">← Back to project</Link>
+      <div className="min-h-screen flex items-center justify-center bg-[#F1F0EC] flex-col gap-3">
+        <p className="text-[#111111]">Slide not found.</p>
+        <Link href={`/projects/${projectId}`} className="text-sm text-[#355846] hover:underline">← Back to project</Link>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-100 overflow-hidden">
+    <div className="h-screen flex flex-col bg-[#F1F0EC] overflow-hidden">
       {/* ── Top toolbar ───────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-slate-200 px-4 h-12 flex items-center gap-3 shadow-sm flex-shrink-0">
-        <Link href={`/projects/${projectId}`} className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900">
+      <header className="bg-white border-b border-[#E3E1DA] px-4 h-12 flex items-center gap-3 shadow-sm flex-shrink-0">
+        <Link href={`/projects/${projectId}`} className="flex items-center gap-1.5 text-sm text-[#6B6B6B] hover:text-[#111111]">
           <ArrowLeft className="w-4 h-4" />
           Back
         </Link>
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="h-5 w-px bg-[#E3E1DA]" />
         {/* Phase 39.1A — workspace switcher (read-only here; no create modal slot) */}
         <WorkspaceSwitcher settingsHref={(id) => `/workspaces/${id}/settings`} />
-        <div className="h-5 w-px bg-slate-200" />
-        <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-900 truncate max-w-xs">
+        <div className="h-5 w-px bg-[#E3E1DA]" />
+        <div className="flex items-center gap-1.5 text-sm font-semibold text-[#111111] truncate max-w-xs">
           {slide.title}
         </div>
-        <span className="text-[11px] text-slate-400 font-mono uppercase">{slide.type}</span>
+        <span className="text-[11px] text-[#C9C6BD] font-mono uppercase">{slide.type}</span>
 
         {/* Slide nav */}
         <div className="ml-3 flex items-center gap-1">
           <button
             disabled={!prevSlide}
             onClick={() => prevSlide && gotoSlide(prevSlide.id)}
-            className="p-1 rounded text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="p-1 rounded text-[#6B6B6B] hover:bg-[#F1F0EC] disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Previous slide"
           >
             <MoveLeft className="w-4 h-4" />
           </button>
-          <span className="text-xs text-slate-500 w-16 text-center">
+          <span className="text-xs text-[#9A9A9A] w-16 text-center">
             {slideIdx >= 0 ? `${slideIdx + 1} / ${slidesForRender.length}` : '—'}
           </span>
           <button
             disabled={!nextSlide}
             onClick={() => nextSlide && gotoSlide(nextSlide.id)}
-            className="p-1 rounded text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="p-1 rounded text-[#6B6B6B] hover:bg-[#F1F0EC] disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Next slide"
           >
             <MoveRight className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="h-5 w-px bg-[#E3E1DA]" />
 
         {/* Template gallery */}
         <DisabledWhilePreviewing disabled={editingDisabled}>
@@ -870,9 +870,9 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             type="button"
             onClick={() => setTemplateGalleryOpen(true)}
             title="Browse templates"
-            className="h-7 px-2.5 bg-white border border-slate-200 hover:border-green-400 hover:bg-green-50 text-slate-700 text-xs font-semibold rounded flex items-center gap-1.5"
+            className="h-7 px-2.5 bg-white border border-[#E3E1DA] hover:border-green-400 hover:bg-[#EEF5F1] text-[#111111] text-xs font-semibold rounded flex items-center gap-1.5"
           >
-            <Sparkles className="w-3.5 h-3.5 text-green-600" />
+            <Sparkles className="w-3.5 h-3.5 text-[#4F7563]" />
             {appliedTemplate ? appliedTemplate.name : 'Templates'}
           </button>
         </DisabledWhilePreviewing>
@@ -907,14 +907,14 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           />
         </DisabledWhilePreviewing>
 
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="h-5 w-px bg-[#E3E1DA]" />
 
         {/* Insert menu */}
         <DisabledWhilePreviewing disabled={editingDisabled}>
           <InsertMenu onInsert={handleInsertElement} />
         </DisabledWhilePreviewing>
 
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="h-5 w-px bg-[#E3E1DA]" />
 
         {/* Smart tools (Phase 15): tidy, group, overflow stats */}
         <DisabledWhilePreviewing disabled={editingDisabled}>
@@ -928,7 +928,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           />
         </DisabledWhilePreviewing>
 
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="h-5 w-px bg-[#E3E1DA]" />
 
         {/* Undo / redo */}
         <div className="flex items-center gap-0.5">
@@ -937,7 +937,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             onClick={() => history.undo()}
             disabled={!history.canUndo || editingDisabled}
             title={editingDisabled ? editDisableTip : 'Undo (⌘Z)'}
-            className="w-7 h-6 flex items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-7 h-6 flex items-center justify-center rounded text-[#6B6B6B] hover:bg-[#F1F0EC] hover:text-[#111111] disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <Undo2 className="w-3.5 h-3.5" />
           </button>
@@ -946,13 +946,13 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             onClick={() => history.redo()}
             disabled={!history.canRedo || editingDisabled}
             title={editingDisabled ? editDisableTip : 'Redo (⌘⇧Z)'}
-            className="w-7 h-6 flex items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-7 h-6 flex items-center justify-center rounded text-[#6B6B6B] hover:bg-[#F1F0EC] hover:text-[#111111] disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <Redo2 className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="h-5 w-px bg-[#E3E1DA]" />
 
         {/* Align */}
         <DisabledWhilePreviewing disabled={editingDisabled}>
@@ -962,7 +962,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           />
         </DisabledWhilePreviewing>
 
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="h-5 w-px bg-[#E3E1DA]" />
 
         {/* Arrange */}
         <DisabledWhilePreviewing disabled={editingDisabled}>
@@ -976,31 +976,31 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
         <div className="ml-auto flex items-center gap-3">
           <SaveStatus />
 
-          <div className="h-5 w-px bg-slate-200" />
+          <div className="h-5 w-px bg-[#E3E1DA]" />
 
           <button
             onClick={() => setZoom((z) => Math.max(0.3, +(z - 0.1).toFixed(2)))}
-            className="p-1 rounded text-slate-600 hover:bg-slate-100"
+            className="p-1 rounded text-[#6B6B6B] hover:bg-[#F1F0EC]"
             aria-label="Zoom out"
           >
             <ZoomOut className="w-4 h-4" />
           </button>
-          <span className="text-xs text-slate-500 w-10 text-center">{Math.round(zoom * 100)}%</span>
+          <span className="text-xs text-[#9A9A9A] w-10 text-center">{Math.round(zoom * 100)}%</span>
           <button
             onClick={() => setZoom((z) => Math.min(2, +(z + 0.1).toFixed(2)))}
-            className="p-1 rounded text-slate-600 hover:bg-slate-100"
+            className="p-1 rounded text-[#6B6B6B] hover:bg-[#F1F0EC]"
             aria-label="Zoom in"
           >
             <ZoomIn className="w-4 h-4" />
           </button>
 
-          <div className="h-5 w-px bg-slate-200" />
+          <div className="h-5 w-px bg-[#E3E1DA]" />
 
           <button
             disabled={selectedIds.length === 0 || editingDisabled}
             onClick={handleDuplicateSelected}
             title={editingDisabled ? editDisableTip : 'Duplicate (Cmd/Ctrl+D)'}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#111111] hover:bg-[#F1F0EC] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Copy className="w-3.5 h-3.5" />
             Duplicate
@@ -1009,7 +1009,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             disabled={selectedIds.length === 0 || editingDisabled}
             onClick={handleDeleteSelected}
             title={editingDisabled ? editDisableTip : 'Delete (Del)'}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#7a2929] hover:bg-[#FCF1F1] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Delete
@@ -1021,31 +1021,31 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             title="Layers panel"
             className={`relative h-7 px-2.5 text-xs font-semibold rounded flex items-center gap-1.5 transition-colors ${
               layersOpen
-                ? 'bg-blue-50 text-blue-700 border border-blue-300'
-                : 'bg-white border border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-slate-700'
+                ? 'bg-[#EEF5F1] text-[#355846] border border-[#A8B9AE]'
+                : 'bg-white border border-[#E3E1DA] hover:border-[#A8B9AE] hover:bg-[#EEF5F1] text-[#111111]'
             }`}
           >
-            <LayersIcon className="w-3.5 h-3.5 text-blue-600" />
+            <LayersIcon className="w-3.5 h-3.5 text-[#4F7563]" />
             Layers
           </button>
 
           {slide?.deckId && (
             <>
-              <div className="h-5 w-px bg-slate-200" />
+              <div className="h-5 w-px bg-[#E3E1DA]" />
               <button
                 type="button"
                 onClick={() => { setCommentsOpen((v) => !v); if (!commentsOpen) setLayersOpen(false); }}
                 title="Comments"
                 className={`relative h-7 px-2.5 text-xs font-semibold rounded flex items-center gap-1.5 transition-colors ${
                   commentsOpen
-                    ? 'bg-green-50 text-green-700 border border-green-300'
-                    : 'bg-white border border-slate-200 hover:border-green-400 hover:bg-green-50 text-slate-700'
+                    ? 'bg-[#EEF5F1] text-[#355846] border border-[#A8B9AE]'
+                    : 'bg-white border border-[#E3E1DA] hover:border-green-400 hover:bg-[#EEF5F1] text-[#111111]'
                 }`}
               >
-                <MessageSquare className="w-3.5 h-3.5 text-green-600" />
+                <MessageSquare className="w-3.5 h-3.5 text-[#4F7563]" />
                 Comments
                 {totalOpenComments > 0 && (
-                  <span className="ml-0.5 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-white text-[9px] font-bold ring-2 ring-white">
+                  <span className="ml-0.5 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-[#D9A441] text-white text-[9px] font-bold ring-2 ring-white">
                     {totalOpenComments}
                   </span>
                 )}
@@ -1060,8 +1060,8 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
                   : commentMode ? 'Exit comment mode (Esc)' : 'Add comment to slide or element (C)'}
                 className={`relative h-7 px-2.5 text-xs font-semibold rounded flex items-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                   commentMode
-                    ? 'bg-amber-500 text-white border border-amber-600 hover:bg-amber-600'
-                    : 'bg-white border border-slate-200 hover:border-amber-400 hover:bg-amber-50 text-slate-700'
+                    ? 'bg-[#D9A441] text-white border border-amber-600 hover:bg-amber-600'
+                    : 'bg-white border border-[#E3E1DA] hover:border-amber-400 hover:bg-[#FAEEDB] text-[#111111]'
                 }`}
               >
                 <MessageSquare className="w-3.5 h-3.5" />
@@ -1072,9 +1072,9 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
                 onClick={() => setPresenterOpen(true)}
                 disabled={deckSlides.slides.length === 0}
                 title="Present (P)"
-                className="h-7 px-2.5 bg-white border border-slate-200 hover:border-green-400 hover:bg-green-50 text-slate-700 text-xs font-semibold rounded flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="h-7 px-2.5 bg-white border border-[#E3E1DA] hover:border-green-400 hover:bg-[#EEF5F1] text-[#111111] text-xs font-semibold rounded flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <Play className="w-3.5 h-3.5 text-green-600 fill-green-600" />
+                <Play className="w-3.5 h-3.5 text-[#4F7563] fill-green-600" />
                 Present
               </button>
               {/* Phase 35 — version history badge opens the panel drawer. */}
@@ -1097,8 +1097,8 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
                 title="Review queue"
                 className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${
                   reviewDashboardOpen
-                    ? 'bg-purple-100 text-purple-700 border border-purple-300'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-[#DDE8E1] text-[#355846] border border-[#A8B9AE]'
+                    : 'text-[#6B6B6B] hover:bg-[#F1F0EC]'
                 }`}
                 aria-label="Review queue"
               >
@@ -1116,8 +1116,8 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
                 aria-label="Collaboration panel"
                 className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${
                   collaborationPanelOpen
-                    ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-[#DDE8E1] text-[#355846] border border-[#A8B9AE]'
+                    : 'text-[#6B6B6B] hover:bg-[#F1F0EC]'
                 }`}
               >
                 <UsersIcon className="w-3.5 h-3.5" />
@@ -1128,7 +1128,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
                 onClick={() => setShortcutsOpen(true)}
                 title="Keyboard shortcuts (⌘/)"
                 aria-label="Keyboard shortcuts"
-                className="h-7 w-7 flex items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                className="h-7 w-7 flex items-center justify-center rounded text-[#6B6B6B] hover:bg-[#F1F0EC] hover:text-[#111111]"
               >
                 <Keyboard className="w-3.5 h-3.5" />
               </button>
@@ -1190,9 +1190,9 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
         />
         <div className="flex-1 overflow-auto flex items-center justify-center p-8 relative">
           {api$.loading ? (
-            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#4F7563]" />
           ) : api$.error ? (
-            <div className="text-red-600 flex items-center gap-2">
+            <div className="text-[#9a3737] flex items-center gap-2">
               <AlertCircle className="w-5 h-5" />
               {api$.error}
               <button onClick={api$.refresh} className="ml-2 underline text-sm">Retry</button>
@@ -1332,7 +1332,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
                   background: 'rgba(22,163,74,0.04)',
                 }}
               >
-                <span className="absolute -top-5 left-0 text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
+                <span className="absolute -top-5 left-0 text-[10px] font-bold text-[#355846] bg-[#EEF5F1] border border-[#DDE8E1] rounded px-1.5 py-0.5">
                   Group · {members.length}
                 </span>
               </div>
@@ -1369,7 +1369,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             reviewerMode={isReviewerMode}
           />
         ) : layersOpen ? (
-          <aside className="w-[280px] flex-shrink-0 bg-white border-l border-slate-200 flex flex-col h-full">
+          <aside className="w-[280px] flex-shrink-0 bg-white border-l border-[#E3E1DA] flex flex-col h-full">
             <LayersPanel
               elements={api$.elements}
               selectedIds={selectedIds}
@@ -1400,19 +1400,19 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
       </div>
 
       {/* ── Bottom info bar ────────────────────────────────────────────── */}
-      <footer className="bg-white border-t border-slate-200 px-4 h-9 flex items-center gap-4 text-[11px] text-slate-500 flex-shrink-0">
+      <footer className="bg-white border-t border-[#E3E1DA] px-4 h-9 flex items-center gap-4 text-[11px] text-[#9A9A9A] flex-shrink-0">
         <span>{api$.elements.length} elements</span>
         {selectedIds.length > 0 && (
-          <span className="text-green-700 font-semibold">
+          <span className="text-[#355846] font-semibold">
             {selectedIds.length} selected
           </span>
         )}
         <span className="ml-auto flex items-center gap-3">
-          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">←↑↓→</kbd> nudge
-          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⌘C/V</kbd> copy/paste
-          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⌘G</kbd> group
-          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⌘D</kbd> duplicate
-          <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px]">⌘/</kbd> shortcuts
+          <kbd className="px-1.5 py-0.5 bg-[#F1F0EC] border border-[#E3E1DA] rounded text-[10px]">←↑↓→</kbd> nudge
+          <kbd className="px-1.5 py-0.5 bg-[#F1F0EC] border border-[#E3E1DA] rounded text-[10px]">⌘C/V</kbd> copy/paste
+          <kbd className="px-1.5 py-0.5 bg-[#F1F0EC] border border-[#E3E1DA] rounded text-[10px]">⌘G</kbd> group
+          <kbd className="px-1.5 py-0.5 bg-[#F1F0EC] border border-[#E3E1DA] rounded text-[10px]">⌘D</kbd> duplicate
+          <kbd className="px-1.5 py-0.5 bg-[#F1F0EC] border border-[#E3E1DA] rounded text-[10px]">⌘/</kbd> shortcuts
         </span>
       </footer>
 
@@ -1446,13 +1446,13 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             className="fixed inset-0 z-40 bg-black/10"
             onClick={() => setVersionPanelOpen(false)}
           />
-          <aside className="fixed right-0 top-0 bottom-0 z-50 w-80 bg-white border-l border-slate-200 shadow-xl flex flex-col">
-            <div className="flex items-center justify-between px-3 h-10 border-b border-slate-200">
-              <span className="text-xs font-semibold text-slate-800">Version history</span>
+          <aside className="fixed right-0 top-0 bottom-0 z-50 w-80 bg-white border-l border-[#E3E1DA] shadow-xl flex flex-col">
+            <div className="flex items-center justify-between px-3 h-10 border-b border-[#E3E1DA]">
+              <span className="text-xs font-semibold text-[#111111]">Version history</span>
               <button
                 type="button"
                 onClick={() => setVersionPanelOpen(false)}
-                className="text-slate-500 hover:text-slate-800 text-lg leading-none"
+                className="text-[#9A9A9A] hover:text-[#111111] text-lg leading-none"
                 aria-label="Close version history"
               >
                 ×

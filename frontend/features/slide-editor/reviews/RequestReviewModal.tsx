@@ -78,42 +78,42 @@ export const RequestReviewModal: React.FC<Props> = ({
   return (
     <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <Send className="w-4 h-4 text-green-600" /> Request Review
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E3E1DA]">
+          <h2 className="text-base font-bold text-[#111111] flex items-center gap-2">
+            <Send className="w-4 h-4 text-[#4F7563]" /> Request Review
           </h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-slate-100" aria-label="Close">
-            <X className="w-4 h-4 text-slate-500" />
+          <button onClick={onClose} className="p-1 rounded hover:bg-[#F1F0EC]" aria-label="Close">
+            <X className="w-4 h-4 text-[#9A9A9A]" />
           </button>
         </div>
 
         {activeRequest ? (
           // -------- Active-request view -----------------------------------
           <div className="px-5 py-4 space-y-3">
-            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="rounded-lg bg-[#FAEEDB] border border-[#F2DCAE] p-3 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-[#8c6210] mt-0.5 flex-shrink-0" />
               <div className="text-xs text-amber-900">
                 This deck already has an active review request.
               </div>
             </div>
-            <div className="text-sm text-slate-700">
+            <div className="text-sm text-[#111111]">
               Assigned to <span className="font-semibold">{activeRequest.reviewer.name || activeRequest.reviewer.email}</span>
             </div>
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-[#9A9A9A]">
               Status: <span className="font-mono uppercase">{activeRequest.status}</span>
               {activeRequest.dueDate && (
                 <> · Due {new Date(activeRequest.dueDate).toLocaleDateString()}</>
               )}
             </div>
             {activeRequest.message && (
-              <div className="text-sm bg-slate-50 border border-slate-200 rounded p-2 text-slate-700">
+              <div className="text-sm bg-[#EDEBE6] border border-[#E3E1DA] rounded p-2 text-[#111111]">
                 "{activeRequest.message}"
               </div>
             )}
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 onClick={onClose}
-                className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded"
+                className="px-3 py-1.5 text-xs font-semibold text-[#111111] hover:bg-[#F1F0EC] rounded"
               >
                 Close
               </button>
@@ -132,7 +132,7 @@ export const RequestReviewModal: React.FC<Props> = ({
           // -------- New-request form --------------------------------------
           <div className="px-5 py-4 space-y-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-[#111111] mb-1">
                 Reviewer email
               </label>
               <input
@@ -141,15 +141,15 @@ export const RequestReviewModal: React.FC<Props> = ({
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="reviewer@example.com"
                 autoFocus
-                className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-green-300"
+                className="w-full px-2.5 py-1.5 text-sm border border-[#C9C6BD] rounded focus:outline-none focus:ring-2 focus:ring-green-300"
               />
-              <div className="text-[11px] text-slate-500 mt-1">
+              <div className="text-[11px] text-[#9A9A9A] mt-1">
                 Reviewer must have a Pitchonix account.
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-[#111111] mb-1">
                 Message (optional)
               </label>
               <textarea
@@ -157,24 +157,24 @@ export const RequestReviewModal: React.FC<Props> = ({
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="What would you like them to focus on?"
                 rows={3}
-                className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-green-300"
+                className="w-full px-2.5 py-1.5 text-sm border border-[#C9C6BD] rounded resize-none focus:outline-none focus:ring-2 focus:ring-green-300"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-[#111111] mb-1">
                 Due date (optional)
               </label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="px-2.5 py-1.5 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-green-300"
+                className="px-2.5 py-1.5 text-sm border border-[#C9C6BD] rounded focus:outline-none focus:ring-2 focus:ring-green-300"
               />
             </div>
 
             {error && (
-              <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
+              <div className="text-xs text-[#7a2929] bg-[#FCF1F1] border border-[#F7E3E3] rounded p-2">
                 {error}
               </div>
             )}
@@ -182,14 +182,14 @@ export const RequestReviewModal: React.FC<Props> = ({
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 onClick={onClose}
-                className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded"
+                className="px-3 py-1.5 text-xs font-semibold text-[#111111] hover:bg-[#F1F0EC] rounded"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={!email.trim() || posting}
-                className="px-3 py-1.5 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 rounded inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-[#4F7563] hover:bg-[#355846] rounded inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {posting ? (
                   <>Sending…</>

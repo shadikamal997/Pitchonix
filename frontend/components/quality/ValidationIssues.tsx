@@ -93,11 +93,11 @@ export function ValidationIssues({
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <AlertCircle className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-[#DDE8E1] rounded-full flex items-center justify-center mx-auto mb-3">
+              <AlertCircle className="w-8 h-8 text-[#4F7563]" />
             </div>
-            <p className="text-lg font-semibold text-gray-900">No Issues Found</p>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-lg font-semibold text-[#111111]">No Issues Found</p>
+            <p className="text-sm text-[#6B6B6B] mt-1">
               Your presentation passed all validation checks!
             </p>
           </div>
@@ -112,7 +112,7 @@ export function ValidationIssues({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>{title}</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-[#6B6B6B] mt-1">
               Found {filteredIssues.length} issue{filteredIssues.length !== 1 ? 's' : ''}
               {searchQuery || filterSeverity !== 'ALL' ? ' (filtered)' : ''}
             </p>
@@ -126,12 +126,12 @@ export function ValidationIssues({
               </Badge>
             )}
             {issueCountsBySeverity.WARNING > 0 && (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+              <Badge variant="secondary" className="bg-[#F5E1B7] text-[#735008]">
                 {issueCountsBySeverity.WARNING} Warning{issueCountsBySeverity.WARNING !== 1 ? 's' : ''}
               </Badge>
             )}
             {issueCountsBySeverity.INFO > 0 && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              <Badge variant="secondary" className="bg-[#DDE8E1] text-[#263F34]">
                 {issueCountsBySeverity.INFO} Info
               </Badge>
             )}
@@ -144,7 +144,7 @@ export function ValidationIssues({
           <div className="flex gap-2">
             {showSearch && (
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#C9C6BD]" />
                 <Input
                   placeholder="Search issues..."
                   value={searchQuery}

@@ -51,10 +51,10 @@ interface BatchResult {
 }
 
 const BAND_STYLES: Record<string, string> = {
-  platinum: 'bg-blue-100 text-blue-800 ring-blue-300',
+  platinum: 'bg-blue-100 text-[#263F34] ring-blue-300',
   gold:     'bg-amber-100 text-amber-800 ring-amber-300',
   silver:   'bg-slate-100 text-slate-700 ring-slate-300',
-  bronze:   'bg-orange-100 text-orange-800 ring-orange-300',
+  bronze:   'bg-[#F5E1B7] text-orange-800 ring-orange-300',
   basic:    'bg-red-100 text-red-800 ring-red-300',
   error:    'bg-red-100 text-red-800 ring-red-300',
 };
@@ -92,7 +92,7 @@ export default function PptxCertificationPage() {
           <ShieldCheck className="w-4 h-4 text-slate-500" /> PPTX Certification
         </h1>
         <button onClick={refresh} disabled={busy}
-          className="ml-auto h-7 px-2 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center gap-1 disabled:opacity-40">
+          className="ml-auto h-7 px-2 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center gap-1 disabled:opacity-40">
           {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
           Refresh
         </button>
@@ -206,7 +206,7 @@ export default function PptxCertificationPage() {
 }
 
 const SummaryCard: React.FC<{ label: string; value: number; primary?: boolean }> = ({ label, value, primary }) => (
-  <div className={`p-3 rounded border ${primary ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-white border-slate-200 text-slate-700'}`}>
+  <div className={`p-3 rounded border ${primary ? 'bg-blue-50 border-blue-200 text-[#263F34]' : 'bg-white border-slate-200 text-slate-700'}`}>
     <div className="text-[9px] uppercase tracking-wider">{label}</div>
     <div className="text-2xl font-bold">{value}</div>
   </div>

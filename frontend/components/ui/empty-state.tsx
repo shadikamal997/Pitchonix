@@ -10,6 +10,7 @@ interface EmptyStateProps {
   className?: string;
 }
 
+// Phase Δ — Premium soft empty-state used across the dashboard.
 export const EmptyState: React.FC<EmptyStateProps> = ({
   icon: Icon,
   title,
@@ -20,22 +21,22 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center py-16 px-6 text-center',
+        'flex flex-col items-center justify-center py-14 px-6 text-center rounded-3xl bg-white border border-[#E3E1DA]/70 shadow-[0_20px_50px_rgba(38,63,52,0.06)]',
         className
       )}
     >
-      <div className="rounded-2xl bg-gray-100 dark:bg-gray-800 p-6 mb-6">
-        <Icon className="h-12 w-12 text-gray-400 dark:text-gray-600" />
+      <div className="w-16 h-16 rounded-full bg-[#EEF5F1] text-[#4F7563] flex items-center justify-center mb-4">
+        <Icon className="h-7 w-7" />
       </div>
-      
-      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+
+      <h3 className="text-[18px] font-bold text-[#111111] tracking-tight mb-1.5">
         {title}
       </h3>
-      
-      <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md leading-relaxed">
+
+      <p className="text-sm text-[#6B6B6B] mb-5 max-w-md leading-relaxed">
         {description}
       </p>
-      
+
       {action && <div>{action}</div>}
     </div>
   );

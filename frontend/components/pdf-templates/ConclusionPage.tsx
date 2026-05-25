@@ -72,7 +72,7 @@ export const ConclusionPage: React.FC<ConclusionPageProps> = ({
 
           {/* Message */}
           <p
-            className="text-slate-700 mb-8 max-w-2xl leading-relaxed"
+            className="text-[#111111] mb-8 max-w-2xl leading-relaxed"
             style={{ fontSize: '14pt', lineHeight: '1.8' }}
           >
             {message}
@@ -94,7 +94,7 @@ export const ConclusionPage: React.FC<ConclusionPageProps> = ({
 
         {/* Contact Information */}
         {contactInfo && (
-          <div className="bg-slate-50 rounded-xl p-6 border-2 border-slate-100">
+          <div className="bg-[#EDEBE6] rounded-xl p-6 border-2 border-[#F1F0EC]">
             <h3
               className="font-bold mb-4 text-center"
               style={{ fontSize: '13pt', color: brandColor }}
@@ -104,17 +104,17 @@ export const ConclusionPage: React.FC<ConclusionPageProps> = ({
             <div className="grid grid-cols-2 gap-4">
               {contactInfo.name && (
                 <div>
-                  <p className="text-slate-500 text-xs mb-1" style={{ fontSize: '9pt' }}>
+                  <p className="text-[#9A9A9A] text-xs mb-1" style={{ fontSize: '9pt' }}>
                     Contact Person
                   </p>
-                  <p className="text-slate-900 font-semibold" style={{ fontSize: '11pt' }}>
+                  <p className="text-[#111111] font-semibold" style={{ fontSize: '11pt' }}>
                     {contactInfo.name}
                   </p>
                 </div>
               )}
               {contactInfo.email && (
                 <div>
-                  <p className="text-slate-500 text-xs mb-1" style={{ fontSize: '9pt' }}>
+                  <p className="text-[#9A9A9A] text-xs mb-1" style={{ fontSize: '9pt' }}>
                     Email
                   </p>
                   <p
@@ -127,17 +127,17 @@ export const ConclusionPage: React.FC<ConclusionPageProps> = ({
               )}
               {contactInfo.phone && (
                 <div>
-                  <p className="text-slate-500 text-xs mb-1" style={{ fontSize: '9pt' }}>
+                  <p className="text-[#9A9A9A] text-xs mb-1" style={{ fontSize: '9pt' }}>
                     Phone
                   </p>
-                  <p className="text-slate-900 font-semibold" style={{ fontSize: '11pt' }}>
+                  <p className="text-[#111111] font-semibold" style={{ fontSize: '11pt' }}>
                     {contactInfo.phone}
                   </p>
                 </div>
               )}
               {contactInfo.website && (
                 <div>
-                  <p className="text-slate-500 text-xs mb-1" style={{ fontSize: '9pt' }}>
+                  <p className="text-[#9A9A9A] text-xs mb-1" style={{ fontSize: '9pt' }}>
                     Website
                   </p>
                   <p
@@ -150,11 +150,11 @@ export const ConclusionPage: React.FC<ConclusionPageProps> = ({
               )}
             </div>
             {contactInfo.address && (
-              <div className="mt-4 pt-4 border-t border-slate-200">
-                <p className="text-slate-500 text-xs mb-1" style={{ fontSize: '9pt' }}>
+              <div className="mt-4 pt-4 border-t border-[#E3E1DA]">
+                <p className="text-[#9A9A9A] text-xs mb-1" style={{ fontSize: '9pt' }}>
                   Address
                 </p>
-                <p className="text-slate-700" style={{ fontSize: '10pt' }}>
+                <p className="text-[#111111]" style={{ fontSize: '10pt' }}>
                   {contactInfo.address}
                 </p>
               </div>

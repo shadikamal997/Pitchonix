@@ -64,8 +64,8 @@ export const Inspector: React.FC<InspectorProps> = ({
     const selectedCount = selectedIds.length;
     const lockSingle = selectedCount === 1 ? elements.find((e) => e.id === selectedIds[0]) : null;
     return (
-      <aside className="w-[280px] flex-shrink-0 bg-white border-l border-slate-200 flex flex-col h-full">
-        <header className="h-9 px-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
+      <aside className="w-[280px] flex-shrink-0 bg-white border-l border-[#E3E1DA] flex flex-col h-full">
+        <header className="h-9 px-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#6B6B6B] border-b border-[#E3E1DA]">
           <Lock className="w-3.5 h-3.5 text-violet-600" />
           Read-only preview
         </header>
@@ -78,34 +78,34 @@ export const Inspector: React.FC<InspectorProps> = ({
           </div>
 
           {readOnlyContext && (
-            <div className="rounded border border-slate-200 p-2.5">
-              <div className="text-[10px] uppercase tracking-wide text-slate-500">Version</div>
-              <div className="text-[12px] font-medium text-slate-800 truncate">{readOnlyContext.label}</div>
+            <div className="rounded border border-[#E3E1DA] p-2.5">
+              <div className="text-[10px] uppercase tracking-wide text-[#9A9A9A]">Version</div>
+              <div className="text-[12px] font-medium text-[#111111] truncate">{readOnlyContext.label}</div>
               {readOnlyContext.timestamp && (
-                <div className="text-[10px] text-slate-500 mt-0.5">{readOnlyContext.timestamp}</div>
+                <div className="text-[10px] text-[#9A9A9A] mt-0.5">{readOnlyContext.timestamp}</div>
               )}
             </div>
           )}
 
           {slide && (
-            <div className="rounded border border-slate-200 p-2.5">
-              <div className="text-[10px] uppercase tracking-wide text-slate-500">Slide</div>
-              <div className="text-[12px] font-medium text-slate-800 truncate">{slide.title || '(untitled)'}</div>
-              <div className="text-[10px] text-slate-500 mt-0.5">{slide.type}</div>
+            <div className="rounded border border-[#E3E1DA] p-2.5">
+              <div className="text-[10px] uppercase tracking-wide text-[#9A9A9A]">Slide</div>
+              <div className="text-[12px] font-medium text-[#111111] truncate">{slide.title || '(untitled)'}</div>
+              <div className="text-[10px] text-[#9A9A9A] mt-0.5">{slide.type}</div>
             </div>
           )}
 
-          <div className="rounded border border-slate-200 p-2.5">
-            <div className="text-[10px] uppercase tracking-wide text-slate-500">Selection</div>
+          <div className="rounded border border-[#E3E1DA] p-2.5">
+            <div className="text-[10px] uppercase tracking-wide text-[#9A9A9A]">Selection</div>
             {selectedCount === 0 ? (
-              <div className="text-[11px] text-slate-500 italic">Nothing selected</div>
+              <div className="text-[11px] text-[#9A9A9A] italic">Nothing selected</div>
             ) : lockSingle ? (
               <>
-                <div className="text-[12px] font-medium text-slate-800">{lockSingle.name || lockSingle.type}</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">{lockSingle.type}</div>
+                <div className="text-[12px] font-medium text-[#111111]">{lockSingle.name || lockSingle.type}</div>
+                <div className="text-[10px] text-[#9A9A9A] mt-0.5">{lockSingle.type}</div>
               </>
             ) : (
-              <div className="text-[12px] font-medium text-slate-800">{selectedCount} elements</div>
+              <div className="text-[12px] font-medium text-[#111111]">{selectedCount} elements</div>
             )}
           </div>
         </div>
@@ -126,15 +126,15 @@ export const Inspector: React.FC<InspectorProps> = ({
   // ── Empty state: no selection → slide-level controls ───────────────────────
   if (selected.length === 0) {
     return (
-      <aside className="w-[280px] flex-shrink-0 bg-white border-l border-slate-200 flex flex-col h-full">
-        <header className="h-9 px-3 flex items-center text-xs font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
+      <aside className="w-[280px] flex-shrink-0 bg-white border-l border-[#E3E1DA] flex flex-col h-full">
+        <header className="h-9 px-3 flex items-center text-xs font-bold uppercase tracking-wider text-[#6B6B6B] border-b border-[#E3E1DA]">
           Slide
         </header>
         <div className="flex-1 overflow-y-auto">
           {slide ? (
             <SlidePanel slide={slide} onPatch={onPatchSlide} />
           ) : (
-            <div className="p-6 text-center text-xs text-slate-400">Loading slide…</div>
+            <div className="p-6 text-center text-xs text-[#C9C6BD]">Loading slide…</div>
           )}
         </div>
       </aside>
@@ -144,17 +144,17 @@ export const Inspector: React.FC<InspectorProps> = ({
   // ── Multi-select: only show layout (numeric inputs would be misleading) ───
   if (!isSingleSelect) {
     return (
-      <aside className="w-[280px] flex-shrink-0 bg-white border-l border-slate-200 flex flex-col h-full">
-        <header className="h-9 px-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
+      <aside className="w-[280px] flex-shrink-0 bg-white border-l border-[#E3E1DA] flex flex-col h-full">
+        <header className="h-9 px-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#6B6B6B] border-b border-[#E3E1DA]">
           <span>{selected.length} elements</span>
         </header>
-        <div className="flex-1 overflow-y-auto p-3 text-xs text-slate-500 leading-relaxed">
+        <div className="flex-1 overflow-y-auto p-3 text-xs text-[#9A9A9A] leading-relaxed">
           Multi-element editing is limited in this version.
           <ul className="mt-3 space-y-1.5">
             <li>• Drag to move all selected</li>
             <li>• Arrow keys to nudge all</li>
-            <li>• <kbd className="px-1 py-0.5 bg-slate-100 border rounded text-[10px]">⌫</kbd> deletes all</li>
-            <li>• <kbd className="px-1 py-0.5 bg-slate-100 border rounded text-[10px]">⌘D</kbd> duplicates all</li>
+            <li>• <kbd className="px-1 py-0.5 bg-[#F1F0EC] border rounded text-[10px]">⌫</kbd> deletes all</li>
+            <li>• <kbd className="px-1 py-0.5 bg-[#F1F0EC] border rounded text-[10px]">⌘D</kbd> duplicates all</li>
           </ul>
           <p className="mt-3">Select a single element to edit its content, style, and layout.</p>
         </div>
@@ -167,13 +167,13 @@ export const Inspector: React.FC<InspectorProps> = ({
   const showTypography = isTextElement(el.type);
 
   return (
-    <aside className="w-[280px] flex-shrink-0 bg-white border-l border-slate-200 flex flex-col h-full">
-      <header className="h-9 px-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
+    <aside className="w-[280px] flex-shrink-0 bg-white border-l border-[#E3E1DA] flex flex-col h-full">
+      <header className="h-9 px-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#6B6B6B] border-b border-[#E3E1DA]">
         <span className="truncate">{el.name || el.type}</span>
-        <span className="text-[10px] font-mono text-slate-400 uppercase">{el.type}</span>
+        <span className="text-[10px] font-mono text-[#C9C6BD] uppercase">{el.type}</span>
       </header>
 
-      <nav className="flex bg-slate-50 border-b border-slate-200">
+      <nav className="flex bg-[#EDEBE6] border-b border-[#E3E1DA]">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -181,8 +181,8 @@ export const Inspector: React.FC<InspectorProps> = ({
             onClick={() => setTab(t.id)}
             className={`flex-1 h-9 flex items-center justify-center gap-1.5 text-[11px] font-semibold transition-colors ${
               tab === t.id
-                ? 'bg-white text-green-700 border-b-2 border-green-600'
-                : 'text-slate-500 hover:text-slate-900'
+                ? 'bg-white text-[#355846] border-b-2 border-[#4F7563]'
+                : 'text-[#9A9A9A] hover:text-[#111111]'
             }`}
           >
             {t.icon}

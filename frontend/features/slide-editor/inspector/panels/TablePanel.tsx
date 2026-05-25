@@ -151,7 +151,7 @@ export const TablePanel: React.FC<Props> = ({ element, onPatch }) => {
       </PanelSection>
 
       <PanelSection title={`Grid (${totalRows}×${cols})`}>
-        <div className="bg-slate-50 border border-slate-200 rounded overflow-x-auto -mx-1.5 px-1.5 py-1.5">
+        <div className="bg-[#EDEBE6] border border-[#E3E1DA] rounded overflow-x-auto -mx-1.5 px-1.5 py-1.5">
           <div className="inline-grid gap-0.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(60px, 1fr))` }}>
             {/* Header row */}
             {hasHeaders && c.headers.map((cell, ci) => {
@@ -186,11 +186,11 @@ export const TablePanel: React.FC<Props> = ({ element, onPatch }) => {
 
         <div className="flex gap-1.5 mt-2">
           <button onClick={() => addRow()}
-                  className="flex-1 h-7 flex items-center justify-center gap-1 text-[11px] font-semibold text-green-700 bg-green-50 hover:bg-green-100 rounded">
+                  className="flex-1 h-7 flex items-center justify-center gap-1 text-[11px] font-semibold text-[#355846] bg-[#EEF5F1] hover:bg-[#DDE8E1] rounded">
             <Plus className="w-3 h-3" /> Row
           </button>
           <button onClick={() => addColumn()}
-                  className="flex-1 h-7 flex items-center justify-center gap-1 text-[11px] font-semibold text-green-700 bg-green-50 hover:bg-green-100 rounded">
+                  className="flex-1 h-7 flex items-center justify-center gap-1 text-[11px] font-semibold text-[#355846] bg-[#EEF5F1] hover:bg-[#DDE8E1] rounded">
             <Plus className="w-3 h-3" /> Column
           </button>
         </div>
@@ -203,7 +203,7 @@ export const TablePanel: React.FC<Props> = ({ element, onPatch }) => {
             value={selectedCell.text}
             onChange={(e) => writeCell(selected.row, selected.col, { text: e.target.value })}
             placeholder="Cell text"
-            className="w-full bg-white border border-slate-200 rounded px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/30 resize-y leading-relaxed"
+            className="w-full bg-white border border-[#E3E1DA] rounded px-2 py-1.5 text-xs text-[#111111] outline-none focus:border-[#4F7563] focus:ring-1 focus:ring-[#4F7563]/40/30 resize-y leading-relaxed"
             rows={2}
           />
           <Row label="Align">
@@ -220,7 +220,7 @@ export const TablePanel: React.FC<Props> = ({ element, onPatch }) => {
               type="button"
               onClick={() => writeCell(selected.row, selected.col, { bold: !selectedCell.bold })}
               title="Toggle bold"
-              className={`w-7 h-6 rounded text-xs font-bold ${selectedCell.bold ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}
+              className={`w-7 h-6 rounded text-xs font-bold ${selectedCell.bold ? 'bg-[#DDE8E1] text-green-800' : 'bg-[#F1F0EC] text-[#9A9A9A]'}`}
             >
               <Bold className="w-3.5 h-3.5 inline" />
             </button>
@@ -237,7 +237,7 @@ export const TablePanel: React.FC<Props> = ({ element, onPatch }) => {
           <Row label="Span">
             <NumberField value={selectedCell.colspan ?? 1} min={1} max={cols}
                          onChange={(v) => writeCell(selected.row, selected.col, { colspan: Math.max(1, Math.round(v)) })} />
-            <span className="text-[10px] text-slate-400">×</span>
+            <span className="text-[10px] text-[#C9C6BD]">×</span>
             <NumberField value={selectedCell.rowspan ?? 1} min={1} max={Math.max(1, c.rows.length)}
                          onChange={(v) => writeCell(selected.row, selected.col, { rowspan: Math.max(1, Math.round(v)) })} />
           </Row>
@@ -262,10 +262,10 @@ export const TablePanel: React.FC<Props> = ({ element, onPatch }) => {
           </Row>
 
           {/* Row / column action bar for the selected cell's row & column */}
-          <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-slate-100">
+          <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-[#F1F0EC]">
             {/* Row actions */}
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Row</p>
+              <p className="text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider">Row</p>
               <div className="flex gap-1">
                 {selected.row > 0 && (
                   <ActionBtn onClick={() => moveRow(selected.row - 1, -1)} disabled={selected.row <= 1} title="Move up">
@@ -289,7 +289,7 @@ export const TablePanel: React.FC<Props> = ({ element, onPatch }) => {
             </div>
             {/* Column actions */}
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Column</p>
+              <p className="text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider">Column</p>
               <div className="flex gap-1">
                 <ActionBtn onClick={() => addColumn(selected.col + 1)} title="Insert column right">
                   <Plus className="w-3 h-3" />
@@ -302,7 +302,7 @@ export const TablePanel: React.FC<Props> = ({ element, onPatch }) => {
           </div>
 
           <button onClick={() => setSelected(null)}
-                  className="w-full mt-2 h-6 text-[10px] font-semibold text-slate-500 hover:text-slate-900">
+                  className="w-full mt-2 h-6 text-[10px] font-semibold text-[#9A9A9A] hover:text-[#111111]">
             Deselect cell
           </button>
         </PanelSection>
@@ -329,10 +329,10 @@ const CellChip: React.FC<{
       title={cell.text || '(empty)'}
       className={`text-[10px] px-1.5 py-1 rounded text-left truncate transition-colors ${
         selected
-          ? 'bg-green-600 text-white shadow-sm'
+          ? 'bg-[#4F7563] text-white shadow-sm'
           : header
-          ? 'bg-white border border-slate-300 text-slate-700 font-semibold hover:bg-green-50'
-          : 'bg-white border border-slate-200 text-slate-600 hover:bg-green-50'
+          ? 'bg-white border border-[#C9C6BD] text-[#111111] font-semibold hover:bg-[#EEF5F1]'
+          : 'bg-white border border-[#E3E1DA] text-[#6B6B6B] hover:bg-[#EEF5F1]'
       }`}
       style={{
         background: !selected && cell.fill ? cell.fill : undefined,
@@ -354,8 +354,8 @@ const ActionBtn: React.FC<{ children: React.ReactNode; onClick: () => void; disa
     title={title}
     className={`w-6 h-6 flex items-center justify-center rounded text-xs ${
       danger
-        ? 'bg-red-50 hover:bg-red-100 text-red-700'
-        : 'bg-slate-100 hover:bg-green-100 text-slate-700 hover:text-green-800'
+        ? 'bg-[#FCF1F1] hover:bg-[#F7E3E3] text-[#7a2929]'
+        : 'bg-[#F1F0EC] hover:bg-[#DDE8E1] text-[#111111] hover:text-green-800'
     } disabled:opacity-30 disabled:cursor-not-allowed`}
   >
     {children}

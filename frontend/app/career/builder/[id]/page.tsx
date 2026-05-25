@@ -145,25 +145,25 @@ export default function CvBuilderPage() {
     } finally { setBusy(null); }
   };
 
-  if (!doc) return <div className="p-6 text-sm text-slate-500">{error || 'Loading…'}</div>;
+  if (!doc) return <div className="p-6 text-sm text-[#9A9A9A]">{error || 'Loading…'}</div>;
 
   const sectionOrder: string[] = (doc.content?.sectionOrder) || CV_SECTIONS.map((s) => s.key);
   const isCV = doc.doctype === 'cv' || doc.doctype === 'resume';
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50">
-      <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
-        <Link href="/career" className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1">
+    <div className="h-screen flex flex-col bg-[#EDEBE6]">
+      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
+        <Link href="/career" className="text-xs text-[#9A9A9A] hover:text-[#111111] flex items-center gap-1">
           <ArrowLeft className="w-3 h-3" /> Back
         </Link>
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="h-5 w-px bg-[#E3E1DA]" />
         <input value={doc.title} onChange={(e) => setDoc({ ...doc, title: e.target.value })}
-          className="text-sm font-bold text-slate-900 bg-transparent border-b border-transparent focus:border-slate-300 outline-none w-72" />
+          className="text-sm font-bold text-[#111111] bg-transparent border-b border-transparent focus:border-[#C9C6BD] outline-none w-72" />
 
         <select
           value={doc.templateId ?? ''}
           onChange={(e) => setDoc({ ...doc, templateId: e.target.value || null })}
-          className="h-7 px-2 text-xs border border-slate-300 rounded bg-white"
+          className="h-7 px-2 text-xs border border-[#C9C6BD] rounded bg-white"
         >
           <option value="">No template</option>
           {templates.map((t) => <option key={t.id} value={t.id}>{t.category} · {t.name}</option>)}
@@ -191,41 +191,41 @@ export default function CvBuilderPage() {
 
 
         <div className="ml-auto flex items-center gap-1.5">
-          {error && <span className="text-[11px] text-red-600 mr-2">{error}</span>}
+          {error && <span className="text-[11px] text-[#9a3737] mr-2">{error}</span>}
           <button onClick={save} disabled={busy !== null}
-            className="h-7 px-2 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center gap-1 disabled:opacity-40">
+            className="h-7 px-2 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center gap-1 disabled:opacity-40">
             {busy === 'save' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} Save
           </button>
           <button onClick={() => exportFile('pdf')} disabled={busy !== null}
-            className="h-7 px-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+            className="h-7 px-2 text-xs font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1 disabled:opacity-40">
             {busy === 'pdf' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />} PDF
           </button>
           <button onClick={() => exportFile('docx')} disabled={busy !== null}
-            className="h-7 px-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+            className="h-7 px-2 text-xs font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1 disabled:opacity-40">
             <Download className="w-3 h-3" /> DOCX
           </button>
           <button onClick={() => exportFile('html')} disabled={busy !== null}
-            className="h-7 px-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+            className="h-7 px-2 text-xs font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1 disabled:opacity-40">
             <Download className="w-3 h-3" /> HTML
           </button>
           {/* Phase Ω.1 — surface the PPTX + Markdown export targets the backend
               already supports (career.controller line 41). */}
           <button onClick={() => exportFile('pptx')} disabled={busy !== null}
-            className="h-7 px-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+            className="h-7 px-2 text-xs font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1 disabled:opacity-40">
             <Download className="w-3 h-3" /> PPTX
           </button>
           <button onClick={() => exportFile('md')} disabled={busy !== null}
-            className="h-7 px-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-1 disabled:opacity-40">
+            className="h-7 px-2 text-xs font-semibold bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-1 disabled:opacity-40">
             <Download className="w-3 h-3" /> MD
           </button>
         </div>
       </header>
 
       <div className="flex-1 grid grid-cols-[280px_1fr] gap-0 overflow-hidden">
-        <aside className="bg-white border-r border-slate-200 overflow-y-auto p-3">
+        <aside className="bg-white border-r border-[#E3E1DA] overflow-y-auto p-3">
           {isCV ? (
             <>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Sections</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-2">Sections</div>
               <SortableSections
                 items={sectionOrder}
                 onReorder={(next) => autoSaveContent({ ...doc.content, sectionOrder: next }, 'Section order saved')}
@@ -235,17 +235,17 @@ export default function CvBuilderPage() {
                 }}
               />
               <div className="mt-3">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Add section</div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">Add section</div>
                 <div className="flex flex-wrap gap-1">
                   {CV_SECTIONS.filter((s) => !sectionOrder.includes(s.key)).map((s) => (
                     <button key={s.key} onClick={() => autoSaveContent({ ...doc.content, sectionOrder: [...sectionOrder, s.key] }, `${s.label} added`)}
-                      className="h-6 px-2 text-[10px] bg-slate-100 text-slate-700 rounded hover:bg-slate-200 inline-flex items-center gap-0.5">
+                      className="h-6 px-2 text-[10px] bg-[#F1F0EC] text-[#111111] rounded hover:bg-[#E3E1DA] inline-flex items-center gap-0.5">
                       <Plus className="w-2.5 h-2.5" /> {s.label}
                     </button>
                   ))}
                 </div>
               </div>
-              <div className="mt-4 p-2.5 bg-blue-50 border border-blue-200 rounded text-[10px] text-blue-900">
+              <div className="mt-4 p-2.5 bg-[#EEF5F1] border border-[#DDE8E1] rounded text-[10px] text-[#1A2D24]">
                 <Sparkles className="w-3 h-3 inline mr-1" />
                 Edit profile data in <Link href="/career" className="underline">Career → Profile</Link>;
                 section content lives there so every CV stays in sync.
@@ -258,16 +258,16 @@ export default function CvBuilderPage() {
           )}
         </aside>
 
-        <main className="overflow-auto bg-slate-100 p-4">
+        <main className="overflow-auto bg-[#F1F0EC] p-4">
           {previewHtml ? (
             <iframe
               title="preview"
               srcDoc={previewHtml}
-              className="w-full h-full bg-white border border-slate-200 rounded"
+              className="w-full h-full bg-white border border-[#E3E1DA] rounded"
               style={{ minHeight: '80vh' }}
             />
           ) : (
-            <div className="text-xs text-slate-500 italic">Rendering preview…</div>
+            <div className="text-xs text-[#9A9A9A] italic">Rendering preview…</div>
           )}
         </main>
       </div>
@@ -277,8 +277,8 @@ export default function CvBuilderPage() {
         {toasts.map((t) => (
           <div key={t.id}
             className={`flex items-center gap-2 px-3 py-2 rounded shadow-lg text-xs animate-in fade-in slide-in-from-bottom-2
-              ${t.tone === 'success' ? 'bg-green-50 border border-green-200 text-green-900'
-              : t.tone === 'error'  ? 'bg-red-50   border border-red-200   text-red-900'
+              ${t.tone === 'success' ? 'bg-[#EEF5F1] border border-[#DDE8E1] text-[#1A2D24]'
+              : t.tone === 'error'  ? 'bg-[#FCF1F1]   border border-[#F7E3E3]   text-red-900'
               :                       'bg-slate-900 text-white'}`}
           >
             <span className="flex-1">{t.message}</span>
@@ -304,7 +304,7 @@ const CoverLetterEditor: React.FC<{ doc: CvDocumentDto; onChange: (d: CvDocument
   const patch = (p: any) => onChange({ ...doc, content: { ...c, ...p } });
   return (
     <div className="space-y-3">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Cover Letter</div>
+      <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">Cover Letter</div>
       <Textarea label="Greeting" value={c.greeting ?? 'Dear Hiring Manager,'} onChange={(v) => patch({ greeting: v })} rows={1} />
       <Textarea label="Company" value={c.company ?? ''} onChange={(v) => patch({ company: v })} rows={1} />
       <Textarea label="Role"    value={c.role ?? ''}    onChange={(v) => patch({ role: v })} rows={1} />
@@ -327,22 +327,22 @@ const PortfolioEditor: React.FC<{ doc: CvDocumentDto; onChange: (d: CvDocumentDt
   const addSection = () => patch({ sections: [...(c.sections || []), { key: `s${(c.sections || []).length + 1}`, title: 'New section' }] });
   return (
     <div className="space-y-3">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Portfolio sections</div>
+      <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">Portfolio sections</div>
       <ul className="space-y-2">
         {(c.sections || []).map((s: any, i: number) => (
-          <li key={i} className="border border-slate-200 rounded p-2 space-y-1">
+          <li key={i} className="border border-[#E3E1DA] rounded p-2 space-y-1">
             <input value={s.title} onChange={(e) => {
               const next = [...c.sections]; next[i] = { ...s, title: e.target.value };
               patch({ sections: next });
-            }} className="w-full h-7 px-1.5 text-xs font-semibold border border-slate-300 rounded" />
+            }} className="w-full h-7 px-1.5 text-xs font-semibold border border-[#C9C6BD] rounded" />
             <textarea value={s.body ?? ''} onChange={(e) => {
               const next = [...c.sections]; next[i] = { ...s, body: e.target.value };
               patch({ sections: next });
-            }} rows={3} placeholder="Section body…" className="w-full px-1.5 py-1 text-xs border border-slate-300 rounded resize-none" />
+            }} rows={3} placeholder="Section body…" className="w-full px-1.5 py-1 text-xs border border-[#C9C6BD] rounded resize-none" />
           </li>
         ))}
       </ul>
-      <button onClick={addSection} className="h-7 px-2 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center gap-1">
+      <button onClick={addSection} className="h-7 px-2 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center gap-1">
         <Plus className="w-3 h-3" /> Add section
       </button>
     </div>
@@ -351,9 +351,9 @@ const PortfolioEditor: React.FC<{ doc: CvDocumentDto; onChange: (d: CvDocumentDt
 
 const Textarea: React.FC<{ label: string; value: string; onChange: (v: string) => void; rows: number }> = ({ label, value, onChange, rows }) => (
   <label className="block text-[11px]">
-    <span className="block font-semibold text-slate-700 mb-1">{label}</span>
+    <span className="block font-semibold text-[#111111] mb-1">{label}</span>
     <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows}
-      className="w-full px-1.5 py-1 text-xs border border-slate-300 rounded resize-none" />
+      className="w-full px-1.5 py-1 text-xs border border-[#C9C6BD] rounded resize-none" />
   </label>
 );
 
@@ -401,16 +401,16 @@ const SortableSectionRow: React.FC<{ id: string; onRemove: () => void }> = ({ id
   };
   return (
     <li ref={setNodeRef} style={style}
-      className={`flex items-center gap-1 text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1.5 ${isDragging ? 'shadow-md ring-1 ring-blue-300' : ''}`}>
+      className={`flex items-center gap-1 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded px-2 py-1.5 ${isDragging ? 'shadow-md ring-1 ring-blue-300' : ''}`}>
       <button
         {...attributes} {...listeners}
-        className="cursor-grab active:cursor-grabbing p-0.5 text-slate-400 hover:text-slate-700"
+        className="cursor-grab active:cursor-grabbing p-0.5 text-[#C9C6BD] hover:text-[#111111]"
         aria-label="Drag to reorder"
       >
         <GripVertical className="w-3 h-3" />
       </button>
       <span className="flex-1 select-none">{label}</span>
-      <button onClick={onRemove} className="p-0.5 text-red-600 hover:bg-red-50 rounded" title="Remove">
+      <button onClick={onRemove} className="p-0.5 text-[#9a3737] hover:bg-[#FCF1F1] rounded" title="Remove">
         <Trash2 className="w-3 h-3" />
       </button>
     </li>

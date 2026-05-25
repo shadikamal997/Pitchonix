@@ -60,7 +60,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
             {title}
           </h1>
           {subtitle && (
-            <p className="text-slate-600" style={{ fontSize: '11pt' }}>
+            <p className="text-[#6B6B6B]" style={{ fontSize: '11pt' }}>
               {subtitle}
             </p>
           )}
@@ -95,7 +95,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                   />
 
                   {/* Event Content */}
-                  <div className="bg-white rounded-lg border-2 border-slate-100 p-5 shadow-sm">
+                  <div className="bg-white rounded-lg border-2 border-[#F1F0EC] p-5 shadow-sm">
                     {/* Date Badge */}
                     <div
                       className="inline-block px-3 py-1 rounded-full text-white font-semibold mb-3"
@@ -120,7 +120,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
 
                     {/* Description */}
                     <p
-                      className="text-slate-600"
+                      className="text-[#6B6B6B]"
                       style={{
                         fontSize: '10pt',
                         lineHeight: '1.6',

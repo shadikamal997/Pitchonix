@@ -48,7 +48,7 @@ export default function MediaGallery({
     return (
       <div className={`text-center py-12 ${className}`}>
         <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500">No media files uploaded yet</p>
+        <p className="text-[#9A9A9A]">No media files uploaded yet</p>
       </div>
     );
   }
@@ -60,13 +60,13 @@ export default function MediaGallery({
           key={item.id}
           onClick={() => handleSelect(item)}
           className={`relative group rounded-xl overflow-hidden border-2 transition-all ${
-            selectable ? 'cursor-pointer hover:border-blue-500' : ''
+            selectable ? 'cursor-pointer hover:border-[#4F7563]' : ''
           } ${
-            selectedId === item.id ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
+            selectedId === item.id ? 'border-[#4F7563] ring-2 ring-[#DDE8E1]' : 'border-[#E3E1DA]'
           }`}
         >
           {/* Media Preview */}
-          <div className="aspect-square bg-gray-100">
+          <div className="aspect-square bg-[#F1F0EC]">
             {item.type === 'image' ? (
               <img
                 src={item.url}
@@ -101,26 +101,26 @@ export default function MediaGallery({
               href={item.url}
               download
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-lg p-2 hover:bg-gray-100 transition-colors"
+              className="bg-white rounded-lg p-2 hover:bg-[#F1F0EC] transition-colors"
             >
-              <Download className="w-4 h-4 text-gray-700" />
+              <Download className="w-4 h-4 text-[#111111]" />
             </a>
             {onDelete && (
               <button
                 onClick={(e) => handleDelete(e, item.id)}
-                className="bg-white rounded-lg p-2 hover:bg-red-50 transition-colors"
+                className="bg-white rounded-lg p-2 hover:bg-[#FCF1F1] transition-colors"
               >
-                <Trash2 className="w-4 h-4 text-red-600" />
+                <Trash2 className="w-4 h-4 text-[#9a3737]" />
               </button>
             )}
           </div>
 
           {/* Info Footer */}
           <div className="p-2 bg-white">
-            <p className="text-xs font-medium text-gray-900 truncate">
+            <p className="text-xs font-medium text-[#111111] truncate">
               {item.name}
             </p>
-            <p className="text-xs text-gray-500">{item.size}</p>
+            <p className="text-xs text-[#9A9A9A]">{item.size}</p>
           </div>
         </div>
       ))}

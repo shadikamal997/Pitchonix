@@ -9,7 +9,7 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
 // Phase 39 — global workspace context (current workspace + permissions)
 import { WorkspaceProvider } from "@/features/workspaces/WorkspaceContext";
-import { inter, allFontClassNames } from './fonts';
+import { inter, manrope, allFontClassNames } from './fonts';
 
 export const metadata: Metadata = {
   title: 'Pitchonix - AI-Powered Presentation Generator',
@@ -25,7 +25,7 @@ export default function RootLayout({
     // Every template font is registered as a CSS variable here so families can
     // reference them via the resolveFontStack() helper.
     <html lang="en" className={cn("font-sans", allFontClassNames)} suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={cn(inter.className, manrope.variable)}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -69,9 +69,9 @@ export function VisualRecommendations({
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 80) return 'text-green-600';
-    if (confidence >= 60) return 'text-yellow-600';
-    return 'text-orange-600';
+    if (confidence >= 80) return 'text-[#4F7563]';
+    if (confidence >= 60) return 'text-[#8c6210]';
+    return 'text-[#8c6210]';
   };
 
   const getConfidenceBadge = (confidence: number) => {
@@ -172,22 +172,22 @@ export function VisualRecommendations({
                     {/* Pros/Cons */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs font-medium text-green-600 mb-2">Pros:</p>
+                        <p className="text-xs font-medium text-[#4F7563] mb-2">Pros:</p>
                         <ul className="space-y-1">
                           {chart.pros.map((pro, j) => (
                             <li key={j} className="text-xs text-muted-foreground flex items-start">
-                              <CheckCircle2 className="w-3 h-3 mr-1 mt-0.5 text-green-600 flex-shrink-0" />
+                              <CheckCircle2 className="w-3 h-3 mr-1 mt-0.5 text-[#4F7563] flex-shrink-0" />
                               <span>{pro}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-red-600 mb-2">Cons:</p>
+                        <p className="text-xs font-medium text-[#9a3737] mb-2">Cons:</p>
                         <ul className="space-y-1">
                           {chart.cons.map((con, j) => (
                             <li key={j} className="text-xs text-muted-foreground flex items-start">
-                              <XCircle className="w-3 h-3 mr-1 mt-0.5 text-red-600 flex-shrink-0" />
+                              <XCircle className="w-3 h-3 mr-1 mt-0.5 text-[#9a3737] flex-shrink-0" />
                               <span>{con}</span>
                             </li>
                           ))}
@@ -431,14 +431,14 @@ export function VisualRecommendations({
             {/* Dos and Don'ts */}
             <div className="grid grid-cols-2 gap-4">
               <Card className="p-6">
-                <h4 className="font-semibold mb-3 text-green-600 flex items-center">
+                <h4 className="font-semibold mb-3 text-[#4F7563] flex items-center">
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   Do This
                 </h4>
                 <ul className="space-y-2">
                   {analysis.dosDonts.dos.map((item, i) => (
                     <li key={i} className="text-sm flex items-start">
-                      <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 text-green-600 flex-shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 text-[#4F7563] flex-shrink-0" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -446,14 +446,14 @@ export function VisualRecommendations({
               </Card>
 
               <Card className="p-6">
-                <h4 className="font-semibold mb-3 text-red-600 flex items-center">
+                <h4 className="font-semibold mb-3 text-[#9a3737] flex items-center">
                   <XCircle className="w-4 h-4 mr-2" />
                   Avoid This
                 </h4>
                 <ul className="space-y-2">
                   {analysis.dosDonts.donts.map((item, i) => (
                     <li key={i} className="text-sm flex items-start">
-                      <XCircle className="w-4 h-4 mr-2 mt-0.5 text-red-600 flex-shrink-0" />
+                      <XCircle className="w-4 h-4 mr-2 mt-0.5 text-[#9a3737] flex-shrink-0" />
                       <span>{item}</span>
                     </li>
                   ))}

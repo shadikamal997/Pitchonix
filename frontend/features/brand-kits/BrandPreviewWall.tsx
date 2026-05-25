@@ -44,15 +44,15 @@ export const BrandPreviewWall: React.FC<Props> = ({ kit, onCancel, onConfirm }) 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <header className="px-5 py-3 border-b border-slate-200 flex items-center gap-3">
-          <Layout className="w-5 h-5 text-purple-600" />
+        <header className="px-5 py-3 border-b border-[#E3E1DA] flex items-center gap-3">
+          <Layout className="w-5 h-5 text-[#4F7563]" />
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Brand preview wall</h2>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <h2 className="text-sm font-bold text-[#111111]">Brand preview wall</h2>
+            <p className="text-[11px] text-[#9A9A9A] mt-0.5">
               How <strong>{kit.name}</strong> looks across CV, Resume, Cover Letter and Portfolio. Apply only after confirming.
             </p>
           </div>
-          <button onClick={onCancel} className="ml-auto text-slate-400 hover:text-slate-700">
+          <button onClick={onCancel} className="ml-auto text-[#C9C6BD] hover:text-[#111111]">
             <X className="w-5 h-5" />
           </button>
         </header>
@@ -83,13 +83,13 @@ export const BrandPreviewWall: React.FC<Props> = ({ kit, onCancel, onConfirm }) 
           </div>
         </div>
 
-        <footer className="px-5 py-3 border-t border-slate-200 flex items-center justify-between bg-slate-50">
-          <span className="text-[11px] text-slate-500">
+        <footer className="px-5 py-3 border-t border-[#E3E1DA] flex items-center justify-between bg-[#EDEBE6]">
+          <span className="text-[11px] text-[#9A9A9A]">
             Previews are approximate — the live renderer uses the full template.
           </span>
           <div className="flex items-center gap-2">
             <button onClick={onCancel}
-              className="h-8 px-3 text-xs font-semibold border border-slate-300 hover:bg-white rounded">Cancel</button>
+              className="h-8 px-3 text-xs font-semibold border border-[#C9C6BD] hover:bg-white rounded">Cancel</button>
             <button onClick={onConfirm}
               className="h-8 px-3 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" /> Apply brand kit
@@ -112,10 +112,10 @@ interface Theme {
 }
 
 const DocPreview: React.FC<{ Icon: any; title: string; theme: Theme; children: React.ReactNode }> = ({ Icon, title, children, theme }) => (
-  <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
-    <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-2 bg-slate-50">
-      <Icon className="w-3.5 h-3.5 text-slate-600" />
-      <span className="text-xs font-bold text-slate-800">{title}</span>
+  <div className="border border-[#E3E1DA] rounded-lg overflow-hidden bg-white">
+    <div className="px-3 py-2 border-b border-[#F1F0EC] flex items-center gap-2 bg-[#EDEBE6]">
+      <Icon className="w-3.5 h-3.5 text-[#6B6B6B]" />
+      <span className="text-xs font-bold text-[#111111]">{title}</span>
     </div>
     <div className="aspect-[1/1.4] bg-white relative overflow-hidden">
       {children}
@@ -126,13 +126,13 @@ const DocPreview: React.FC<{ Icon: any; title: string; theme: Theme; children: R
 const Swatch: React.FC<{ label: string; value: string; mono?: boolean }> = ({ label, value, mono }) => {
   const isColour = /^#[0-9a-f]{3,8}$/i.test(value);
   return (
-    <div className="border border-slate-200 rounded p-1.5 flex items-center gap-2 bg-slate-50">
+    <div className="border border-[#E3E1DA] rounded p-1.5 flex items-center gap-2 bg-[#EDEBE6]">
       {isColour
-        ? <span className="w-5 h-5 rounded-sm border border-slate-300" style={{ background: value }} />
-        : <span className="w-5 h-5 rounded-sm border border-slate-300 flex items-center justify-center text-[8px] font-bold text-slate-500">Aa</span>}
+        ? <span className="w-5 h-5 rounded-sm border border-[#C9C6BD]" style={{ background: value }} />
+        : <span className="w-5 h-5 rounded-sm border border-[#C9C6BD] flex items-center justify-center text-[8px] font-bold text-[#9A9A9A]">Aa</span>}
       <div className="flex-1 min-w-0">
-        <div className="text-[9px] uppercase tracking-wide text-slate-500">{label}</div>
-        <div className={`text-[11px] text-slate-800 truncate ${mono ? 'font-mono' : ''}`}>{value}</div>
+        <div className="text-[9px] uppercase tracking-wide text-[#9A9A9A]">{label}</div>
+        <div className={`text-[11px] text-[#111111] truncate ${mono ? 'font-mono' : ''}`}>{value}</div>
       </div>
     </div>
   );
@@ -147,7 +147,7 @@ const CvMock: React.FC<{ theme: Theme }> = ({ theme }) => (
         : <span className="w-5 h-5 rounded-sm" style={{ background: theme.primary }} />}
       <div className="flex-1">
         <div className="font-bold leading-tight" style={{ fontFamily: theme.headingFont, color: theme.primary, fontSize: 10 }}>Jane Engineer</div>
-        <div className="text-[6px] text-slate-500">Senior Software Engineer · Berlin</div>
+        <div className="text-[6px] text-[#9A9A9A]">Senior Software Engineer · Berlin</div>
       </div>
     </div>
     <div className="h-px mb-1" style={{ background: theme.accent }} />
@@ -170,7 +170,7 @@ const CvMock: React.FC<{ theme: Theme }> = ({ theme }) => (
 const ResumeMock: React.FC<{ theme: Theme }> = ({ theme }) => (
   <div className="absolute inset-0 p-3" style={{ fontFamily: theme.bodyFont, fontSize: 7 }}>
     <div className="font-bold leading-tight" style={{ fontFamily: theme.headingFont, color: theme.primary, fontSize: 11 }}>Jane Engineer</div>
-    <div className="text-[6px] text-slate-500 mb-1.5">Senior Software Engineer · jane@example.com · linkedin.com/in/jane</div>
+    <div className="text-[6px] text-[#9A9A9A] mb-1.5">Senior Software Engineer · jane@example.com · linkedin.com/in/jane</div>
     <Section title="Experience" theme={theme}>
       <SubTitle theme={theme} text="Senior Engineer · TechCo · 2022–Present" />
       <Bullet w={92} /><Bullet w={88} /><Bullet w={84} /><Bullet w={80} />
@@ -192,19 +192,19 @@ const CoverLetterMock: React.FC<{ theme: Theme }> = ({ theme }) => (
     <div className="flex items-center justify-between mb-1.5">
       <div>
         <div className="font-bold" style={{ fontFamily: theme.headingFont, color: theme.primary, fontSize: 10 }}>Jane Engineer</div>
-        <div className="text-[6px] text-slate-500">jane@example.com</div>
+        <div className="text-[6px] text-[#9A9A9A]">jane@example.com</div>
       </div>
       {theme.logo
         ? <img src={theme.logo} alt="" className="w-5 h-5 object-contain" />
         : <span className="w-5 h-5 rounded-sm" style={{ background: theme.primary }} />}
     </div>
     <div className="h-px mb-1" style={{ background: theme.accent }} />
-    <div className="text-[7px] text-slate-700 mb-1">Dear Hiring Manager,</div>
+    <div className="text-[7px] text-[#111111] mb-1">Dear Hiring Manager,</div>
     <Paragraph lines={5} />
     <Paragraph lines={4} />
     <Paragraph lines={3} />
     <div className="text-[7px] mt-1.5" style={{ color: theme.primary, fontFamily: theme.headingFont }}>Sincerely,</div>
-    <div className="text-[7px] text-slate-700">Jane Engineer</div>
+    <div className="text-[7px] text-[#111111]">Jane Engineer</div>
   </div>
 );
 
@@ -217,10 +217,10 @@ const PortfolioMock: React.FC<{ theme: Theme }> = ({ theme }) => (
     </div>
     <div className="grid grid-cols-2 gap-1.5">
       {[1,2,3,4].map((i) => (
-        <div key={i} className="border border-slate-200 rounded p-1.5">
+        <div key={i} className="border border-[#E3E1DA] rounded p-1.5">
           <div className="w-full h-8 rounded mb-1" style={{ background: i % 2 ? theme.accent : theme.secondary }} />
           <div className="font-semibold text-[7px]" style={{ color: theme.primary }}>Project {i}</div>
-          <div className="text-[6px] text-slate-500">Lorem ipsum dolor sit amet.</div>
+          <div className="text-[6px] text-[#9A9A9A]">Lorem ipsum dolor sit amet.</div>
         </div>
       ))}
     </div>
@@ -238,22 +238,22 @@ const Section: React.FC<{ title: string; theme: Theme; children: React.ReactNode
 );
 
 const SubTitle: React.FC<{ theme: Theme; text: string }> = ({ theme, text }) => (
-  <div className="font-semibold text-[7px] text-slate-700 mt-1" style={{ fontFamily: theme.headingFont }}>{text}</div>
+  <div className="font-semibold text-[7px] text-[#111111] mt-1" style={{ fontFamily: theme.headingFont }}>{text}</div>
 );
 
 const Line: React.FC<{ w: number }> = ({ w }) => (
-  <div className="h-[2px] bg-slate-200 rounded mt-0.5" style={{ width: `${w}%` }} />
+  <div className="h-[2px] bg-[#E3E1DA] rounded mt-0.5" style={{ width: `${w}%` }} />
 );
 const Bullet: React.FC<{ w: number }> = ({ w }) => (
   <div className="flex items-center gap-1 mt-0.5">
     <span className="w-[3px] h-[3px] rounded-full bg-slate-400 flex-shrink-0" />
-    <div className="h-[2px] bg-slate-200 rounded" style={{ width: `${w}%` }} />
+    <div className="h-[2px] bg-[#E3E1DA] rounded" style={{ width: `${w}%` }} />
   </div>
 );
 const Paragraph: React.FC<{ lines: number }> = ({ lines }) => (
   <div className="mb-1">
     {Array.from({ length: lines }).map((_, i) => (
-      <div key={i} className="h-[2px] bg-slate-200 rounded mt-0.5" style={{ width: `${88 - (i * 4)}%` }} />
+      <div key={i} className="h-[2px] bg-[#E3E1DA] rounded mt-0.5" style={{ width: `${88 - (i * 4)}%` }} />
     ))}
   </div>
 );

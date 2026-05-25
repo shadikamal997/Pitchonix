@@ -80,13 +80,13 @@ export const FloatingToolbar: React.FC<Props> = ({ editor, element, anchorRect, 
       data-floating-toolbar
       onMouseDown={(e) => { e.preventDefault(); /* keep editor focus */ }}
       style={{ position: 'fixed', top, left, zIndex: 50 }}
-      className="bg-white border border-slate-200 shadow-xl rounded-lg flex items-center gap-1 p-1"
+      className="bg-white border border-[#E3E1DA] shadow-xl rounded-lg flex items-center gap-1 p-1"
     >
       {/* Font size */}
       <select
         value={currentSize}
         onChange={(e) => onStyleChange({ fontSize: Number(e.target.value) })}
-        className="h-7 text-xs border border-slate-200 rounded px-1.5 outline-none focus:border-green-500"
+        className="h-7 text-xs border border-[#E3E1DA] rounded px-1.5 outline-none focus:border-[#4F7563]"
         title="Font size"
       >
         {FONT_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -120,15 +120,15 @@ export const FloatingToolbar: React.FC<Props> = ({ editor, element, anchorRect, 
       <div className="relative group">
         <ToolBtn label="Text color">
           <Palette className="w-3.5 h-3.5" />
-          <span className="ml-1 inline-block w-3 h-3 rounded-sm border border-slate-300" style={{ background: currentColor }} />
+          <span className="ml-1 inline-block w-3 h-3 rounded-sm border border-[#C9C6BD]" style={{ background: currentColor }} />
         </ToolBtn>
-        <div className="absolute top-full left-0 mt-1 hidden group-hover:flex bg-white border border-slate-200 rounded-lg shadow-xl p-1.5 z-10">
+        <div className="absolute top-full left-0 mt-1 hidden group-hover:flex bg-white border border-[#E3E1DA] rounded-lg shadow-xl p-1.5 z-10">
           {COLORS.map((c) => (
             <button
               key={c}
               onClick={() => onStyleChange({ color: c })}
               title={c}
-              className="w-5 h-5 rounded border border-slate-200 m-0.5"
+              className="w-5 h-5 rounded border border-[#E3E1DA] m-0.5"
               style={{ background: c }}
             />
           ))}
@@ -147,14 +147,14 @@ const ToolBtn: React.FC<{
     onMouseDown={(e) => { e.preventDefault(); }}
     onClick={onClick}
     className={`h-7 min-w-[28px] px-1.5 rounded text-xs flex items-center justify-center transition-colors ${
-      active ? 'bg-green-100 text-green-800' : 'text-slate-700 hover:bg-slate-100'
+      active ? 'bg-[#DDE8E1] text-green-800' : 'text-[#111111] hover:bg-[#F1F0EC]'
     }`}
   >
     {children}
   </button>
 );
 
-const Divider: React.FC = () => <div className="h-5 w-px bg-slate-200 mx-0.5" />;
+const Divider: React.FC = () => <div className="h-5 w-px bg-[#E3E1DA] mx-0.5" />;
 
 function defaultSizeFor(type: string): number {
   switch (type) {

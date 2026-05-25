@@ -30,7 +30,7 @@ export const ElementCommentBadge: React.FC<Props> = ({ elements, counts, onOpenF
             type="button"
             onClick={(e) => { e.stopPropagation(); onOpenForElement(el.id); }}
             title={`${count} unresolved comment${count === 1 ? '' : 's'}`}
-            className="absolute z-[60] flex items-center gap-0.5 h-5 px-1.5 rounded-full text-[10px] font-bold text-white bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/50 ring-2 ring-white pointer-events-auto"
+            className="absolute z-[60] flex items-center gap-0.5 h-5 px-1.5 rounded-full text-[10px] font-bold text-white bg-[#D9A441] hover:bg-amber-600 shadow-lg shadow-amber-500/50 ring-2 ring-white pointer-events-auto"
             style={{
               // Anchor to the top-right corner of the element box.
               left:      `calc(${el.x + el.width}% - 16px)`,

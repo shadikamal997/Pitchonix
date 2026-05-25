@@ -41,14 +41,14 @@ export const PresenceAvatars: React.FC<Props> = ({ users, you, slideTitleById, m
           >
             {(u.name || u.email || '?').charAt(0).toUpperCase()}
             {you?.userId === u.userId && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 ring-1 ring-white" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#4F7563] ring-1 ring-white" />
             )}
           </div>
         );
       })}
       {overflow > 0 && (
         <div
-          className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold flex items-center justify-center ring-2 ring-white"
+          className="w-7 h-7 rounded-full bg-[#E3E1DA] text-[#111111] text-[10px] font-bold flex items-center justify-center ring-2 ring-white"
           title={`${overflow} more collaborator${overflow === 1 ? '' : 's'}`}
         >
           +{overflow}

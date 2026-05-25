@@ -98,9 +98,9 @@ export function RichTextEditor({
 
   return (
     <SectionErrorBoundary sectionName="Rich Text Editor">
-      <div className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden ${className}`}>
+      <div className={`border border-[#E3E1DA] dark:border-gray-700 rounded-lg overflow-hidden ${className}`}>
         {/* Toolbar */}
-        <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2 flex items-center gap-1 flex-wrap">
+        <div className="bg-[#EDEBE6] dark:bg-gray-800 border-b border-[#E3E1DA] dark:border-gray-700 p-2 flex items-center gap-1 flex-wrap">
           {/* Text Formatting */}
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
@@ -198,7 +198,7 @@ export function RichTextEditor({
           <div className="flex-1" />
 
           {/* Word Count */}
-          <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
+          <div className="text-xs text-[#9A9A9A] dark:text-[#C9C6BD] px-2">
             {editor.storage.characterCount?.words() || 0} words •{' '}
             {editor.storage.characterCount?.characters() || 0} characters
           </div>

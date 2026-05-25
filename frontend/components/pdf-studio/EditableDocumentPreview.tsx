@@ -76,7 +76,7 @@ function EditablePage({
       }}
     >
       {/* Page Number Badge */}
-      <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow">
+      <div className="absolute -top-2 -left-2 bg-[#4F7563] text-white text-xs font-bold px-2 py-1 rounded-full shadow">
         {page.pageNumber}
       </div>
 
@@ -163,7 +163,7 @@ function EditableBlock({
           style={blockStyles}
           className={`
             outline-none transition-all duration-150
-            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2 bg-blue-50' : 'hover:bg-gray-50'}
+            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2 bg-[#EEF5F1]' : 'hover:bg-[#EDEBE6]'}
           `}
         >
           {block.content}
@@ -186,7 +186,7 @@ function EditableBlock({
           style={blockStyles}
           className={`
             outline-none transition-all duration-150
-            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2 bg-blue-50' : 'hover:bg-gray-50'}
+            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2 bg-[#EEF5F1]' : 'hover:bg-[#EDEBE6]'}
           `}
         >
           {block.content}
@@ -221,13 +221,13 @@ function EditableBlock({
           }}
           style={blockStyles}
           className={`
-            border-2 border-dashed border-gray-300 rounded p-8 text-center
+            border-2 border-dashed border-[#C9C6BD] rounded p-8 text-center
             transition-all duration-150 cursor-pointer
-            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2 bg-blue-50' : 'hover:bg-gray-50'}
+            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2 bg-[#EEF5F1]' : 'hover:bg-[#EDEBE6]'}
           `}
         >
-          <div className="text-gray-400">📷 Image Placeholder</div>
-          <div className="text-xs text-gray-500 mt-2">{block.content}</div>
+          <div className="text-[#C9C6BD]">📷 Image Placeholder</div>
+          <div className="text-xs text-[#9A9A9A] mt-2">{block.content}</div>
         </div>
       );
 
@@ -250,7 +250,7 @@ function EditableBlock({
           }}
           className={`
             outline-none transition-all duration-150
-            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2 bg-blue-50' : 'hover:bg-gray-50'}
+            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2 bg-[#EEF5F1]' : 'hover:bg-[#EDEBE6]'}
           `}
         >
           {block.content}
@@ -270,9 +270,9 @@ function EditableBlock({
           }}
           style={blockStyles}
           className={`
-            px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold text-center
+            px-6 py-3 bg-[#4F7563] text-white rounded-lg font-semibold text-center
             outline-none transition-all duration-150 cursor-pointer
-            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : 'hover:bg-blue-600'}
+            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : 'hover:bg-[#4F7563]'}
           `}
         >
           {block.content}
@@ -293,7 +293,7 @@ function EditableBlock({
           style={blockStyles}
           className={`
             outline-none transition-all duration-150
-            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2 bg-blue-50' : 'hover:bg-gray-50'}
+            ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2 bg-[#EEF5F1]' : 'hover:bg-[#EDEBE6]'}
           `}
         >
           {block.content}

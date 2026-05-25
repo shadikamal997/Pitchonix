@@ -106,8 +106,8 @@ export function GenerationProgress({
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-600">Loading status...</span>
+            <Loader2 className="w-6 h-6 animate-spin text-[#C9C6BD]" />
+            <span className="ml-2 text-[#6B6B6B]">Loading status...</span>
           </div>
         </CardContent>
       </Card>
@@ -131,25 +131,25 @@ export function GenerationProgress({
   const getStatusDisplay = () => {
     if (status.status === 'FAILED') {
       return {
-        icon: <XCircle className="w-5 h-5 text-red-500" />,
-        color: 'text-red-700',
-        bgColor: 'bg-red-50',
-        borderColor: 'border-red-200',
+        icon: <XCircle className="w-5 h-5 text-[#D96A6A]" />,
+        color: 'text-[#7a2929]',
+        bgColor: 'bg-[#FCF1F1]',
+        borderColor: 'border-[#F7E3E3]',
       };
     }
     if (status.completed) {
       return {
         icon: <CheckCircle2 className="w-5 h-5 text-green-500" />,
-        color: 'text-green-700',
-        bgColor: 'bg-green-50',
-        borderColor: 'border-green-200',
+        color: 'text-[#355846]',
+        bgColor: 'bg-[#EEF5F1]',
+        borderColor: 'border-[#DDE8E1]',
       };
     }
     return {
-      icon: <Loader2 className="w-5 h-5 animate-spin text-blue-500" />,
-      color: 'text-blue-700',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
+      icon: <Loader2 className="w-5 h-5 animate-spin text-[#4F7563]" />,
+      color: 'text-[#355846]',
+      bgColor: 'bg-[#EEF5F1]',
+      borderColor: 'border-[#DDE8E1]',
     };
   };
 
@@ -172,10 +172,10 @@ export function GenerationProgress({
         {/* Progress Bar */}
         <div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-[#111111]">
               {status.progress.message || 'Processing...'}
             </span>
-            <span className="text-sm font-semibold text-gray-900">
+            <span className="text-sm font-semibold text-[#111111]">
               {status.progress.percentage}%
             </span>
           </div>
@@ -185,8 +185,8 @@ export function GenerationProgress({
         {/* Slide Progress */}
         {status.progress.currentSlide > 0 && status.progress.totalSlides > 0 && (
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Slides</span>
-            <span className="font-medium text-gray-900">
+            <span className="text-[#6B6B6B]">Slides</span>
+            <span className="font-medium text-[#111111]">
               {status.progress.currentSlide} / {status.progress.totalSlides}
             </span>
           </div>
@@ -195,18 +195,18 @@ export function GenerationProgress({
         {/* Time Information */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-gray-400" />
+            <Clock className="w-4 h-4 text-[#C9C6BD]" />
             <div>
-              <p className="text-xs text-gray-600">Elapsed</p>
-              <p className="text-sm font-semibold text-gray-900">{getElapsedTime()}</p>
+              <p className="text-xs text-[#6B6B6B]">Elapsed</p>
+              <p className="text-sm font-semibold text-[#111111]">{getElapsedTime()}</p>
             </div>
           </div>
           {status.progress.estimatedTimeRemaining && !status.completed && (
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-400" />
+              <Clock className="w-4 h-4 text-[#C9C6BD]" />
               <div>
-                <p className="text-xs text-gray-600">Remaining</p>
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-xs text-[#6B6B6B]">Remaining</p>
+                <p className="text-sm font-semibold text-[#111111]">
                   {formatDuration(status.progress.estimatedTimeRemaining)}
                 </p>
               </div>
@@ -228,7 +228,7 @@ export function GenerationProgress({
         {/* Errors */}
         {status.errors && status.errors.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-red-700">Errors:</p>
+            <p className="text-sm font-medium text-[#7a2929]">Errors:</p>
             {status.errors.map((err, idx) => (
               <Alert key={idx} variant="destructive" className="py-2">
                 <AlertDescription className="text-sm">

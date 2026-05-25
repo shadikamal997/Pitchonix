@@ -98,13 +98,13 @@ export function TableBlock({
       {/* Title */}
       {title && (
         <div className="flex items-center gap-2 mb-6">
-          <TableIcon className="h-6 w-6 text-slate-700" />
-          <h3 className="text-2xl font-bold text-slate-900">{title}</h3>
+          <TableIcon className="h-6 w-6 text-[#111111]" />
+          <h3 className="text-2xl font-bold text-[#111111]">{title}</h3>
         </div>
       )}
 
       {/* Table */}
-      <div className={`overflow-hidden rounded-2xl ${bordered ? 'border-2 border-slate-200 shadow-lg' : ''}`}>
+      <div className={`overflow-hidden rounded-2xl ${bordered ? 'border-2 border-[#E3E1DA] shadow-lg' : ''}`}>
         <table className="w-full">
           <tbody>
             {rows.map((row, rowIndex) => {
@@ -117,10 +117,10 @@ export function TableBlock({
                   key={rowIndex}
                   className={`
                     ${isFirstRow ? 'bg-slate-900' : ''}
-                    ${isTotalRow ? 'bg-green-600' : ''}
-                    ${isDataRow && striped && rowIndex % 2 === 0 ? 'bg-slate-50' : ''}
+                    ${isTotalRow ? 'bg-[#4F7563]' : ''}
+                    ${isDataRow && striped && rowIndex % 2 === 0 ? 'bg-[#EDEBE6]' : ''}
                     ${isDataRow && (!striped || rowIndex % 2 !== 0) ? 'bg-white' : ''}
-                    ${bordered && !isTotalRow ? 'border-b border-slate-200' : ''}
+                    ${bordered && !isTotalRow ? 'border-b border-[#E3E1DA]' : ''}
                   `}
                 >
                   {row.cells.map((cell, cellIndex) => {
@@ -138,9 +138,9 @@ export function TableBlock({
                           ${isFirstRow && isFirstColumn ? 'text-white font-bold text-sm' : ''}
                           ${isFirstRow && !isFirstColumn ? 'text-white font-bold text-sm' : ''}
                           ${isTotalRow ? 'text-white font-bold' : ''}
-                          ${isDataRow && isFirstColumn ? 'font-semibold text-slate-700' : ''}
-                          ${isDataRow && !isFirstColumn ? 'text-slate-600' : ''}
-                          ${highlightFirstColumn && isFirstColumn && !isFirstRow ? 'bg-slate-100 font-semibold' : ''}
+                          ${isDataRow && isFirstColumn ? 'font-semibold text-[#111111]' : ''}
+                          ${isDataRow && !isFirstColumn ? 'text-[#6B6B6B]' : ''}
+                          ${highlightFirstColumn && isFirstColumn && !isFirstRow ? 'bg-[#F1F0EC] font-semibold' : ''}
                         `}
                       >
                         {cell.value}

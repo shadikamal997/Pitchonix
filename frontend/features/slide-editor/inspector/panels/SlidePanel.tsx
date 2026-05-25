@@ -45,7 +45,7 @@ export const SlidePanel: React.FC<Props> = ({ slide, onPatch }) => {
           <input
             value={slide.type}
             disabled
-            className="flex-1 h-7 bg-slate-100 border border-slate-200 rounded px-2 text-xs text-slate-500"
+            className="flex-1 h-7 bg-[#F1F0EC] border border-[#E3E1DA] rounded px-2 text-xs text-[#9A9A9A]"
           />
         </Row>
       </PanelSection>

@@ -66,10 +66,10 @@ export function TestimonialBlock({
   };
 
   const TestimonialCard = ({ testimonial }: { testimonial: Testimonial }) => (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 hover:border-green-300 hover:shadow-lg transition-all h-full flex flex-col">
+    <div className="bg-white border-2 border-[#E3E1DA] rounded-2xl p-6 hover:border-[#A8B9AE] hover:shadow-lg transition-all h-full flex flex-col">
       {/* Quote Icon */}
       <div className="w-12 h-12 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl flex items-center justify-center mb-4">
-        <Quote className="h-6 w-6 text-green-600" />
+        <Quote className="h-6 w-6 text-[#4F7563]" />
       </div>
 
       {/* Rating */}
@@ -78,12 +78,12 @@ export function TestimonialBlock({
       )}
 
       {/* Quote */}
-      <blockquote className="text-slate-700 leading-relaxed mb-6 flex-1 italic">
+      <blockquote className="text-[#111111] leading-relaxed mb-6 flex-1 italic">
         "{testimonial.quote}"
       </blockquote>
 
       {/* Author */}
-      <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+      <div className="flex items-center gap-3 pt-4 border-t border-[#F1F0EC]">
         {testimonial.avatar ? (
           <img
             src={testimonial.avatar}
@@ -96,8 +96,8 @@ export function TestimonialBlock({
           </div>
         )}
         <div>
-          <p className="font-bold text-slate-900">{testimonial.author}</p>
-          <p className="text-sm text-slate-600">
+          <p className="font-bold text-[#111111]">{testimonial.author}</p>
+          <p className="text-sm text-[#6B6B6B]">
             {testimonial.role} at {testimonial.company}
           </p>
         </div>
@@ -113,7 +113,7 @@ export function TestimonialBlock({
       {/* Header */}
       {title && (
         <div className="text-center mb-10">
-          <h3 className="text-3xl font-bold text-slate-900">{title}</h3>
+          <h3 className="text-3xl font-bold text-[#111111]">{title}</h3>
         </div>
       )}
 

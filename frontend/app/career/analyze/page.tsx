@@ -260,16 +260,16 @@ export default function CvAnalyzePage() {
   useEffect(() => { if (step === 'template' && !recommendations) loadRecs(); /* eslint-disable-line */ }, [step]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
-        <Link href="/career" className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1">
+    <div className="min-h-screen bg-[#EDEBE6]">
+      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
+        <Link href="/career" className="text-xs text-[#9A9A9A] hover:text-[#111111] flex items-center gap-1">
           <ArrowLeft className="w-3 h-3" /> Career
         </Link>
-        <div className="h-5 w-px bg-slate-200" />
-        <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-purple-600" /> CV Intelligence Studio
+        <div className="h-5 w-px bg-[#E3E1DA]" />
+        <h1 className="text-base font-bold text-[#111111] flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-[#4F7563]" /> CV Intelligence Studio
         </h1>
-        <span className="ml-2 text-[10px] font-bold tracking-wide uppercase bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">
+        <span className="ml-2 text-[10px] font-bold tracking-wide uppercase bg-[#DDE8E1] text-purple-800 px-1.5 py-0.5 rounded">
           Improve existing CV
         </span>
       </header>
@@ -280,7 +280,7 @@ export default function CvAnalyzePage() {
         <PrivacyBar />
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 text-xs rounded p-3">{error}</div>
+          <div className="bg-[#FCF1F1] border border-[#F7E3E3] text-[#7a2929] text-xs rounded p-3">{error}</div>
         )}
 
         {step === 'upload' && (
@@ -308,12 +308,12 @@ export default function CvAnalyzePage() {
         {step === 'fixes' && profile && report && (
           <>
             {/* Phase 42.4A — Before / After diff toggle */}
-            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded p-2">
-              <span className="text-xs text-slate-600">
+            <div className="flex items-center justify-between bg-[#EDEBE6] border border-[#E3E1DA] rounded p-2">
+              <span className="text-xs text-[#6B6B6B]">
                 Want to see exactly what changed from the original upload?
               </span>
               <button onClick={() => setShowDiff((v) => !v)}
-                className="h-7 px-2 text-xs font-semibold border border-slate-300 hover:bg-white rounded inline-flex items-center gap-1">
+                className="h-7 px-2 text-xs font-semibold border border-[#C9C6BD] hover:bg-white rounded inline-flex items-center gap-1">
                 <Layers className="w-3 h-3" /> {showDiff ? 'Hide diff' : 'Show diff'}
               </button>
             </div>
@@ -386,10 +386,10 @@ const Stepper: React.FC<{ step: Step }> = ({ step }) => {
         <React.Fragment key={s.id}>
           <div className={`px-2 py-1 rounded font-semibold ${
             i === cur     ? 'bg-purple-600 text-white' :
-            i <  cur      ? 'bg-purple-50 text-purple-700' :
-                            'bg-slate-100 text-slate-500'
+            i <  cur      ? 'bg-[#EEF5F1] text-[#355846]' :
+                            'bg-[#F1F0EC] text-[#9A9A9A]'
           }`}>{s.label}</div>
-          {i < steps.length - 1 && <ChevronRight className="w-3 h-3 text-slate-300" />}
+          {i < steps.length - 1 && <ChevronRight className="w-3 h-3 text-[#C9C6BD]" />}
         </React.Fragment>
       ))}
     </div>
@@ -397,7 +397,7 @@ const Stepper: React.FC<{ step: Step }> = ({ step }) => {
 };
 
 const PrivacyBar: React.FC = () => (
-  <div className="bg-blue-50/50 border border-blue-200 rounded-md p-3 flex items-start gap-2 text-[11px] text-blue-900">
+  <div className="bg-[#EEF5F1]/50 border border-[#DDE8E1] rounded-md p-3 flex items-start gap-2 text-[11px] text-[#1A2D24]">
     <Lock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
     <div>
       <strong>Your CV stays private.</strong> The uploaded file is parsed in memory
@@ -410,23 +410,23 @@ const PrivacyBar: React.FC = () => (
 
 // ----- UPLOAD --------------------------------------------------------------
 const UploadStep: React.FC<{ onUpload: (f: File) => void; busy: boolean; warnings: string[] }> = ({ onUpload, busy, warnings }) => (
-  <section className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
-    <h2 className="text-sm font-bold text-slate-900">Upload your existing CV</h2>
-    <p className="text-xs text-slate-500">
+  <section className="bg-white border border-[#E3E1DA] rounded-lg p-6 space-y-4">
+    <h2 className="text-sm font-bold text-[#111111]">Upload your existing CV</h2>
+    <p className="text-xs text-[#9A9A9A]">
       Supported: PDF · DOCX · HTML · Markdown · TXT. The file is parsed into
       structured sections (Personal, Experience, Education, Skills, Languages,
       Projects, Certifications) for analysis.
     </p>
-    <label className={`flex items-center gap-2 border-2 border-dashed border-slate-300 rounded-lg p-8 cursor-pointer hover:bg-slate-50 ${busy ? 'opacity-60 pointer-events-none' : ''}`}>
-      {busy ? <Loader2 className="w-5 h-5 animate-spin text-purple-600" /> : <Upload className="w-5 h-5 text-purple-600" />}
-      <span className="text-sm text-slate-700">{busy ? 'Parsing…' : 'Click to choose a file or drop one here'}</span>
+    <label className={`flex items-center gap-2 border-2 border-dashed border-[#C9C6BD] rounded-lg p-8 cursor-pointer hover:bg-[#EDEBE6] ${busy ? 'opacity-60 pointer-events-none' : ''}`}>
+      {busy ? <Loader2 className="w-5 h-5 animate-spin text-[#4F7563]" /> : <Upload className="w-5 h-5 text-[#4F7563]" />}
+      <span className="text-sm text-[#111111]">{busy ? 'Parsing…' : 'Click to choose a file or drop one here'}</span>
       <input type="file" className="hidden"
         accept=".pdf,.docx,.doc,.html,.htm,.md,.markdown,.txt"
         disabled={busy}
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); }} />
     </label>
     {warnings.length > 0 && (
-      <ul className="text-[11px] text-amber-700 space-y-0.5">
+      <ul className="text-[11px] text-[#735008] space-y-0.5">
         {warnings.map((w, i) => <li key={i} className="flex items-start gap-1"><AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" /> {w}</li>)}
       </ul>
     )}
@@ -439,15 +439,15 @@ const ReportStep: React.FC<{
   jdText: string; setJdText: (s: string) => void;
   matchReport: any; onMatch: () => void;
 }> = ({ report, busy, onNext, jdText, setJdText, matchReport, onMatch }) => {
-  if (!report) return <div className="text-xs text-slate-500"><Loader2 className="w-3 h-3 animate-spin inline mr-1" /> Analysing…</div>;
+  if (!report) return <div className="text-xs text-[#9A9A9A]"><Loader2 className="w-3 h-3 animate-spin inline mr-1" /> Analysing…</div>;
   const tone = report.overall >= 80 ? 'green' : report.overall >= 60 ? 'amber' : 'red';
   return (
-    <section className="bg-white border border-slate-200 rounded-lg p-5 space-y-4">
+    <section className="bg-white border border-[#E3E1DA] rounded-lg p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-purple-600" /> Quality report
+        <h2 className="text-sm font-bold text-[#111111] flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-[#4F7563]" /> Quality report
         </h2>
-        <span className="text-[11px] text-slate-500">Detected: <strong className="text-slate-700">{report.detectedType}</strong></span>
+        <span className="text-[11px] text-[#9A9A9A]">Detected: <strong className="text-[#111111]">{report.detectedType}</strong></span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -461,8 +461,8 @@ const ReportStep: React.FC<{
         <ScoreCard label="Completeness" value={report.subscores.completeness} />
       </div>
 
-      <div className="border-t border-slate-100 pt-3">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Metrics</div>
+      <div className="border-t border-[#F1F0EC] pt-3">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">Metrics</div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
           <Metric k="Years of experience"  v={String(report.metrics.yearsExperience)} />
           <Metric k="Estimated pages"      v={String(report.metrics.estimatedPages)} />
@@ -476,13 +476,13 @@ const ReportStep: React.FC<{
       </div>
 
       {report.warnings?.length > 0 && (
-        <ul className="text-[11px] text-amber-700 space-y-0.5">
+        <ul className="text-[11px] text-[#735008] space-y-0.5">
           {report.warnings.map((w, i) => <li key={i} className="flex items-start gap-1"><AlertTriangle className="w-3 h-3 mt-0.5" /> {w}</li>)}
         </ul>
       )}
 
-      <details className="border border-slate-200 rounded">
-        <summary className="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50 flex items-center gap-2">
+      <details className="border border-[#E3E1DA] rounded">
+        <summary className="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-[#EDEBE6] flex items-center gap-2">
           <Briefcase className="w-3.5 h-3.5" /> Match against a job description (optional)
         </summary>
         <div className="p-3 space-y-2 text-xs">
@@ -490,27 +490,27 @@ const ReportStep: React.FC<{
             value={jdText} onChange={(e) => setJdText(e.target.value)}
             rows={6}
             placeholder="Paste the job description here…"
-            className="w-full px-2 py-1.5 border border-slate-300 rounded resize-none font-mono text-[11px]"
+            className="w-full px-2 py-1.5 border border-[#C9C6BD] rounded resize-none font-mono text-[11px]"
           />
           <button onClick={onMatch} disabled={!jdText.trim() || busy}
-            className="px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-40 inline-flex items-center gap-1">
+            className="px-3 py-1.5 text-xs font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded disabled:opacity-40 inline-flex items-center gap-1">
             {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />} Match
           </button>
           {matchReport && (
-            <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded space-y-1">
+            <div className="mt-2 p-2 bg-[#EDEBE6] border border-[#E3E1DA] rounded space-y-1">
               <div className="text-xs font-semibold">Alignment: {matchReport.alignment}%</div>
               {matchReport.missingSkills?.length > 0 && (
                 <div className="text-[11px]">
-                  <strong className="text-amber-700">Possible gaps:</strong> {matchReport.missingSkills.join(', ')}
+                  <strong className="text-[#735008]">Possible gaps:</strong> {matchReport.missingSkills.join(', ')}
                 </div>
               )}
               {matchReport.presentSkills?.length > 0 && (
                 <div className="text-[11px]">
-                  <strong className="text-green-700">Already present:</strong> {matchReport.presentSkills.join(', ')}
+                  <strong className="text-[#355846]">Already present:</strong> {matchReport.presentSkills.join(', ')}
                 </div>
               )}
               {matchReport.recommendations?.length > 0 && (
-                <ul className="text-[11px] text-slate-700 list-disc ml-4">
+                <ul className="text-[11px] text-[#111111] list-disc ml-4">
                   {matchReport.recommendations.map((r: string, i: number) => <li key={i}>{r}</li>)}
                 </ul>
               )}
@@ -519,7 +519,7 @@ const ReportStep: React.FC<{
         </div>
       </details>
 
-      <div className="flex justify-end pt-2 border-t border-slate-100">
+      <div className="flex justify-end pt-2 border-t border-[#F1F0EC]">
         <button onClick={onNext}
           className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center gap-1">
           Review fixes <ChevronRight className="w-4 h-4" />
@@ -541,22 +541,22 @@ const FixesStep: React.FC<{
   const visible = report.issues.filter((i) => !ignored.has(i.id));
   const safeCount = visible.filter((i) => i.autoFixAvailable).length;
   return (
-    <section className="bg-white border border-slate-200 rounded-lg p-5 space-y-4">
+    <section className="bg-white border border-[#E3E1DA] rounded-lg p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <Wand2 className="w-4 h-4 text-purple-600" /> Fix suggestions
+        <h2 className="text-sm font-bold text-[#111111] flex items-center gap-2">
+          <Wand2 className="w-4 h-4 text-[#4F7563]" /> Fix suggestions
         </h2>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-slate-500">{visible.length} open · {safeCount} auto-safe</span>
+          <span className="text-[11px] text-[#9A9A9A]">{visible.length} open · {safeCount} auto-safe</span>
           <button onClick={onApplyAllSafe} disabled={busy || safeCount === 0}
-            className="h-7 px-2 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded inline-flex items-center gap-1 disabled:opacity-40">
+            className="h-7 px-2 text-xs font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded inline-flex items-center gap-1 disabled:opacity-40">
             {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />} Apply all safe
           </button>
         </div>
       </div>
 
       {visible.length === 0 ? (
-        <div className="bg-green-50 border border-green-200 rounded p-4 text-sm text-green-900 flex items-center gap-2">
+        <div className="bg-[#EEF5F1] border border-[#DDE8E1] rounded p-4 text-sm text-[#1A2D24] flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4" /> No open issues. Looking great!
         </div>
       ) : (
@@ -565,8 +565,8 @@ const FixesStep: React.FC<{
         </ul>
       )}
 
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-        <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-slate-300 rounded hover:bg-slate-50">← Back</button>
+      <div className="flex items-center justify-between pt-2 border-t border-[#F1F0EC]">
+        <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">← Back</button>
         <button onClick={onNext}
           className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center gap-1">
           Choose template <ChevronRight className="w-4 h-4" />
@@ -583,10 +583,10 @@ const IssueCard: React.FC<{
   const [draft, setDraft] = useState<string>(issue.fixHint?.example || '');
 
   const sevTone =
-    issue.severity === 'critical' ? 'bg-red-50 border-red-200 text-red-900' :
-    issue.severity === 'major'    ? 'bg-amber-50 border-amber-200 text-amber-900' :
-    issue.severity === 'minor'    ? 'bg-blue-50 border-blue-200 text-blue-900' :
-                                    'bg-slate-50 border-slate-200 text-slate-700';
+    issue.severity === 'critical' ? 'bg-[#FCF1F1] border-[#F7E3E3] text-red-900' :
+    issue.severity === 'major'    ? 'bg-[#FAEEDB] border-[#F2DCAE] text-amber-900' :
+    issue.severity === 'minor'    ? 'bg-[#EEF5F1] border-[#DDE8E1] text-[#1A2D24]' :
+                                    'bg-[#EDEBE6] border-[#E3E1DA] text-[#111111]';
 
   const SevIcon = issue.severity === 'critical' ? AlertCircle
                 : issue.severity === 'major'    ? AlertTriangle
@@ -609,31 +609,31 @@ const IssueCard: React.FC<{
           {showEdit && issue.fixHint?.kind === 'text' && (
             <div className="mt-2 space-y-1">
               {issue.fixHint.current && (
-                <div className="text-[10px] text-slate-600 font-mono p-1.5 bg-white/60 rounded">
+                <div className="text-[10px] text-[#6B6B6B] font-mono p-1.5 bg-white/60 rounded">
                   current: {issue.fixHint.current}
                 </div>
               )}
               <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={3}
-                className="w-full px-2 py-1 text-[11px] font-mono border border-slate-300 rounded resize-none" />
+                className="w-full px-2 py-1 text-[11px] font-mono border border-[#C9C6BD] rounded resize-none" />
             </div>
           )}
 
           <div className="flex items-center gap-1.5 mt-2">
             {issue.autoFixAvailable && (
               <button onClick={() => onApply(issue.id, showEdit ? draft : undefined)} disabled={busy}
-                className="h-6 px-2 text-[11px] font-semibold bg-green-600 hover:bg-green-700 text-white rounded inline-flex items-center gap-1 disabled:opacity-40">
+                className="h-6 px-2 text-[11px] font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded inline-flex items-center gap-1 disabled:opacity-40">
                 {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
                 {showEdit ? 'Apply edit' : 'Apply fix'}
               </button>
             )}
             {issue.autoFixAvailable && (
               <button onClick={() => setShowEdit((v) => !v)}
-                className="h-6 px-2 text-[11px] font-semibold border border-slate-300 hover:bg-white text-slate-700 rounded inline-flex items-center gap-1">
+                className="h-6 px-2 text-[11px] font-semibold border border-[#C9C6BD] hover:bg-white text-[#111111] rounded inline-flex items-center gap-1">
                 {showEdit ? 'Cancel edit' : 'Edit manually'}
               </button>
             )}
             <button onClick={() => onIgnore(issue.id)}
-              className="h-6 px-2 text-[11px] font-semibold border border-slate-300 hover:bg-white text-slate-700 rounded">
+              className="h-6 px-2 text-[11px] font-semibold border border-[#C9C6BD] hover:bg-white text-[#111111] rounded">
               Ignore
             </button>
           </div>
@@ -670,16 +670,16 @@ const TemplateStep: React.FC<{
   const compareInsight  = compareWith ? insightById.get(compareWith) : null;
 
   return (
-    <section className="bg-white border border-slate-200 rounded-lg p-5 space-y-4">
-      <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-        <FileText className="w-4 h-4 text-purple-600" /> Choose a template
+    <section className="bg-white border border-[#E3E1DA] rounded-lg p-5 space-y-4">
+      <h2 className="text-sm font-bold text-[#111111] flex items-center gap-2">
+        <FileText className="w-4 h-4 text-[#4F7563]" /> Choose a template
       </h2>
 
-      {busy && <div className="text-[11px] text-slate-500 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Loading recommendations…</div>}
+      {busy && <div className="text-[11px] text-[#9A9A9A] flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Loading recommendations…</div>}
 
       {/* Phase 42.5A — radar panel for the selected template */}
       {selectedInsight && (
-        <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 border border-purple-200 bg-purple-50/40 rounded-lg p-3">
+        <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4 border border-[#DDE8E1] bg-[#EEF5F1]/40 rounded-lg p-3">
           <div className="flex flex-col items-center">
             {compareInsight ? (
               <TemplateRadarCompare
@@ -693,30 +693,30 @@ const TemplateStep: React.FC<{
           </div>
           <div className="space-y-2 text-xs">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-slate-900">{selectedInsight.name}</span>
-              <span className="text-[10px] text-slate-500">Best for <strong>{selectedInsight.bestFor}</strong> · balanced {selectedInsight.balanced}/100</span>
+              <span className="font-bold text-[#111111]">{selectedInsight.name}</span>
+              <span className="text-[10px] text-[#9A9A9A]">Best for <strong>{selectedInsight.bestFor}</strong> · balanced {selectedInsight.balanced}/100</span>
               {selectedInsight.badges?.map((b: string) => (
-                <span key={b} className="text-[9px] uppercase tracking-wide bg-white border border-purple-200 text-purple-800 px-1 py-0.5 rounded">{b}</span>
+                <span key={b} className="text-[9px] uppercase tracking-wide bg-white border border-[#DDE8E1] text-purple-800 px-1 py-0.5 rounded">{b}</span>
               ))}
             </div>
             <div className="grid grid-cols-3 gap-1.5">
               {(['ats','visual','executive','creative','readability','print'] as const).map((k) => {
                 const v = selectedInsight.axes[k];
-                const tone = v >= 80 ? 'bg-green-100 text-green-800' : v >= 60 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800';
+                const tone = v >= 80 ? 'bg-[#DDE8E1] text-[#263F34]' : v >= 60 ? 'bg-[#F5E1B7] text-amber-800' : 'bg-[#F7E3E3] text-[#7a2929]';
                 return (
-                  <div key={k} className="flex items-center justify-between text-[11px] border border-slate-200 rounded px-1.5 py-1 bg-white">
-                    <span className="capitalize text-slate-600">{k}</span>
+                  <div key={k} className="flex items-center justify-between text-[11px] border border-[#E3E1DA] rounded px-1.5 py-1 bg-white">
+                    <span className="capitalize text-[#6B6B6B]">{k}</span>
                     <span className={`text-[10px] font-bold px-1 rounded ${tone}`}>{v}</span>
                   </div>
                 );
               })}
             </div>
-            <div className="pt-1 text-[11px] text-slate-600">
+            <div className="pt-1 text-[11px] text-[#6B6B6B]">
               Compare with:
               <select
                 value={compareWith || ''}
                 onChange={(e) => setCompareWith(e.target.value || null)}
-                className="ml-2 h-7 px-2 text-xs border border-slate-300 rounded bg-white max-w-[220px]"
+                className="ml-2 h-7 px-2 text-xs border border-[#C9C6BD] rounded bg-white max-w-[220px]"
               >
                 <option value="">— none —</option>
                 {insights.filter((i) => i.id !== templateId).slice(0, 30).map((i) => (
@@ -730,7 +730,7 @@ const TemplateStep: React.FC<{
 
       {recommendations?.bestOverall?.length > 0 && (
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1.5">
             Recommended for your {recommendations.detectedType} CV
           </div>
           <TemplateGrid items={recommendations.bestOverall} selectedId={templateId} onSelect={setTemplateId} insights={insightById} />
@@ -739,20 +739,20 @@ const TemplateStep: React.FC<{
 
       {recommendations?.bestForAts?.length > 0 && (
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">ATS-safe</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1.5">ATS-safe</div>
           <TemplateGrid items={recommendations.bestForAts} selectedId={templateId} onSelect={setTemplateId} insights={insightById} />
         </div>
       )}
 
-      <details className="border border-slate-200 rounded">
-        <summary className="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-slate-50">Browse all templates ({all.length})</summary>
+      <details className="border border-[#E3E1DA] rounded">
+        <summary className="px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-[#EDEBE6]">Browse all templates ({all.length})</summary>
         <div className="p-3">
           <TemplateGrid items={all.map((t: any) => ({ id: t.id, name: t.name, category: t.category, atsSafe: t.atsSafe }))} selectedId={templateId} onSelect={setTemplateId} insights={insightById} />
         </div>
       </details>
 
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-        <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-slate-300 rounded hover:bg-slate-50">← Back</button>
+      <div className="flex items-center justify-between pt-2 border-t border-[#F1F0EC]">
+        <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">← Back</button>
         <button onClick={onNext} disabled={!templateId}
           className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-40 inline-flex items-center gap-1">
           Preview <ChevronRight className="w-4 h-4" />
@@ -771,18 +771,18 @@ const TemplateGrid: React.FC<{
       const ins = insights?.get(t.id);
       return (
       <button key={t.id} onClick={() => onSelect(t.id)}
-        className={`text-left p-2 rounded border transition-colors flex gap-2 ${selectedId === t.id ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-slate-300 bg-white'}`}>
+        className={`text-left p-2 rounded border transition-colors flex gap-2 ${selectedId === t.id ? 'border-purple-500 bg-[#EEF5F1]' : 'border-[#E3E1DA] hover:border-[#C9C6BD] bg-white'}`}>
         {ins && (
           <TemplateRadar axes={ins.axes} size={56} showLabels={false} className="flex-shrink-0 opacity-90" />
         )}
         <div className="flex-1 min-w-0">
-        <div className="text-xs font-semibold text-slate-900 truncate">{t.name}</div>
+        <div className="text-xs font-semibold text-[#111111] truncate">{t.name}</div>
         <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-          {t.category && <span className="text-[9px] uppercase tracking-wide bg-slate-100 text-slate-600 px-1 py-0.5 rounded">{t.category}</span>}
-          {t.atsSafe  && <span className="text-[9px] uppercase tracking-wide bg-green-100 text-green-800 px-1 py-0.5 rounded">ATS-safe</span>}
+          {t.category && <span className="text-[9px] uppercase tracking-wide bg-[#F1F0EC] text-[#6B6B6B] px-1 py-0.5 rounded">{t.category}</span>}
+          {t.atsSafe  && <span className="text-[9px] uppercase tracking-wide bg-[#DDE8E1] text-[#263F34] px-1 py-0.5 rounded">ATS-safe</span>}
         </div>
         {ins && (
-          <div className="text-[10px] text-slate-500 mt-1 font-mono">
+          <div className="text-[10px] text-[#9A9A9A] mt-1 font-mono">
             ATS {ins.axes.ats} · Vis {ins.axes.visual} · Exec {ins.axes.executive}
           </div>
         )}
@@ -795,14 +795,14 @@ const TemplateGrid: React.FC<{
 
 // ----- PREVIEW + EXPORT ----------------------------------------------------
 const PreviewStep: React.FC<{ html: string; onBack: () => void; onNext: () => void }> = ({ html, onBack, onNext }) => (
-  <section className="bg-white border border-slate-200 rounded-lg p-5 space-y-3">
-    <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-      <Eye className="w-4 h-4 text-purple-600" /> Preview
+  <section className="bg-white border border-[#E3E1DA] rounded-lg p-5 space-y-3">
+    <h2 className="text-sm font-bold text-[#111111] flex items-center gap-2">
+      <Eye className="w-4 h-4 text-[#4F7563]" /> Preview
     </h2>
-    <p className="text-[11px] text-slate-500">Approximate render. The final exported file uses the full template renderer.</p>
-    <iframe srcDoc={html} className="w-full h-[600px] border border-slate-200 rounded bg-white" />
-    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-      <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-slate-300 rounded hover:bg-slate-50">← Back</button>
+    <p className="text-[11px] text-[#9A9A9A]">Approximate render. The final exported file uses the full template renderer.</p>
+    <iframe srcDoc={html} className="w-full h-[600px] border border-[#E3E1DA] rounded bg-white" />
+    <div className="flex items-center justify-between pt-2 border-t border-[#F1F0EC]">
+      <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">← Back</button>
       <button onClick={onNext} className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center gap-1">
         Continue to export <ChevronRight className="w-4 h-4" />
       </button>
@@ -811,14 +811,14 @@ const PreviewStep: React.FC<{ html: string; onBack: () => void; onNext: () => vo
 );
 
 const ExportStep: React.FC<{ onBack: () => void; onSave: () => void; savedDocId: string | null; busy: boolean }> = ({ onBack, onSave, savedDocId, busy }) => (
-  <section className="bg-white border border-slate-200 rounded-lg p-5 space-y-3">
-    <h2 className="text-sm font-bold text-slate-900">Save &amp; export</h2>
-    <p className="text-xs text-slate-500">
+  <section className="bg-white border border-[#E3E1DA] rounded-lg p-5 space-y-3">
+    <h2 className="text-sm font-bold text-[#111111]">Save &amp; export</h2>
+    <p className="text-xs text-[#9A9A9A]">
       Saving creates a new CV document linked to your profile. From the builder
       you can keep editing and export PDF, DOCX, HTML, MD or PPTX.
     </p>
-    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-      <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-slate-300 rounded hover:bg-slate-50">← Back</button>
+    <div className="flex items-center justify-between pt-2 border-t border-[#F1F0EC]">
+      <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">← Back</button>
       <button onClick={onSave} disabled={busy}
         className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-40 inline-flex items-center gap-1">
         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
@@ -826,7 +826,7 @@ const ExportStep: React.FC<{ onBack: () => void; onSave: () => void; savedDocId:
       </button>
     </div>
     {savedDocId && (
-      <p className="text-[11px] text-green-700">Saved. Opening builder…</p>
+      <p className="text-[11px] text-[#355846]">Saved. Opening builder…</p>
     )}
   </section>
 );
@@ -834,9 +834,9 @@ const ExportStep: React.FC<{ onBack: () => void; onSave: () => void; savedDocId:
 // ----- atoms ---------------------------------------------------------------
 const ScoreCard: React.FC<{ label: string; value: number; tone?: 'green' | 'amber' | 'red'; large?: boolean }> = ({ label, value, tone, large }) => {
   const t = tone || (value >= 80 ? 'green' : value >= 60 ? 'amber' : 'red');
-  const colour = t === 'green' ? 'text-green-700 bg-green-50 border-green-200'
-              : t === 'amber' ? 'text-amber-700 bg-amber-50 border-amber-200'
-                              : 'text-red-700 bg-red-50 border-red-200';
+  const colour = t === 'green' ? 'text-[#355846] bg-[#EEF5F1] border-[#DDE8E1]'
+              : t === 'amber' ? 'text-[#735008] bg-[#FAEEDB] border-[#F2DCAE]'
+                              : 'text-[#7a2929] bg-[#FCF1F1] border-[#F7E3E3]';
   return (
     <div className={`border rounded p-2 ${colour}`}>
       <div className="text-[10px] uppercase tracking-wide opacity-80">{label}</div>
@@ -846,9 +846,9 @@ const ScoreCard: React.FC<{ label: string; value: number; tone?: 'green' | 'ambe
 };
 
 const Metric: React.FC<{ k: string; v: string }> = ({ k, v }) => (
-  <div className="border border-slate-200 rounded p-1.5 bg-slate-50">
-    <div className="text-[9px] uppercase tracking-wide text-slate-500">{k}</div>
-    <div className="text-xs font-mono text-slate-800 truncate">{v}</div>
+  <div className="border border-[#E3E1DA] rounded p-1.5 bg-[#EDEBE6]">
+    <div className="text-[9px] uppercase tracking-wide text-[#9A9A9A]">{k}</div>
+    <div className="text-xs font-mono text-[#111111] truncate">{v}</div>
   </div>
 );
 
@@ -910,10 +910,10 @@ const ProExtras: React.FC<{
   busy: boolean;
 }> = ({ benchmark, interview, variants, onBenchmark, onInterview, onVariants, busy }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+    <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
       <div className="flex items-center gap-2">
-        <Award className="w-4 h-4 text-purple-600" />
-        <h3 className="text-sm font-bold text-slate-900">Benchmark</h3>
+        <Award className="w-4 h-4 text-[#4F7563]" />
+        <h3 className="text-sm font-bold text-[#111111]">Benchmark</h3>
       </div>
       {!benchmark ? (
         <button onClick={onBenchmark} disabled={busy}
@@ -925,24 +925,24 @@ const ProExtras: React.FC<{
           {(Object.values(benchmark.bands || {}) as any[]).slice(0, 4).map((b, i) => (
             <div key={i}>
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-700 font-semibold">{b.metric}</span>
-                <span className="text-slate-500">{b.value}{b.unit === 'percent' ? '%' : ''}</span>
+                <span className="text-[#111111] font-semibold">{b.metric}</span>
+                <span className="text-[#9A9A9A]">{b.value}{b.unit === 'percent' ? '%' : ''}</span>
               </div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className={`h-full ${b.band === 'top10' ? 'bg-green-500' : b.band === 'aboveAvg' ? 'bg-blue-500' : b.band === 'average' ? 'bg-amber-500' : 'bg-red-500'}`}
+              <div className="h-1.5 bg-[#F1F0EC] rounded-full overflow-hidden">
+                <div className={`h-full ${b.band === 'top10' ? 'bg-[#4F7563]' : b.band === 'aboveAvg' ? 'bg-[#4F7563]' : b.band === 'average' ? 'bg-[#D9A441]' : 'bg-[#D96A6A]'}`}
                      style={{ width: `${Math.max(0, Math.min(100, b.value))}%` }} />
               </div>
-              <div className="text-[10px] text-slate-400">industry {b.industry} · top10 {b.top10}</div>
+              <div className="text-[10px] text-[#C9C6BD]">industry {b.industry} · top10 {b.top10}</div>
             </div>
           ))}
         </div>
       )}
     </section>
 
-    <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+    <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
       <div className="flex items-center gap-2">
-        <Mic className="w-4 h-4 text-purple-600" />
-        <h3 className="text-sm font-bold text-slate-900">Interview readiness</h3>
+        <Mic className="w-4 h-4 text-[#4F7563]" />
+        <h3 className="text-sm font-bold text-[#111111]">Interview readiness</h3>
       </div>
       {!interview ? (
         <button onClick={onInterview} disabled={busy}
@@ -951,19 +951,19 @@ const ProExtras: React.FC<{
         </button>
       ) : (
         <div className="space-y-2 text-[11px]">
-          <div className="text-2xl font-bold text-slate-900">{interview.score}<span className="text-xs text-slate-500">/100</span></div>
+          <div className="text-2xl font-bold text-[#111111]">{interview.score}<span className="text-xs text-[#9A9A9A]">/100</span></div>
           {interview.weakAreas?.length > 0 && (
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-0.5">Weak areas</div>
-              <ul className="list-disc ml-4 text-slate-700">
+              <div className="text-[10px] font-bold uppercase tracking-wide text-[#9A9A9A] mb-0.5">Weak areas</div>
+              <ul className="list-disc ml-4 text-[#111111]">
                 {interview.weakAreas.slice(0, 3).map((w: string, i: number) => <li key={i}>{w}</li>)}
               </ul>
             </div>
           )}
           {interview.likelyHiringManagerQuestions?.length > 0 && (
             <details>
-              <summary className="cursor-pointer text-slate-700 font-semibold">Likely hiring-manager Qs ({interview.likelyHiringManagerQuestions.length})</summary>
-              <ul className="list-disc ml-4 text-slate-700 mt-1">
+              <summary className="cursor-pointer text-[#111111] font-semibold">Likely hiring-manager Qs ({interview.likelyHiringManagerQuestions.length})</summary>
+              <ul className="list-disc ml-4 text-[#111111] mt-1">
                 {interview.likelyHiringManagerQuestions.slice(0, 5).map((q: any, i: number) => <li key={i}>{q.q}</li>)}
               </ul>
             </details>
@@ -972,14 +972,14 @@ const ProExtras: React.FC<{
       )}
     </section>
 
-    <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+    <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
       <div className="flex items-center gap-2">
-        <Layers className="w-4 h-4 text-purple-600" />
-        <h3 className="text-sm font-bold text-slate-900">Generate variants</h3>
+        <Layers className="w-4 h-4 text-[#4F7563]" />
+        <h3 className="text-sm font-bold text-[#111111]">Generate variants</h3>
       </div>
       {!variants ? (
         <>
-          <p className="text-[11px] text-slate-500">One-click ATS / Executive / Modern / Developer versions, each a separate CvDocument linked to your profile.</p>
+          <p className="text-[11px] text-[#9A9A9A]">One-click ATS / Executive / Modern / Developer versions, each a separate CvDocument linked to your profile.</p>
           <button onClick={onVariants} disabled={busy}
             className="w-full h-8 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center justify-center gap-1 disabled:opacity-50">
             {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Layers className="w-3 h-3" />} Generate 4 variants
@@ -988,10 +988,10 @@ const ProExtras: React.FC<{
       ) : (
         <ul className="space-y-1 text-[11px]">
           {variants.map((v: any) => (
-            <li key={v.documentId} className="flex items-center gap-2 border border-slate-200 rounded px-2 py-1">
-              <span className="font-mono text-[10px] uppercase bg-purple-100 text-purple-800 px-1 py-0.5 rounded">{v.preset}</span>
+            <li key={v.documentId} className="flex items-center gap-2 border border-[#E3E1DA] rounded px-2 py-1">
+              <span className="font-mono text-[10px] uppercase bg-[#DDE8E1] text-purple-800 px-1 py-0.5 rounded">{v.preset}</span>
               <span className="flex-1 truncate">{v.title}</span>
-              <a href={`/career/builder/${v.documentId}`} className="text-blue-600 hover:underline">Open →</a>
+              <a href={`/career/builder/${v.documentId}`} className="text-[#4F7563] hover:underline">Open →</a>
             </li>
           ))}
         </ul>
@@ -1001,39 +1001,39 @@ const ProExtras: React.FC<{
 );
 
 const PreflightPanel: React.FC<{ preflight: any; onRun: () => void; busy: boolean }> = ({ preflight, onRun, busy }) => (
-  <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-2">
+  <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-2">
     <div className="flex items-center justify-between">
-      <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-        <ShieldCheck className="w-4 h-4 text-purple-600" /> Export preflight
+      <h3 className="text-sm font-bold text-[#111111] flex items-center gap-2">
+        <ShieldCheck className="w-4 h-4 text-[#4F7563]" /> Export preflight
       </h3>
       <button onClick={onRun} disabled={busy}
-        className="h-7 px-2 text-xs font-semibold border border-slate-300 hover:bg-slate-50 rounded inline-flex items-center gap-1 disabled:opacity-50">
+        className="h-7 px-2 text-xs font-semibold border border-[#C9C6BD] hover:bg-[#EDEBE6] rounded inline-flex items-center gap-1 disabled:opacity-50">
         {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3" />} Run check
       </button>
     </div>
     {!preflight ? (
-      <p className="text-[11px] text-slate-500 italic">Run the check to see warnings the export would surface (missing contact, page overflow, ATS issues).</p>
+      <p className="text-[11px] text-[#9A9A9A] italic">Run the check to see warnings the export would surface (missing contact, page overflow, ATS issues).</p>
     ) : (
       <div className="space-y-1.5">
         {preflight.ok ? (
-          <div className="text-[11px] text-green-700 inline-flex items-center gap-1">
+          <div className="text-[11px] text-[#355846] inline-flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" /> No blocking issues. Safe to export.
           </div>
         ) : (
-          <div className="text-[11px] text-red-700 inline-flex items-center gap-1">
+          <div className="text-[11px] text-[#7a2929] inline-flex items-center gap-1">
             <AlertCircle className="w-3 h-3" /> {preflight.warnings.filter((w: any) => w.severity === 'error').length} blocking issue(s).
           </div>
         )}
         <ul className="space-y-0.5 max-h-32 overflow-auto">
           {preflight.warnings.map((w: any, i: number) => (
-            <li key={i} className={`text-[11px] flex items-start gap-1 ${w.severity === 'error' ? 'text-red-700' : 'text-amber-700'}`}>
+            <li key={i} className={`text-[11px] flex items-start gap-1 ${w.severity === 'error' ? 'text-[#7a2929]' : 'text-[#735008]'}`}>
               {w.severity === 'error' ? <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" /> : <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />}
               <span><strong>{w.section}:</strong> {w.message}</span>
             </li>
           ))}
         </ul>
         {!preflight.ok && preflight.canForceExport && (
-          <p className="text-[10px] text-slate-500 italic">You can still Save &amp; open below — preflight warnings don't block.</p>
+          <p className="text-[10px] text-[#9A9A9A] italic">You can still Save &amp; open below — preflight warnings don't block.</p>
         )}
       </div>
     )}

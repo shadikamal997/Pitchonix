@@ -58,22 +58,22 @@ export function TimelineBlock({
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="h-5 w-5 text-green-600" />;
+        return <CheckCircle className="h-5 w-5 text-[#4F7563]" />;
       case 'in-progress':
-        return <Circle className="h-5 w-5 text-blue-600 fill-blue-600" />;
+        return <Circle className="h-5 w-5 text-[#4F7563] fill-blue-600" />;
       default:
-        return <Circle className="h-5 w-5 text-gray-400" />;
+        return <Circle className="h-5 w-5 text-[#C9C6BD]" />;
     }
   };
 
   const getStatusColor = (status?: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800 border-green-300';
+        return 'bg-[#DDE8E1] text-green-800 border-[#A8B9AE]';
       case 'in-progress':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
+        return 'bg-[#DDE8E1] text-[#263F34] border-[#A8B9AE]';
       default:
-        return 'bg-gray-100 text-gray-600 border-gray-300';
+        return 'bg-[#F1F0EC] text-[#6B6B6B] border-[#C9C6BD]';
     }
   };
 
@@ -82,20 +82,20 @@ export function TimelineBlock({
       <div className="w-full py-8">
         {title && (
           <div className="flex items-center gap-2 mb-6">
-            <Calendar className="h-6 w-6 text-slate-700" />
-            <h3 className="text-2xl font-bold text-slate-900">{title}</h3>
+            <Calendar className="h-6 w-6 text-[#111111]" />
+            <h3 className="text-2xl font-bold text-[#111111]">{title}</h3>
           </div>
         )}
         <div className="relative">
           {/* Horizontal Line */}
-          <div className="absolute top-8 left-0 right-0 h-1 bg-slate-200" />
+          <div className="absolute top-8 left-0 right-0 h-1 bg-[#E3E1DA]" />
 
           {/* Timeline Items */}
           <div className="grid grid-cols-4 gap-4">
             {items.map((item, index) => (
               <div key={item.id} className="relative">
                 {/* Circle Marker */}
-                <div className="relative z-10 w-16 h-16 mx-auto bg-white rounded-full border-4 border-slate-200 flex items-center justify-center mb-4">
+                <div className="relative z-10 w-16 h-16 mx-auto bg-white rounded-full border-4 border-[#E3E1DA] flex items-center justify-center mb-4">
                   {getStatusIcon(item.status)}
                 </div>
 
@@ -104,8 +104,8 @@ export function TimelineBlock({
                   <div className={`inline-block px-3 py-1 rounded-full border text-xs font-semibold mb-2 ${getStatusColor(item.status)}`}>
                     {item.date}
                   </div>
-                  <h4 className="text-sm font-bold text-slate-900 mb-1">{item.title}</h4>
-                  <p className="text-xs text-slate-600">{item.description}</p>
+                  <h4 className="text-sm font-bold text-[#111111] mb-1">{item.title}</h4>
+                  <p className="text-xs text-[#6B6B6B]">{item.description}</p>
                 </div>
               </div>
             ))}
@@ -119,35 +119,35 @@ export function TimelineBlock({
     <div className="w-full py-8">
       {title && (
         <div className="flex items-center gap-2 mb-6">
-          <Calendar className="h-6 w-6 text-slate-700" />
-          <h3 className="text-2xl font-bold text-slate-900">{title}</h3>
+          <Calendar className="h-6 w-6 text-[#111111]" />
+          <h3 className="text-2xl font-bold text-[#111111]">{title}</h3>
         </div>
       )}
       <div className="relative pl-8">
         {/* Vertical Line */}
-        <div className="absolute left-6 top-0 bottom-0 w-1 bg-slate-200" />
+        <div className="absolute left-6 top-0 bottom-0 w-1 bg-[#E3E1DA]" />
 
         {/* Timeline Items */}
         <div className="space-y-8">
           {items.map((item, index) => (
             <div key={item.id} className="relative">
               {/* Circle Marker */}
-              <div className="absolute -left-[1.875rem] top-1 w-12 h-12 bg-white rounded-full border-4 border-slate-200 flex items-center justify-center">
+              <div className="absolute -left-[1.875rem] top-1 w-12 h-12 bg-white rounded-full border-4 border-[#E3E1DA] flex items-center justify-center">
                 {getStatusIcon(item.status)}
               </div>
 
               {/* Content Card */}
-              <div className="ml-6 bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div className="ml-6 bg-white border border-[#E3E1DA] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-2">
                   <div className={`px-3 py-1 rounded-full border text-xs font-semibold ${getStatusColor(item.status)}`}>
                     {item.date}
                   </div>
                   {item.status && (
-                    <span className="text-xs text-slate-500 capitalize">{item.status.replace('-', ' ')}</span>
+                    <span className="text-xs text-[#9A9A9A] capitalize">{item.status.replace('-', ' ')}</span>
                   )}
                 </div>
-                <h4 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h4>
-                <p className="text-sm text-slate-600">{item.description}</p>
+                <h4 className="text-lg font-bold text-[#111111] mb-2">{item.title}</h4>
+                <p className="text-sm text-[#6B6B6B]">{item.description}</p>
               </div>
             </div>
           ))}

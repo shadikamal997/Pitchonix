@@ -58,16 +58,16 @@ function TemplatesPage() {
           onCancel={handleCreateFromScratch}
         />
       ) : (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-8">
-          <div className="text-center">
-            <Sparkles className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Choose Your Starting Point
-            </h1>
+        <div className="min-h-screen bg-[#EDEBE6] flex items-center justify-center p-8">
+          <div className="text-center max-w-lg">
+            <div className="w-16 h-16 rounded-full bg-[#EEF5F1] text-[#4F7563] flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-7 h-7" />
+            </div>
+            <h1 className="pn-h1 mb-3">Choose Your Starting Point</h1>
             <div className="flex gap-4 justify-center">
               <Button
                 onClick={() => setShowTemplates(true)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-[#4F7563] hover:bg-[#355846]"
               >
                 Browse Templates
               </Button>

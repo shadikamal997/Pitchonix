@@ -47,15 +47,15 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4F7563]"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-sm text-red-600">{error}</p>
+      <div className="p-4 bg-[#FCF1F1] border border-[#F7E3E3] rounded-lg">
+        <p className="text-sm text-[#9a3737]">{error}</p>
       </div>
     );
   }
@@ -76,8 +76,8 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        <h3 className="text-sm font-medium text-gray-900 mb-1">Not Enough History</h3>
-        <p className="text-sm text-gray-600">
+        <h3 className="text-sm font-medium text-[#111111] mb-1">Not Enough History</h3>
+        <p className="text-sm text-[#6B6B6B]">
           At least 2 quality checks are needed to show comparisons.
         </p>
       </div>
@@ -92,15 +92,15 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
   return (
     <div className="space-y-6">
       {/* Score Comparison */}
-      <div className="bg-white p-6 border border-gray-200 rounded-lg">
-        <h3 className="text-sm font-medium text-gray-700 mb-4">Overall Score Change</h3>
+      <div className="bg-white p-6 border border-[#E3E1DA] rounded-lg">
+        <h3 className="text-sm font-medium text-[#111111] mb-4">Overall Score Change</h3>
         
         <div className="flex items-center justify-between mb-6">
           {/* Previous */}
           <div className="text-center">
-            <p className="text-xs text-gray-600 mb-2">Version {comparison.previous.version}</p>
+            <p className="text-xs text-[#6B6B6B] mb-2">Version {comparison.previous.version}</p>
             <div className="flex flex-col items-center">
-              <span className="text-3xl font-bold text-gray-900">
+              <span className="text-3xl font-bold text-[#111111]">
                 {comparison.previous.overallScore.toFixed(1)}
               </span>
               <span
@@ -113,7 +113,7 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
                 {comparison.previous.grade}
               </span>
             </div>
-            <p className="text-xs text-gray-600 mt-2">
+            <p className="text-xs text-[#6B6B6B] mt-2">
               {new Date(comparison.previous.createdAt).toLocaleDateString()}
             </p>
           </div>
@@ -121,7 +121,7 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
           {/* Arrow */}
           <div className="flex flex-col items-center mx-8">
             <svg
-              className={`w-8 h-8 ${isDeltaPositive ? 'text-green-600' : 'text-red-600'}`}
+              className={`w-8 h-8 ${isDeltaPositive ? 'text-[#4F7563]' : 'text-[#9a3737]'}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -135,7 +135,7 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
             </svg>
             <span
               className={`mt-2 text-lg font-bold ${
-                isDeltaPositive ? 'text-green-600' : 'text-red-600'
+                isDeltaPositive ? 'text-[#4F7563]' : 'text-[#9a3737]'
               }`}
             >
               {isDeltaPositive ? '+' : ''}{scoreDelta.toFixed(1)}
@@ -144,9 +144,9 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
 
           {/* Current */}
           <div className="text-center">
-            <p className="text-xs text-gray-600 mb-2">Version {comparison.current.version}</p>
+            <p className="text-xs text-[#6B6B6B] mb-2">Version {comparison.current.version}</p>
             <div className="flex flex-col items-center">
-              <span className="text-3xl font-bold text-gray-900">
+              <span className="text-3xl font-bold text-[#111111]">
                 {comparison.current.overallScore.toFixed(1)}
               </span>
               <span
@@ -159,23 +159,23 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
                 {comparison.current.grade}
               </span>
             </div>
-            <p className="text-xs text-gray-600 mt-2">
+            <p className="text-xs text-[#6B6B6B] mt-2">
               {new Date(comparison.current.createdAt).toLocaleDateString()}
             </p>
           </div>
         </div>
 
         {/* Grade Change */}
-        <div className="pt-4 border-t border-gray-200">
-          <p className="text-sm text-gray-600">
+        <div className="pt-4 border-t border-[#E3E1DA]">
+          <p className="text-sm text-[#6B6B6B]">
             Grade: <span className="font-medium">{comparison.gradeDelta}</span>
           </p>
         </div>
       </div>
 
       {/* Dimension Changes */}
-      <div className="bg-white p-6 border border-gray-200 rounded-lg">
-        <h3 className="text-sm font-medium text-gray-700 mb-4">Dimension Scores</h3>
+      <div className="bg-white p-6 border border-[#E3E1DA] rounded-lg">
+        <h3 className="text-sm font-medium text-[#111111] mb-4">Dimension Scores</h3>
         
         <div className="space-y-4">
           {[
@@ -192,21 +192,21 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
             return (
               <div key={dimension.key}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-700">{dimension.label}</span>
+                  <span className="text-sm text-[#111111]">{dimension.label}</span>
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-[#6B6B6B]">
                       {prevScore.toFixed(1)} → {currScore.toFixed(1)}
                     </span>
                     <span
                       className={`text-sm font-medium ${
-                        isPositive ? 'text-green-600' : 'text-red-600'
+                        isPositive ? 'text-[#4F7563]' : 'text-[#9a3737]'
                       }`}
                     >
                       {isPositive ? '+' : ''}{delta.toFixed(1)}
                     </span>
                   </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-[#E3E1DA] rounded-full h-2">
                   <div
                     className="h-2 rounded-full transition-all duration-300"
                     style={{
@@ -223,7 +223,7 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
 
       {/* Improvements */}
       {comparison.improvements.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+        <div className="bg-[#EEF5F1] border border-[#DDE8E1] rounded-lg p-6">
           <h3 className="text-sm font-medium text-green-900 mb-3 flex items-center">
             <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -247,7 +247,7 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
 
       {/* Regressions */}
       {comparison.regressions.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+        <div className="bg-[#FAEEDB] border border-[#F2DCAE] rounded-lg p-6">
           <h3 className="text-sm font-medium text-amber-900 mb-3 flex items-center">
             <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -260,7 +260,7 @@ export function QualityComparison({ deckId }: QualityComparisonProps) {
           </h3>
           <ul className="space-y-2">
             {comparison.regressions.map((regression, index) => (
-              <li key={index} className="text-sm text-amber-800 flex items-start">
+              <li key={index} className="text-sm text-[#735008] flex items-start">
                 <span className="mr-2">•</span>
                 <span>{regression}</span>
               </li>

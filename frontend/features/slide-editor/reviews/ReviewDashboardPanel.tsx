@@ -74,33 +74,33 @@ export const ReviewDashboardPanel: React.FC<Props> = ({
   const current = lists[tab];
 
   return (
-    <aside className="w-[420px] flex-shrink-0 border-l border-slate-200 bg-white flex flex-col h-full overflow-hidden">
-      <header className="h-11 flex items-center px-3 gap-2 border-b border-slate-200 flex-shrink-0">
-        <Send className="w-4 h-4 text-purple-600" />
+    <aside className="w-[420px] flex-shrink-0 border-l border-[#E3E1DA] bg-white flex flex-col h-full overflow-hidden">
+      <header className="h-11 flex items-center px-3 gap-2 border-b border-[#E3E1DA] flex-shrink-0">
+        <Send className="w-4 h-4 text-[#4F7563]" />
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-bold text-slate-900">Reviews</div>
-          <div className="text-[10px] text-slate-500">Queue across all decks you can see</div>
+          <div className="text-xs font-bold text-[#111111]">Reviews</div>
+          <div className="text-[10px] text-[#9A9A9A]">Queue across all decks you can see</div>
         </div>
-        <button onClick={onClose} className="p-1 rounded text-slate-500 hover:bg-slate-100" aria-label="Close">
+        <button onClick={onClose} className="p-1 rounded text-[#9A9A9A] hover:bg-[#F1F0EC]" aria-label="Close">
           <X className="w-4 h-4" />
         </button>
       </header>
 
       {/* Tabs */}
-      <div className="px-2 py-1.5 border-b border-slate-100 flex items-center gap-1 overflow-x-auto">
+      <div className="px-2 py-1.5 border-b border-[#F1F0EC] flex items-center gap-1 overflow-x-auto">
         {(Object.keys(lists) as TabKey[]).map((k) => (
           <button
             key={k}
             onClick={() => setTab(k)}
             className={`px-2 py-1 text-[11px] font-semibold rounded flex items-center gap-1.5 flex-shrink-0 transition-colors ${
               tab === k
-                ? 'bg-purple-100 text-purple-800'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                ? 'bg-[#DDE8E1] text-purple-800'
+                : 'text-[#9A9A9A] hover:bg-[#F1F0EC] hover:text-[#111111]'
             }`}
           >
             {lists[k].label}
             <span className={`inline-flex items-center justify-center min-w-[18px] h-[16px] px-1 rounded-full text-[9px] font-bold ${
-              tab === k ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-600'
+              tab === k ? 'bg-purple-600 text-white' : 'bg-[#E3E1DA] text-[#6B6B6B]'
             }`}>
               {counts[k]}
             </span>
@@ -111,13 +111,13 @@ export const ReviewDashboardPanel: React.FC<Props> = ({
       {/* List */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
         {tab === 'assigned' && loadingMine ? (
-          <div className="text-xs text-slate-400 flex items-center gap-2 py-3">
+          <div className="text-xs text-[#C9C6BD] flex items-center gap-2 py-3">
             <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading…
           </div>
         ) : current.items.length === 0 ? (
           <div className="text-center pt-8">
             <FileText className="w-7 h-7 text-slate-300 mx-auto mb-2" />
-            <p className="text-xs text-slate-500">Nothing here.</p>
+            <p className="text-xs text-[#9A9A9A]">Nothing here.</p>
           </div>
         ) : (
           current.items.map((r) => {
@@ -125,7 +125,7 @@ export const ReviewDashboardPanel: React.FC<Props> = ({
             return (
               <article
                 key={r.id}
-                className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm"
+                className="rounded-lg border border-[#E3E1DA] bg-white p-2.5 shadow-sm"
               >
                 <div className="flex items-start gap-2">
                   <StatusIcon status={r.status as DeckReviewStatus | 'requested' | 'withdrawn'} />
@@ -134,17 +134,17 @@ export const ReviewDashboardPanel: React.FC<Props> = ({
                       <button
                         type="button"
                         onClick={() => onOpenDeck?.(deckRef.id)}
-                        className="text-xs font-bold text-slate-900 hover:text-purple-700 truncate text-left"
+                        className="text-xs font-bold text-[#111111] hover:text-[#355846] truncate text-left"
                       >
                         {deckRef.title}
                       </button>
                     )}
-                    <div className="text-[10px] text-slate-500 mt-0.5">
+                    <div className="text-[10px] text-[#9A9A9A] mt-0.5">
                       <span className="font-semibold">{r.requestedBy.name || r.requestedBy.email}</span>
-                      <span className="text-slate-400"> → </span>
+                      <span className="text-[#C9C6BD]"> → </span>
                       <span>{r.reviewer.name || r.reviewer.email}</span>
                     </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-2">
+                    <div className="text-[10px] text-[#C9C6BD] mt-0.5 flex items-center gap-2">
                       <span>{relativeTime(r.createdAt)}</span>
                       {r.dueDate && (
                         <span className="inline-flex items-center gap-1">
@@ -154,7 +154,7 @@ export const ReviewDashboardPanel: React.FC<Props> = ({
                       )}
                     </div>
                     {r.message && (
-                      <div className="text-[11px] text-slate-700 mt-1.5 italic bg-slate-50 border border-slate-100 rounded p-1.5">
+                      <div className="text-[11px] text-[#111111] mt-1.5 italic bg-[#EDEBE6] border border-[#F1F0EC] rounded p-1.5">
                         "{r.message}"
                       </div>
                     )}
@@ -170,11 +170,11 @@ export const ReviewDashboardPanel: React.FC<Props> = ({
 };
 
 const STATUS_TONE = {
-  requested:          { Icon: Send,         cls: 'text-amber-600' },
-  in_review:          { Icon: Send,         cls: 'text-amber-600' },
-  approved:           { Icon: CheckCircle2, cls: 'text-green-600' },
-  changes_requested:  { Icon: XCircle,      cls: 'text-red-600' },
-  withdrawn:          { Icon: X,            cls: 'text-slate-500' },
+  requested:          { Icon: Send,         cls: 'text-[#8c6210]' },
+  in_review:          { Icon: Send,         cls: 'text-[#8c6210]' },
+  approved:           { Icon: CheckCircle2, cls: 'text-[#4F7563]' },
+  changes_requested:  { Icon: XCircle,      cls: 'text-[#9a3737]' },
+  withdrawn:          { Icon: X,            cls: 'text-[#9A9A9A]' },
 } as const;
 
 const StatusIcon: React.FC<{ status: string }> = ({ status }) => {

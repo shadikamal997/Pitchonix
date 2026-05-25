@@ -70,15 +70,15 @@ export const BrandAuditPanel: React.FC<Props> = ({ deckId, brandKitId, autoRun }
     }
   };
 
-  if (!deckId) return <div className="text-xs text-slate-500 italic">No deck selected.</div>;
+  if (!deckId) return <div className="text-xs text-[#9A9A9A] italic">No deck selected.</div>;
   if (loading && !report) {
     return (
-      <div className="flex items-center gap-2 text-xs text-slate-500">
+      <div className="flex items-center gap-2 text-xs text-[#9A9A9A]">
         <Loader2 className="w-3.5 h-3.5 animate-spin" /> Running brand audit…
       </div>
     );
   }
-  if (error) return <div className="text-xs text-red-600">{error}</div>;
+  if (error) return <div className="text-xs text-[#9a3737]">{error}</div>;
   if (!report) return null;
 
   return (
@@ -87,8 +87,8 @@ export const BrandAuditPanel: React.FC<Props> = ({ deckId, brandKitId, autoRun }
       <div className="flex items-center gap-3">
         <ScoreBadge score={report.score} />
         <div className="flex-1">
-          <div className="text-xs font-bold text-slate-900">Brand compliance</div>
-          <div className="text-[10px] text-slate-500">
+          <div className="text-xs font-bold text-[#111111]">Brand compliance</div>
+          <div className="text-[10px] text-[#9A9A9A]">
             Generated {new Date(report.generatedAt).toLocaleTimeString()}
             {report.brandKitId ? ' · kit attached' : ' · no kit attached'}
           </div>
@@ -96,7 +96,7 @@ export const BrandAuditPanel: React.FC<Props> = ({ deckId, brandKitId, autoRun }
         {!autoRun && (
           <button
             onClick={refresh}
-            className="px-2 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 rounded inline-flex items-center gap-1"
+            className="px-2 py-1 text-[11px] font-semibold bg-[#F1F0EC] hover:bg-[#E3E1DA] rounded inline-flex items-center gap-1"
           >
             <RefreshCw className="w-3 h-3" /> Re-run
           </button>
@@ -109,18 +109,18 @@ export const BrandAuditPanel: React.FC<Props> = ({ deckId, brandKitId, autoRun }
           const score = report.categories[cat];
           return (
             <div key={cat} className="flex items-center gap-2 text-xs">
-              <div className="w-24 text-slate-600">{CATEGORY_LABEL[cat]}</div>
-              <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div className="w-24 text-[#6B6B6B]">{CATEGORY_LABEL[cat]}</div>
+              <div className="flex-1 h-2 bg-[#F1F0EC] rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    score >= 80 ? 'bg-green-500' :
-                    score >= 60 ? 'bg-amber-500' :
-                                  'bg-red-500'
+                    score >= 80 ? 'bg-[#4F7563]' :
+                    score >= 60 ? 'bg-[#D9A441]' :
+                                  'bg-[#D96A6A]'
                   }`}
                   style={{ width: `${score}%` }}
                 />
               </div>
-              <div className="w-10 text-right text-[11px] font-mono text-slate-700">{score}</div>
+              <div className="w-10 text-right text-[11px] font-mono text-[#111111]">{score}</div>
             </div>
           );
         })}
@@ -129,11 +129,11 @@ export const BrandAuditPanel: React.FC<Props> = ({ deckId, brandKitId, autoRun }
       {/* Recommendations */}
       {report.recommendations.length > 0 && (
         <section>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Recommendations</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">Recommendations</div>
           <ul className="space-y-1">
             {report.recommendations.map((r, i) => (
-              <li key={i} className="text-xs text-slate-700 flex items-start gap-1.5">
-                <CheckCircle2 className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
+              <li key={i} className="text-xs text-[#111111] flex items-start gap-1.5">
+                <CheckCircle2 className="w-3 h-3 text-[#4F7563] mt-0.5 flex-shrink-0" />
                 {r}
               </li>
             ))}
@@ -143,14 +143,14 @@ export const BrandAuditPanel: React.FC<Props> = ({ deckId, brandKitId, autoRun }
 
       {/* Issues */}
       <section>
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-1">
           Issues ({report.issues.length})
         </div>
         {fixError && (
-          <div className="text-[10px] text-red-600 mb-1">{fixError}</div>
+          <div className="text-[10px] text-[#9a3737] mb-1">{fixError}</div>
         )}
         {report.issues.length === 0 ? (
-          <div className="text-xs text-green-700 italic flex items-center gap-1.5">
+          <div className="text-xs text-[#355846] italic flex items-center gap-1.5">
             <CheckCircle2 className="w-3 h-3" /> No issues found.
           </div>
         ) : (
@@ -170,7 +170,7 @@ export const BrandAuditPanel: React.FC<Props> = ({ deckId, brandKitId, autoRun }
               );
             })}
             {report.issues.length > 50 && (
-              <li className="text-[10px] text-slate-400 italic">
+              <li className="text-[10px] text-[#C9C6BD] italic">
                 + {report.issues.length - 50} more
               </li>
             )}
@@ -187,10 +187,10 @@ export const BrandAuditPanel: React.FC<Props> = ({ deckId, brandKitId, autoRun }
 
 const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
   const cls = score >= 80
-    ? 'bg-green-100 text-green-800 ring-green-300'
+    ? 'bg-[#DDE8E1] text-green-800 ring-green-300'
     : score >= 60
-      ? 'bg-amber-100 text-amber-800 ring-amber-300'
-      : 'bg-red-100 text-red-800 ring-red-300';
+      ? 'bg-[#F5E1B7] text-[#735008] ring-amber-300'
+      : 'bg-[#F7E3E3] text-[#7a2929] ring-red-300';
   return (
     <div className={`relative w-14 h-14 flex items-center justify-center rounded-full ring-2 ${cls}`}>
       <Shield className="absolute w-12 h-12 opacity-20" />
@@ -200,9 +200,9 @@ const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
 };
 
 const SEV_META: Record<AuditSeverity, { Icon: React.ComponentType<any>; cls: string }> = {
-  info:    { Icon: Info,         cls: 'text-blue-600'  },
-  warning: { Icon: AlertTriangle, cls: 'text-amber-600' },
-  error:   { Icon: AlertCircle,  cls: 'text-red-600'   },
+  info:    { Icon: Info,         cls: 'text-[#4F7563]'  },
+  warning: { Icon: AlertTriangle, cls: 'text-[#8c6210]' },
+  error:   { Icon: AlertCircle,  cls: 'text-[#9a3737]'   },
 };
 
 interface IssueRowProps {
@@ -217,11 +217,11 @@ interface IssueRowProps {
 const IssueRow: React.FC<IssueRowProps> = ({ issue, fixing, canFix, canNavigate, onFix, onNavigate }) => {
   const { Icon, cls } = SEV_META[issue.severity];
   return (
-    <li className="text-xs flex items-start gap-1.5 py-1 border-b border-slate-100 last:border-0">
+    <li className="text-xs flex items-start gap-1.5 py-1 border-b border-[#F1F0EC] last:border-0">
       <Icon className={`w-3 h-3 mt-0.5 flex-shrink-0 ${cls}`} />
       <div className="flex-1 min-w-0">
-        <div className="text-slate-800">{issue.message}</div>
-        {issue.fixHint && <div className="text-[10px] text-slate-500 italic">→ {issue.fixHint}</div>}
+        <div className="text-[#111111]">{issue.message}</div>
+        {issue.fixHint && <div className="text-[10px] text-[#9A9A9A] italic">→ {issue.fixHint}</div>}
       </div>
       <div className="flex items-center gap-1 flex-shrink-0">
         {canFix && (
@@ -229,7 +229,7 @@ const IssueRow: React.FC<IssueRowProps> = ({ issue, fixing, canFix, canNavigate,
             onClick={onFix}
             disabled={fixing}
             title="Auto-fix this issue"
-            className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50 inline-flex items-center gap-0.5"
+            className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[#EEF5F1] text-[#355846] hover:bg-[#DDE8E1] disabled:opacity-50 inline-flex items-center gap-0.5"
           >
             {fixing
               ? <Loader2 className="w-2.5 h-2.5 animate-spin" />
@@ -241,7 +241,7 @@ const IssueRow: React.FC<IssueRowProps> = ({ issue, fixing, canFix, canNavigate,
           <button
             onClick={onNavigate}
             title="Open slide"
-            className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 inline-flex items-center gap-0.5"
+            className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[#F1F0EC] text-[#111111] hover:bg-[#E3E1DA] inline-flex items-center gap-0.5"
           >
             <ExternalLink className="w-2.5 h-2.5" /> Open
           </button>

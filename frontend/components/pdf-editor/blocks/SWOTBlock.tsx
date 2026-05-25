@@ -75,7 +75,7 @@ export function SWOTBlock({
         {items.map((item, index) => (
           <li key={index} className="flex items-start gap-2.5">
             <span className={`mt-1.5 h-1.5 w-1.5 rounded-full ${textColor.replace('text-', 'bg-')} flex-shrink-0`} />
-            <span className="text-sm text-slate-700 leading-relaxed">{item}</span>
+            <span className="text-sm text-[#111111] leading-relaxed">{item}</span>
           </li>
         ))}
       </ul>
@@ -86,8 +86,8 @@ export function SWOTBlock({
     <div className="w-full py-8">
       {title && (
         <div className="text-center mb-8">
-          <h3 className="text-3xl font-bold text-slate-900 mb-2">{title}</h3>
-          <p className="text-sm text-slate-600">Strategic position assessment</p>
+          <h3 className="text-3xl font-bold text-[#111111] mb-2">{title}</h3>
+          <p className="text-sm text-[#6B6B6B]">Strategic position assessment</p>
         </div>
       )}
 
@@ -97,9 +97,9 @@ export function SWOTBlock({
           title="Strengths"
           items={strengths}
           icon={TrendingUp}
-          bgColor="bg-green-50"
-          textColor="text-green-700"
-          borderColor="border-green-300"
+          bgColor="bg-[#EEF5F1]"
+          textColor="text-[#355846]"
+          borderColor="border-[#A8B9AE]"
         />
 
         {/* Weaknesses */}
@@ -107,9 +107,9 @@ export function SWOTBlock({
           title="Weaknesses"
           items={weaknesses}
           icon={TrendingDown}
-          bgColor="bg-red-50"
-          textColor="text-red-700"
-          borderColor="border-red-300"
+          bgColor="bg-[#FCF1F1]"
+          textColor="text-[#7a2929]"
+          borderColor="border-[#F1D2D2]"
         />
 
         {/* Opportunities */}
@@ -117,9 +117,9 @@ export function SWOTBlock({
           title="Opportunities"
           items={opportunities}
           icon={Target}
-          bgColor="bg-blue-50"
-          textColor="text-blue-700"
-          borderColor="border-blue-300"
+          bgColor="bg-[#EEF5F1]"
+          textColor="text-[#355846]"
+          borderColor="border-[#A8B9AE]"
         />
 
         {/* Threats */}
@@ -127,8 +127,8 @@ export function SWOTBlock({
           title="Threats"
           items={threats}
           icon={AlertTriangle}
-          bgColor="bg-orange-50"
-          textColor="text-orange-700"
+          bgColor="bg-[#FAEEDB]"
+          textColor="text-[#735008]"
           borderColor="border-orange-300"
         />
       </div>

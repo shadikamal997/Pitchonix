@@ -29,10 +29,10 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: 'border bg-background text-foreground',
-        success: 'border-green-500 bg-green-50 text-green-900',
-        error: 'border-red-500 bg-red-50 text-red-900',
-        warning: 'border-yellow-500 bg-yellow-50 text-yellow-900',
-        info: 'border-blue-500 bg-blue-50 text-blue-900',
+        success: 'border-[#4F7563] bg-[#EEF5F1] text-green-900',
+        error: 'border-red-500 bg-[#FCF1F1] text-red-900',
+        warning: 'border-yellow-500 bg-[#FAEEDB] text-yellow-900',
+        info: 'border-[#4F7563] bg-[#EEF5F1] text-[#1A2D24]',
       },
     },
     defaultVariants: {
@@ -63,7 +63,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      'inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.success]:border-green-600 group-[.success]:hover:bg-green-100 group-[.error]:border-red-600 group-[.error]:hover:bg-red-100',
+      'inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.success]:border-[#4F7563] group-[.success]:hover:bg-[#DDE8E1] group-[.error]:border-red-600 group-[.error]:hover:bg-[#F7E3E3]',
       className
     )}
     {...props}

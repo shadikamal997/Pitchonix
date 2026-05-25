@@ -72,10 +72,10 @@ export default function EnhancementPanel({
   const handleFixAllIssues = () => handleEnhancement('fixAll', `/enhance/fix-all/${deckId}`);
 
   return (
-    <Card className="bg-white border-gray-200">
+    <Card className="bg-white border-[#E3E1DA]">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <Wand2 className="h-5 w-5 text-purple-600" />
+          <Wand2 className="h-5 w-5 text-[#4F7563]" />
           AI Enhancements
         </CardTitle>
         <CardDescription>
@@ -88,8 +88,8 @@ export default function EnhancementPanel({
           <div
             className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
               message.type === 'success'
-                ? 'bg-green-50 text-green-800 border border-green-200'
-                : 'bg-red-50 text-red-800 border border-red-200'
+                ? 'bg-[#EEF5F1] text-green-800 border border-[#DDE8E1]'
+                : 'bg-[#FCF1F1] text-[#7a2929] border border-[#F7E3E3]'
             }`}
           >
             {message.type === 'success' ? (
@@ -103,7 +103,7 @@ export default function EnhancementPanel({
 
         {/* Content Enhancement */}
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-gray-700">Content Enhancement</h4>
+          <h4 className="text-sm font-semibold text-[#111111]">Content Enhancement</h4>
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
@@ -171,7 +171,7 @@ export default function EnhancementPanel({
 
         {/* Audience Optimization */}
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-gray-700">Audience Optimization</h4>
+          <h4 className="text-sm font-semibold text-[#111111]">Audience Optimization</h4>
           <Button
             variant="outline"
             size="sm"
@@ -192,7 +192,7 @@ export default function EnhancementPanel({
 
         {/* Regenerate */}
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-gray-700">Regenerate</h4>
+          <h4 className="text-sm font-semibold text-[#111111]">Regenerate</h4>
           <Button
             variant="outline"
             size="sm"
@@ -213,7 +213,7 @@ export default function EnhancementPanel({
 
         {/* Deck-level Actions */}
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-[#111111] flex items-center gap-2">
             Deck-Level Actions
             <Badge variant="secondary" className="text-xs">
               All Slides
@@ -225,7 +225,7 @@ export default function EnhancementPanel({
               size="sm"
               onClick={handleFixStructure}
               disabled={enhancing !== null}
-              className="w-full justify-start text-orange-600 hover:text-orange-700"
+              className="w-full justify-start text-[#8c6210] hover:text-[#735008]"
             >
               {enhancing === 'fixStructure' ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -240,7 +240,7 @@ export default function EnhancementPanel({
               size="sm"
               onClick={handleFixAllIssues}
               disabled={enhancing !== null}
-              className="w-full justify-start text-red-600 hover:text-red-700"
+              className="w-full justify-start text-[#9a3737] hover:text-[#7a2929]"
             >
               {enhancing === 'fixAll' ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -253,7 +253,7 @@ export default function EnhancementPanel({
         </div>
 
         {/* Enhancement Tips */}
-        <div className="bg-blue-50 p-3 rounded-lg text-xs text-blue-800 border border-blue-200">
+        <div className="bg-[#EEF5F1] p-3 rounded-lg text-xs text-[#263F34] border border-[#DDE8E1]">
           <p className="font-semibold mb-1">💡 Tips</p>
           <ul className="space-y-1 ml-4 list-disc">
             <li>Use "Improve" to enhance clarity and impact</li>

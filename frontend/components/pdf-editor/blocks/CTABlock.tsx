@@ -40,22 +40,22 @@ export function CTABlock({
   const colorClasses = {
     green: {
       bg: 'from-green-600 to-emerald-500',
-      button: 'bg-white text-green-700 hover:bg-gray-50',
+      button: 'bg-white text-[#355846] hover:bg-[#EDEBE6]',
       buttonSecondary: 'border-white text-white hover:bg-white/10',
     },
     blue: {
       bg: 'from-blue-600 to-cyan-500',
-      button: 'bg-white text-blue-700 hover:bg-gray-50',
+      button: 'bg-white text-[#355846] hover:bg-[#EDEBE6]',
       buttonSecondary: 'border-white text-white hover:bg-white/10',
     },
     purple: {
       bg: 'from-purple-600 to-pink-500',
-      button: 'bg-white text-purple-700 hover:bg-gray-50',
+      button: 'bg-white text-[#355846] hover:bg-[#EDEBE6]',
       buttonSecondary: 'border-white text-white hover:bg-white/10',
     },
     orange: {
       bg: 'from-orange-600 to-amber-500',
-      button: 'bg-white text-orange-700 hover:bg-gray-50',
+      button: 'bg-white text-[#735008] hover:bg-[#EDEBE6]',
       buttonSecondary: 'border-white text-white hover:bg-white/10',
     },
   };
@@ -108,20 +108,20 @@ export function CTABlock({
 
   if (style === 'card') {
     return (
-      <div className="w-full bg-white border-2 border-slate-200 rounded-3xl p-12 shadow-xl">
+      <div className="w-full bg-white border-2 border-[#E3E1DA] rounded-3xl p-12 shadow-xl">
         <div className="text-center mb-8">
           <div className={`w-16 h-16 mx-auto bg-gradient-to-br ${colors.bg} rounded-2xl flex items-center justify-center mb-6`}>
             <PrimaryIcon className="h-8 w-8 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">{title}</h2>
-          <p className="text-slate-600 text-lg">{subtitle}</p>
+          <h2 className="text-3xl font-bold text-[#111111] mb-4">{title}</h2>
+          <p className="text-[#6B6B6B] text-lg">{subtitle}</p>
         </div>
         <div className="flex items-center justify-center gap-4">
           <button className={`bg-gradient-to-r ${colors.bg} text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2`}>
             {primaryButtonText}
             <PrimaryIcon className="h-5 w-5" />
           </button>
-          <button className="border-2 border-slate-200 text-slate-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-50 transition-all flex items-center gap-2">
+          <button className="border-2 border-[#E3E1DA] text-[#111111] px-8 py-4 rounded-xl font-bold text-lg hover:bg-[#EDEBE6] transition-all flex items-center gap-2">
             <SecondaryIcon className="h-5 w-5" />
             {secondaryButtonText}
           </button>
@@ -132,11 +132,11 @@ export function CTABlock({
 
   // minimal style
   return (
-    <div className="w-full py-12 border-t-2 border-b-2 border-slate-200">
+    <div className="w-full py-12 border-t-2 border-b-2 border-[#E3E1DA]">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-2">{title}</h3>
-          <p className="text-slate-600">{subtitle}</p>
+          <h3 className="text-2xl font-bold text-[#111111] mb-2">{title}</h3>
+          <p className="text-[#6B6B6B]">{subtitle}</p>
         </div>
         <div className="flex items-center gap-3">
           <button className={`bg-gradient-to-r ${colors.bg} text-white px-6 py-3 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2`}>

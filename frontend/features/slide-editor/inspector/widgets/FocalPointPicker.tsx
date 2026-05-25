@@ -51,7 +51,7 @@ export const FocalPointPicker: React.FC<Props> = ({ src, fit, focalX, focalY, on
       <div
         ref={boxRef}
         onMouseDown={onDown}
-        className="relative w-full h-32 bg-slate-50 border border-slate-200 rounded overflow-hidden cursor-crosshair select-none"
+        className="relative w-full h-32 bg-[#EDEBE6] border border-[#E3E1DA] rounded overflow-hidden cursor-crosshair select-none"
       >
         <img
           src={src} alt=""
@@ -84,7 +84,7 @@ export const FocalPointPicker: React.FC<Props> = ({ src, fit, focalX, focalY, on
           }} />
         </div>
       </div>
-      <div className="flex justify-between text-[10px] text-slate-500">
+      <div className="flex justify-between text-[10px] text-[#9A9A9A]">
         <span>Focal X: {(focalX * 100).toFixed(0)}%</span>
         <span>Focal Y: {(focalY * 100).toFixed(0)}%</span>
       </div>

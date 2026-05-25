@@ -40,10 +40,10 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold">{title}</h2>
-          <p className="text-gray-500 mt-1">{description}</p>
+          <p className="text-[#9A9A9A] mt-1">{description}</p>
         </div>
         <div>
-          <Label htmlFor="problem">Key Message <span className="text-red-500">*</span></Label>
+          <Label htmlFor="problem">Key Message <span className="text-[#D96A6A]">*</span></Label>
           <Textarea
             id="problem"
             value={data.problem}
@@ -74,20 +74,20 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold">{title}</h2>
-          <p className="text-gray-500 mt-1">{description}</p>
+          <p className="text-[#9A9A9A] mt-1">{description}</p>
         </div>
         <div>
-          <Label htmlFor="problem">Customer Challenge <span className="text-red-500">*</span></Label>
+          <Label htmlFor="problem">Customer Challenge <span className="text-[#D96A6A]">*</span></Label>
           <Textarea id="problem" value={data.problem} onChange={(e) => onUpdate({ problem: e.target.value })} placeholder="What challenge was the customer facing? What was the business impact?" rows={4} className="mt-1" />
         </div>
         <div>
-          <Label htmlFor="solution">Solution Implemented <span className="text-red-500">*</span></Label>
+          <Label htmlFor="solution">Solution Implemented <span className="text-[#D96A6A]">*</span></Label>
           <Textarea id="solution" value={data.solution} onChange={(e) => onUpdate({ solution: e.target.value })} placeholder="What solution did you provide? What was the implementation process?" rows={4} className="mt-1" />
         </div>
         <div>
-          <Label htmlFor="traction">Results & Impact <span className="text-red-500">*</span></Label>
+          <Label htmlFor="traction">Results & Impact <span className="text-[#D96A6A]">*</span></Label>
           <Textarea id="traction" value={data.traction} onChange={(e) => onUpdate({ traction: e.target.value })} placeholder="Quantifiable results: ROI, cost savings, growth metrics, time saved, etc." rows={4} className="mt-1" />
-          <p className="text-xs text-gray-500 mt-1">Use specific numbers: "50% cost reduction" or "$500K annual savings"</p>
+          <p className="text-xs text-[#9A9A9A] mt-1">Use specific numbers: "50% cost reduction" or "$500K annual savings"</p>
         </div>
       </div>
     );
@@ -99,14 +99,14 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold">{title}</h2>
-          <p className="text-gray-500 mt-1">{description}</p>
+          <p className="text-[#9A9A9A] mt-1">{description}</p>
         </div>
         <div>
-          <Label htmlFor="problem">Learning Objectives <span className="text-red-500">*</span></Label>
+          <Label htmlFor="problem">Learning Objectives <span className="text-[#D96A6A]">*</span></Label>
           <Textarea id="problem" value={data.problem} onChange={(e) => onUpdate({ problem: e.target.value })} placeholder="What will participants learn? List 3-5 key learning outcomes." rows={4} className="mt-1" />
         </div>
         <div>
-          <Label htmlFor="solution">Content Modules <span className="text-red-500">*</span></Label>
+          <Label htmlFor="solution">Content Modules <span className="text-[#D96A6A]">*</span></Label>
           <Textarea id="solution" value={data.solution} onChange={(e) => onUpdate({ solution: e.target.value })} placeholder="Main topics and modules. Outline the training structure." rows={5} className="mt-1" />
         </div>
         <div>
@@ -123,13 +123,13 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold">{title}</h2>
-          <p className="text-gray-500 mt-1">{description}</p>
+          <p className="text-[#9A9A9A] mt-1">{description}</p>
         </div>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h3 className="font-semibold text-gray-700 border-b pb-2">Client Needs</h3>
+            <h3 className="font-semibold text-[#111111] border-b pb-2">Client Needs</h3>
             <div>
-              <Label htmlFor="problem">Client's Challenge <span className="text-red-500">*</span></Label>
+              <Label htmlFor="problem">Client's Challenge <span className="text-[#D96A6A]">*</span></Label>
               <Textarea id="problem" value={data.problem} onChange={(e) => onUpdate({ problem: e.target.value })} placeholder="What problem or opportunity does the client have?" rows={4} className="mt-1" />
             </div>
             <div>
@@ -138,9 +138,9 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
             </div>
           </div>
           <div className="space-y-4">
-            <h3 className="font-semibold text-gray-700 border-b pb-2">Your Solution</h3>
+            <h3 className="font-semibold text-[#111111] border-b pb-2">Your Solution</h3>
             <div>
-              <Label htmlFor="solution">Proposed Solution <span className="text-red-500">*</span></Label>
+              <Label htmlFor="solution">Proposed Solution <span className="text-[#D96A6A]">*</span></Label>
               <Textarea id="solution" value={data.solution} onChange={(e) => onUpdate({ solution: e.target.value })} placeholder="What will you deliver? Describe your approach and methodology." rows={4} className="mt-1" />
             </div>
             <div>
@@ -162,11 +162,11 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">{title}</h2>
-        <p className="text-gray-500 mt-1">{description}</p>
+        <p className="text-[#9A9A9A] mt-1">{description}</p>
       </div>
 
       {/* Simple tab bar */}
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-[#E3E1DA]">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -174,8 +174,8 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-green-600 text-green-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-[#4F7563] text-[#4F7563]'
+                : 'border-transparent text-[#9A9A9A] hover:text-[#111111]'
             }`}
           >
             {tab.label}
@@ -187,8 +187,8 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
       {activeTab === 'core' && (
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <Label htmlFor="problem">The Problem <span className="text-red-500">*</span></Label>
-            <p className="text-xs text-gray-500 mb-1">Pain point your customers face</p>
+            <Label htmlFor="problem">The Problem <span className="text-[#D96A6A]">*</span></Label>
+            <p className="text-xs text-[#9A9A9A] mb-1">Pain point your customers face</p>
             <Textarea
               id="problem"
               value={data.problem}
@@ -198,8 +198,8 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
             />
           </div>
           <div>
-            <Label htmlFor="solution">Your Solution <span className="text-red-500">*</span></Label>
-            <p className="text-xs text-gray-500 mb-1">How your product/service solves it</p>
+            <Label htmlFor="solution">Your Solution <span className="text-[#D96A6A]">*</span></Label>
+            <p className="text-xs text-[#9A9A9A] mb-1">How your product/service solves it</p>
             <Textarea
               id="solution"
               value={data.solution}
@@ -210,7 +210,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
           </div>
           <div>
             <Label htmlFor="targetCustomers">Target Customers</Label>
-            <p className="text-xs text-gray-500 mb-1">Who needs this most</p>
+            <p className="text-xs text-[#9A9A9A] mb-1">Who needs this most</p>
             <Textarea
               id="targetCustomers"
               value={data.targetCustomers}
@@ -221,7 +221,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
           </div>
           <div>
             <Label htmlFor="differentiation">Differentiation</Label>
-            <p className="text-xs text-gray-500 mb-1">Your competitive advantage</p>
+            <p className="text-xs text-[#9A9A9A] mb-1">Your competitive advantage</p>
             <Textarea
               id="differentiation"
               value={data.differentiation}
@@ -238,7 +238,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <Label htmlFor="marketOpportunity">Market Opportunity</Label>
-            <p className="text-xs text-gray-500 mb-1">TAM/SAM/SOM and growth rate</p>
+            <p className="text-xs text-[#9A9A9A] mb-1">TAM/SAM/SOM and growth rate</p>
             <Textarea
               id="marketOpportunity"
               value={data.marketOpportunity}
@@ -249,7 +249,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
           </div>
           <div>
             <Label htmlFor="competitors">Competitors</Label>
-            <p className="text-xs text-gray-500 mb-1">Main competitors and their weaknesses</p>
+            <p className="text-xs text-[#9A9A9A] mb-1">Main competitors and their weaknesses</p>
             <Textarea
               id="competitors"
               value={data.competitors}
@@ -260,7 +260,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
           </div>
           <div>
             <Label htmlFor="revenueModel">Revenue Model</Label>
-            <p className="text-xs text-gray-500 mb-1">How you make money</p>
+            <p className="text-xs text-[#9A9A9A] mb-1">How you make money</p>
             <Textarea
               id="revenueModel"
               value={data.revenueModel}
@@ -271,7 +271,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
           </div>
           <div>
             <Label htmlFor="pricing">Pricing Strategy</Label>
-            <p className="text-xs text-gray-500 mb-1">Tiers, deal size, unit economics</p>
+            <p className="text-xs text-[#9A9A9A] mb-1">Tiers, deal size, unit economics</p>
             <Textarea
               id="pricing"
               value={data.pricing}
@@ -288,7 +288,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <Label htmlFor="traction">Traction & Metrics</Label>
-            <p className="text-xs text-gray-500 mb-1">Revenue, users, growth, milestones</p>
+            <p className="text-xs text-[#9A9A9A] mb-1">Revenue, users, growth, milestones</p>
             <Textarea
               id="traction"
               value={data.traction}
@@ -299,7 +299,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
           </div>
           <div>
             <Label htmlFor="team">Team</Label>
-            <p className="text-xs text-gray-500 mb-1">Key members, experience, advisors</p>
+            <p className="text-xs text-[#9A9A9A] mb-1">Key members, experience, advisors</p>
             <Textarea
               id="team"
               value={data.team}
@@ -310,7 +310,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
           </div>
           <div>
             <Label htmlFor="fundingAsk">Funding Ask</Label>
-            <p className="text-xs text-gray-500 mb-1">Amount and use of funds (optional)</p>
+            <p className="text-xs text-[#9A9A9A] mb-1">Amount and use of funds (optional)</p>
             <Textarea
               id="fundingAsk"
               value={data.fundingAsk}
@@ -321,7 +321,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
           </div>
           <div>
             <Label htmlFor="roadmap">Roadmap & Vision</Label>
-            <p className="text-xs text-gray-500 mb-1">Next 12–24 months milestones</p>
+            <p className="text-xs text-[#9A9A9A] mb-1">Next 12–24 months milestones</p>
             <Textarea
               id="roadmap"
               value={data.roadmap}
@@ -333,7 +333,7 @@ export default function Step4BusinessDetails({ data, onUpdate, documentType = 'p
         </div>
       )}
 
-      <p className="text-xs text-gray-400">You can skip optional fields now and fill them in later.</p>
+      <p className="text-xs text-[#C9C6BD]">You can skip optional fields now and fill them in later.</p>
     </div>
   );
 }

@@ -74,7 +74,7 @@ export const SectionDividerPage: React.FC<SectionDividerPageProps> = ({
           {/* Section Description */}
           {sectionDescription && (
             <p
-              className="text-slate-600 max-w-lg mx-auto"
+              className="text-[#6B6B6B] max-w-lg mx-auto"
               style={{ fontSize: '14pt', lineHeight: '1.6' }}
             >
               {sectionDescription}

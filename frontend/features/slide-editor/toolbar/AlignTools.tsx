@@ -89,11 +89,11 @@ export const AlignTools: React.FC<Props> = ({ selected, onUpdateMany, disabled }
       <Btn onClick={() => alignH('left')}   title="Align left"        ><AlignStartHorizontal className="w-3.5 h-3.5" /></Btn>
       <Btn onClick={() => alignH('center')} title="Align horizontal center"><AlignCenterHorizontal className="w-3.5 h-3.5" /></Btn>
       <Btn onClick={() => alignH('right')}  title="Align right"       ><AlignEndHorizontal className="w-3.5 h-3.5" /></Btn>
-      <span className="w-px h-4 bg-slate-200 mx-0.5" />
+      <span className="w-px h-4 bg-[#E3E1DA] mx-0.5" />
       <Btn onClick={() => alignV('top')}    title="Align top"         ><AlignStartVertical className="w-3.5 h-3.5" /></Btn>
       <Btn onClick={() => alignV('middle')} title="Align vertical middle"><AlignCenterVertical className="w-3.5 h-3.5" /></Btn>
       <Btn onClick={() => alignV('bottom')} title="Align bottom"      ><AlignEndVertical className="w-3.5 h-3.5" /></Btn>
-      <span className="w-px h-4 bg-slate-200 mx-0.5" />
+      <span className="w-px h-4 bg-[#E3E1DA] mx-0.5" />
       <Btn onClick={distributeH} disabled={n < 3} title="Distribute horizontally"><AlignHorizontalDistributeCenter className="w-3.5 h-3.5" /></Btn>
       <Btn onClick={distributeV} disabled={n < 3} title="Distribute vertically"  ><AlignVerticalDistributeCenter   className="w-3.5 h-3.5" /></Btn>
     </div>
@@ -108,7 +108,7 @@ const Btn: React.FC<{
     onClick={onClick}
     disabled={disabled}
     title={title}
-    className="w-7 h-6 flex items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed"
+    className="w-7 h-6 flex items-center justify-center rounded text-[#6B6B6B] hover:bg-[#F1F0EC] hover:text-[#111111] disabled:opacity-30 disabled:cursor-not-allowed"
   >
     {children}
   </button>

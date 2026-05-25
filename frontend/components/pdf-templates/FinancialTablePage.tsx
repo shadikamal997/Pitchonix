@@ -50,7 +50,7 @@ export const FinancialTablePage: React.FC<FinancialTablePageProps> = ({
             {title}
           </h1>
           {subtitle && (
-            <p className="text-slate-600" style={{ fontSize: '11pt' }}>
+            <p className="text-[#6B6B6B]" style={{ fontSize: '11pt' }}>
               {subtitle}
             </p>
           )}
@@ -86,8 +86,8 @@ export const FinancialTablePage: React.FC<FinancialTablePageProps> = ({
               {rows.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
-                  className={`border-b border-slate-200 ${
-                    row.isTotal ? 'bg-slate-100' : rowIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                  className={`border-b border-[#E3E1DA] ${
+                    row.isTotal ? 'bg-[#F1F0EC]' : rowIndex % 2 === 0 ? 'bg-white' : 'bg-[#EDEBE6]'
                   }`}
                 >
                   <td
@@ -127,7 +127,7 @@ export const FinancialTablePage: React.FC<FinancialTablePageProps> = ({
             {notes.map((note, index) => (
               <p
                 key={index}
-                className="text-slate-600"
+                className="text-[#6B6B6B]"
                 style={{ fontSize: '9pt', lineHeight: '1.4' }}
               >
                 <span className="font-semibold">Note {index + 1}:</span> {note}

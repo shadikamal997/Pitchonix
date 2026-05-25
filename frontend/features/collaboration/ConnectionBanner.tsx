@@ -19,24 +19,24 @@ export const ConnectionBanner: React.FC<Props> = ({ state }) => {
 
   if (state === 'forbidden') {
     return (
-      <div className="flex-shrink-0 bg-red-50 border-b border-red-200 px-4 py-1.5 flex items-center gap-2 text-xs text-red-800">
+      <div className="flex-shrink-0 bg-[#FCF1F1] border-b border-[#F7E3E3] px-4 py-1.5 flex items-center gap-2 text-xs text-[#7a2929]">
         <ShieldOff className="w-3.5 h-3.5" />
         <span className="font-semibold">Live collaboration unavailable</span>
-        <span className="text-red-600">— you don't have access to this deck.</span>
+        <span className="text-[#9a3737]">— you don't have access to this deck.</span>
       </div>
     );
   }
 
   const reconnecting = state === 'reconnecting' || state === 'connecting';
   return (
-    <div className="flex-shrink-0 bg-amber-50 border-b border-amber-200 px-4 py-1.5 flex items-center gap-2 text-xs text-amber-800">
+    <div className="flex-shrink-0 bg-[#FAEEDB] border-b border-[#F2DCAE] px-4 py-1.5 flex items-center gap-2 text-xs text-[#735008]">
       {reconnecting
         ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
         : <WifiOff className="w-3.5 h-3.5" />}
       <span className="font-semibold">
         {reconnecting ? 'Reconnecting…' : 'Disconnected'}
       </span>
-      <span className="text-amber-700">
+      <span className="text-[#735008]">
         Editing continues locally; changes will sync when the connection returns.
       </span>
     </div>

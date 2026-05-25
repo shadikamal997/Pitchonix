@@ -102,7 +102,7 @@ export default function OnboardingTour() {
         >
           <button
             onClick={handleSkip}
-            className="absolute right-4 top-4 rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="absolute right-4 top-4 rounded-lg p-1 text-[#C9C6BD] transition-colors hover:bg-[#F1F0EC] hover:text-[#6B6B6B]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -112,14 +112,14 @@ export default function OnboardingTour() {
               <Icon className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900">{currentHint.title}</h3>
-              <p className="text-xs text-gray-500">
+              <h3 className="text-lg font-semibold text-[#111111]">{currentHint.title}</h3>
+              <p className="text-xs text-[#9A9A9A]">
                 Step {currentStep + 1} of {hints.length}
               </p>
             </div>
           </div>
 
-          <p className="mb-6 text-sm text-gray-600">{currentHint.description}</p>
+          <p className="mb-6 text-sm text-[#6B6B6B]">{currentHint.description}</p>
 
           <div className="flex items-center justify-between">
             <div className="flex gap-1.5">
@@ -131,7 +131,7 @@ export default function OnboardingTour() {
                       ? 'bg-purple-600'
                       : index < currentStep
                       ? 'bg-purple-300'
-                      : 'bg-gray-200'
+                      : 'bg-[#E3E1DA]'
                   }`}
                 />
               ))}
@@ -140,7 +140,7 @@ export default function OnboardingTour() {
             <div className="flex gap-2">
               <button
                 onClick={handleSkip}
-                className="px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+                className="px-4 py-2 text-sm font-medium text-[#6B6B6B] transition-colors hover:text-[#111111]"
               >
                 Skip
               </button>

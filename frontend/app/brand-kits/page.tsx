@@ -44,10 +44,13 @@ export default function BrandKitsPage() {
   if (!_hasHydrated || !user) return null;
 
   return (
-    <div className="min-h-full bg-slate-50 p-8">
-      <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Brand Kits</h1>
+    <div className="min-h-full bg-[#EDEBE6] p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="pn-h1">Brand Kits</h1>
+              <p className="pn-body text-[#6B6B6B] mt-1">Logos, colors, typography, voice — applied everywhere you create.</p>
+            </div>
             <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Brand Kit
@@ -55,8 +58,19 @@ export default function BrandKitsPage() {
           </div>
 
           {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-pulse">Loading brand kits...</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="pn-card p-6 space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="pn-skeleton w-12 h-12 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <div className="pn-skeleton h-4 w-3/4" />
+                      <div className="pn-skeleton h-3 w-1/3" />
+                    </div>
+                  </div>
+                  <div className="pn-skeleton h-9 w-full" />
+                </div>
+              ))}
             </div>
           ) : brandKits.length === 0 ? (
             <EmptyState onCreate={() => setShowCreateDialog(true)} onImportZip={async (file) => {
@@ -133,41 +147,51 @@ function BrandKitCard({ kit, onEdit, onRefresh, toast }: any) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="flex items-center gap-4 mb-4">
+    <div className="group pn-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-lifted">
+      <div className="flex items-center gap-4 mb-5">
         <div
-          className="w-12 h-12 rounded"
-          style={{ backgroundColor: kit.primaryColor || '#8B5CF6' }}
+          className="w-14 h-14 rounded-full ring-[3px] ring-white shadow-[0_10px_22px_rgba(0,0,0,0.10)]"
+          style={{ backgroundColor: kit.primaryColor || '#4F7563' }}
         />
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">{kit.name}</h3>
-          <p className="text-sm text-gray-500">{kit.primaryColor}</p>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-[#111111] text-[15px] truncate">{kit.name}</h3>
+          <p className="text-xs text-[#9A9A9A] font-mono">{kit.primaryColor || '—'}</p>
         </div>
       </div>
-      <div className="flex gap-2 mb-3">
+      <div className="flex gap-1.5 mb-5">
+        <div
+          className="w-7 h-7 rounded-full border-2 border-white shadow-sm"
+          style={{ backgroundColor: kit.primaryColor || '#4F7563' }}
+          title={kit.primaryColor}
+        />
         {kit.secondaryColor && (
           <div
-            className="w-8 h-8 rounded border border-gray-200"
+            className="w-7 h-7 rounded-full border-2 border-white shadow-sm"
             style={{ backgroundColor: kit.secondaryColor }}
             title={kit.secondaryColor}
           />
         )}
+        {kit.accentColor && (
+          <div
+            className="w-7 h-7 rounded-full border-2 border-white shadow-sm"
+            style={{ backgroundColor: kit.accentColor }}
+            title={kit.accentColor}
+          />
+        )}
       </div>
       <div className="flex gap-2">
-        {/* Phase 37Q — Open dashboard is the primary action; it surfaces all
-            8 tabs (Colors, Typography, Logos, Assets, Voice, Charts, Audit,
-            Overview) plus Export ZIP / Import ZIP / Apply-to-workspace. */}
+        {/* Phase 37Q — Open dashboard is the primary action; it surfaces all 8 tabs. */}
         <a
           href={`/brand-kits/${kit.id}`}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded"
+          className="pn-btn pn-btn-primary flex-1 h-10 text-[13px]"
         >
           <Settings className="h-4 w-4" /> Open dashboard
         </a>
         <Button size="sm" variant="outline" onClick={onEdit} title="Quick rename / recolor">
-          <Edit className="h-3 w-3" />
+          <Edit className="h-3.5 w-3.5" />
         </Button>
         <Button size="sm" variant="outline" onClick={handleDelete} title="Delete this brand kit">
-          <Trash className="h-3 w-3" />
+          <Trash className="h-3.5 w-3.5 text-[#9a3737]" />
         </Button>
       </div>
     </div>
@@ -192,11 +216,13 @@ function EmptyState({ onCreate, onImportZip }: { onCreate: () => void; onImportZ
     { Icon: Download,        label: 'Apply to workspace', desc: 'Rebrand every deck in one click' },
   ];
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-8">
-      <div className="text-center mb-8">
-        <Palette className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Create your first brand kit</h2>
-        <p className="text-gray-600 max-w-xl mx-auto">
+    <div className="pn-card p-8 lg:p-10">
+      <div className="text-center mb-10">
+        <div className="w-16 h-16 rounded-full bg-[#EEF5F1] text-[#4F7563] flex items-center justify-center mx-auto mb-4">
+          <Palette className="h-7 w-7" />
+        </div>
+        <h2 className="pn-h1 mb-2">Create your first brand kit</h2>
+        <p className="text-[#6B6B6B] max-w-xl mx-auto">
           A brand kit centralises your colors, fonts, logos, assets and voice — then
           applies them to every deck, PDF and CV in your workspace.
         </p>
@@ -204,19 +230,21 @@ function EmptyState({ onCreate, onImportZip }: { onCreate: () => void; onImportZ
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         {features.map(({ Icon, label, desc }) => (
-          <div key={label} className="border border-gray-200 rounded-lg p-3 text-left">
-            <Icon className="h-5 w-5 text-blue-600 mb-2" />
-            <div className="text-sm font-semibold text-gray-900">{label}</div>
-            <div className="text-[11px] text-gray-500 leading-snug">{desc}</div>
+          <div key={label} className="rounded-2xl border border-[#E3E1DA]/70 bg-[#F7F6F2] p-4 text-left">
+            <div className="w-9 h-9 rounded-full bg-[#EEF5F1] text-[#4F7563] flex items-center justify-center mb-2.5">
+              <Icon className="h-4 w-4" />
+            </div>
+            <div className="text-sm font-semibold text-[#111111] mb-0.5">{label}</div>
+            <div className="text-[11px] text-[#9A9A9A] leading-snug">{desc}</div>
           </div>
         ))}
       </div>
 
       <div className="flex flex-wrap justify-center gap-3">
-        <Button onClick={onCreate} className="px-6">
+        <Button onClick={onCreate}>
           <Plus className="h-4 w-4 mr-2" /> Create brand kit
         </Button>
-        <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 rounded-md cursor-pointer text-sm font-semibold text-gray-700">
+        <label className="pn-btn pn-btn-secondary cursor-pointer">
           <Upload className="h-4 w-4" /> Import .zip
           <input
             type="file"
@@ -229,7 +257,7 @@ function EmptyState({ onCreate, onImportZip }: { onCreate: () => void; onImportZ
           />
         </label>
       </div>
-      <p className="text-center text-[11px] text-gray-400 mt-4">
+      <p className="text-center text-[11px] text-[#9A9A9A] mt-4">
         Tip: the create form just collects a name + 2 seed colors — you'll land on the
         full 8-tab dashboard right after.
       </p>
@@ -267,31 +295,31 @@ function BrandKitDialog({ mode, kit, onClose, onSuccess, toast }: any) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <div className="flex justify-between items-start mb-4">
+    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-[28px] shadow-[0_30px_80px_rgba(0,0,0,0.18)] p-7 w-full max-w-md">
+        <div className="flex justify-between items-start mb-5">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="pn-h2">
               {mode === 'edit' ? 'Edit Brand Kit' : 'Create Brand Kit'}
             </h2>
             {mode === 'create' && (
-              <p className="text-xs text-gray-500 mt-1 leading-snug">
+              <p className="text-xs text-[#6B6B6B] mt-1.5 leading-snug">
                 Just a name + 2 seed colors to get started. <strong>The next
                 screen has the full editor</strong> for typography, logos,
                 assets, voice, charts, audit and more.
               </p>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 flex-shrink-0 ml-2">
-            <X className="h-5 w-5" />
+          <button onClick={onClose} className="w-9 h-9 rounded-full text-[#6B6B6B] hover:bg-[#F1F0EC] flex items-center justify-center flex-shrink-0 ml-2 transition-colors">
+            <X className="h-4 w-4" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Name</label>
+            <label className="block text-sm font-medium mb-2 text-[#111111]">Name</label>
             <input
               type="text"
-              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-[#E3E1DA] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My Brand"
@@ -299,34 +327,34 @@ function BrandKitDialog({ mode, kit, onClose, onSuccess, toast }: any) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Primary Color</label>
+            <label className="block text-sm font-medium mb-2 text-[#111111]">Primary Color</label>
             <div className="flex gap-2">
               <input
                 type="color"
-                className="w-16 h-10 border border-gray-200 rounded cursor-pointer"
+                className="w-16 h-10 border border-[#E3E1DA] rounded cursor-pointer"
                 value={primaryColor}
                 onChange={(e) => setPrimaryColor(e.target.value)}
               />
               <input
                 type="text"
-                className="flex-1 border border-gray-200 rounded-lg px-4 py-2 font-mono text-sm"
+                className="flex-1 border border-[#E3E1DA] rounded-lg px-4 py-2 font-mono text-sm"
                 value={primaryColor}
                 onChange={(e) => setPrimaryColor(e.target.value)}
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Secondary Color</label>
+            <label className="block text-sm font-medium mb-2 text-[#111111]">Secondary Color</label>
             <div className="flex gap-2">
               <input
                 type="color"
-                className="w-16 h-10 border border-gray-200 rounded cursor-pointer"
+                className="w-16 h-10 border border-[#E3E1DA] rounded cursor-pointer"
                 value={secondaryColor}
                 onChange={(e) => setSecondaryColor(e.target.value)}
               />
               <input
                 type="text"
-                className="flex-1 border border-gray-200 rounded-lg px-4 py-2 font-mono text-sm"
+                className="flex-1 border border-[#E3E1DA] rounded-lg px-4 py-2 font-mono text-sm"
                 value={secondaryColor}
                 onChange={(e) => setSecondaryColor(e.target.value)}
               />
@@ -343,7 +371,7 @@ function BrandKitDialog({ mode, kit, onClose, onSuccess, toast }: any) {
             </Button>
           </div>
           {mode === 'create' && (
-            <p className="text-[11px] text-gray-400 text-center mt-2">
+            <p className="text-[11px] text-[#C9C6BD] text-center mt-2">
               You'll land on a dashboard with 8 tabs: Overview, Logos, Colors,
               Typography, Charts, Voice, Assets, Audit — plus Export ZIP /
               Import ZIP / Apply-to-workspace.

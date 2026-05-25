@@ -63,7 +63,7 @@ export const TableOfContentsPage: React.FC<TableOfContentsPageProps> = ({
               >
                 <span
                   className={`${
-                    isSubsection ? 'text-slate-600' : 'text-slate-900 font-semibold'
+                    isSubsection ? 'text-[#6B6B6B]' : 'text-[#111111] font-semibold'
                   }`}
                   style={{
                     fontSize: isSubsection ? '11pt' : '13pt',

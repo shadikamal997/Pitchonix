@@ -2,19 +2,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
-import { 
-  Home, 
-  User, 
-  Settings, 
-  LogOut, 
-  Menu, 
-  X, 
-  ChevronLeft, 
+import {
+  Home,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  ChevronLeft,
   ChevronRight,
   FolderOpen,
-  FileText,
   Palette,
-  Download,
   Search,
   HelpCircle,
   Plus,
@@ -38,24 +35,19 @@ interface SidebarProps {
   className?: string;
 }
 
-// Pitchonix navigation items
+// Pitchonix navigation items (Phase Δ — Soft Sage)
 const navigationItems: NavigationItem[] = [
-  { id: "dashboard", name: "Dashboard", icon: Home, href: "/dashboard" },
-  { id: "create", name: "Create New", icon: Plus, href: "/create" },
-  { id: "projects", name: "Projects", icon: FolderOpen, href: "/projects" },
-  { id: "pdf-studio", name: "PDF Studio", icon: FileType, href: "/pdf-studio" },
-  { id: "career", name: "Career Docs", icon: Briefcase, href: "/career" },
-  { id: "brand-kits", name: "Brand Kits", icon: Palette, href: "/brand-kits" },
-  // Phase Ω.1 — surface universal conversion + PPTX import (both were
-  // built out fully but invisible because they had no sidebar entry).
-  { id: "convert", name: "Convert", icon: Shuffle, href: "/convert" },
-  { id: "pptx-import", name: "Import .pptx", icon: Upload, href: "/pptx-import" },
-  // Phase Audit Fix — /export-templates is a "Coming Soon" stub; hidden from
-  // sidebar until it ships real functionality. Page kept at the route so
-  // existing bookmarks still resolve.
-  { id: "analytics", name: "Analytics", icon: BarChart2, href: "/analytics" },
-  { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
-  { id: "help", name: "Help & Support", icon: HelpCircle, href: "/help" },
+  { id: "dashboard",   name: "Dashboard",     icon: Home,        href: "/dashboard" },
+  { id: "create",      name: "Create New",    icon: Plus,        href: "/create" },
+  { id: "projects",    name: "Projects",      icon: FolderOpen,  href: "/projects" },
+  { id: "pdf-studio",  name: "PDF Studio",    icon: FileType,    href: "/pdf-studio" },
+  { id: "career",      name: "Career Docs",   icon: Briefcase,   href: "/career" },
+  { id: "brand-kits",  name: "Brand Kits",    icon: Palette,     href: "/brand-kits" },
+  { id: "convert",     name: "Convert",       icon: Shuffle,     href: "/convert" },
+  { id: "pptx-import", name: "Import .pptx",  icon: Upload,      href: "/pptx-import" },
+  { id: "analytics",   name: "Analytics",     icon: BarChart2,   href: "/analytics" },
+  { id: "settings",    name: "Settings",      icon: Settings,    href: "/settings" },
+  { id: "help",        name: "Help & Support",icon: HelpCircle,  href: "/help" },
 ];
 
 export function ModernSidebar({ className = "" }: SidebarProps) {
@@ -67,21 +59,13 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Handle component mounting
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  useEffect(() => { setIsMounted(true); }, []);
 
-  // Auto-open sidebar on desktop
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
+      if (window.innerWidth >= 768) setIsOpen(true);
+      else setIsOpen(false);
     };
-    
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -92,9 +76,7 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
 
   const handleItemClick = (item: NavigationItem) => {
     router.push(item.href);
-    if (window.innerWidth < 768) {
-      setIsOpen(false);
-    }
+    if (window.innerWidth < 768) setIsOpen(false);
   };
 
   const handleLogout = () => {
@@ -115,106 +97,96 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
     return navigationItems.filter((item) => item.name.toLowerCase().includes(q));
   }, [searchQuery]);
 
-  // Get user initials
   const getUserInitials = () => {
     if (!user?.name) return 'U';
     const names = user.name.split(' ');
-    if (names.length >= 2) {
-      return `${names[0][0]}${names[1][0]}`.toUpperCase();
-    }
+    if (names.length >= 2) return `${names[0][0]}${names[1][0]}`.toUpperCase();
     return user.name.substring(0, 2).toUpperCase();
   };
 
-  // Prevent hydration mismatch by not rendering until mounted
-  if (!isMounted || !_hasHydrated) {
-    return null;
-  }
+  if (!isMounted || !_hasHydrated) return null;
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Mobile hamburger */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-6 left-6 z-50 p-3 rounded-lg bg-white shadow-md border border-slate-100 md:hidden hover:bg-slate-50 transition-all duration-200"
+        className="fixed top-6 left-6 z-50 p-3 rounded-2xl bg-white shadow-[0_12px_30px_rgba(0,0,0,0.06)] md:hidden hover:bg-[#F7F6F2] transition-all"
         aria-label="Toggle sidebar"
       >
-        {isOpen ? 
-          <X className="h-5 w-5 text-slate-600" /> : 
-          <Menu className="h-5 w-5 text-slate-600" />
-        }
+        {isOpen
+          ? <X className="h-5 w-5 text-[#111111]" />
+          : <Menu className="h-5 w-5 text-[#111111]" />}
       </button>
 
       {/* Mobile overlay */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 md:hidden transition-opacity duration-300" 
-          onClick={toggleSidebar} 
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 md:hidden transition-opacity"
+          onClick={toggleSidebar}
         />
       )}
 
       {/* Sidebar */}
       <div
         className={`
-          fixed top-0 left-0 h-full bg-white border-r border-slate-200 z-40 transition-all duration-300 ease-in-out flex flex-col
+          fixed top-0 left-0 h-full bg-white border-r border-[#EDEBE6] z-40 transition-all duration-300 ease-in-out flex flex-col
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           ${isCollapsed ? "w-20" : "w-72"}
           md:translate-x-0 md:static md:z-auto
           ${className}
         `}
       >
-        {/* Header with logo and collapse button */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-200 bg-slate-50/60">
+        {/* Brand + collapse */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-4">
           {!isCollapsed && (
-            <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 bg-gradient-to-br from-green-600 to-emerald-500 rounded-lg flex items-center justify-center shadow-sm">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#4F7563] to-[#355846] flex items-center justify-center shadow-[0_10px_24px_rgba(79,117,99,0.28)] shrink-0">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
-              <div className="flex flex-col">
-                <span className="font-semibold text-slate-800 text-base">Pitchonix</span>
-                <span className="text-xs text-slate-500">AI Presentation Studio</span>
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold tracking-tight text-[#111111] text-[15px] truncate">Pitchonix</span>
+                <span className="text-[11px] font-medium text-[#9A9A9A] truncate">AI Presentation Studio</span>
               </div>
             </div>
           )}
 
           {isCollapsed && (
-            <div className="w-9 h-9 bg-gradient-to-br from-green-600 to-emerald-500 rounded-lg flex items-center justify-center mx-auto shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#4F7563] to-[#355846] flex items-center justify-center mx-auto shadow-[0_10px_24px_rgba(79,117,99,0.28)]">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
           )}
 
-          {/* Desktop collapse button */}
           <button
             onClick={toggleCollapse}
-            className="hidden md:flex p-1.5 rounded-md hover:bg-slate-100 transition-all duration-200"
+            className="hidden md:flex p-1.5 rounded-full hover:bg-[#F1F0EC] transition-all text-[#6B6B6B]"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4 text-slate-500" />
-            ) : (
-              <ChevronLeft className="h-4 w-4 text-slate-500" />
-            )}
+            {isCollapsed
+              ? <ChevronRight className="h-4 w-4" />
+              : <ChevronLeft className="h-4 w-4" />}
           </button>
         </div>
 
-        {/* Search Bar */}
+        {/* Search */}
         {!isCollapsed && (
-          <div className="px-4 py-3">
+          <div className="px-4 pb-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9A9A9A]" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Quick find…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                className="w-full pl-10 pr-4 h-10 bg-[#F7F6F2] border border-transparent rounded-full text-sm placeholder:text-[#9A9A9A] text-[#111111] focus:outline-none focus:bg-white focus:border-[#4F7563]/40 focus:shadow-[0_0_0_3px_rgba(79,117,99,0.12)] transition-all"
               />
             </div>
           </div>
         )}
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-2 overflow-y-auto">
-          <ul className="space-y-0.5">
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-1.5 overflow-y-auto">
+          <ul className="space-y-1">
             {filteredNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeItem === item.id;
@@ -224,36 +196,36 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
                   <button
                     onClick={() => handleItemClick(item)}
                     className={`
-                      w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-md text-left transition-all duration-200 group relative
+                      w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-left transition-all group relative
                       ${isActive
-                        ? "bg-green-50 text-green-700"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        ? "bg-[#111114] text-white shadow-[0_12px_24px_rgba(0,0,0,0.16)]"
+                        : "text-[#3F3F3F] hover:bg-[#F1F0EC]"
                       }
                       ${isCollapsed ? "justify-center px-2" : ""}
                     `}
                     title={isCollapsed ? item.name : undefined}
                   >
-                    <div className="flex items-center justify-center min-w-[24px]">
-                      <Icon
-                        className={`
-                          h-4.5 w-4.5 flex-shrink-0
-                          ${isActive 
-                            ? "text-green-600" 
-                            : "text-slate-500 group-hover:text-slate-700"
-                          }
-                        `}
-                      />
+                    <div className={`
+                      flex items-center justify-center w-9 h-9 rounded-full shrink-0
+                      ${isActive
+                        ? "bg-white/10 text-white"
+                        : "bg-[#EEF5F1] text-[#4F7563] group-hover:bg-white"
+                      }
+                    `}>
+                      <Icon className="h-4 w-4" />
                     </div>
-                    
+
                     {!isCollapsed && (
-                      <div className="flex items-center justify-between w-full">
-                        <span className={`text-sm ${isActive ? "font-medium" : "font-normal"}`}>{item.name}</span>
+                      <div className="flex items-center justify-between w-full min-w-0">
+                        <span className={`text-[13.5px] truncate ${isActive ? "font-semibold" : "font-medium"}`}>
+                          {item.name}
+                        </span>
                         {item.badge && (
                           <span className={`
-                            px-1.5 py-0.5 text-xs font-medium rounded-full
+                            px-2 py-0.5 text-[10px] font-bold rounded-full
                             ${isActive
-                              ? "bg-green-100 text-green-700"
-                              : "bg-slate-100 text-slate-600"
+                              ? "bg-white/15 text-white"
+                              : "bg-[#EEF5F1] text-[#4F7563]"
                             }
                           `}>
                             {item.badge}
@@ -262,25 +234,22 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
                       </div>
                     )}
 
-                    {/* Badge for collapsed state */}
                     {isCollapsed && item.badge && (
-                      <div className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-full bg-green-100 border border-white">
-                        <span className="text-[10px] font-medium text-green-700">
+                      <div className="absolute top-0.5 right-0.5 w-4 h-4 flex items-center justify-center rounded-full bg-[#4F7563] border-2 border-white">
+                        <span className="text-[9px] font-bold text-white">
                           {parseInt(item.badge) > 9 ? '9+' : item.badge}
                         </span>
                       </div>
                     )}
 
-                    {/* Tooltip for collapsed state */}
                     {isCollapsed && (
-                      <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                      <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#111114] text-white text-xs font-medium rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
                         {item.name}
                         {item.badge && (
-                          <span className="ml-1.5 px-1 py-0.5 bg-slate-700 rounded-full text-[10px]">
+                          <span className="ml-2 px-1.5 py-0.5 bg-white/15 rounded-full text-[10px]">
                             {item.badge}
                           </span>
                         )}
-                        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-1.5 h-1.5 bg-slate-800 rotate-45" />
                       </div>
                     )}
                   </button>
@@ -290,69 +259,59 @@ export function ModernSidebar({ className = "" }: SidebarProps) {
           </ul>
         </nav>
 
-        {/* Bottom section with profile and logout */}
-        <div className="mt-auto border-t border-slate-200">
-          {/* Profile Section */}
-          <div className={`border-b border-slate-200 bg-slate-50/30 ${isCollapsed ? 'py-3 px-2' : 'p-3'}`}>
-            {!isCollapsed ? (
-              <button
-                onClick={() => router.push('/settings')}
-                className="w-full flex items-center px-3 py-2 rounded-md bg-white hover:bg-slate-50 transition-colors duration-200 text-left"
-                title="Go to Settings"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-medium text-sm">{getUserInitials()}</span>
-                </div>
-                <div className="flex-1 min-w-0 ml-2.5">
-                  <p className="text-sm font-medium text-slate-800 truncate">{user?.name || 'User'}</p>
-                  <p className="text-xs text-slate-500 truncate">{user?.email || 'user@pitchonix.com'}</p>
-                </div>
-                <div className="w-2 h-2 bg-green-500 rounded-full ml-2" title="Online" />
-              </button>
-            ) : (
-              <button
-                onClick={() => router.push('/settings')}
-                className="flex justify-center w-full"
-                title="Go to Settings"
-              >
-                <div className="relative">
-                  <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-cyan-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-medium text-sm">{getUserInitials()}</span>
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                </div>
-              </button>
-            )}
-          </div>
-
-          {/* Logout Button */}
-          <div className="p-3">
+        {/* Bottom: profile + logout */}
+        <div className="mt-auto p-3 space-y-2 border-t border-[#F1F0EC]">
+          {!isCollapsed ? (
             <button
-              onClick={handleLogout}
-              className={`
-                w-full flex items-center rounded-md text-left transition-all duration-200 group relative
-                text-red-600 hover:bg-red-50 hover:text-red-700
-                ${isCollapsed ? "justify-center p-2.5" : "space-x-2.5 px-3 py-2.5"}
-              `}
-              title={isCollapsed ? "Logout" : undefined}
+              onClick={() => router.push('/settings')}
+              className="w-full flex items-center gap-3 p-2.5 rounded-2xl bg-[#F7F6F2] hover:bg-[#EEF5F1] transition-colors text-left"
+              title="Go to Settings"
             >
-              <div className="flex items-center justify-center min-w-[24px]">
-                <LogOut className="h-4.5 w-4.5 flex-shrink-0 text-red-500 group-hover:text-red-600" />
-              </div>
-              
-              {!isCollapsed && (
-                <span className="text-sm">Logout</span>
-              )}
-              
-              {/* Tooltip for collapsed state */}
-              {isCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                  Logout
-                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-1.5 h-1.5 bg-slate-800 rotate-45" />
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-[#EFEAE0] text-[#355846] flex items-center justify-center font-semibold text-sm ring-[3px] ring-white shadow-[0_8px_18px_rgba(0,0,0,0.06)]">
+                  {getUserInitials()}
                 </div>
-              )}
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#4F7563] rounded-full border-2 border-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-[#111111] truncate">{user?.name || 'User'}</p>
+                <p className="text-[11px] text-[#9A9A9A] truncate">{user?.email || 'user@pitchonix.com'}</p>
+              </div>
             </button>
-          </div>
+          ) : (
+            <button
+              onClick={() => router.push('/settings')}
+              className="flex justify-center w-full"
+              title="Go to Settings"
+            >
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-[#EFEAE0] text-[#355846] flex items-center justify-center font-semibold text-sm ring-[3px] ring-white shadow-[0_8px_18px_rgba(0,0,0,0.06)]">
+                  {getUserInitials()}
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#4F7563] rounded-full border-2 border-white" />
+              </div>
+            </button>
+          )}
+
+          <button
+            onClick={handleLogout}
+            className={`
+              w-full flex items-center rounded-2xl transition-all group relative
+              text-[#9a3737] hover:bg-[#F7E3E3]/60
+              ${isCollapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5"}
+            `}
+            title={isCollapsed ? "Logout" : undefined}
+          >
+            <div className={`flex items-center justify-center w-9 h-9 rounded-full shrink-0 ${isCollapsed ? '' : ''} bg-[#F7E3E3] text-[#9a3737]`}>
+              <LogOut className="h-4 w-4" />
+            </div>
+            {!isCollapsed && <span className="text-[13.5px] font-medium">Sign out</span>}
+            {isCollapsed && (
+              <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#111114] text-white text-xs rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
+                Sign out
+              </div>
+            )}
+          </button>
         </div>
       </div>
     </>

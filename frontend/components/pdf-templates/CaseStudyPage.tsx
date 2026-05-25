@@ -44,11 +44,11 @@ export const CaseStudyPage: React.FC<CaseStudyPageProps> = ({
             >
               Case Study
             </h1>
-            <p className="text-2xl font-semibold text-slate-900" style={{ fontSize: '18pt' }}>
+            <p className="text-2xl font-semibold text-[#111111]" style={{ fontSize: '18pt' }}>
               {customerName}
             </p>
             {industry && (
-              <p className="text-slate-600 mt-1" style={{ fontSize: '11pt' }}>
+              <p className="text-[#6B6B6B] mt-1" style={{ fontSize: '11pt' }}>
                 {industry}
               </p>
             )}
@@ -77,7 +77,7 @@ export const CaseStudyPage: React.FC<CaseStudyPageProps> = ({
               </h2>
             </div>
             <p
-              className="text-slate-700 ml-13 leading-relaxed"
+              className="text-[#111111] ml-13 leading-relaxed"
               style={{ fontSize: '11pt', lineHeight: '1.8' }}
             >
               {challenge}
@@ -101,7 +101,7 @@ export const CaseStudyPage: React.FC<CaseStudyPageProps> = ({
               </h2>
             </div>
             <p
-              className="text-slate-700 ml-13 leading-relaxed"
+              className="text-[#111111] ml-13 leading-relaxed"
               style={{ fontSize: '11pt', lineHeight: '1.8' }}
             >
               {solution}

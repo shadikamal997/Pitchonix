@@ -54,7 +54,7 @@ const SmallIconButton: React.FC<React.PropsWithChildren<{ onClick: () => void; t
     title={title}
     disabled={disabled}
     className={`w-6 h-6 flex items-center justify-center rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
-      danger ? 'text-red-600 hover:bg-red-50' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+      danger ? 'text-[#9a3737] hover:bg-[#FCF1F1]' : 'text-[#9A9A9A] hover:bg-[#F1F0EC] hover:text-[#111111]'
     }`}
   >
     {children}
@@ -70,7 +70,7 @@ const ItemHeader: React.FC<{
   onRemove: () => void;
 }> = ({ index, total, label, onUp, onDown, onRemove }) => (
   <div className="flex items-center justify-between mb-1.5">
-    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{label} {index + 1}</span>
+    <span className="text-[10px] font-bold text-[#6B6B6B] uppercase tracking-wider">{label} {index + 1}</span>
     <div className="flex items-center gap-0.5">
       <SmallIconButton title="Move up"   onClick={onUp}   disabled={index === 0}><MoveUp className="w-3 h-3" /></SmallIconButton>
       <SmallIconButton title="Move down" onClick={onDown} disabled={index === total - 1}><MoveDown className="w-3 h-3" /></SmallIconButton>
@@ -83,7 +83,7 @@ const AddButton: React.FC<{ onClick: () => void; label: string }> = ({ onClick, 
   <button
     type="button"
     onClick={onClick}
-    className="w-full h-7 mt-1 flex items-center justify-center gap-1.5 text-[11px] font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-dashed border-green-300 rounded"
+    className="w-full h-7 mt-1 flex items-center justify-center gap-1.5 text-[11px] font-semibold text-[#355846] bg-[#EEF5F1] hover:bg-[#DDE8E1] border border-dashed border-[#A8B9AE] rounded"
   >
     <Plus className="w-3 h-3" />
     {label}
@@ -105,7 +105,7 @@ const TestimonialEdit: React.FC<Props> = ({ element, onPatch }) => {
           onChange={(e) => set({ quote: e.target.value })}
           rows={4}
           placeholder="What your customer said…"
-          className="flex-1 px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:bg-white resize-none"
+          className="flex-1 px-2 py-1.5 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:bg-white resize-none"
         />
       </Row>
       <Row label="Author"><TextField value={c.author} onChange={(v) => set({ author: v })} placeholder="Name" /></Row>
@@ -127,7 +127,7 @@ const TeamEdit: React.FC<Props> = ({ element, onPatch }) => {
   return (
     <PanelSection title={`Team · ${members.length}`}>
       {members.map((m, i) => (
-        <div key={m.id || i} className="rounded border border-slate-200 bg-white p-2 space-y-1">
+        <div key={m.id || i} className="rounded border border-[#E3E1DA] bg-white p-2 space-y-1">
           <ItemHeader
             index={i} total={members.length} label="Member"
             onUp={() => setMembers(arrayMove(members, i, i - 1))}
@@ -142,7 +142,7 @@ const TeamEdit: React.FC<Props> = ({ element, onPatch }) => {
               value={m.bio || ''}
               onChange={(e) => setMembers(members.map((x, j) => j === i ? { ...x, bio: e.target.value } : x))}
               rows={2}
-              className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:bg-white resize-none"
+              className="flex-1 px-2 py-1 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:bg-white resize-none"
             />
           </Row>
         </div>
@@ -163,7 +163,7 @@ const PricingEdit: React.FC<Props> = ({ element, onPatch }) => {
   return (
     <PanelSection title={`Pricing · ${tiers.length}`}>
       {tiers.map((t, i) => (
-        <div key={t.id || i} className="rounded border border-slate-200 bg-white p-2 space-y-1">
+        <div key={t.id || i} className="rounded border border-[#E3E1DA] bg-white p-2 space-y-1">
           <ItemHeader
             index={i} total={tiers.length} label="Tier"
             onUp={() => setTiers(arrayMove(tiers, i, i - 1))}
@@ -179,10 +179,10 @@ const PricingEdit: React.FC<Props> = ({ element, onPatch }) => {
               onChange={(e) => setTiers(tiers.map((x, j) => j === i ? { ...x, features: e.target.value.split('\n').filter(Boolean) } : x))}
               rows={4}
               placeholder="One feature per line…"
-              className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:bg-white resize-none"
+              className="flex-1 px-2 py-1 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:bg-white resize-none"
             />
           </Row>
-          <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
+          <label className="flex items-center gap-1.5 text-[11px] text-[#6B6B6B] cursor-pointer">
             <input
               type="checkbox"
               checked={!!t.highlight}
@@ -216,7 +216,7 @@ const ComparisonEdit: React.FC<Props> = ({ element, onPatch }) => {
           onChange={(e) => setAll({ columns: e.target.value.split('\n').filter(Boolean) })}
           rows={3}
           placeholder="One column header per line…"
-          className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:bg-white resize-none"
+          className="flex-1 px-2 py-1 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:bg-white resize-none"
         />
       </Row>
       <Row label="Highlight">
@@ -228,7 +228,7 @@ const ComparisonEdit: React.FC<Props> = ({ element, onPatch }) => {
       </Row>
       <div className="space-y-1.5">
         {rows.map((r, i) => (
-          <div key={i} className="rounded border border-slate-200 bg-white p-2 space-y-1">
+          <div key={i} className="rounded border border-[#E3E1DA] bg-white p-2 space-y-1">
             <ItemHeader
               index={i} total={rows.length} label="Row"
               onUp={() => setAll({ rows: arrayMove(rows, i, i - 1) })}
@@ -242,7 +242,7 @@ const ComparisonEdit: React.FC<Props> = ({ element, onPatch }) => {
                 onChange={(e) => setAll({ rows: rows.map((x, j) => j === i ? { ...x, values: e.target.value.split('\n') } : x) })}
                 rows={Math.max(2, cols.length)}
                 placeholder="One value per column…"
-                className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:bg-white resize-none"
+                className="flex-1 px-2 py-1 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:bg-white resize-none"
               />
             </Row>
           </div>
@@ -268,7 +268,7 @@ const SwotEdit: React.FC<Props> = ({ element, onPatch }) => {
         onChange={(e) => set(key, e.target.value.split('\n').filter(Boolean))}
         rows={3}
         placeholder="One item per line…"
-        className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:bg-white resize-none"
+        className="flex-1 px-2 py-1 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:bg-white resize-none"
       />
     </Row>
   );
@@ -296,7 +296,7 @@ const FeatureGridEdit: React.FC<Props> = ({ element, onPatch }) => {
         <NumberField value={c.columns ?? 3} onChange={(v) => onPatch({ content: { ...c, columns: Math.max(1, Math.min(4, Math.floor(v))) } })} min={1} max={4} suffix="cols" />
       </Row>
       {items.map((it, i) => (
-        <div key={it.id || i} className="rounded border border-slate-200 bg-white p-2 space-y-1">
+        <div key={it.id || i} className="rounded border border-[#E3E1DA] bg-white p-2 space-y-1">
           <ItemHeader
             index={i} total={items.length} label="Feature"
             onUp={() => setItems(arrayMove(items, i, i - 1))}
@@ -309,7 +309,7 @@ const FeatureGridEdit: React.FC<Props> = ({ element, onPatch }) => {
               value={it.description || ''}
               onChange={(e) => setItems(items.map((x, j) => j === i ? { ...x, description: e.target.value } : x))}
               rows={2}
-              className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:bg-white resize-none"
+              className="flex-1 px-2 py-1 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:bg-white resize-none"
             />
           </Row>
         </div>
@@ -330,7 +330,7 @@ const ProcessStepsEdit: React.FC<Props> = ({ element, onPatch }) => {
   return (
     <PanelSection title={`Process · ${steps.length}`}>
       {steps.map((s, i) => (
-        <div key={s.id || i} className="rounded border border-slate-200 bg-white p-2 space-y-1">
+        <div key={s.id || i} className="rounded border border-[#E3E1DA] bg-white p-2 space-y-1">
           <ItemHeader
             index={i} total={steps.length} label="Step"
             onUp={() => setSteps(arrayMove(steps, i, i - 1))}
@@ -343,7 +343,7 @@ const ProcessStepsEdit: React.FC<Props> = ({ element, onPatch }) => {
               value={s.description || ''}
               onChange={(e) => setSteps(steps.map((x, j) => j === i ? { ...x, description: e.target.value } : x))}
               rows={2}
-              className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:bg-white resize-none"
+              className="flex-1 px-2 py-1 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:bg-white resize-none"
             />
           </Row>
         </div>
@@ -364,7 +364,7 @@ const TimelineEdit: React.FC<Props> = ({ element, onPatch }) => {
   return (
     <PanelSection title={`Timeline · ${items.length}`}>
       {items.map((it, i) => (
-        <div key={it.id || i} className="rounded border border-slate-200 bg-white p-2 space-y-1">
+        <div key={it.id || i} className="rounded border border-[#E3E1DA] bg-white p-2 space-y-1">
           <ItemHeader
             index={i} total={items.length} label="Event"
             onUp={() => setItems(arrayMove(items, i, i - 1))}
@@ -378,7 +378,7 @@ const TimelineEdit: React.FC<Props> = ({ element, onPatch }) => {
               value={it.description || ''}
               onChange={(e) => setItems(items.map((x, j) => j === i ? { ...x, description: e.target.value } : x))}
               rows={2}
-              className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:bg-white resize-none"
+              className="flex-1 px-2 py-1 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:bg-white resize-none"
             />
           </Row>
         </div>
@@ -399,7 +399,7 @@ const RoadmapEdit: React.FC<Props> = ({ element, onPatch }) => {
   return (
     <PanelSection title={`Roadmap · ${phases.length}`}>
       {phases.map((p, i) => (
-        <div key={p.id || i} className="rounded border border-slate-200 bg-white p-2 space-y-1">
+        <div key={p.id || i} className="rounded border border-[#E3E1DA] bg-white p-2 space-y-1">
           <ItemHeader
             index={i} total={phases.length} label="Phase"
             onUp={() => setPhases(arrayMove(phases, i, i - 1))}
@@ -414,7 +414,7 @@ const RoadmapEdit: React.FC<Props> = ({ element, onPatch }) => {
               onChange={(e) => setPhases(phases.map((x, j) => j === i ? { ...x, bullets: e.target.value.split('\n').filter(Boolean) } : x))}
               rows={4}
               placeholder="One bullet per line…"
-              className="flex-1 px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded outline-none focus:border-green-500 focus:bg-white resize-none"
+              className="flex-1 px-2 py-1 text-xs bg-[#EDEBE6] border border-[#E3E1DA] rounded outline-none focus:border-[#4F7563] focus:bg-white resize-none"
             />
           </Row>
         </div>

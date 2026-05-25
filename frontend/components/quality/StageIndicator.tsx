@@ -68,31 +68,31 @@ export function StageIndicator({
     switch (status) {
       case 'completed':
         return {
-          bg: 'bg-green-100',
-          border: 'border-green-500',
-          text: 'text-green-700',
+          bg: 'bg-[#DDE8E1]',
+          border: 'border-[#4F7563]',
+          text: 'text-[#355846]',
           icon: 'text-green-500',
         };
       case 'current':
         return {
-          bg: 'bg-blue-100',
-          border: 'border-blue-500',
-          text: 'text-blue-700',
-          icon: 'text-blue-500',
+          bg: 'bg-[#DDE8E1]',
+          border: 'border-[#4F7563]',
+          text: 'text-[#355846]',
+          icon: 'text-[#4F7563]',
         };
       case 'failed':
         return {
-          bg: 'bg-red-100',
+          bg: 'bg-[#F7E3E3]',
           border: 'border-red-500',
-          text: 'text-red-700',
-          icon: 'text-red-500',
+          text: 'text-[#7a2929]',
+          icon: 'text-[#D96A6A]',
         };
       default:
         return {
-          bg: 'bg-gray-100',
-          border: 'border-gray-300',
-          text: 'text-gray-600',
-          icon: 'text-gray-400',
+          bg: 'bg-[#F1F0EC]',
+          border: 'border-[#C9C6BD]',
+          text: 'text-[#6B6B6B]',
+          icon: 'text-[#C9C6BD]',
         };
     }
   };
@@ -105,7 +105,7 @@ export function StageIndicator({
       <CardContent>
         <div className="relative">
           {/* Vertical Timeline Line */}
-          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
+          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-[#E3E1DA]" />
 
           {/* Stages */}
           <div className="space-y-4">
@@ -146,15 +146,15 @@ export function StageIndicator({
                           {STAGE_NAMES[stage]}
                         </p>
                         {status === 'current' && (
-                          <p className="text-xs text-gray-500 mt-0.5">In progress...</p>
+                          <p className="text-xs text-[#9A9A9A] mt-0.5">In progress...</p>
                         )}
                         {status === 'completed' && stageTime && (
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-[#9A9A9A] mt-0.5">
                             Completed in {formatTime(stageTime)}
                           </p>
                         )}
                         {status === 'failed' && (
-                          <p className="text-xs text-red-600 mt-0.5">Failed</p>
+                          <p className="text-xs text-[#9a3737] mt-0.5">Failed</p>
                         )}
                       </div>
 
@@ -173,11 +173,11 @@ export function StageIndicator({
                           animate={{ rotate: 360 }}
                           transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                         >
-                          <Clock className="w-5 h-5 text-blue-500" />
+                          <Clock className="w-5 h-5 text-[#4F7563]" />
                         </motion.div>
                       )}
                       {status === 'failed' && (
-                        <XCircle className="w-5 h-5 text-red-500" />
+                        <XCircle className="w-5 h-5 text-[#D96A6A]" />
                       )}
                     </div>
                   </div>

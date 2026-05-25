@@ -43,9 +43,9 @@ export const ReviewerBanner: React.FC<Props> = ({
   const status = request.status;
 
   return (
-    <div className="flex-shrink-0 border-b border-purple-200 bg-gradient-to-r from-purple-50 via-purple-100 to-purple-50 px-3 py-2">
+    <div className="flex-shrink-0 border-b border-[#DDE8E1] bg-gradient-to-r from-purple-50 via-purple-100 to-purple-50 px-3 py-2">
       <div className="flex items-center gap-3 max-w-full">
-        <ShieldCheck className="w-4 h-4 text-purple-700 flex-shrink-0" />
+        <ShieldCheck className="w-4 h-4 text-[#355846] flex-shrink-0" />
 
         <div className="flex-1 min-w-0">
           <div className="text-xs font-bold text-purple-900 truncate">
@@ -59,7 +59,7 @@ export const ReviewerBanner: React.FC<Props> = ({
                     ? 'You requested changes'
                     : 'Review'}
           </div>
-          <div className="text-[10px] text-purple-700 truncate flex items-center gap-2">
+          <div className="text-[10px] text-[#355846] truncate flex items-center gap-2">
             <span>From <span className="font-semibold">{request.requestedBy.name || request.requestedBy.email}</span></span>
             {request.dueDate && (
               <span className="inline-flex items-center gap-1">
@@ -82,7 +82,7 @@ export const ReviewerBanner: React.FC<Props> = ({
               type="button"
               onClick={() => run(onOpen)}
               disabled={acting}
-              className="h-7 px-3 text-xs font-semibold bg-white text-purple-800 border border-purple-300 hover:bg-purple-50 rounded inline-flex items-center gap-1.5 disabled:opacity-50"
+              className="h-7 px-3 text-xs font-semibold bg-white text-purple-800 border border-[#A8B9AE] hover:bg-[#EEF5F1] rounded inline-flex items-center gap-1.5 disabled:opacity-50"
             >
               {acting ? 'Starting…' : 'Start review'}
             </button>
@@ -93,7 +93,7 @@ export const ReviewerBanner: React.FC<Props> = ({
                 type="button"
                 onClick={() => run(onRequestChanges)}
                 disabled={acting}
-                className="h-7 px-3 text-xs font-semibold bg-white text-red-800 border border-red-300 hover:bg-red-50 rounded inline-flex items-center gap-1.5 disabled:opacity-50"
+                className="h-7 px-3 text-xs font-semibold bg-white text-[#7a2929] border border-[#F1D2D2] hover:bg-[#FCF1F1] rounded inline-flex items-center gap-1.5 disabled:opacity-50"
               >
                 <XCircle className="w-3 h-3" /> Request changes
               </button>
@@ -101,7 +101,7 @@ export const ReviewerBanner: React.FC<Props> = ({
                 type="button"
                 onClick={() => run(onApprove)}
                 disabled={acting}
-                className="h-7 px-3 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded inline-flex items-center gap-1.5 disabled:opacity-50"
+                className="h-7 px-3 text-xs font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded inline-flex items-center gap-1.5 disabled:opacity-50"
               >
                 <CheckCircle2 className="w-3 h-3" /> Approve
               </button>
@@ -112,7 +112,7 @@ export const ReviewerBanner: React.FC<Props> = ({
               type="button"
               onClick={() => run(onReopen)}
               disabled={acting}
-              className="h-7 px-3 text-xs font-semibold bg-white text-purple-800 border border-purple-300 hover:bg-purple-50 rounded inline-flex items-center gap-1.5 disabled:opacity-50"
+              className="h-7 px-3 text-xs font-semibold bg-white text-purple-800 border border-[#A8B9AE] hover:bg-[#EEF5F1] rounded inline-flex items-center gap-1.5 disabled:opacity-50"
             >
               <RotateCw className="w-3 h-3" /> {status === 'approved' ? 'Reopen review' : 'Look again'}
             </button>
@@ -120,7 +120,7 @@ export const ReviewerBanner: React.FC<Props> = ({
         </div>
       </div>
       {status === 'requested' && (
-        <div className="flex items-center gap-1 text-[10px] text-amber-700 mt-1">
+        <div className="flex items-center gap-1 text-[10px] text-[#735008] mt-1">
           <AlertTriangle className="w-2.5 h-2.5" />
           A snapshot will be created when you start the review.
         </div>

@@ -108,10 +108,10 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#EDEBE6] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading project...</p>
+          <Loader2 className="h-10 w-10 animate-spin text-[#4F7563] mx-auto mb-4" />
+          <p className="text-[#6B6B6B]">Loading project…</p>
         </div>
       </div>
     );
@@ -119,59 +119,52 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card>
-          <CardContent className="text-center py-12">
-            <p className="text-gray-600 mb-4">Project not found</p>
-            <Link href="/dashboard">
-              <Button>Back to Dashboard</Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-[#EDEBE6] flex items-center justify-center p-6">
+        <div className="pn-card p-8 text-center max-w-sm">
+          <p className="text-[#6B6B6B] mb-4">Project not found</p>
+          <Link href="/dashboard">
+            <Button>Back to Dashboard</Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
+  const statusTint =
+    project.status === 'completed'  ? 'bg-[#E6F0EA] text-[#355846]' :
+    project.status === 'generating' ? 'bg-[#FAEEDB] text-[#8c6210]' :
+    project.status === 'failed'     ? 'bg-[#F7E3E3] text-[#9a3737]' :
+    'bg-[#F1F0EC] text-[#6B6B6B]';
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#EDEBE6]">
       {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
+      <header className="bg-[#EDEBE6]/85 backdrop-blur-md border-b border-[#E3E1DA]/60 sticky top-0 z-30">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-4 min-w-0">
             <Link href="/dashboard">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Button>
             </Link>
-            <div>
-              <h1 className="text-xl font-bold">{project.name}</h1>
+            <div className="min-w-0">
+              <h1 className="pn-h2 truncate">{project.name}</h1>
               {project.description && (
-                <p className="text-sm text-gray-600">{project.description}</p>
+                <p className="text-sm text-[#6B6B6B] truncate">{project.description}</p>
               )}
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                project.status === 'completed'
-                  ? 'bg-green-100 text-green-700'
-                  : project.status === 'generating'
-                  ? 'bg-blue-100 text-blue-700'
-                  : project.status === 'failed'
-                  ? 'bg-red-100 text-red-700'
-                  : 'bg-gray-100 text-gray-700'
-              }`}
-            >
+          <div className="flex items-center gap-2">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${statusTint}`}>
               {project.status}
             </span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowShareModal(true)}
-              className="flex items-center gap-1.5"
             >
-              <Share2 className="h-4 w-4" />
+              <Share2 className="h-4 w-4 mr-1.5" />
               Share
             </Button>
           </div>
@@ -197,42 +190,41 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
           {/* Main Content Column */}
           <div className="lg:col-span-2 space-y-6">
             {polling && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center">
-                <Loader2 className="h-5 w-5 animate-spin text-green-600 mr-3" />
+              <div className="rounded-3xl bg-[#EEF5F1] border border-[#DDE8E1] p-5 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#DDE8E1] flex items-center justify-center flex-shrink-0">
+                  <Loader2 className="h-5 w-5 animate-spin text-[#4F7563]" />
+                </div>
                 <div>
-                  <p className="text-green-900 font-medium">Generating your deck...</p>
-                  <p className="text-green-700 text-sm">
-                    This usually takes 10-30 seconds. We'll refresh automatically.
+                  <p className="text-[#263F34] font-semibold">Generating your deck…</p>
+                  <p className="text-[#4F7563] text-sm">
+                    This usually takes 10–30 seconds. We'll refresh automatically.
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Regenerate banner — appears when the project failed OR any deck is empty.
-                Lets the user retry the auto-generation pipeline with one click. */}
+            {/* Regenerate banner — appears when the project failed OR any deck is empty. */}
             {!polling && (project.status === 'failed' || project.decks.some((d) => (d.slides?.length || 0) === 0)) && (
-              <div className="bg-gradient-to-br from-green-50 via-white to-green-50 border border-green-200 rounded-lg p-5 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-green-100 border border-green-200 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
+              <div className="pn-card p-5 flex items-start gap-4 bg-[#F7F6F2]">
+                <div className="w-11 h-11 rounded-full bg-[#EEF5F1] flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 text-[#4F7563]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-slate-900">
-                    {project.status === 'failed' ? 'Generation didn\'t finish' : 'Empty deck — ready to auto-generate'}
+                  <h3 className="pn-h3">
+                    {project.status === 'failed' ? "Generation didn't finish" : 'Empty deck — ready to auto-generate'}
                   </h3>
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  <p className="text-[13px] text-[#6B6B6B] mt-1 leading-relaxed">
                     {project.status === 'failed'
-                      ? 'The slide generator couldn\'t complete last time. Click below to retry — the system will rebuild every slide automatically from your project info.'
+                      ? "The slide generator couldn't complete last time. Click below to retry — the system will rebuild every slide automatically from your project info."
                       : 'This deck has no slides yet. Click below and the system will auto-generate the full presentation for you.'}
                   </p>
-                  <button
-                    type="button"
+                  <Button
                     onClick={async () => {
                       try {
                         setLoading(true);
                         await api.post(`/generate/regenerate/${project.id}`);
                         setPolling(true);
                         fetchProject(true);
-                        // Start polling for completion
                         pollIntervalRef.current = setInterval(() => fetchProject(true), 3000);
                       } catch (err: any) {
                         toast.error(err?.response?.data?.message || err?.message || 'Could not start generation');
@@ -241,11 +233,12 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                       }
                     }}
                     disabled={loading}
-                    className="mt-3 inline-flex items-center gap-2 h-9 px-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg shadow-md shadow-green-500/30"
+                    size="sm"
+                    className="mt-3"
                   >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />}
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <TrendingUp className="w-4 h-4 mr-2" />}
                     {loading ? 'Starting…' : 'Auto-generate slides'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -253,14 +246,16 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
             {project.decks.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-12">
-                  <FileText className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No decks yet</h3>
-                  <p className="text-gray-600 mb-4">
+                  <div className="w-16 h-16 rounded-full bg-[#EEF5F1] text-[#4F7563] flex items-center justify-center mx-auto mb-4">
+                    <FileText className="h-7 w-7" />
+                  </div>
+                  <h3 className="pn-h2 mb-1.5">No decks yet</h3>
+                  <p className="text-[#6B6B6B] text-sm mb-4">
                     {project.status === 'generating'
-                      ? 'Your deck is being generated...'
+                      ? 'Your deck is being generated…'
                       : project.status === 'draft'
                       ? 'This project is in draft mode.'
-                      : 'This project doesnt have any decks yet.'}
+                      : "This project doesn't have any decks yet."}
                   </p>
                   {project.status === 'draft' && (
                     <Button
@@ -335,10 +330,10 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
 
               {/* Validation Summary (link to quality page for full details) */}
               {qualityReport && qualityReport.validation.totalIssues > 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
-                  <p className="font-medium mb-1">Validation Issues Found</p>
+                <div className="rounded-3xl bg-[#FAEEDB] border border-[#F2DCAE] p-4 text-sm text-[#8c6210]">
+                  <p className="font-semibold mb-1">Validation Issues Found</p>
                   <p>{qualityReport.validation.errorCount} error(s), {qualityReport.validation.warningCount} warning(s)</p>
-                  <a href={`/projects/${project.id}/quality`} className="underline mt-1 inline-block">
+                  <a href={`/projects/${project.id}/quality`} className="underline mt-1 inline-block font-semibold">
                     View full validation report
                   </a>
                 </div>
@@ -379,7 +374,7 @@ function DeckCard({ deck, params, setShowBrandModal, fetchProject }: any) {
               <CardTitle className="mb-0">{deck.title}</CardTitle>
               <BrandKitBadge kitId={brand.brandKitId} />
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[#6B6B6B]">
               {deck.slides.length} slides • Created{' '}
               {new Date(deck.createdAt).toLocaleDateString()}
             </p>
@@ -404,7 +399,6 @@ function DeckCard({ deck, params, setShowBrandModal, fetchProject }: any) {
               <Button
                 variant="outline"
                 onClick={() => setShowBrandModal(true)}
-                className="border-green-300 hover:bg-green-50 text-green-700"
               >
                 <ImageIcon className="h-4 w-4 mr-2" />
                 Upload logo & photos
@@ -417,7 +411,7 @@ function DeckCard({ deck, params, setShowBrandModal, fetchProject }: any) {
                   : `/projects/${params.id}/edit/${deck.id}?new=1`
               }
             >
-              <Button className="bg-green-600 hover:bg-green-700 text-white">
+              <Button>
                 <Edit className="h-4 w-4 mr-2" />
                 Open Editor
               </Button>
@@ -431,14 +425,14 @@ function DeckCard({ deck, params, setShowBrandModal, fetchProject }: any) {
             <Link
               key={slide.id}
               href={`/projects/${params.id}/edit/${slide.id}`}
-              className="group block border rounded-lg p-4 bg-white hover:shadow-md hover:border-green-400 transition-all cursor-pointer"
+              className="group block rounded-2xl border border-[#E3E1DA]/70 p-4 bg-white hover:shadow-soft hover:border-[#4F7563]/40 transition-all cursor-pointer"
             >
-              <div className="text-xs text-gray-500 mb-1 flex items-center justify-between">
+              <div className="text-[11px] text-[#9A9A9A] mb-1 flex items-center justify-between">
                 <span>Slide {slide.order}</span>
-                <span className="text-green-700 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-semibold uppercase tracking-wider">Edit →</span>
+                <span className="text-[#4F7563] opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-semibold uppercase tracking-wider">Edit →</span>
               </div>
-              <div className="font-medium text-sm line-clamp-2">{slide.title}</div>
-              <div className="text-xs text-gray-500 mt-1 capitalize">{slide.type}</div>
+              <div className="font-semibold text-sm text-[#111111] line-clamp-2">{slide.title}</div>
+              <div className="text-[11px] text-[#9A9A9A] mt-1 capitalize">{slide.type}</div>
             </Link>
           ))}
         </div>

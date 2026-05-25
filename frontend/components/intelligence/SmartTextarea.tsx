@@ -68,9 +68,9 @@ export function SmartTextarea({
 
   const getQuickCheckColor = () => {
     if (!quickCheck) return 'text-muted-foreground';
-    if (quickCheck.score >= 80) return 'text-green-600';
-    if (quickCheck.score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    if (quickCheck.score >= 80) return 'text-[#4F7563]';
+    if (quickCheck.score >= 60) return 'text-[#8c6210]';
+    return 'text-[#9a3737]';
   };
 
   return (

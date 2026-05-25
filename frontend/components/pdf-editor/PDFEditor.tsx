@@ -161,7 +161,7 @@ const PDFEditor = ({
   return (
     <div className="h-screen flex flex-col bg-white">
       {/* Top Action Bar */}
-      <header className="border-b border-slate-200 bg-white shadow-sm">
+      <header className="border-b border-[#E3E1DA] bg-white shadow-sm">
         {/* First Row - Title and Main Actions */}
         <div className="h-14 flex items-center justify-between px-6">
           <div className="flex items-center gap-4">
@@ -171,10 +171,10 @@ const PDFEditor = ({
                 Back
               </Button>
             </Link>
-            <div className="h-6 w-px bg-slate-200" />
+            <div className="h-6 w-px bg-[#E3E1DA]" />
             <div>
-              <h1 className="text-base font-bold text-slate-900">PDF Studio</h1>
-              <p className="text-xs text-slate-600">
+              <h1 className="text-base font-bold text-[#111111]">PDF Studio</h1>
+              <p className="text-xs text-[#6B6B6B]">
                 {pages.length} {pages.length === 1 ? 'page' : 'pages'}
               </p>
             </div>
@@ -182,7 +182,7 @@ const PDFEditor = ({
 
           <div className="flex items-center gap-3">
             {/* Zoom Controls */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#E3E1DA]">
               <Button
                 variant="ghost"
                 size="sm"
@@ -192,7 +192,7 @@ const PDFEditor = ({
               >
                 <ZoomOut className="h-3.5 w-3.5" />
               </Button>
-              <span className="text-sm font-medium text-slate-700 min-w-[60px] text-center">
+              <span className="text-sm font-medium text-[#111111] min-w-[60px] text-center">
                 {zoom}%
               </span>
               <Button
@@ -206,7 +206,7 @@ const PDFEditor = ({
               </Button>
             </div>
 
-            <div className="h-6 w-px bg-slate-200" />
+            <div className="h-6 w-px bg-[#E3E1DA]" />
 
             {/* Action Buttons */}
             <Button
@@ -223,7 +223,7 @@ const PDFEditor = ({
               variant="outline"
               size="sm"
               onClick={onEnhance}
-              className="gap-2 border-green-200 text-green-700 hover:bg-green-50"
+              className="gap-2 border-[#DDE8E1] text-[#355846] hover:bg-[#EEF5F1]"
             >
               <Sparkles className="h-4 w-4" />
               Enhance
@@ -233,7 +233,7 @@ const PDFEditor = ({
               size="sm"
               onClick={handleSave}
               disabled={isSaving}
-              className="gap-2 bg-green-600 hover:bg-green-700"
+              className="gap-2 bg-[#4F7563] hover:bg-[#355846]"
             >
               <Save className="h-4 w-4" />
               {isSaving ? 'Saving...' : 'Save'}
@@ -251,12 +251,12 @@ const PDFEditor = ({
         </div>
 
         {/* Second Row - Formatting Toolbar */}
-        <div className="h-12 flex items-center px-6 gap-2 border-t border-slate-100 bg-slate-50/50 overflow-x-auto">
+        <div className="h-12 flex items-center px-6 gap-2 border-t border-[#F1F0EC] bg-[#EDEBE6]/50 overflow-x-auto">
           {/* Font Family Selector */}
           <select
             value={selectedFont}
             onChange={(e) => setSelectedFont(e.target.value)}
-            className="h-8 px-3 text-sm border border-slate-200 rounded-md bg-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer min-w-[180px]"
+            className="h-8 px-3 text-sm border border-[#E3E1DA] rounded-md bg-white hover:border-[#C9C6BD] focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40 cursor-pointer min-w-[180px]"
           >
             <optgroup label="Sans Serif">
               <option value="Inter">Inter</option>
@@ -331,7 +331,7 @@ const PDFEditor = ({
           <select
             value={selectedFontSize}
             onChange={(e) => setSelectedFontSize(e.target.value)}
-            className="h-8 px-3 text-sm border border-slate-200 rounded-md bg-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer w-20"
+            className="h-8 px-3 text-sm border border-[#E3E1DA] rounded-md bg-white hover:border-[#C9C6BD] focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40 cursor-pointer w-20"
           >
             <option>8</option>
             <option>9</option>
@@ -399,14 +399,14 @@ const PDFEditor = ({
               type="color"
               value={textColor}
               onChange={(e) => setTextColor(e.target.value)}
-              className="h-8 w-10 rounded border border-slate-200 cursor-pointer"
+              className="h-8 w-10 rounded border border-[#E3E1DA] cursor-pointer"
               title="Text Color"
             />
             <input
               type="color"
               value={highlightColor}
               onChange={(e) => setHighlightColor(e.target.value)}
-              className="h-8 w-10 rounded border border-slate-200 cursor-pointer"
+              className="h-8 w-10 rounded border border-[#E3E1DA] cursor-pointer"
               title="Highlight Color"
             />
           </div>
@@ -488,9 +488,9 @@ const PDFEditor = ({
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Page List */}
-        <aside className="w-64 border-r border-slate-200 bg-slate-50 overflow-y-auto">
+        <aside className="w-64 border-r border-[#E3E1DA] bg-[#EDEBE6] overflow-y-auto">
           <div className="p-4">
-            <h2 className="text-sm font-bold text-slate-900 mb-3">Pages</h2>
+            <h2 className="text-sm font-bold text-[#111111] mb-3">Pages</h2>
             <div className="space-y-3">
               {pages.map((page, index) => (
                 <div
@@ -498,12 +498,12 @@ const PDFEditor = ({
                   onClick={() => setSelectedPageIndex(index)}
                   className={`group relative cursor-pointer rounded-xl border-2 transition-all ${
                     selectedPageIndex === index
-                      ? 'border-green-500 bg-green-50 shadow-md'
-                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                      ? 'border-[#4F7563] bg-[#EEF5F1] shadow-md'
+                      : 'border-[#E3E1DA] bg-white hover:border-[#C9C6BD] hover:shadow-sm'
                   }`}
                 >
                   {/* Page Preview Thumbnail */}
-                  <div className="aspect-[210/297] w-full rounded-t-lg bg-white flex items-center justify-center text-slate-400 border-b">
+                  <div className="aspect-[210/297] w-full rounded-t-lg bg-white flex items-center justify-center text-[#C9C6BD] border-b">
                     <Eye className="h-8 w-8 opacity-30" />
                   </div>
 
@@ -511,10 +511,10 @@ const PDFEditor = ({
                   <div className="p-3">
                     <div className="flex items-start justify-between">
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-slate-900 truncate">
+                        <p className="text-xs font-bold text-[#111111] truncate">
                           Page {index + 1}
                         </p>
-                        <p className="text-[10px] text-slate-600 truncate mt-0.5">
+                        <p className="text-[10px] text-[#6B6B6B] truncate mt-0.5">
                           {page.title || page.type}
                         </p>
                       </div>
@@ -568,7 +568,7 @@ const PDFEditor = ({
                           handleDeletePage(index);
                         }}
                         disabled={pages.length <= 1}
-                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="h-7 w-7 p-0 text-[#9a3737] hover:text-[#7a2929] hover:bg-[#FCF1F1]"
                         title="Delete"
                       >
                         <Trash2 className="h-3 w-3" />
@@ -581,12 +581,12 @@ const PDFEditor = ({
               {/* Add Page Button */}
               <button
                 onClick={() => handleAddPage('content')}
-                className="w-full aspect-[210/297] rounded-xl border-2 border-dashed border-slate-300 hover:border-green-400 hover:bg-green-50 flex flex-col items-center justify-center gap-2 transition-all group"
+                className="w-full aspect-[210/297] rounded-xl border-2 border-dashed border-[#C9C6BD] hover:border-green-400 hover:bg-[#EEF5F1] flex flex-col items-center justify-center gap-2 transition-all group"
               >
-                <div className="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-green-100 flex items-center justify-center transition-colors">
-                  <Plus className="h-5 w-5 text-slate-400 group-hover:text-green-600" />
+                <div className="w-10 h-10 rounded-full bg-[#F1F0EC] group-hover:bg-[#DDE8E1] flex items-center justify-center transition-colors">
+                  <Plus className="h-5 w-5 text-[#C9C6BD] group-hover:text-[#4F7563]" />
                 </div>
-                <p className="text-xs font-semibold text-slate-600 group-hover:text-green-700">
+                <p className="text-xs font-semibold text-[#6B6B6B] group-hover:text-[#355846]">
                   Add Page
                 </p>
               </button>
@@ -595,7 +595,7 @@ const PDFEditor = ({
         </aside>
 
         {/* Center - Page Preview */}
-        <main className="flex-1 bg-slate-100 overflow-auto p-8">
+        <main className="flex-1 bg-[#F1F0EC] overflow-auto p-8">
           <div className="max-w-4xl mx-auto">
             <div
               className="bg-white shadow-2xl mx-auto transition-transform"
@@ -620,16 +620,16 @@ const PDFEditor = ({
                   backgroundColor: highlightColor !== '#ffff00' ? highlightColor : 'transparent',
                 }}
               >
-                <div className="text-center text-slate-400 py-20">
+                <div className="text-center text-[#C9C6BD] py-20">
                   <Eye className="h-16 w-16 mx-auto mb-4 opacity-30" />
                   <p className="text-lg font-medium">Page Preview</p>
                   <p className="text-sm mt-2">
                     Page {selectedPageIndex + 1} • {selectedPage?.type}
                   </p>
-                  <p className="text-xs mt-4 text-slate-500">
+                  <p className="text-xs mt-4 text-[#9A9A9A]">
                     PDF page templates will render here
                   </p>
-                  <p className="text-xs mt-2 text-slate-500">
+                  <p className="text-xs mt-2 text-[#9A9A9A]">
                     Font: {selectedFont} • Size: {selectedFontSize}px
                   </p>
                 </div>
@@ -639,18 +639,18 @@ const PDFEditor = ({
         </main>
 
         {/* Right Sidebar - Edit Panel */}
-        <aside className="w-80 border-l border-slate-200 bg-white overflow-y-auto">
+        <aside className="w-80 border-l border-[#E3E1DA] bg-white overflow-y-auto">
           <div className="p-6">
-            <h2 className="text-lg font-bold text-slate-900 mb-6">
+            <h2 className="text-lg font-bold text-[#111111] mb-6">
               Edit Page
             </h2>
 
             {/* Page Type Selector */}
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
+              <label className="block text-sm font-semibold text-[#111111] mb-2">
                 Page Type
               </label>
-              <select className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500">
+              <select className="w-full px-3 py-2 border border-[#C9C6BD] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40">
                 <option>Cover Page</option>
                 <option>Table of Contents</option>
                 <option>Executive Summary</option>
@@ -668,24 +668,24 @@ const PDFEditor = ({
             {/* Content Editors */}
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                <label className="block text-sm font-semibold text-[#111111] mb-2">
                   Title
                 </label>
                 <input
                   type="text"
                   placeholder="Enter title"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-[#C9C6BD] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                <label className="block text-sm font-semibold text-[#111111] mb-2">
                   Content
                 </label>
                 <textarea
                   rows={8}
                   placeholder="Enter content"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                  className="w-full px-3 py-2 border border-[#C9C6BD] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4F7563]/40 resize-none"
                   style={{
                     fontFamily: selectedFont,
                     fontSize: `${selectedFontSize}px`,
@@ -696,7 +696,7 @@ const PDFEditor = ({
               {/* Enhance Section Button */}
               <Button
                 variant="outline"
-                className="w-full gap-2 border-green-200 text-green-700 hover:bg-green-50"
+                className="w-full gap-2 border-[#DDE8E1] text-[#355846] hover:bg-[#EEF5F1]"
               >
                 <Sparkles className="h-4 w-4" />
                 Enhance This Section

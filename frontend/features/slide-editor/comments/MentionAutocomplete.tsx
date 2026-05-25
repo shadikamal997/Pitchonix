@@ -102,7 +102,7 @@ export const MentionAutocomplete: React.FC<Props> = ({
         top:      anchor.top,
         zIndex:   200,
       }}
-      className="w-64 bg-white border border-slate-200 rounded-lg shadow-xl py-1 max-h-64 overflow-auto"
+      className="w-64 bg-white border border-[#E3E1DA] rounded-lg shadow-xl py-1 max-h-64 overflow-auto"
     >
       {results.map((u, i) => {
         const focused = i === hoverIdx;
@@ -113,15 +113,15 @@ export const MentionAutocomplete: React.FC<Props> = ({
             onMouseEnter={() => setHoverIdx(i)}
             onClick={() => onSelect({ userId: u.id, displayName: u.name || u.email })}
             className={`w-full text-left px-2.5 py-1.5 flex items-center gap-2 transition-colors ${
-              focused ? 'bg-blue-50' : 'hover:bg-slate-50'
+              focused ? 'bg-[#EEF5F1]' : 'hover:bg-[#EDEBE6]'
             }`}
           >
-            <div className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+            <div className="w-6 h-6 rounded-full bg-[#4F7563] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
               {(u.name || u.email).charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-slate-900 truncate">{u.name || u.email}</div>
-              {u.name && <div className="text-[10px] text-slate-500 truncate">{u.email}</div>}
+              <div className="text-xs font-semibold text-[#111111] truncate">{u.name || u.email}</div>
+              {u.name && <div className="text-[10px] text-[#9A9A9A] truncate">{u.email}</div>}
             </div>
           </button>
         );

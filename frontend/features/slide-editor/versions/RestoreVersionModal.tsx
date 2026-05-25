@@ -31,13 +31,13 @@ export const RestoreVersionModal: React.FC<Props> = ({ version, onCancel, onConf
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6" onClick={busy ? undefined : onCancel}>
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-[#E3E1DA] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <RotateCcw className="w-4 h-4 text-violet-600" />
             <span className="text-sm font-semibold">Restore version</span>
           </div>
           {!busy && (
-            <button type="button" onClick={onCancel} className="w-7 h-7 flex items-center justify-center rounded text-slate-500 hover:bg-slate-100">
+            <button type="button" onClick={onCancel} className="w-7 h-7 flex items-center justify-center rounded text-[#9A9A9A] hover:bg-[#F1F0EC]">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -46,9 +46,9 @@ export const RestoreVersionModal: React.FC<Props> = ({ version, onCancel, onConf
         {/* Body */}
         <div className="p-4 space-y-3">
           <div>
-            <div className="text-[13px] font-medium text-slate-900">{version.name}</div>
+            <div className="text-[13px] font-medium text-[#111111]">{version.name}</div>
             {version.description && (
-              <div className="text-[11px] text-slate-500 mt-1">{version.description}</div>
+              <div className="text-[11px] text-[#9A9A9A] mt-1">{version.description}</div>
             )}
           </div>
 
@@ -59,12 +59,12 @@ export const RestoreVersionModal: React.FC<Props> = ({ version, onCancel, onConf
             <MetaRow icon={<Award    className="w-3 h-3" />} label="Quality"  value={version.qualityScore != null ? `${version.qualityScore}/100` : '—'} />
           </div>
 
-          <div className="text-[10px] text-slate-500">
-            Type: <span className="px-1.5 py-0.5 bg-slate-100 rounded">{VERSION_TYPE_LABEL[version.type]}</span>
+          <div className="text-[10px] text-[#9A9A9A]">
+            Type: <span className="px-1.5 py-0.5 bg-[#F1F0EC] rounded">{VERSION_TYPE_LABEL[version.type]}</span>
           </div>
 
           {/* Safety reassurance */}
-          <div className="flex items-start gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded text-[11px] text-amber-800">
+          <div className="flex items-start gap-2 p-2.5 bg-[#FAEEDB] border border-[#F2DCAE] rounded text-[11px] text-[#735008]">
             <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
             <div>
               <strong>This will replace your current deck.</strong> A safety snapshot of the current state will be created automatically so this restore is reversible.
@@ -73,12 +73,12 @@ export const RestoreVersionModal: React.FC<Props> = ({ version, onCancel, onConf
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-slate-200 flex justify-end gap-1.5">
+        <div className="px-4 py-2.5 border-t border-[#E3E1DA] flex justify-end gap-1.5">
           <button
             type="button"
             disabled={busy}
             onClick={onCancel}
-            className="h-7 px-3 text-[11px] bg-slate-100 hover:bg-slate-200 rounded disabled:opacity-50"
+            className="h-7 px-3 text-[11px] bg-[#F1F0EC] hover:bg-[#E3E1DA] rounded disabled:opacity-50"
           >
             Cancel
           </button>
@@ -98,10 +98,10 @@ export const RestoreVersionModal: React.FC<Props> = ({ version, onCancel, onConf
 };
 
 const MetaRow: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
-  <div className="flex items-center gap-1.5 text-slate-700 bg-slate-50 border border-slate-200 rounded px-2 py-1.5">
-    <span className="text-slate-400">{icon}</span>
+  <div className="flex items-center gap-1.5 text-[#111111] bg-[#EDEBE6] border border-[#E3E1DA] rounded px-2 py-1.5">
+    <span className="text-[#C9C6BD]">{icon}</span>
     <div className="min-w-0 flex-1">
-      <div className="text-[9px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-[9px] uppercase tracking-wide text-[#9A9A9A]">{label}</div>
       <div className="truncate font-medium">{value}</div>
     </div>
   </div>

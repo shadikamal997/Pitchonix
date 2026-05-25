@@ -27,18 +27,18 @@ export default function TemplatePreviewModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white border-b border-[#E3E1DA] p-6 flex items-center justify-between z-10">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-2xl font-bold text-gray-900">{template.name}</h2>
+              <h2 className="text-2xl font-bold text-[#111111]">{template.name}</h2>
               {template.popular && (
-                <Badge className="bg-yellow-500 text-white">
+                <Badge className="bg-[#D9A441] text-white">
                   <Sparkles className="w-3 h-3 mr-1" />
                   Popular
                 </Badge>
               )}
             </div>
-            <p className="text-gray-600">{template.description}</p>
+            <p className="text-[#6B6B6B]">{template.description}</p>
           </div>
           <Button
             variant="ghost"
@@ -54,10 +54,10 @@ export default function TemplatePreviewModal({
         <div className="p-6 space-y-6">
           {/* Tags */}
           <div className="flex flex-wrap gap-2">
-            <Badge className="bg-blue-100 text-blue-700">
+            <Badge className="bg-[#DDE8E1] text-[#355846]">
               {template.industry}
             </Badge>
-            <Badge className="bg-purple-100 text-purple-700">
+            <Badge className="bg-[#DDE8E1] text-[#355846]">
               {template.documentType.replace('_', ' ')}
             </Badge>
             {template.tags.map((tag) => (
@@ -130,30 +130,30 @@ export default function TemplatePreviewModal({
             />
 
             {/* Expandable Sections */}
-            <details className="bg-gray-50 rounded-lg p-4">
-              <summary className="font-semibold text-gray-900 cursor-pointer">
+            <details className="bg-[#EDEBE6] rounded-lg p-4">
+              <summary className="font-semibold text-[#111111] cursor-pointer">
                 View More Details
               </summary>
               <div className="mt-4 space-y-4">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Pricing</h4>
-                  <p className="text-gray-700 text-sm">{prefilled.pricing}</p>
+                  <h4 className="font-medium text-[#111111] mb-2">Pricing</h4>
+                  <p className="text-[#111111] text-sm">{prefilled.pricing}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Competition</h4>
-                  <p className="text-gray-700 text-sm">{prefilled.competitors}</p>
+                  <h4 className="font-medium text-[#111111] mb-2">Competition</h4>
+                  <p className="text-[#111111] text-sm">{prefilled.competitors}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Team</h4>
-                  <p className="text-gray-700 text-sm">{prefilled.team}</p>
+                  <h4 className="font-medium text-[#111111] mb-2">Team</h4>
+                  <p className="text-[#111111] text-sm">{prefilled.team}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Funding Ask</h4>
-                  <p className="text-gray-700 text-sm">{prefilled.fundingAsk}</p>
+                  <h4 className="font-medium text-[#111111] mb-2">Funding Ask</h4>
+                  <p className="text-[#111111] text-sm">{prefilled.fundingAsk}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Roadmap</h4>
-                  <p className="text-gray-700 text-sm">{prefilled.roadmap}</p>
+                  <h4 className="font-medium text-[#111111] mb-2">Roadmap</h4>
+                  <p className="text-[#111111] text-sm">{prefilled.roadmap}</p>
                 </div>
               </div>
             </details>
@@ -161,7 +161,7 @@ export default function TemplatePreviewModal({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex gap-3">
+        <div className="sticky bottom-0 bg-white border-t border-[#E3E1DA] p-6 flex gap-3">
           <Button
             variant="outline"
             onClick={onClose}
@@ -171,7 +171,7 @@ export default function TemplatePreviewModal({
           </Button>
           <Button
             onClick={handleUse}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            className="flex-1 bg-[#4F7563] hover:bg-[#355846]"
           >
             Use This Template
           </Button>
@@ -190,12 +190,12 @@ interface PreviewSectionProps {
 
 function PreviewSection({ icon: Icon, title, content, compact }: PreviewSectionProps) {
   return (
-    <div className={`bg-gray-50 rounded-lg p-4 ${compact ? '' : ''}`}>
+    <div className={`bg-[#EDEBE6] rounded-lg p-4 ${compact ? '' : ''}`}>
       <div className="flex items-center gap-2 mb-2">
-        <Icon className="w-5 h-5 text-blue-600" />
-        <h3 className="font-semibold text-gray-900">{title}</h3>
+        <Icon className="w-5 h-5 text-[#4F7563]" />
+        <h3 className="font-semibold text-[#111111]">{title}</h3>
       </div>
-      <p className="text-gray-700 text-sm leading-relaxed">{content}</p>
+      <p className="text-[#111111] text-sm leading-relaxed">{content}</p>
     </div>
   );
 }

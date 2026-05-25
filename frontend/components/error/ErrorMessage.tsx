@@ -22,24 +22,24 @@ export function ErrorMessage({
 }: ErrorMessageProps) {
   const config = {
     error: {
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      textColor: 'text-red-800',
-      iconColor: 'text-red-500',
+      bgColor: 'bg-[#FCF1F1]',
+      borderColor: 'border-[#F7E3E3]',
+      textColor: 'text-[#7a2929]',
+      iconColor: 'text-[#D96A6A]',
       Icon: XCircle,
     },
     warning: {
-      bgColor: 'bg-yellow-50',
-      borderColor: 'border-yellow-200',
-      textColor: 'text-yellow-800',
+      bgColor: 'bg-[#FAEEDB]',
+      borderColor: 'border-[#F2DCAE]',
+      textColor: 'text-[#735008]',
       iconColor: 'text-yellow-500',
       Icon: AlertTriangle,
     },
     info: {
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      textColor: 'text-blue-800',
-      iconColor: 'text-blue-500',
+      bgColor: 'bg-[#EEF5F1]',
+      borderColor: 'border-[#DDE8E1]',
+      textColor: 'text-[#263F34]',
+      iconColor: 'text-[#4F7563]',
       Icon: Info,
     },
   };

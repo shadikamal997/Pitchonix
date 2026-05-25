@@ -44,7 +44,7 @@ export const WorkspaceSwitcher: React.FC<Props> = ({ settingsHref, onCreate }) =
       <button
         type="button"
         onClick={onCreate}
-        className="h-7 px-2.5 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded inline-flex items-center gap-1.5"
+        className="h-7 px-2.5 text-xs font-semibold bg-[#EEF5F1] text-[#355846] border border-[#DDE8E1] hover:bg-[#DDE8E1] rounded inline-flex items-center gap-1.5"
       >
         <Plus className="w-3 h-3" /> Create workspace
       </button>
@@ -60,22 +60,22 @@ export const WorkspaceSwitcher: React.FC<Props> = ({ settingsHref, onCreate }) =
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="h-7 px-2.5 text-xs font-semibold bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 rounded inline-flex items-center gap-1.5 max-w-[200px]"
+        className="h-7 px-2.5 text-xs font-semibold bg-white border border-[#E3E1DA] hover:border-[#A8B9AE] hover:bg-[#EEF5F1] rounded inline-flex items-center gap-1.5 max-w-[200px]"
       >
-        <Building2 className="w-3 h-3 text-blue-600 flex-shrink-0" />
-        <span className="truncate text-slate-800">{currentName}</span>
+        <Building2 className="w-3 h-3 text-[#4F7563] flex-shrink-0" />
+        <span className="truncate text-[#111111]">{currentName}</span>
         {currentRole && (
-          <span className="text-[9px] uppercase tracking-wide text-slate-400 font-mono">
+          <span className="text-[9px] uppercase tracking-wide text-[#C9C6BD] font-mono">
             {ROLE_LABEL[currentRole] || currentRole}
           </span>
         )}
-        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3 h-3 text-[#C9C6BD] transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute left-0 mt-1 w-72 bg-white border border-slate-200 rounded-lg shadow-2xl z-50 overflow-hidden">
-          <div className="px-3 py-2 border-b border-slate-100">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Your workspaces</p>
+        <div className="absolute left-0 mt-1 w-72 bg-white border border-[#E3E1DA] rounded-lg shadow-2xl z-50 overflow-hidden">
+          <div className="px-3 py-2 border-b border-[#F1F0EC]">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A]">Your workspaces</p>
           </div>
           <div className="max-h-80 overflow-auto py-1">
             {workspaces.map((m) => {
@@ -86,38 +86,38 @@ export const WorkspaceSwitcher: React.FC<Props> = ({ settingsHref, onCreate }) =
                   type="button"
                   onClick={() => { setCurrentWorkspaceId(m.workspace.id); setOpen(false); }}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
-                    selected ? 'bg-blue-50' : 'hover:bg-slate-50'
+                    selected ? 'bg-[#EEF5F1]' : 'hover:bg-[#EDEBE6]'
                   }`}
                 >
-                  <Building2 className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                  <Building2 className="w-3.5 h-3.5 text-[#4F7563] flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-semibold text-slate-900 truncate">{m.workspace.name}</div>
-                    <div className="text-[10px] text-slate-500 truncate">
+                    <div className="text-xs font-semibold text-[#111111] truncate">{m.workspace.name}</div>
+                    <div className="text-[10px] text-[#9A9A9A] truncate">
                       {m.memberCount} member{m.memberCount === 1 ? '' : 's'} · {m.projectCount} project{m.projectCount === 1 ? '' : 's'} · {ROLE_LABEL[m.role] || m.role}
                     </div>
                   </div>
-                  {selected && <Check className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />}
+                  {selected && <Check className="w-3.5 h-3.5 text-[#4F7563] flex-shrink-0" />}
                 </button>
               );
             })}
           </div>
-          <div className="border-t border-slate-100">
+          <div className="border-t border-[#F1F0EC]">
             {onCreate && (
               <button
                 type="button"
                 onClick={() => { setOpen(false); onCreate(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#111111] hover:bg-[#EDEBE6]"
               >
-                <Plus className="w-3 h-3 text-blue-600" /> Create workspace
+                <Plus className="w-3 h-3 text-[#4F7563]" /> Create workspace
               </button>
             )}
             {currentMembership && settingsHref && (
               <Link
                 href={settingsHref(currentMembership.workspace.id)}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                className="flex items-center gap-2 px-3 py-2 text-xs text-[#111111] hover:bg-[#EDEBE6]"
               >
-                <Settings2 className="w-3 h-3 text-slate-500" /> Workspace settings
+                <Settings2 className="w-3 h-3 text-[#9A9A9A]" /> Workspace settings
               </Link>
             )}
           </div>

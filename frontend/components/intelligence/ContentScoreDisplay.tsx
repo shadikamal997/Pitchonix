@@ -16,9 +16,9 @@ interface ContentScoreDisplayProps {
 
 export function ContentScoreDisplay({ scores, compact = false }: ContentScoreDisplayProps) {
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    if (score >= 80) return 'text-[#4F7563]';
+    if (score >= 60) return 'text-[#8c6210]';
+    return 'text-[#9a3737]';
   };
 
   const getScoreLabel = (score: number) => {
@@ -98,11 +98,11 @@ export function SuggestionList({ suggestions, onApply }: SuggestionListProps) {
   const getIcon = (type: string) => {
     switch (type) {
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+        return <AlertTriangle className="w-5 h-5 text-[#8c6210]" />;
       case 'tip':
-        return <Lightbulb className="w-5 h-5 text-blue-600" />;
+        return <Lightbulb className="w-5 h-5 text-[#4F7563]" />;
       default:
-        return <TrendingUp className="w-5 h-5 text-green-600" />;
+        return <TrendingUp className="w-5 h-5 text-[#4F7563]" />;
     }
   };
 
@@ -113,7 +113,7 @@ export function SuggestionList({ suggestions, onApply }: SuggestionListProps) {
       case 'medium':
         return 'border-yellow-500';
       default:
-        return 'border-blue-500';
+        return 'border-[#4F7563]';
     }
   };
 

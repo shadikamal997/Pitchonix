@@ -53,14 +53,14 @@ export default function Step2BusinessInfo({ data, onUpdate, documentType = 'pitc
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold mb-2">Tell us about your business</h2>
-        <p className="text-gray-600">Basic information about your company</p>
+        <p className="text-[#6B6B6B]">Basic information about your company</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Company Name */}
         <div className="md:col-span-2">
           <Label htmlFor="companyName" className="text-base">
-            Company Name <span className="text-red-500">*</span>
+            Company Name <span className="text-[#D96A6A]">*</span>
           </Label>
           <Input
             id="companyName"
@@ -75,7 +75,7 @@ export default function Step2BusinessInfo({ data, onUpdate, documentType = 'pitc
         {/* Industry */}
         <div>
           <Label htmlFor="industry" className="text-base">
-            Industry <span className="text-red-500">*</span>
+            Industry <span className="text-[#D96A6A]">*</span>
           </Label>
           <Select value={data.industry} onValueChange={(value) => onUpdate({ industry: value })}>
             <SelectTrigger className="mt-2">
@@ -168,21 +168,21 @@ export default function Step2BusinessInfo({ data, onUpdate, documentType = 'pitc
             rows={3}
             className="mt-2"
           />
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-[#9A9A9A] mt-1">
             This will be used as the tagline in your presentation
           </p>
         </div>
       </div>
 
       {/* Progress Indicator */}
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
+      <div className="mt-8 p-4 bg-[#EDEBE6] rounded-lg">
+        <div className="flex justify-between text-sm text-[#6B6B6B] mb-2">
           <span>Form completion</span>
           <span>{Math.round(((data.companyName ? 1 : 0) + (data.industry ? 1 : 0)) / 2 * 100)}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-[#E3E1DA] rounded-full h-2">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all"
+            className="bg-[#4F7563] h-2 rounded-full transition-all"
             style={{ width: `${((data.companyName ? 1 : 0) + (data.industry ? 1 : 0)) / 2 * 100}%` }}
           />
         </div>

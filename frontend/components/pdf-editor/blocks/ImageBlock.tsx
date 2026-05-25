@@ -23,15 +23,15 @@ export function ImageBlock({
   onChange,
 }: ImageBlockProps) {
   const renderPlaceholder = (index?: number) => (
-    <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex flex-col items-center justify-center gap-3 border-2 border-dashed border-slate-300 hover:border-green-400 hover:bg-green-50 transition-all cursor-pointer group">
-      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors">
-        <Upload className="h-8 w-8 text-slate-400 group-hover:text-green-600 transition-colors" />
+    <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex flex-col items-center justify-center gap-3 border-2 border-dashed border-[#C9C6BD] hover:border-green-400 hover:bg-[#EEF5F1] transition-all cursor-pointer group">
+      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center group-hover:bg-[#DDE8E1] transition-colors">
+        <Upload className="h-8 w-8 text-[#C9C6BD] group-hover:text-[#4F7563] transition-colors" />
       </div>
       <div className="text-center">
-        <p className="text-sm font-semibold text-slate-700 group-hover:text-green-700 transition-colors">
+        <p className="text-sm font-semibold text-[#111111] group-hover:text-[#355846] transition-colors">
           Upload Image{index !== undefined && ` ${index + 1}`}
         </p>
-        <p className="text-xs text-slate-500 mt-1">Click to browse or drag and drop</p>
+        <p className="text-xs text-[#9A9A9A] mt-1">Click to browse or drag and drop</p>
       </div>
     </div>
   );
@@ -49,7 +49,7 @@ export function ImageBlock({
         )}
       </div>
       {caption && (
-        <p className="mt-4 text-sm text-center text-slate-600 italic">{caption}</p>
+        <p className="mt-4 text-sm text-center text-[#6B6B6B] italic">{caption}</p>
       )}
     </div>
   );
@@ -71,7 +71,7 @@ export function ImageBlock({
         })}
       </div>
       {caption && (
-        <p className="mt-4 text-sm text-center text-slate-600 italic">{caption}</p>
+        <p className="mt-4 text-sm text-center text-[#6B6B6B] italic">{caption}</p>
       )}
     </div>
   );
@@ -93,7 +93,7 @@ export function ImageBlock({
         })}
       </div>
       {caption && (
-        <p className="mt-4 text-sm text-center text-slate-600 italic">{caption}</p>
+        <p className="mt-4 text-sm text-center text-[#6B6B6B] italic">{caption}</p>
       )}
     </div>
   );
@@ -122,7 +122,7 @@ export function ImageBlock({
         })}
       </div>
       {caption && (
-        <p className="mt-4 text-sm text-center text-slate-600 italic">{caption}</p>
+        <p className="mt-4 text-sm text-center text-[#6B6B6B] italic">{caption}</p>
       )}
     </div>
   );

@@ -113,7 +113,7 @@ const BrandKitPickerDropdown: React.FC<Props> = (props) => {
       />
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-[420px] max-w-[95vw] bg-white border border-slate-200 rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-[420px] max-w-[95vw] bg-white border border-[#E3E1DA] rounded-xl shadow-2xl z-50 overflow-hidden">
           <PickerHeader
             currentKitName={selected?.name || null}
             onClose={() => setOpen(false)}
@@ -151,7 +151,7 @@ const BrandKitPickerGrid: React.FC<Props> = (props) => {
   const current = previewId ?? props.value;
 
   return (
-    <div className={`bg-white border border-slate-200 rounded-xl ${props.className || ''}`}>
+    <div className={`bg-white border border-[#E3E1DA] rounded-xl ${props.className || ''}`}>
       <PickerHeader currentKitName={items.find((k) => k.id === props.value)?.name || null} />
       <PickerBody
         items={items}
@@ -183,25 +183,25 @@ const TriggerButton: React.FC<{
         type="button"
         onClick={onClick}
         title={`Brand Kit: ${selected.name} — click to change or clear`}
-        className={`inline-flex items-center gap-2 ${compact ? 'h-7 px-2 text-xs' : 'h-9 px-3 text-sm'} border border-slate-300 hover:border-purple-400 hover:bg-purple-50/40 bg-white text-slate-800 font-semibold rounded-lg`}
+        className={`inline-flex items-center gap-2 ${compact ? 'h-7 px-2 text-xs' : 'h-9 px-3 text-sm'} border border-[#C9C6BD] hover:border-purple-400 hover:bg-[#EEF5F1]/40 bg-white text-[#111111] font-semibold rounded-lg`}
       >
         <span className="inline-flex items-center gap-1">
           <span
-            className="w-3.5 h-3.5 rounded-sm border border-slate-300"
+            className="w-3.5 h-3.5 rounded-sm border border-[#C9C6BD]"
             style={{ background: selected.primaryColor || selected.tokens?.colors?.primary || '#8B5CF6' }}
           />
           {selected.secondaryColor && (
             <span
-              className="w-3.5 h-3.5 rounded-sm border border-slate-300 -ml-1"
+              className="w-3.5 h-3.5 rounded-sm border border-[#C9C6BD] -ml-1"
               style={{ background: selected.secondaryColor }}
             />
           )}
         </span>
         <span className="truncate max-w-[140px]">Brand: {selected.name}</span>
         {selected.isDefault && (
-          <span className="text-[9px] font-bold tracking-wide uppercase bg-blue-100 text-blue-800 px-1 py-0.5 rounded">Default</span>
+          <span className="text-[9px] font-bold tracking-wide uppercase bg-[#DDE8E1] text-[#263F34] px-1 py-0.5 rounded">Default</span>
         )}
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-[#9A9A9A] transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
     );
   }
@@ -210,11 +210,11 @@ const TriggerButton: React.FC<{
       type="button"
       onClick={onClick}
       title="Choose a brand kit to apply"
-      className={`inline-flex items-center gap-1.5 ${compact ? 'h-7 px-2 text-xs' : 'h-9 px-3 text-sm'} bg-white border border-slate-300 hover:border-purple-400 hover:bg-purple-50 text-slate-700 font-semibold rounded-lg`}
+      className={`inline-flex items-center gap-1.5 ${compact ? 'h-7 px-2 text-xs' : 'h-9 px-3 text-sm'} bg-white border border-[#C9C6BD] hover:border-purple-400 hover:bg-[#EEF5F1] text-[#111111] font-semibold rounded-lg`}
     >
-      <Palette className="w-3.5 h-3.5 text-purple-600" />
+      <Palette className="w-3.5 h-3.5 text-[#4F7563]" />
       {emptyLabel}
-      <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+      <ChevronDown className={`w-3.5 h-3.5 text-[#9A9A9A] transition-transform ${open ? 'rotate-180' : ''}`} />
     </button>
   );
 };
@@ -223,12 +223,12 @@ const TriggerButton: React.FC<{
 //  Picker header (used by both layouts)
 // =============================================================================
 const PickerHeader: React.FC<{ currentKitName: string | null; onClose?: () => void }> = ({ currentKitName, onClose }) => (
-  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60">
+  <div className="px-4 py-3 border-b border-[#F1F0EC] bg-[#EDEBE6]/60">
     <div className="flex items-start justify-between">
       <div>
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-700">Brand Kit</div>
-        <div className="text-[11px] text-slate-500 mt-0.5">
-          {currentKitName ? <>Currently applied: <strong className="text-slate-700">{currentKitName}</strong></> : 'No brand kit applied yet.'}
+        <div className="text-xs font-bold uppercase tracking-wider text-[#111111]">Brand Kit</div>
+        <div className="text-[11px] text-[#9A9A9A] mt-0.5">
+          {currentKitName ? <>Currently applied: <strong className="text-[#111111]">{currentKitName}</strong></> : 'No brand kit applied yet.'}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -236,19 +236,19 @@ const PickerHeader: React.FC<{ currentKitName: string | null; onClose?: () => vo
           href="/brand-kits"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[11px] text-blue-600 hover:underline inline-flex items-center gap-1"
+          className="text-[11px] text-[#4F7563] hover:underline inline-flex items-center gap-1"
         >
           Manage <ExternalLink className="w-3 h-3" />
         </a>
         {onClose && (
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="text-[#C9C6BD] hover:text-[#111111]"><X className="w-4 h-4" /></button>
         )}
       </div>
     </div>
     {/* Phase Ω.2 — clarify the "Default" semantic. Users have been confused
         whether the default kit auto-applies; it does not, by design. */}
-    <p className="text-[10px] text-slate-400 mt-1.5 italic">
-      The <span className="font-semibold text-slate-500">Default</span> badge is a preference label only — kits are never applied automatically. Pick one explicitly to apply.
+    <p className="text-[10px] text-[#C9C6BD] mt-1.5 italic">
+      The <span className="font-semibold text-[#9A9A9A]">Default</span> badge is a preference label only — kits are never applied automatically. Pick one explicitly to apply.
     </p>
   </div>
 );
@@ -273,7 +273,7 @@ const PickerBody: React.FC<{
 
   if (loading) {
     return (
-      <div className="px-4 py-8 text-xs text-slate-500 flex items-center gap-2">
+      <div className="px-4 py-8 text-xs text-[#9A9A9A] flex items-center gap-2">
         <Loader2 className="w-4 h-4 animate-spin" /> Loading brand kits…
       </div>
     );
@@ -283,11 +283,11 @@ const PickerBody: React.FC<{
     return (
       <div className="px-4 py-8 text-center">
         <Palette className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-        <div className="text-sm font-semibold text-slate-700 mb-1">No brand kits yet</div>
-        <p className="text-xs text-slate-500 mb-3">Create one to brand your decks, PDFs and CVs.</p>
+        <div className="text-sm font-semibold text-[#111111] mb-1">No brand kits yet</div>
+        <p className="text-xs text-[#9A9A9A] mb-3">Create one to brand your decks, PDFs and CVs.</p>
         <a
           href="/brand-kits"
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846]"
         >
           <Plus className="w-3 h-3" /> Create brand kit
         </a>
@@ -314,16 +314,16 @@ const PickerBody: React.FC<{
       <button
         type="button"
         onClick={() => onPreview(null)}
-        className={`w-full flex items-center gap-3 px-4 py-2.5 border-b border-slate-100 text-left hover:bg-slate-50 ${previewId === null ? 'bg-slate-50' : ''}`}
+        className={`w-full flex items-center gap-3 px-4 py-2.5 border-b border-[#F1F0EC] text-left hover:bg-[#EDEBE6] ${previewId === null ? 'bg-[#EDEBE6]' : ''}`}
       >
-        <div className="w-8 h-8 rounded border border-dashed border-slate-300 flex items-center justify-center">
-          <X className="w-3.5 h-3.5 text-slate-400" />
+        <div className="w-8 h-8 rounded border border-dashed border-[#C9C6BD] flex items-center justify-center">
+          <X className="w-3.5 h-3.5 text-[#C9C6BD]" />
         </div>
         <div className="flex-1">
-          <div className="text-xs font-semibold text-slate-700">No brand kit</div>
-          <div className="text-[10px] text-slate-500">Use built-in default styling.</div>
+          <div className="text-xs font-semibold text-[#111111]">No brand kit</div>
+          <div className="text-[10px] text-[#9A9A9A]">Use built-in default styling.</div>
         </div>
-        {previewId === null && <Check className="w-4 h-4 text-blue-600" />}
+        {previewId === null && <Check className="w-4 h-4 text-[#4F7563]" />}
       </button>
 
       {/* Kit cards */}
@@ -340,26 +340,26 @@ const PickerBody: React.FC<{
       </div>
 
       {/* Action bar */}
-      <div className="px-4 py-3 border-t border-slate-100 flex items-center gap-2 bg-slate-50/60">
+      <div className="px-4 py-3 border-t border-[#F1F0EC] flex items-center gap-2 bg-[#EDEBE6]/60">
         {currentValue && (
           <button
             type="button"
             onClick={doClear}
             disabled={busy}
-            className="h-8 px-2.5 text-xs font-semibold text-red-700 hover:bg-red-50 rounded inline-flex items-center gap-1 disabled:opacity-40"
+            className="h-8 px-2.5 text-xs font-semibold text-[#7a2929] hover:bg-[#FCF1F1] rounded inline-flex items-center gap-1 disabled:opacity-40"
           >
             <Trash2 className="w-3 h-3" /> Clear
           </button>
         )}
         <div className="flex-1" />
-        <span className="text-[10px] text-slate-500 inline-flex items-center gap-1">
+        <span className="text-[10px] text-[#9A9A9A] inline-flex items-center gap-1">
           <Eye className="w-3 h-3" /> {selectedKit ? selectedKit.name : 'None'} — preview
         </span>
         {selectedKit && (
           <button
             type="button"
             onClick={() => setWallKit(selectedKit)}
-            className="h-8 px-2.5 text-xs font-semibold border border-slate-300 hover:bg-white text-slate-700 rounded inline-flex items-center gap-1"
+            className="h-8 px-2.5 text-xs font-semibold border border-[#C9C6BD] hover:bg-white text-[#111111] rounded inline-flex items-center gap-1"
             title="Preview wall — see how this kit looks across CV / Resume / Cover Letter / Portfolio"
           >
             <Eye className="w-3 h-3" /> Preview wall
@@ -369,7 +369,7 @@ const PickerBody: React.FC<{
           type="button"
           onClick={doApply}
           disabled={busy || (previewId === currentValue) || !selectedKit}
-          className="h-8 px-3 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center gap-1 disabled:opacity-40"
+          className="h-8 px-3 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center gap-1 disabled:opacity-40"
         >
           {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
           {mode === 'apply' ? 'Apply Brand Kit' : 'Use this kit'}
@@ -405,10 +405,10 @@ const BrandKitCard: React.FC<{
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-stretch gap-3 px-4 py-3 border-b border-slate-100 text-left hover:bg-slate-50 transition-colors ${isPreview ? 'bg-blue-50/40 ring-1 ring-inset ring-blue-200' : ''}`}
+      className={`w-full flex items-stretch gap-3 px-4 py-3 border-b border-[#F1F0EC] text-left hover:bg-[#EDEBE6] transition-colors ${isPreview ? 'bg-[#EEF5F1]/40 ring-1 ring-inset ring-[#DDE8E1]' : ''}`}
     >
       {/* Logo / color preview block */}
-      <div className="flex-shrink-0 w-12 h-12 rounded-md border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center" style={{ background: primary }}>
+      <div className="flex-shrink-0 w-12 h-12 rounded-md border border-[#E3E1DA] bg-[#EDEBE6] overflow-hidden flex items-center justify-center" style={{ background: primary }}>
         {kit.logo ? (
           <img src={kit.logo} alt="" className="max-w-[44px] max-h-[44px] object-contain" />
         ) : (
@@ -420,34 +420,34 @@ const BrandKitCard: React.FC<{
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <div className="text-sm font-bold text-slate-900 truncate">{kit.name}</div>
+          <div className="text-sm font-bold text-[#111111] truncate">{kit.name}</div>
           {kit.isDefault && (
-            <span className="text-[9px] font-bold tracking-wide uppercase bg-blue-100 text-blue-800 px-1 py-0.5 rounded">Default</span>
+            <span className="text-[9px] font-bold tracking-wide uppercase bg-[#DDE8E1] text-[#263F34] px-1 py-0.5 rounded">Default</span>
           )}
           {isCurrent && (
-            <span className="text-[9px] font-bold tracking-wide uppercase bg-green-100 text-green-800 px-1 py-0.5 rounded inline-flex items-center gap-0.5">
+            <span className="text-[9px] font-bold tracking-wide uppercase bg-[#DDE8E1] text-green-800 px-1 py-0.5 rounded inline-flex items-center gap-0.5">
               <Check className="w-2.5 h-2.5" /> Applied
             </span>
           )}
         </div>
         {/* color row */}
         <div className="flex items-center gap-1 mb-1">
-          <span className="w-4 h-4 rounded-sm border border-slate-300" style={{ background: primary }} title={`Primary ${primary}`} />
-          <span className="w-4 h-4 rounded-sm border border-slate-300" style={{ background: secondary }} title={`Secondary ${secondary}`} />
+          <span className="w-4 h-4 rounded-sm border border-[#C9C6BD]" style={{ background: primary }} title={`Primary ${primary}`} />
+          <span className="w-4 h-4 rounded-sm border border-[#C9C6BD]" style={{ background: secondary }} title={`Secondary ${secondary}`} />
           {kit.tokens?.colors?.accent && (
-            <span className="w-4 h-4 rounded-sm border border-slate-300" style={{ background: kit.tokens.colors.accent }} title={`Accent ${kit.tokens.colors.accent}`} />
+            <span className="w-4 h-4 rounded-sm border border-[#C9C6BD]" style={{ background: kit.tokens.colors.accent }} title={`Accent ${kit.tokens.colors.accent}`} />
           )}
-          <span className="text-[10px] font-mono text-slate-400 ml-1">{primary}</span>
+          <span className="text-[10px] font-mono text-[#C9C6BD] ml-1">{primary}</span>
         </div>
         {/* typography preview */}
-        <div className="text-[11px] text-slate-600 truncate" style={{ fontFamily: bodyFont }}>
+        <div className="text-[11px] text-[#6B6B6B] truncate" style={{ fontFamily: bodyFont }}>
           <strong style={{ fontFamily: headingFont }}>Aa</strong> · {headingFont} / {bodyFont}
         </div>
       </div>
 
       {isPreview && (
         <div className="flex-shrink-0 flex items-center pr-1">
-          <Eye className="w-4 h-4 text-blue-600" />
+          <Eye className="w-4 h-4 text-[#4F7563]" />
         </div>
       )}
     </button>
@@ -496,14 +496,14 @@ export const BrandKitBadge: React.FC<{
   if (!resolved) return null;
   const primary = resolved.primaryColor || resolved.tokens?.colors?.primary || '#8B5CF6';
   return (
-    <span className={`inline-flex items-center gap-1.5 ${compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-[11px]'} bg-purple-50 border border-purple-200 text-purple-900 font-semibold rounded-full`}>
+    <span className={`inline-flex items-center gap-1.5 ${compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-[11px]'} bg-[#EEF5F1] border border-[#DDE8E1] text-purple-900 font-semibold rounded-full`}>
       <span className="w-2.5 h-2.5 rounded-sm border border-white shadow-sm" style={{ background: primary }} />
       Brand: {resolved.name}
       {onChange && (
-        <button onClick={onChange} className="text-purple-600 hover:underline ml-0.5">change</button>
+        <button onClick={onChange} className="text-[#4F7563] hover:underline ml-0.5">change</button>
       )}
       {onRemove && (
-        <button onClick={onRemove} className="text-red-600 hover:underline">remove</button>
+        <button onClick={onRemove} className="text-[#9a3737] hover:underline">remove</button>
       )}
     </span>
   );

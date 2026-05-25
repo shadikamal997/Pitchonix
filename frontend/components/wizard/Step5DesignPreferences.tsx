@@ -99,13 +99,13 @@ export default function Step5DesignPreferences({ data, onUpdate }: Step5Props) {
     <div className="space-y-10 max-w-6xl mx-auto">
       <div className="text-center mb-10">
         <h2 className="text-3xl font-bold mb-3">Design Your Look</h2>
-        <p className="text-lg text-gray-600">Choose a theme and customize your brand</p>
+        <p className="text-lg text-[#6B6B6B]">Choose a theme and customize your brand</p>
       </div>
 
       {/* Theme Selection */}
       <div>
         <Label className="text-base mb-4 block">
-          Choose a Theme <span className="text-red-500">*</span>
+          Choose a Theme <span className="text-[#D96A6A]">*</span>
         </Label>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {THEMES.map((theme) => {
@@ -117,8 +117,8 @@ export default function Step5DesignPreferences({ data, onUpdate }: Step5Props) {
                 onClick={() => onUpdate({ theme: theme.id })}
                 className={`p-4 rounded-lg border-2 transition-all ${
                   isSelected
-                    ? 'border-blue-500 shadow-lg scale-105'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-[#4F7563] shadow-lg scale-105'
+                    : 'border-[#E3E1DA] hover:border-[#A8B9AE]'
                 }`}
               >
                 <div className="flex gap-1 mb-3 justify-center">
@@ -130,10 +130,10 @@ export default function Step5DesignPreferences({ data, onUpdate }: Step5Props) {
                     />
                   ))}
                 </div>
-                <p className={`font-medium text-sm ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
+                <p className={`font-medium text-sm ${isSelected ? 'text-[#1A2D24]' : 'text-[#111111]'}`}>
                   {theme.name}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">{theme.description}</p>
+                <p className="text-xs text-[#9A9A9A] mt-1">{theme.description}</p>
               </button>
             );
           })}
@@ -145,10 +145,10 @@ export default function Step5DesignPreferences({ data, onUpdate }: Step5Props) {
         <Label className="text-base mb-2 block">
           Company Logo (Optional)
         </Label>
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
-          <Upload className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600 mb-1">Click to upload or drag and drop</p>
-          <p className="text-sm text-gray-500">PNG, JPG, SVG up to 5MB</p>
+        <div className="border-2 border-dashed border-[#C9C6BD] rounded-lg p-8 text-center hover:border-[#A8B9AE] transition-colors cursor-pointer">
+          <Upload className="h-12 w-12 text-[#C9C6BD] mx-auto mb-3" />
+          <p className="text-[#6B6B6B] mb-1">Click to upload or drag and drop</p>
+          <p className="text-sm text-[#9A9A9A]">PNG, JPG, SVG up to 5MB</p>
           <Input
             type="file"
             accept="image/*"
@@ -162,13 +162,13 @@ export default function Step5DesignPreferences({ data, onUpdate }: Step5Props) {
             }}
           />
           <label htmlFor="logo-upload" className="cursor-pointer">
-            <span className="mt-4 inline-block px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
+            <span className="mt-4 inline-block px-4 py-2 bg-[#EEF5F1] text-[#4F7563] rounded-lg hover:bg-[#DDE8E1]">
               Select File
             </span>
           </label>
         </div>
         {data.logo && (
-          <p className="text-sm text-green-600 mt-2">
+          <p className="text-sm text-[#4F7563] mt-2">
             ✓ Logo uploaded
           </p>
         )}
@@ -180,14 +180,14 @@ export default function Step5DesignPreferences({ data, onUpdate }: Step5Props) {
           <ImagePlus className="h-5 w-5" />
           Additional Images (Optional)
         </Label>
-        <p className="text-sm text-gray-500 mb-3">
+        <p className="text-sm text-[#9A9A9A] mb-3">
           Upload product images, team photos, screenshots, or other visuals to use in your {data.documentType?.replace('_', ' ')}
         </p>
         
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer">
-          <Upload className="h-10 w-10 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-600 mb-1">Upload multiple images</p>
-          <p className="text-sm text-gray-500 mb-3">PNG, JPG up to 5MB each</p>
+        <div className="border-2 border-dashed border-[#C9C6BD] rounded-lg p-6 text-center hover:border-[#A8B9AE] transition-colors cursor-pointer">
+          <Upload className="h-10 w-10 text-[#C9C6BD] mx-auto mb-2" />
+          <p className="text-[#6B6B6B] mb-1">Upload multiple images</p>
+          <p className="text-sm text-[#9A9A9A] mb-3">PNG, JPG up to 5MB each</p>
           <Input
             type="file"
             accept="image/*"
@@ -197,7 +197,7 @@ export default function Step5DesignPreferences({ data, onUpdate }: Step5Props) {
             onChange={handleImageUpload}
           />
           <label htmlFor="images-upload" className="cursor-pointer">
-            <span className="inline-block px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
+            <span className="inline-block px-4 py-2 bg-[#EEF5F1] text-[#4F7563] rounded-lg hover:bg-[#DDE8E1]">
               Select Images
             </span>
           </label>
@@ -206,12 +206,12 @@ export default function Step5DesignPreferences({ data, onUpdate }: Step5Props) {
         {/* Image Preview Grid */}
         {data.images && data.images.length > 0 && (
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">
+            <p className="text-sm font-medium text-[#111111] mb-2">
               {data.images.length} image{data.images.length !== 1 ? 's' : ''} uploaded
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {imagePreviews.map((preview, index) => (
-                <div key={index} className="relative group rounded-lg overflow-hidden border border-gray-200">
+                <div key={index} className="relative group rounded-lg overflow-hidden border border-[#E3E1DA]">
                   <img 
                     src={preview} 
                     alt={`Upload ${index + 1}`}
@@ -219,7 +219,7 @@ export default function Step5DesignPreferences({ data, onUpdate }: Step5Props) {
                   />
                   <button
                     onClick={() => handleRemoveImage(index)}
-                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                    className="absolute top-1 right-1 p-1 bg-[#D96A6A] text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                     type="button"
                   >
                     <X className="h-3 w-3" />
@@ -334,14 +334,14 @@ export default function Step5DesignPreferences({ data, onUpdate }: Step5Props) {
                 onClick={() => onUpdate({ visualStyle: style.value })}
                 className={`p-4 rounded-lg border-2 transition-all text-left ${
                   isSelected
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
+                    ? 'border-purple-500 bg-[#EEF5F1]'
+                    : 'border-[#E3E1DA] hover:border-[#A8B9AE] hover:bg-[#EDEBE6]'
                 }`}
               >
-                <p className={`font-semibold mb-1 ${isSelected ? 'text-purple-900' : 'text-gray-900'}`}>
+                <p className={`font-semibold mb-1 ${isSelected ? 'text-purple-900' : 'text-[#111111]'}`}>
                   {style.label}
                 </p>
-                <p className="text-sm text-gray-600">{style.description}</p>
+                <p className="text-sm text-[#6B6B6B]">{style.description}</p>
               </button>
             );
           })}

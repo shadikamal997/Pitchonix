@@ -113,8 +113,8 @@ export default function HomePage() {
       <section className="relative bg-white py-32 overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-white to-cyan-50/20"></div>
-        <div className="absolute top-20 right-20 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-20 right-20 w-96 h-96 bg-[#4F7563]/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-[#4F7563]/5 rounded-full blur-3xl"></div>
 
         <div className="relative max-w-7xl mx-auto px-6">
           {/* Header */}
@@ -125,7 +125,7 @@ export default function HomePage() {
             className="text-center mb-20"
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 mb-6">
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+              <div className="w-2 h-2 rounded-full bg-[#4F7563] animate-pulse"></div>
               <span className="text-sm font-semibold text-blue-700">Simple Process</span>
             </div>
             <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6">
@@ -365,17 +365,17 @@ export default function HomePage() {
               {/* Mini Template Previews */}
               <div className="relative z-10 mt-4 flex gap-2">
                 <div className="flex-1 h-28 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-slate-200 p-2 flex flex-col justify-between">
-                  <div className="w-6 h-6 rounded bg-blue-500"></div>
+                  <div className="w-6 h-6 rounded bg-[#4F7563]"></div>
                   <div className="space-y-1">
                     <div className="h-1.5 bg-blue-200 rounded w-full"></div>
                     <div className="h-1.5 bg-blue-100 rounded w-3/4"></div>
                   </div>
                 </div>
                 <div className="flex-1 h-28 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-slate-200 p-2 flex flex-col justify-between">
-                  <div className="w-6 h-6 rounded bg-purple-500"></div>
+                  <div className="w-6 h-6 rounded bg-[#4F7563]"></div>
                   <div className="space-y-1">
                     <div className="h-1.5 bg-purple-200 rounded w-full"></div>
-                    <div className="h-1.5 bg-purple-100 rounded w-3/4"></div>
+                    <div className="h-1.5 bg-[#DDE8E1] rounded w-3/4"></div>
                   </div>
                 </div>
               </div>
@@ -470,7 +470,7 @@ export default function HomePage() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-200/50 mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#4F7563]/10 border border-blue-200/50 mb-6">
                 <Sparkles className="w-4 h-4 text-blue-600" />
                 <span className="text-sm font-semibold text-blue-700">Smart PDF Builder</span>
               </div>
@@ -493,7 +493,7 @@ export default function HomePage() {
                   { icon: Download, text: 'Export polished PDF instantly' },
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-[#4F7563] flex items-center justify-center flex-shrink-0">
                       <item.icon className="w-5 h-5 text-white" />
                     </div>
                     <span className="text-slate-700 font-medium">{item.text}</span>
@@ -502,7 +502,7 @@ export default function HomePage() {
               </ul>
 
               <Link href="/pdf-studio/smart-builder">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
+                <Button size="lg" className="bg-[#4F7563] hover:bg-[#355846] text-white px-8">
                   Try Smart PDF Builder
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -600,7 +600,7 @@ export default function HomePage() {
               transition={{ duration: 0.5 }}
             >
               <div className="mb-6">
-                <div className="w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center mb-4">
+                <div className="w-14 h-14 rounded-xl bg-[#4F7563] flex items-center justify-center mb-4">
                   <Presentation className="w-7 h-7 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Presentations</h3>
@@ -608,7 +608,7 @@ export default function HomePage() {
               <ul className="space-y-3">
                 {['Pitch Deck', 'Sales Deck', 'Strategy Presentation', 'Company Overview'].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-slate-700 hover:text-blue-600 transition-colors cursor-pointer">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#4F7563]"></div>
                     <span className="font-medium">{item}</span>
                   </li>
                 ))}
@@ -653,7 +653,7 @@ export default function HomePage() {
               </div>
               <ul className="space-y-3">
                 {['Smart PDF Builder', 'PRD', 'Technical Docs', 'Meeting Notes'].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-slate-700 hover:text-purple-600 transition-colors cursor-pointer">
+                  <li key={item} className="flex items-center gap-3 text-slate-700 hover:text-[#4F7563] transition-colors cursor-pointer">
                     <div className="w-1.5 h-1.5 rounded-full bg-purple-600"></div>
                     <span className="font-medium">{item}</span>
                   </li>
@@ -687,7 +687,7 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
               >
-                <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center mb-6">
+                <div className="w-12 h-12 rounded-lg bg-[#4F7563] flex items-center justify-center mb-6">
                   <Layers className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-4xl font-bold text-slate-900 mb-4">Structure Analysis</h3>
@@ -717,8 +717,8 @@ export default function HomePage() {
                 <div className="space-y-4">
                   {[
                     { label: 'Content', value: 95, color: 'bg-green-500' },
-                    { label: 'Structure', value: 88, color: 'bg-blue-500' },
-                    { label: 'Design', value: 93, color: 'bg-purple-500' },
+                    { label: 'Structure', value: 88, color: 'bg-[#4F7563]' },
+                    { label: 'Design', value: 93, color: 'bg-[#4F7563]' },
                   ].map((metric) => (
                     <div key={metric.label}>
                       <div className="flex justify-between text-sm mb-2">
@@ -761,7 +761,7 @@ export default function HomePage() {
                       <div className="text-sm text-yellow-700">Add TAM/SAM/SOM metrics</div>
                     </div>
                   </div>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Button className="w-full bg-[#4F7563] hover:bg-[#355846]">
                     <Zap className="w-4 h-4 mr-2" />
                     Fix All Issues
                   </Button>
@@ -807,7 +807,7 @@ export default function HomePage() {
             <div className="grid md:grid-cols-3 gap-8">
               <div className="relative">
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-8 text-white shadow-xl">
-                  <div className="absolute -top-4 -left-4 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                  <div className="absolute -top-4 -left-4 w-12 h-12 bg-[#4F7563] rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
                     1
                   </div>
                   <FileText className="h-12 w-12 mb-4 opacity-90" />
@@ -879,7 +879,7 @@ export default function HomePage() {
             ].map((type, i) => (
               <div
                 key={i}
-                className="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all border border-gray-200 hover:border-blue-300"
+                className="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all border border-gray-200 hover:border-[#A8B9AE]"
               >
                 <div className="text-4xl mb-3">{type.icon}</div>
                 <h3 className="font-semibold text-lg mb-1">{type.name}</h3>
@@ -908,7 +908,7 @@ export default function HomePage() {
               <p className="text-sm text-gray-500 mt-2">Pitch decks, business plans, proposals, reports, and more</p>
             </div>
             <div className="text-center">
-              <div className="text-5xl font-bold text-purple-600 mb-2">100+</div>
+              <div className="text-5xl font-bold text-[#4F7563] mb-2">100+</div>
               <p className="text-gray-600 font-medium">Slide Templates</p>
               <p className="text-sm text-gray-500 mt-2">Professional designs for every business need</p>
             </div>
@@ -1011,9 +1011,9 @@ export default function HomePage() {
           <div className="grid md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
             {[
               { value: '5,000+', label: 'Active Users', color: 'text-blue-600' },
-              { value: '50K+', label: 'Decks Created', color: 'text-purple-600' },
+              { value: '50K+', label: 'Decks Created', color: 'text-[#4F7563]' },
               { value: '$500M+', label: 'Raised by Customers', color: 'text-green-600' },
-              { value: '98%', label: 'Satisfaction Rate', color: 'text-orange-600' },
+              { value: '98%', label: 'Satisfaction Rate', color: 'text-[#8c6210]' },
             ].map((stat, i) => (
               <div key={i}>
                 <div className={`text-4xl font-bold ${stat.color} mb-2`}>{stat.value}</div>
@@ -1034,7 +1034,7 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* Free Plan */}
-            <div className="bg-white rounded-2xl p-8 border-2 border-gray-200 hover:border-blue-500 transition-all hover:shadow-xl">
+            <div className="bg-white rounded-2xl p-8 border-2 border-gray-200 hover:border-[#4F7563] transition-all hover:shadow-xl">
               <h3 className="text-2xl font-bold mb-2">Free</h3>
               <div className="mb-6">
                 <span className="text-4xl font-bold">$0</span>
@@ -1141,7 +1141,7 @@ export default function HomePage() {
                 a: 'Unlike chatbot-based tools, Pitchonix uses a structured workflow with smart forms and templates. You fill in business details step-by-step, ensuring complete, professional content every time.',
               },
               {
-                color: 'text-purple-600',
+                color: 'text-[#4F7563]',
                 q: "What's included in the quality score?",
                 a: 'The Pitchonix Score evaluates content completeness, clarity, data inclusion, visual appeal, and structure. You get specific suggestions to improve your deck and make it investor-ready.',
               },
@@ -1151,7 +1151,7 @@ export default function HomePage() {
                 a: 'Absolutely! Choose from 10+ design themes, apply your brand kit (colors, fonts, logo), and edit any slide in our visual editor.',
               },
               {
-                color: 'text-orange-600',
+                color: 'text-[#8c6210]',
                 q: 'What export formats are supported?',
                 a: 'Pro users can export to PowerPoint (PPTX) and PDF. All exports are high-quality with proper formatting, charts, and speaker notes included.',
               },
@@ -1191,7 +1191,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl mb-8">
-              <Rocket className="w-4 h-4 text-blue-400" />
+              <Rocket className="w-4 h-4 text-[#A8B9AE]" />
               <span className="text-sm font-semibold text-white">Start Creating Today</span>
             </div>
 

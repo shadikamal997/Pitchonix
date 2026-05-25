@@ -29,7 +29,7 @@ export default function SlideRenderer({ slide, themeOverride }: SlideRendererPro
   if (!slide) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-900">
-        <p className="text-gray-500 text-sm">No slide selected</p>
+        <p className="text-[#9A9A9A] text-sm">No slide selected</p>
       </div>
     );
   }

@@ -41,7 +41,7 @@ export default function AdminDiagnosticsPage() {
 
   if (check === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center text-sm text-slate-500">
+      <div className="min-h-screen flex items-center justify-center text-sm text-[#9A9A9A]">
         <Loader2 className="w-4 h-4 animate-spin mr-2" /> Checking admin access…
       </div>
     );
@@ -50,10 +50,10 @@ export default function AdminDiagnosticsPage() {
   if (check === 'forbidden') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white border border-red-200 rounded-lg p-8 text-center max-w-md">
-          <Shield className="w-12 h-12 text-red-500 mx-auto mb-3" />
-          <h1 className="text-lg font-bold text-slate-900 mb-2">Admin access required</h1>
-          <p className="text-sm text-slate-600">
+        <div className="bg-white border border-[#F7E3E3] rounded-lg p-8 text-center max-w-md">
+          <Shield className="w-12 h-12 text-[#D96A6A] mx-auto mb-3" />
+          <h1 className="text-lg font-bold text-[#111111] mb-2">Admin access required</h1>
+          <p className="text-sm text-[#6B6B6B]">
             This page is reserved for workspace owners and platform administrators.
           </p>
         </div>
@@ -62,17 +62,17 @@ export default function AdminDiagnosticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
-        <Shield className="w-5 h-5 text-purple-600" />
-        <h1 className="text-base font-bold text-slate-900">Admin · Diagnostics</h1>
-        <span className="ml-2 text-[10px] font-bold tracking-wide uppercase bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">
+    <div className="min-h-screen bg-[#EDEBE6]">
+      <header className="bg-white border-b border-[#E3E1DA] px-6 h-14 flex items-center gap-3">
+        <Shield className="w-5 h-5 text-[#4F7563]" />
+        <h1 className="text-base font-bold text-[#111111]">Admin · Diagnostics</h1>
+        <span className="ml-2 text-[10px] font-bold tracking-wide uppercase bg-[#DDE8E1] text-purple-800 px-1.5 py-0.5 rounded">
           Internal
         </span>
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[#9A9A9A]">
           Operational tooling. Not part of the user-facing product. All endpoints
           here are authenticated and access-checked server-side.
         </p>
@@ -113,22 +113,22 @@ function RendererCard() {
       {data && (
         <ul className="text-xs space-y-1.5">
           <li className="flex items-center gap-2">
-            {data.soffice?.ok ? <CheckCircle2 className="w-3 h-3 text-green-600" /> : <AlertTriangle className="w-3 h-3 text-red-600" />}
+            {data.soffice?.ok ? <CheckCircle2 className="w-3 h-3 text-[#4F7563]" /> : <AlertTriangle className="w-3 h-3 text-[#9a3737]" />}
             <span className="font-semibold">LibreOffice:</span>
-            <span className="text-slate-600">{data.soffice?.version || '—'}</span>
+            <span className="text-[#6B6B6B]">{data.soffice?.version || '—'}</span>
           </li>
           <li className="flex items-center gap-2">
-            {data.pdftoppm?.ok ? <CheckCircle2 className="w-3 h-3 text-green-600" /> : <AlertTriangle className="w-3 h-3 text-red-600" />}
+            {data.pdftoppm?.ok ? <CheckCircle2 className="w-3 h-3 text-[#4F7563]" /> : <AlertTriangle className="w-3 h-3 text-[#9a3737]" />}
             <span className="font-semibold">Poppler:</span>
-            <span className="text-slate-600">{data.pdftoppm?.version || '—'}</span>
+            <span className="text-[#6B6B6B]">{data.pdftoppm?.version || '—'}</span>
           </li>
           <li className="flex items-center gap-2">
-            {data.e2e?.ok ? <CheckCircle2 className="w-3 h-3 text-green-600" /> : <AlertTriangle className="w-3 h-3 text-red-600" />}
+            {data.e2e?.ok ? <CheckCircle2 className="w-3 h-3 text-[#4F7563]" /> : <AlertTriangle className="w-3 h-3 text-[#9a3737]" />}
             <span className="font-semibold">End-to-end:</span>
-            <span className="text-slate-600">{data.e2e?.bytes ? `${data.e2e.bytes}B in ${data.e2e.ms}ms` : '—'}</span>
+            <span className="text-[#6B6B6B]">{data.e2e?.bytes ? `${data.e2e.bytes}B in ${data.e2e.ms}ms` : '—'}</span>
           </li>
           {!ok && data.installHint && (
-            <li className="bg-amber-50 border border-amber-200 rounded p-2 text-[11px] text-amber-900 mt-1">
+            <li className="bg-[#FAEEDB] border border-[#F2DCAE] rounded p-2 text-[11px] text-amber-900 mt-1">
               <strong>Install hint:</strong> {data.installHint}
             </li>
           )}
@@ -195,9 +195,9 @@ function PptxCertificationCard() {
       action={
         <div className="flex items-center gap-2">
           <a href="/pptx-certification" target="_blank" rel="noopener noreferrer"
-            className="text-[11px] text-blue-600 hover:underline">Open full dashboard →</a>
+            className="text-[11px] text-[#4F7563] hover:underline">Open full dashboard →</a>
           <button onClick={run} disabled={busy}
-            className="h-7 px-2 text-[11px] font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded inline-flex items-center gap-1 disabled:opacity-50">
+            className="h-7 px-2 text-[11px] font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded inline-flex items-center gap-1 disabled:opacity-50">
             {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />} Certify
           </button>
         </div>
@@ -205,7 +205,7 @@ function PptxCertificationCard() {
     >
       {err && <ErrorBox text={err} />}
       {!data && !err && !busy && (
-        <p className="text-xs text-slate-500 italic">Click "Certify" to run against the fixtures directory.</p>
+        <p className="text-xs text-[#9A9A9A] italic">Click "Certify" to run against the fixtures directory.</p>
       )}
       {data && (
         <div className="space-y-2 text-xs">
@@ -241,14 +241,14 @@ function RoundTripCard() {
       icon={<Play className="w-4 h-4" />}
       action={
         <button onClick={run} disabled={busy}
-          className="h-7 px-2 text-[11px] font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded inline-flex items-center gap-1 disabled:opacity-50">
+          className="h-7 px-2 text-[11px] font-semibold bg-[#4F7563] hover:bg-[#355846] text-white rounded inline-flex items-center gap-1 disabled:opacity-50">
           {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />} Run
         </button>
       }
     >
       {err && <ErrorBox text={err} />}
       {!data && !err && !busy && (
-        <p className="text-xs text-slate-500 italic">Builds a synthetic deck, exports it, re-parses it, diffs the structure.</p>
+        <p className="text-xs text-[#9A9A9A] italic">Builds a synthetic deck, exports it, re-parses it, diffs the structure.</p>
       )}
       {data && (
         <div className="grid grid-cols-2 gap-2 text-xs">
@@ -282,7 +282,7 @@ function StorageDiagnosticsCard() {
     <Card title="Conversion storage" icon={<HardDrive className="w-4 h-4" />} action={<RefreshButton busy={busy} onClick={refresh} />}>
       {err && <ErrorBox text={err} />}
       {data && (
-        <pre className="text-[11px] font-mono bg-slate-50 border border-slate-200 rounded p-2 overflow-auto max-h-48">
+        <pre className="text-[11px] font-mono bg-[#EDEBE6] border border-[#E3E1DA] rounded p-2 overflow-auto max-h-48">
 {JSON.stringify(data, null, 2)}
         </pre>
       )}
@@ -295,11 +295,11 @@ function StorageDiagnosticsCard() {
 // =============================================================================
 const Card: React.FC<{ title: string; icon: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }> =
   ({ title, icon, action, children }) => (
-  <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+  <section className="bg-white border border-[#E3E1DA] rounded-lg p-4 space-y-3">
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2">
-        <div className="text-slate-600">{icon}</div>
-        <h2 className="text-sm font-bold text-slate-900">{title}</h2>
+        <div className="text-[#6B6B6B]">{icon}</div>
+        <h2 className="text-sm font-bold text-[#111111]">{title}</h2>
       </div>
       <div>{action}</div>
     </div>
@@ -308,9 +308,9 @@ const Card: React.FC<{ title: string; icon: React.ReactNode; action?: React.Reac
 );
 
 const Metric: React.FC<{ label: string; value: any }> = ({ label, value }) => (
-  <div className="bg-slate-50 border border-slate-200 rounded p-2">
-    <div className="text-[10px] text-slate-500 uppercase tracking-wide">{label}</div>
-    <div className="text-sm font-semibold text-slate-900 font-mono truncate">{String(value)}</div>
+  <div className="bg-[#EDEBE6] border border-[#E3E1DA] rounded p-2">
+    <div className="text-[10px] text-[#9A9A9A] uppercase tracking-wide">{label}</div>
+    <div className="text-sm font-semibold text-[#111111] font-mono truncate">{String(value)}</div>
   </div>
 );
 
@@ -334,9 +334,9 @@ function CvImportAnalyticsCard() {
   return (
     <Card title="CV import analytics" icon={<BarChart3 className="w-4 h-4" />} action={<RefreshButton busy={busy} onClick={refresh} />}>
       {err && <ErrorBox text={err} />}
-      {!data && !err && !busy && <p className="text-xs text-slate-500 italic">Loading…</p>}
+      {!data && !err && !busy && <p className="text-xs text-[#9A9A9A] italic">Loading…</p>}
       {data && data.total === 0 && (
-        <p className="text-xs text-slate-500 italic">No imports in the last 30 days yet.</p>
+        <p className="text-xs text-[#9A9A9A] italic">No imports in the last 30 days yet.</p>
       )}
       {data && data.total > 0 && (
         <div className="space-y-3 text-xs">
@@ -349,37 +349,37 @@ function CvImportAnalyticsCard() {
           </div>
           {data.missingSections?.length > 0 && (
             <div>
-              <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Most common missing sections</div>
+              <div className="text-[10px] uppercase tracking-wide text-[#9A9A9A] mb-1">Most common missing sections</div>
               <div className="flex flex-wrap gap-1">
                 {data.missingSections.map((r: any) => (
-                  <span key={r.key} className="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono">{r.key} × {r.count}</span>
+                  <span key={r.key} className="text-[10px] bg-[#F1F0EC] text-[#111111] px-1.5 py-0.5 rounded font-mono">{r.key} × {r.count}</span>
                 ))}
               </div>
             </div>
           )}
           {data.unknownHeadings?.length > 0 && (
             <div>
-              <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Most common unknown headings</div>
+              <div className="text-[10px] uppercase tracking-wide text-[#9A9A9A] mb-1">Most common unknown headings</div>
               <div className="flex flex-wrap gap-1">
                 {data.unknownHeadings.map((r: any) => (
-                  <span key={r.key} className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-mono">"{r.key}" × {r.count}</span>
+                  <span key={r.key} className="text-[10px] bg-[#F5E1B7] text-amber-800 px-1.5 py-0.5 rounded font-mono">"{r.key}" × {r.count}</span>
                 ))}
               </div>
             </div>
           )}
           {data.langs?.length > 0 && (
             <div>
-              <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">OCR languages used</div>
+              <div className="text-[10px] uppercase tracking-wide text-[#9A9A9A] mb-1">OCR languages used</div>
               <div className="flex flex-wrap gap-1">
                 {data.langs.map((r: any) => (
-                  <span key={r.key} className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-mono">{r.key} × {r.count}</span>
+                  <span key={r.key} className="text-[10px] bg-[#DDE8E1] text-[#263F34] px-1.5 py-0.5 rounded font-mono">{r.key} × {r.count}</span>
                 ))}
               </div>
             </div>
           )}
           {data.daily?.length > 0 && (
             <div>
-              <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Daily volume</div>
+              <div className="text-[10px] uppercase tracking-wide text-[#9A9A9A] mb-1">Daily volume</div>
               <div className="flex items-end gap-0.5 h-10">
                 {data.daily.map((d: any) => (
                   <div key={d.day} title={`${d.day}: ${d.n}`}
@@ -397,12 +397,12 @@ function CvImportAnalyticsCard() {
 
 const RefreshButton: React.FC<{ busy: boolean; onClick: () => void }> = ({ busy, onClick }) => (
   <button onClick={onClick} disabled={busy}
-    className="text-[11px] text-blue-600 hover:underline inline-flex items-center gap-1 disabled:opacity-50">
+    className="text-[11px] text-[#4F7563] hover:underline inline-flex items-center gap-1 disabled:opacity-50">
     {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
     Refresh
   </button>
 );
 
 const ErrorBox: React.FC<{ text: string }> = ({ text }) => (
-  <div className="bg-red-50 border border-red-200 text-red-800 text-xs rounded p-2">{text}</div>
+  <div className="bg-[#FCF1F1] border border-[#F7E3E3] text-[#7a2929] text-xs rounded p-2">{text}</div>
 );

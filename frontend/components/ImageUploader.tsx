@@ -123,18 +123,18 @@ export default function ImageUploader({
         <button
           onClick={handleClickUpload}
           disabled={uploading}
-          className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors flex flex-col items-center justify-center gap-3 text-gray-600 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-48 border-2 border-dashed border-[#C9C6BD] rounded-lg hover:border-[#A8B9AE] transition-colors flex flex-col items-center justify-center gap-3 text-[#6B6B6B] hover:text-[#4F7563] bg-[#EDEBE6] hover:bg-[#EEF5F1] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {uploading ? (
             <>
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-[#4F7563]" />
               <span className="text-sm">Uploading...</span>
             </>
           ) : (
             <>
               <Upload className="w-8 h-8" />
               <span className="text-sm font-medium">Click to upload image</span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-[#9A9A9A]">
                 Max {maxSizeMB}MB • JPEG, PNG, WebP, GIF
               </span>
             </>
@@ -147,7 +147,7 @@ export default function ImageUploader({
           <img
             src={preview}
             alt="Preview"
-            className="w-full h-48 object-cover rounded-lg border border-gray-200"
+            className="w-full h-48 object-cover rounded-lg border border-[#E3E1DA]"
           />
           
           {uploading && (
@@ -160,7 +160,7 @@ export default function ImageUploader({
           )}
 
           {uploadedImage && !uploading && (
-            <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1.5">
+            <div className="absolute top-2 right-2 bg-[#4F7563] text-white rounded-full p-1.5">
               <CheckCircle className="w-4 h-4" />
             </div>
           )}
@@ -168,7 +168,7 @@ export default function ImageUploader({
           {!uploading && (
             <button
               onClick={handleRemoveImage}
-              className="absolute top-2 left-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors"
+              className="absolute top-2 left-2 bg-[#D96A6A] text-white rounded-full p-1.5 hover:bg-red-600 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -177,19 +177,19 @@ export default function ImageUploader({
       )}
 
       {uploadedImage && (
-        <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+        <div className="mt-2 text-sm text-[#6B6B6B] bg-[#EDEBE6] p-3 rounded-lg">
           <div className="flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-green-600" />
-            <span className="font-medium text-green-600">Upload successful</span>
+            <ImageIcon className="w-4 h-4 text-[#4F7563]" />
+            <span className="font-medium text-[#4F7563]">Upload successful</span>
           </div>
-          <div className="mt-1 text-xs text-gray-500">
+          <div className="mt-1 text-xs text-[#9A9A9A]">
             {uploadedImage.filename} • {(uploadedImage.size / 1024).toFixed(1)} KB
           </div>
         </div>
       )}
 
       {error && (
-        <div className="mt-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+        <div className="mt-2 text-sm text-[#9a3737] bg-[#FCF1F1] p-3 rounded-lg">
           {error}
         </div>
       )}

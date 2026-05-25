@@ -52,15 +52,15 @@ export function QualityTrendsChart({ deckId, showDimensions = false }: QualityTr
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4F7563]"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-sm text-red-600">{error}</p>
+      <div className="p-4 bg-[#FCF1F1] border border-[#F7E3E3] rounded-lg">
+        <p className="text-sm text-[#9a3737]">{error}</p>
       </div>
     );
   }
@@ -81,8 +81,8 @@ export function QualityTrendsChart({ deckId, showDimensions = false }: QualityTr
             d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
           />
         </svg>
-        <h3 className="text-sm font-medium text-gray-900 mb-1">No Trend Data</h3>
-        <p className="text-sm text-gray-600">
+        <h3 className="text-sm font-medium text-[#111111] mb-1">No Trend Data</h3>
+        <p className="text-sm text-[#6B6B6B]">
           Quality checks need to be performed over time to see trends.
         </p>
       </div>
@@ -120,14 +120,14 @@ export function QualityTrendsChart({ deckId, showDimensions = false }: QualityTr
     const data = payload[0].payload;
 
     return (
-      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-        <p className="text-xs text-gray-600 mb-2">{data.date}</p>
+      <div className="bg-white p-3 border border-[#E3E1DA] rounded-lg shadow-lg">
+        <p className="text-xs text-[#6B6B6B] mb-2">{data.date}</p>
         {viewMode === 'overall' ? (
           <>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-[#111111]">
               Score: {data.score.toFixed(1)}/100
             </p>
-            <p className="text-xs text-gray-600">Grade: {data.grade}</p>
+            <p className="text-xs text-[#6B6B6B]">Grade: {data.grade}</p>
           </>
         ) : (
           <div className="space-y-1">
@@ -138,9 +138,9 @@ export function QualityTrendsChart({ deckId, showDimensions = false }: QualityTr
                     className="w-3 h-3 rounded-full mr-2"
                     style={{ backgroundColor: entry.color }}
                   />
-                  <span className="text-xs text-gray-600 capitalize">{entry.name}:</span>
+                  <span className="text-xs text-[#6B6B6B] capitalize">{entry.name}:</span>
                 </div>
-                <span className="text-xs font-medium text-gray-900">
+                <span className="text-xs font-medium text-[#111111]">
                   {entry.value.toFixed(1)}
                 </span>
               </div>
@@ -160,8 +160,8 @@ export function QualityTrendsChart({ deckId, showDimensions = false }: QualityTr
             onClick={() => setViewMode('overall')}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               viewMode === 'overall'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[#4F7563] text-white'
+                : 'bg-[#F1F0EC] text-[#111111] hover:bg-[#E3E1DA]'
             }`}
           >
             Overall Score
@@ -170,8 +170,8 @@ export function QualityTrendsChart({ deckId, showDimensions = false }: QualityTr
             onClick={() => setViewMode('dimensions')}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               viewMode === 'dimensions'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[#4F7563] text-white'
+                : 'bg-[#F1F0EC] text-[#111111] hover:bg-[#E3E1DA]'
             }`}
           >
             By Dimension
@@ -180,7 +180,7 @@ export function QualityTrendsChart({ deckId, showDimensions = false }: QualityTr
       )}
 
       {/* Chart */}
-      <div className="bg-white p-6 border border-gray-200 rounded-lg">
+      <div className="bg-white p-6 border border-[#E3E1DA] rounded-lg">
         <ResponsiveContainer width="100%" height={300}>
           {viewMode === 'overall' ? (
             <LineChart data={chartData}>
@@ -290,21 +290,21 @@ export function QualityTrendsChart({ deckId, showDimensions = false }: QualityTr
               value: trends.length.toString(),
             },
           ].map((stat) => (
-            <div key={stat.label} className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">{stat.label}</p>
+            <div key={stat.label} className="p-4 bg-[#EDEBE6] rounded-lg">
+              <p className="text-xs text-[#6B6B6B] mb-1">{stat.label}</p>
               <p
                 className={`text-xl font-semibold ${
                   stat.color === 'green'
-                    ? 'text-green-600'
+                    ? 'text-[#4F7563]'
                     : stat.color === 'red'
-                    ? 'text-red-600'
-                    : 'text-gray-900'
+                    ? 'text-[#9a3737]'
+                    : 'text-[#111111]'
                 }`}
               >
                 {stat.value}
               </p>
               {stat.grade && (
-                <p className="text-xs text-gray-600 mt-1">Grade: {stat.grade}</p>
+                <p className="text-xs text-[#6B6B6B] mt-1">Grade: {stat.grade}</p>
               )}
             </div>
           ))}

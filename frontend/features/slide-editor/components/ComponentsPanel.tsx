@@ -132,7 +132,7 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
   return (
     <div className="text-xs flex flex-col h-full">
       {/* Tab switcher */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-[#E3E1DA]">
         <TabButton active={tab === 'mine'}    onClick={() => setTab('mine')}>My library</TabButton>
         <TabButton active={tab === 'builtin'} onClick={() => setTab('builtin')}>
           <Sparkles className="w-3 h-3" /> Built-In
@@ -140,9 +140,9 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
       </div>
 
       {/* Toolbar */}
-      <div className="px-3 py-2 border-b border-slate-100 space-y-2">
-        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded h-7 px-2">
-          <Search className="w-3 h-3 text-slate-400" />
+      <div className="px-3 py-2 border-b border-[#F1F0EC] space-y-2">
+        <div className="flex items-center gap-1.5 bg-[#EDEBE6] border border-[#E3E1DA] rounded h-7 px-2">
+          <Search className="w-3 h-3 text-[#C9C6BD]" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -160,7 +160,7 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
               className={`h-6 px-2 text-[10px] uppercase tracking-wide rounded ${
                 filter === m
                   ? 'bg-slate-800 text-white'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                  : 'bg-[#EDEBE6] text-[#6B6B6B] hover:bg-[#F1F0EC] border border-[#E3E1DA]'
               }`}
             >
               {m}
@@ -168,11 +168,11 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
           ))}
           <div className="flex-1" />
           <button type="button" onClick={() => setView('grid')}
-            className={`w-7 h-7 flex items-center justify-center rounded ${view === 'grid' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-100'}`}>
+            className={`w-7 h-7 flex items-center justify-center rounded ${view === 'grid' ? 'bg-slate-800 text-white' : 'text-[#9A9A9A] hover:bg-[#F1F0EC]'}`}>
             <Grid3x3 className="w-3.5 h-3.5" />
           </button>
           <button type="button" onClick={() => setView('list')}
-            className={`w-7 h-7 flex items-center justify-center rounded ${view === 'list' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-100'}`}>
+            className={`w-7 h-7 flex items-center justify-center rounded ${view === 'list' ? 'bg-slate-800 text-white' : 'text-[#9A9A9A] hover:bg-[#F1F0EC]'}`}>
             <List className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -182,7 +182,7 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
             <button
               type="button"
               onClick={() => setCategoryFilter(null)}
-              className={`h-5 px-1.5 text-[10px] rounded ${categoryFilter == null ? 'bg-green-100 text-green-800' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
+              className={`h-5 px-1.5 text-[10px] rounded ${categoryFilter == null ? 'bg-[#DDE8E1] text-green-800' : 'bg-[#EDEBE6] text-[#9A9A9A] border border-[#E3E1DA]'}`}
             >
               All
             </button>
@@ -191,7 +191,7 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
                 key={cat}
                 type="button"
                 onClick={() => setCategoryFilter(cat === categoryFilter ? null : cat)}
-                className={`h-5 px-1.5 text-[10px] rounded ${categoryFilter === cat ? 'bg-green-100 text-green-800' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
+                className={`h-5 px-1.5 text-[10px] rounded ${categoryFilter === cat ? 'bg-[#DDE8E1] text-green-800' : 'bg-[#EDEBE6] text-[#9A9A9A] border border-[#E3E1DA]'}`}
               >
                 {categoryLabel(cat)}
               </button>
@@ -202,7 +202,7 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
             <button
               type="button"
               onClick={() => setFamilyFilter(null)}
-              className={`h-5 px-1.5 text-[10px] rounded ${familyFilter == null ? 'bg-violet-100 text-violet-800' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
+              className={`h-5 px-1.5 text-[10px] rounded ${familyFilter == null ? 'bg-violet-100 text-violet-800' : 'bg-[#EDEBE6] text-[#9A9A9A] border border-[#E3E1DA]'}`}
             >
               All families
             </button>
@@ -211,7 +211,7 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
                 key={f}
                 type="button"
                 onClick={() => setFamilyFilter(f === familyFilter ? null : f)}
-                className={`h-5 px-1.5 text-[10px] rounded ${familyFilter === f ? 'bg-violet-100 text-violet-800' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
+                className={`h-5 px-1.5 text-[10px] rounded ${familyFilter === f ? 'bg-violet-100 text-violet-800' : 'bg-[#EDEBE6] text-[#9A9A9A] border border-[#E3E1DA]'}`}
               >
                 {SMART_FAMILY_LABEL[f]}
               </button>
@@ -232,12 +232,12 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
         ) : (
           <>
         {components.loading && filtered.length === 0 && (
-          <div className="px-3 py-4 text-[11px] text-slate-500 italic">Loading…</div>
+          <div className="px-3 py-4 text-[11px] text-[#9A9A9A] italic">Loading…</div>
         )}
         {!components.loading && filtered.length === 0 && (
           <div className="px-3 py-6 text-center">
-            <div className="text-[11px] text-slate-500">No components yet.</div>
-            <div className="text-[10px] text-slate-400 mt-1">Select something on a slide and click "Save as component".</div>
+            <div className="text-[11px] text-[#9A9A9A]">No components yet.</div>
+            <div className="text-[10px] text-[#C9C6BD] mt-1">Select something on a slide and click "Save as component".</div>
           </div>
         )}
 
@@ -277,11 +277,11 @@ export const ComponentsPanel: React.FC<Props> = ({ activeSlideId, selection, onI
 
       {/* Footer */}
       {selection && selection.length > 0 && (
-        <div className="border-t border-slate-100 px-3 py-2">
+        <div className="border-t border-[#F1F0EC] px-3 py-2">
           <button
             type="button"
             onClick={onSaveSelection}
-            className="w-full h-7 text-[11px] bg-green-500 hover:bg-green-600 text-white rounded flex items-center justify-center gap-1.5"
+            className="w-full h-7 text-[11px] bg-[#4F7563] hover:bg-[#4F7563] text-white rounded flex items-center justify-center gap-1.5"
           >
             <Plus className="w-3 h-3" />
             Save selection as component ({selection.length})
@@ -303,7 +303,7 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; children: Reac
     className={`flex-1 h-8 flex items-center justify-center gap-1 text-[11px] font-medium border-b-2 ${
       active
         ? 'border-violet-500 text-violet-700 bg-violet-50/50'
-        : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+        : 'border-transparent text-[#9A9A9A] hover:text-[#111111] hover:bg-[#EDEBE6]'
     }`}
   >
     {children}
@@ -317,7 +317,7 @@ const BuiltInBody: React.FC<{
   insertSmart: (sc: SmartComponentDTO) => Promise<void>;
 }> = ({ smart, view, search, insertSmart }) => {
   if (smart.loading && smart.items.length === 0) {
-    return <div className="px-3 py-4 text-[11px] text-slate-500 italic">Loading built-in components…</div>;
+    return <div className="px-3 py-4 text-[11px] text-[#9A9A9A] italic">Loading built-in components…</div>;
   }
   const items = search
     ? smart.items.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
@@ -328,7 +328,7 @@ const BuiltInBody: React.FC<{
     <>
       {groups.map(([useCase, list]) => list.length === 0 ? null : (
         <div key={useCase} className="px-3 py-2 border-b border-slate-50 last:border-b-0">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#9A9A9A] mb-2">
             {useCase} · {list.length}
           </div>
           {view === 'grid' ? (
@@ -347,7 +347,7 @@ const BuiltInBody: React.FC<{
         </div>
       ))}
       {items.length === 0 && (
-        <div className="px-3 py-6 text-center text-[11px] text-slate-500">No built-in components match your search.</div>
+        <div className="px-3 py-6 text-center text-[11px] text-[#9A9A9A]">No built-in components match your search.</div>
       )}
     </>
   );
@@ -358,14 +358,14 @@ const SmartCard: React.FC<{ sc: SmartComponentDTO; onInsert: () => void }> = ({ 
     type="button"
     onClick={onInsert}
     onDoubleClick={onInsert}
-    className="text-left border border-slate-200 rounded-lg overflow-hidden bg-white hover:border-violet-300 hover:shadow-sm"
+    className="text-left border border-[#E3E1DA] rounded-lg overflow-hidden bg-white hover:border-violet-300 hover:shadow-sm"
   >
     <div className="aspect-[4/3] bg-gradient-to-br from-violet-50 to-slate-50 flex items-center justify-center text-violet-400 text-[10px] uppercase font-bold tracking-wide">
       {sc.family.replace(/-/g, ' ')}
     </div>
     <div className="p-1.5">
-      <div className="text-[11px] font-medium text-slate-800 truncate">{sc.name.split(' · ')[0]}</div>
-      <div className="text-[9px] text-slate-500 truncate">{SMART_FAMILY_LABEL[sc.family]}</div>
+      <div className="text-[11px] font-medium text-[#111111] truncate">{sc.name.split(' · ')[0]}</div>
+      <div className="text-[9px] text-[#9A9A9A] truncate">{SMART_FAMILY_LABEL[sc.family]}</div>
     </div>
   </button>
 );
@@ -374,10 +374,10 @@ const SmartRow: React.FC<{ sc: SmartComponentDTO; onInsert: () => void }> = ({ s
   <button
     type="button"
     onClick={onInsert}
-    className="w-full flex items-center justify-between gap-2 h-7 px-2 border border-slate-200 rounded bg-white hover:bg-violet-50 hover:border-violet-300"
+    className="w-full flex items-center justify-between gap-2 h-7 px-2 border border-[#E3E1DA] rounded bg-white hover:bg-violet-50 hover:border-violet-300"
   >
-    <span className="text-[11px] text-slate-800 truncate">{sc.name}</span>
-    <span className="text-[9px] text-slate-400 flex-shrink-0">{SMART_FAMILY_LABEL[sc.family]}</span>
+    <span className="text-[11px] text-[#111111] truncate">{sc.name}</span>
+    <span className="text-[9px] text-[#C9C6BD] flex-shrink-0">{SMART_FAMILY_LABEL[sc.family]}</span>
   </button>
 );
 
@@ -388,7 +388,7 @@ const ComponentCard: React.FC<{
   onDuplicate: () => void;
   onDelete: () => void;
 }> = ({ component, onInsert, onToggleFavorite, onDuplicate, onDelete }) => (
-  <div className="relative group border border-slate-200 rounded-lg overflow-hidden bg-white hover:border-slate-300 hover:shadow-sm">
+  <div className="relative group border border-[#E3E1DA] rounded-lg overflow-hidden bg-white hover:border-[#C9C6BD] hover:shadow-sm">
     <button
       type="button"
       onDoubleClick={onInsert}
@@ -396,7 +396,7 @@ const ComponentCard: React.FC<{
       className="block w-full"
       title="Double-click to insert"
     >
-      <div className="aspect-[4/3] bg-slate-50 flex items-center justify-center text-slate-400">
+      <div className="aspect-[4/3] bg-[#EDEBE6] flex items-center justify-center text-[#C9C6BD]">
         {component.thumbnail ? (
           <img src={component.thumbnail} alt={component.name} className="w-full h-full object-cover" />
         ) : (
@@ -404,10 +404,10 @@ const ComponentCard: React.FC<{
         )}
       </div>
       <div className="p-1.5 text-left">
-        <div className="text-[11px] font-medium text-slate-800 truncate">{component.name}</div>
+        <div className="text-[11px] font-medium text-[#111111] truncate">{component.name}</div>
         <div className="flex items-center justify-between mt-0.5">
-          <span className="text-[9px] text-slate-500">{categoryLabel(component.category)}</span>
-          <span className="text-[9px] text-slate-400">used {component.usageCount}×</span>
+          <span className="text-[9px] text-[#9A9A9A]">{categoryLabel(component.category)}</span>
+          <span className="text-[9px] text-[#C9C6BD]">used {component.usageCount}×</span>
         </div>
       </div>
     </button>
@@ -420,7 +420,7 @@ const ComponentCard: React.FC<{
         <Copy className="w-3 h-3" />
       </IconButton>
       <IconButton title="Delete" onClick={onDelete}>
-        <Trash2 className="w-3 h-3 text-red-500" />
+        <Trash2 className="w-3 h-3 text-[#D96A6A]" />
       </IconButton>
     </div>
   </div>
@@ -432,7 +432,7 @@ const ComponentRow: React.FC<{
   onToggleFavorite: () => void;
   onDelete: () => void;
 }> = ({ component, onInsert, onToggleFavorite, onDelete }) => (
-  <div className="flex items-center gap-2 h-8 px-2 border border-slate-200 rounded bg-white hover:bg-slate-50">
+  <div className="flex items-center gap-2 h-8 px-2 border border-[#E3E1DA] rounded bg-white hover:bg-[#EDEBE6]">
     <button
       type="button"
       onClick={onToggleFavorite}
@@ -443,17 +443,17 @@ const ComponentRow: React.FC<{
     <button
       type="button"
       onClick={onInsert}
-      className="flex-1 text-left text-[11px] text-slate-800 truncate min-w-0"
+      className="flex-1 text-left text-[11px] text-[#111111] truncate min-w-0"
       title="Click to insert"
     >
       <span className="font-medium">{component.name}</span>
-      <span className="text-slate-500"> · {categoryLabel(component.category)}</span>
+      <span className="text-[#9A9A9A]"> · {categoryLabel(component.category)}</span>
     </button>
-    <span className="text-[9px] text-slate-400 flex-shrink-0">used {component.usageCount}×</span>
+    <span className="text-[9px] text-[#C9C6BD] flex-shrink-0">used {component.usageCount}×</span>
     <button
       type="button"
       onClick={onDelete}
-      className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-slate-400 hover:text-red-600"
+      className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-[#C9C6BD] hover:text-[#9a3737]"
     >
       <Trash2 className="w-3 h-3" />
     </button>
@@ -465,7 +465,7 @@ const IconButton: React.FC<{ title?: string; onClick: () => void; children: Reac
     type="button"
     onClick={(e) => { e.stopPropagation(); onClick(); }}
     title={title}
-    className="w-5 h-5 flex items-center justify-center bg-white/90 hover:bg-white border border-slate-200 rounded text-slate-600"
+    className="w-5 h-5 flex items-center justify-center bg-white/90 hover:bg-white border border-[#E3E1DA] rounded text-[#6B6B6B]"
   >
     {children}
   </button>

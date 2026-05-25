@@ -36,7 +36,7 @@ export const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
         className="relative"
       >
         <motion.div
-          className="absolute inset-0 bg-green-500/20 rounded-full blur-xl"
+          className="absolute inset-0 bg-[#4F7563]/20 rounded-full blur-xl"
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.5, 0.8, 0.5],
@@ -47,7 +47,7 @@ export const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
             ease: 'easeInOut',
           }}
         />
-        <CheckCircle2 className="h-16 w-16 text-green-600 relative z-10" />
+        <CheckCircle2 className="h-16 w-16 text-[#4F7563] relative z-10" />
       </motion.div>
       
       {message && (
@@ -55,7 +55,7 @@ export const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-4 text-lg font-semibold text-gray-900"
+          className="mt-4 text-lg font-semibold text-[#111111]"
         >
           {message}
         </motion.p>

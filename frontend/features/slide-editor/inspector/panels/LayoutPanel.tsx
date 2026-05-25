@@ -41,7 +41,7 @@ export const LayoutPanel: React.FC<Props> = ({ element, onPatch }) => {
             type="button"
             title="Reset rotation"
             onClick={() => onPatch({ rotation: 0 })}
-            className="text-slate-500 hover:text-slate-900 flex-shrink-0"
+            className="text-[#9A9A9A] hover:text-[#111111] flex-shrink-0"
           >
             <RotateCw className="w-3.5 h-3.5" />
           </button>
@@ -117,7 +117,7 @@ const AlignBtn: React.FC<{ onClick: () => void; title: string; children: React.R
     type="button"
     onClick={onClick}
     title={title}
-    className="flex-1 h-6 bg-slate-100 hover:bg-green-100 hover:text-green-800 text-slate-600 rounded text-[11px] font-semibold transition-colors"
+    className="flex-1 h-6 bg-[#F1F0EC] hover:bg-[#DDE8E1] hover:text-green-800 text-[#6B6B6B] rounded text-[11px] font-semibold transition-colors"
   >
     {children}
   </button>

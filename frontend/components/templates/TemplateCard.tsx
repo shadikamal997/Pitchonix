@@ -20,17 +20,17 @@ const CATEGORY_STYLES: Record<string, { bg: string; gradient: string; badge: str
   technology: { 
     bg: 'from-blue-500/10 via-cyan-500/10 to-blue-600/5',
     gradient: 'from-blue-500 to-cyan-600',
-    badge: 'bg-blue-500/10 backdrop-blur-xl border-blue-300/30 text-blue-700'
+    badge: 'bg-[#4F7563]/10 backdrop-blur-xl border-[#A8B9AE]/30 text-[#355846]'
   },
   fintech: { 
     bg: 'from-emerald-500/10 via-green-500/10 to-teal-600/5',
     gradient: 'from-emerald-500 to-teal-600',
-    badge: 'bg-emerald-500/10 backdrop-blur-xl border-emerald-300/30 text-emerald-700'
+    badge: 'bg-[#4F7563]/10 backdrop-blur-xl border-emerald-300/30 text-[#355846]'
   },
   ecommerce: { 
     bg: 'from-purple-500/10 via-violet-500/10 to-fuchsia-600/5',
     gradient: 'from-purple-500 to-fuchsia-600',
-    badge: 'bg-purple-500/10 backdrop-blur-xl border-purple-300/30 text-purple-700'
+    badge: 'bg-[#4F7563]/10 backdrop-blur-xl border-[#A8B9AE]/30 text-[#355846]'
   },
   healthcare: { 
     bg: 'from-rose-500/10 via-red-500/10 to-pink-600/5',
@@ -40,12 +40,12 @@ const CATEGORY_STYLES: Record<string, { bg: string; gradient: string; badge: str
   education: { 
     bg: 'from-amber-500/10 via-yellow-500/10 to-orange-600/5',
     gradient: 'from-amber-500 to-orange-600',
-    badge: 'bg-amber-500/10 backdrop-blur-xl border-amber-300/30 text-amber-700'
+    badge: 'bg-[#D9A441]/10 backdrop-blur-xl border-amber-300/30 text-[#735008]'
   },
   food: { 
     bg: 'from-orange-500/10 via-amber-500/10 to-red-600/5',
     gradient: 'from-orange-500 to-red-600',
-    badge: 'bg-orange-500/10 backdrop-blur-xl border-orange-300/30 text-orange-700'
+    badge: 'bg-[#D9A441]/10 backdrop-blur-xl border-orange-300/30 text-[#735008]'
   },
 };
 
@@ -78,7 +78,7 @@ export default function TemplateCard({ template, onPreview, onUse }: TemplateCar
   const categoryStyle = CATEGORY_STYLES[template.category] || {
     bg: 'from-slate-500/10 via-gray-500/10 to-slate-600/5',
     gradient: 'from-slate-500 to-gray-600',
-    badge: 'bg-slate-500/10 backdrop-blur-xl border-slate-300/30 text-slate-700'
+    badge: 'bg-[#9A9A9A]/10 backdrop-blur-xl border-[#C9C6BD]/30 text-[#111111]'
   };
 
   return (
@@ -90,7 +90,7 @@ export default function TemplateCard({ template, onPreview, onUse }: TemplateCar
       onHoverEnd={() => setIsHovered(false)}
       className="group relative"
     >
-      <div className="relative bg-white rounded-2xl overflow-hidden border border-slate-200/60 shadow-md shadow-slate-200/50 hover:shadow-xl hover:shadow-slate-300/50 hover:border-slate-300/80 transition-all duration-500">
+      <div className="relative bg-white rounded-2xl overflow-hidden border border-[#E3E1DA]/60 shadow-md shadow-slate-200/50 hover:shadow-xl hover:shadow-slate-300/50 hover:border-[#C9C6BD]/80 transition-all duration-500">
         
         {/* Large Template Preview - 70% of card */}
         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100">
@@ -110,24 +110,24 @@ export default function TemplateCard({ template, onPreview, onUse }: TemplateCar
                 <div className="space-y-2">
                   <div className={`h-8 w-8 rounded-xl bg-gradient-to-br ${categoryStyle.gradient} shadow-md`} />
                   <div className="h-2.5 bg-slate-300/50 rounded-full w-3/4" />
-                  <div className="h-2 bg-slate-200/50 rounded-full w-full" />
-                  <div className="h-2 bg-slate-200/50 rounded-full w-5/6" />
+                  <div className="h-2 bg-[#E3E1DA]/50 rounded-full w-full" />
+                  <div className="h-2 bg-[#E3E1DA]/50 rounded-full w-5/6" />
                 </div>
                 
                 {/* Simulated content blocks */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="h-12 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/40 p-2">
+                  <div className="h-12 bg-white/60 backdrop-blur-sm rounded-lg border border-[#E3E1DA]/40 p-2">
                     <div className="h-1.5 bg-slate-300/40 rounded w-8 mb-1" />
                     <div className="h-2 bg-slate-400/50 rounded w-10" />
                   </div>
-                  <div className="h-12 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/40 p-2">
+                  <div className="h-12 bg-white/60 backdrop-blur-sm rounded-lg border border-[#E3E1DA]/40 p-2">
                     <div className="h-1.5 bg-slate-300/40 rounded w-8 mb-1" />
                     <div className="h-2 bg-slate-400/50 rounded w-10" />
                   </div>
                 </div>
 
                 {/* Simulated chart */}
-                <div className="h-16 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/40 p-2 flex items-end gap-1">
+                <div className="h-16 bg-white/60 backdrop-blur-sm rounded-lg border border-[#E3E1DA]/40 p-2 flex items-end gap-1">
                   <div className="flex-1 bg-slate-300/50 rounded h-8" />
                   <div className="flex-1 bg-slate-400/50 rounded h-10" />
                   <div className="flex-1 bg-slate-300/50 rounded h-6" />
@@ -159,7 +159,7 @@ export default function TemplateCard({ template, onPreview, onUse }: TemplateCar
               className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:scale-110 transition-transform"
             >
               <Heart
-                className={`w-3.5 h-3.5 transition-colors ${isFav ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                className={`w-3.5 h-3.5 transition-colors ${isFav ? 'fill-red-500 text-[#D96A6A]' : 'text-[#C9C6BD]'}`}
               />
             </button>
           )}
@@ -189,7 +189,7 @@ export default function TemplateCard({ template, onPreview, onUse }: TemplateCar
               onClick={() => onPreview(template)}
               variant="outline"
               size="sm"
-              className="bg-white/95 backdrop-blur-md border-white/40 hover:bg-white text-slate-900 font-semibold shadow-xl text-xs"
+              className="bg-white/95 backdrop-blur-md border-white/40 hover:bg-white text-[#111111] font-semibold shadow-xl text-xs"
             >
               <Eye className="w-3 h-3 mr-1.5" />
               Preview
@@ -208,12 +208,12 @@ export default function TemplateCard({ template, onPreview, onUse }: TemplateCar
         {/* Template Info - Bottom 30% */}
         <div className="p-3 space-y-2">
           {/* Title */}
-          <h3 className="text-sm font-bold text-slate-900 leading-tight group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-violet-600 group-hover:to-cyan-600 group-hover:bg-clip-text transition-all duration-300 line-clamp-1">
+          <h3 className="text-sm font-bold text-[#111111] leading-tight group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-violet-600 group-hover:to-cyan-600 group-hover:bg-clip-text transition-all duration-300 line-clamp-1">
             {template.name}
           </h3>
 
           {/* Description */}
-          <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+          <p className="text-xs text-[#6B6B6B] leading-relaxed line-clamp-2">
             {template.description}
           </p>
 
@@ -223,7 +223,7 @@ export default function TemplateCard({ template, onPreview, onUse }: TemplateCar
               <Badge
                 key={tag}
                 variant="outline"
-                className="text-[10px] px-2 py-0 rounded-full border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+                className="text-[10px] px-2 py-0 rounded-full border-[#C9C6BD] bg-[#EDEBE6] text-[#111111] hover:bg-[#F1F0EC] transition-colors"
               >
                 {tag}
               </Badge>
@@ -231,7 +231,7 @@ export default function TemplateCard({ template, onPreview, onUse }: TemplateCar
             {template.tags.length > 2 && (
               <Badge
                 variant="outline"
-                className="text-[10px] px-2 py-0 rounded-full border-slate-300 bg-slate-50 text-slate-700"
+                className="text-[10px] px-2 py-0 rounded-full border-[#C9C6BD] bg-[#EDEBE6] text-[#111111]"
               >
                 +{template.tags.length - 2}
               </Badge>

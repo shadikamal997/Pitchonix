@@ -80,7 +80,7 @@ const GradientRow: React.FC<{
       <button
         type="button"
         onClick={() => onChange({ kind: 'linear', angle: 180, stops: [{ color: '#22c55e', offset: 0 }, { color: '#16a34a', offset: 1 }] })}
-        className="w-full h-7 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded"
+        className="w-full h-7 text-[11px] font-semibold bg-[#F1F0EC] hover:bg-[#E3E1DA] text-[#111111] rounded"
       >
         Add gradient
       </button>
@@ -112,7 +112,7 @@ const GradientRow: React.FC<{
       <button
         type="button"
         onClick={() => onChange(undefined)}
-        className="text-[10px] font-semibold text-red-600 hover:text-red-800"
+        className="text-[10px] font-semibold text-[#9a3737] hover:text-[#7a2929]"
       >
         Remove gradient
       </button>

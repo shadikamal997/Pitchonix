@@ -31,11 +31,11 @@ export default function StepBrandSelection({ selectedBrandKitId, onSelect }: Pro
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <Palette className="w-6 h-6 text-purple-600" />
+        <h2 className="text-2xl font-bold text-[#111111] flex items-center gap-2">
+          <Palette className="w-6 h-6 text-[#4F7563]" />
           Brand Selection
         </h2>
-        <p className="text-sm text-slate-600 mt-1">
+        <p className="text-sm text-[#6B6B6B] mt-1">
           Pick a brand kit and your deck will inherit colors, fonts, logo, and voice automatically. Or skip to set them manually in the Design step.
         </p>
       </div>
@@ -46,30 +46,30 @@ export default function StepBrandSelection({ selectedBrandKitId, onSelect }: Pro
         onClick={() => onSelect(null)}
         className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-colors text-left ${
           !selectedBrandKitId
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-slate-200 hover:border-slate-300 bg-white'
+            ? 'border-[#4F7563] bg-[#EEF5F1]'
+            : 'border-[#E3E1DA] hover:border-[#C9C6BD] bg-white'
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-            <X className="w-5 h-5 text-slate-400" />
+          <div className="w-10 h-10 rounded-lg bg-[#F1F0EC] flex items-center justify-center">
+            <X className="w-5 h-5 text-[#C9C6BD]" />
           </div>
           <div>
-            <div className="text-sm font-semibold text-slate-900">No brand kit</div>
-            <div className="text-xs text-slate-500">Use the Design step to pick colors + fonts manually.</div>
+            <div className="text-sm font-semibold text-[#111111]">No brand kit</div>
+            <div className="text-xs text-[#9A9A9A]">Use the Design step to pick colors + fonts manually.</div>
           </div>
         </div>
-        {!selectedBrandKitId && <Check className="w-5 h-5 text-blue-600" />}
+        {!selectedBrandKitId && <Check className="w-5 h-5 text-[#4F7563]" />}
       </button>
 
       {/* Brand kit cards */}
       {loading ? (
-        <div className="text-sm text-slate-500">Loading brand kits…</div>
+        <div className="text-sm text-[#9A9A9A]">Loading brand kits…</div>
       ) : items.length === 0 ? (
-        <div className="text-center py-8 px-4 border-2 border-dashed border-slate-300 rounded-lg">
+        <div className="text-center py-8 px-4 border-2 border-dashed border-[#C9C6BD] rounded-lg">
           <Palette className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm text-slate-600 mb-1">No brand kits yet.</p>
-          <Link href="/brand-kits" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+          <p className="text-sm text-[#6B6B6B] mb-1">No brand kits yet.</p>
+          <Link href="/brand-kits" className="inline-flex items-center gap-1 text-sm text-[#4F7563] hover:underline">
             <Plus className="w-3.5 h-3.5" /> Create your first brand kit
           </Link>
         </div>
@@ -88,8 +88,8 @@ export default function StepBrandSelection({ selectedBrandKitId, onSelect }: Pro
 
       {/* Live preview of what the picked kit looks like */}
       {selected && (
-        <div className="pt-4 border-t border-slate-200">
-          <div className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Preview</div>
+        <div className="pt-4 border-t border-[#E3E1DA]">
+          <div className="text-xs font-bold uppercase tracking-wide text-[#9A9A9A] mb-2">Preview</div>
           <BrandPreviewPanel kit={selected} />
         </div>
       )}
@@ -109,13 +109,13 @@ const BrandKitCard: React.FC<{
       onClick={onSelect}
       className={`relative flex items-start gap-3 p-4 rounded-lg border-2 transition-colors text-left ${
         selected
-          ? 'border-blue-500 bg-blue-50'
-          : 'border-slate-200 hover:border-slate-300 bg-white'
+          ? 'border-[#4F7563] bg-[#EEF5F1]'
+          : 'border-[#E3E1DA] hover:border-[#C9C6BD] bg-white'
       }`}
     >
       {/* Logo or colored block */}
       {kit.logo ? (
-        <img src={kit.logo} alt="" className="w-12 h-12 object-contain rounded-lg bg-white border border-slate-200 flex-shrink-0" />
+        <img src={kit.logo} alt="" className="w-12 h-12 object-contain rounded-lg bg-white border border-[#E3E1DA] flex-shrink-0" />
       ) : (
         <div
           className="w-12 h-12 rounded-lg flex-shrink-0"
@@ -124,13 +124,13 @@ const BrandKitCard: React.FC<{
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <div className="text-sm font-semibold text-slate-900 truncate">{kit.name}</div>
+          <div className="text-sm font-semibold text-[#111111] truncate">{kit.name}</div>
           {kit.isDefault && (
-            <span className="text-[9px] uppercase tracking-wide bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold">Default</span>
+            <span className="text-[9px] uppercase tracking-wide bg-[#DDE8E1] text-[#263F34] px-1.5 py-0.5 rounded font-bold">Default</span>
           )}
         </div>
         {kit.description && (
-          <div className="text-xs text-slate-500 truncate mt-0.5">{kit.description}</div>
+          <div className="text-xs text-[#9A9A9A] truncate mt-0.5">{kit.description}</div>
         )}
         {/* Color swatches */}
         <div className="flex items-center gap-1 mt-2">
@@ -138,14 +138,14 @@ const BrandKitCard: React.FC<{
           <span className="w-4 h-4 rounded-sm ring-1 ring-slate-200" style={{ background: secondary }} />
           <span className="w-4 h-4 rounded-sm ring-1 ring-slate-200" style={{ background: accent }} />
           {kit.fontFamily && (
-            <span className="ml-1 text-[10px] text-slate-500 font-mono" style={{ fontFamily: kit.fontFamily }}>
+            <span className="ml-1 text-[10px] text-[#9A9A9A] font-mono" style={{ fontFamily: kit.fontFamily }}>
               {kit.fontFamily.split(',')[0]}
             </span>
           )}
         </div>
       </div>
       {selected && (
-        <Check className="absolute top-3 right-3 w-5 h-5 text-blue-600" />
+        <Check className="absolute top-3 right-3 w-5 h-5 text-[#4F7563]" />
       )}
     </button>
   );

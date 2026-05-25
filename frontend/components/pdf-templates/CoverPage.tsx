@@ -43,7 +43,7 @@ export const CoverPage: React.FC<CoverPageProps> = ({
             </div>
           )}
           {date && (
-            <div className="text-sm text-slate-600" style={{ fontSize: '10pt' }}>
+            <div className="text-sm text-[#6B6B6B]" style={{ fontSize: '10pt' }}>
               {date}
             </div>
           )}
@@ -77,7 +77,7 @@ export const CoverPage: React.FC<CoverPageProps> = ({
           {/* Subtitle */}
           {subtitle && (
             <p
-              className="text-2xl text-slate-600 max-w-2xl"
+              className="text-2xl text-[#6B6B6B] max-w-2xl"
               style={{ fontSize: '18pt', lineHeight: '1.5' }}
             >
               {subtitle}
@@ -89,11 +89,11 @@ export const CoverPage: React.FC<CoverPageProps> = ({
         <div className="flex justify-between items-end">
           <div>
             {author && (
-              <p className="text-sm text-slate-600 mb-1" style={{ fontSize: '10pt' }}>
+              <p className="text-sm text-[#6B6B6B] mb-1" style={{ fontSize: '10pt' }}>
                 Prepared by
               </p>
             )}
-            <p className="font-semibold text-slate-900" style={{ fontSize: '12pt' }}>
+            <p className="font-semibold text-[#111111]" style={{ fontSize: '12pt' }}>
               {author || companyName}
             </p>
           </div>
