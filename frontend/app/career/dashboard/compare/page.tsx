@@ -68,16 +68,18 @@ export default function SnapshotComparePage() {
     })();
   }, [bId]);
 
+  const [info, setInfo] = useState<string | null>(null);
+
   const restore = async (snap: SnapshotFull) => {
     if (!snap?.profileJson) {
-      alert('Snapshot has no profile payload to restore.');
+      setInfo('Snapshot has no profile payload to restore.');
       return;
     }
     if (!window.confirm(`Restore profile from snapshot "${snap.label || snap.id}"? This will overwrite the saved profile.`)) return;
-    setBusy(true); setErr(null);
+    setBusy(true); setErr(null); setInfo(null);
     try {
       await api.post('/career/analyze/save', { profile: snap.profileJson, doctype: 'cv', title: 'Restored CV' });
-      alert('Restored. Open /career/builder to see the result.');
+      setInfo('Restored. Open the builder to see the result.');
     } catch (e: any) { setErr(e?.response?.data?.message || e?.message); }
     finally { setBusy(false); }
   };
@@ -95,7 +97,10 @@ export default function SnapshotComparePage() {
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-5">
-        {err && <div className="bg-red-50 border border-red-200 text-red-800 text-xs rounded p-3">{err}</div>}
+        {err  && <div className="bg-red-50  border border-red-200  text-red-800  text-xs rounded p-3">{err}</div>}
+        {info && <div className="bg-green-50 border border-green-200 text-green-900 text-xs rounded p-3 flex items-center gap-2">{info}
+          <Link href="/career" className="underline ml-1">go to career →</Link>
+        </div>}
 
         {/* Pickers + side-by-side score row */}
         <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">

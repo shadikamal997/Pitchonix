@@ -55,14 +55,24 @@ export default function CareerWorkspacePage() {
         const { data } = await api.post('/career/documents', { doctype, title: defaultTitles[doctype] });
         router.replace(`/career/builder/${data.id}`);
       } catch (e: any) {
-        alert(`Failed to create ${doctype}: ${e?.response?.data?.message || e?.message}`);
-        router.replace('/career');
+        // Phase 42.6 — surface auto-create errors as a query param the page
+        // can render inline; previously this was a window.alert.
+        console.error('career auto-create failed:', e);
+        router.replace(`/career?create_error=${encodeURIComponent(e?.response?.data?.message || e?.message || 'unknown')}`);
       }
     })();
   }, [params, router]);
 
+  const createError = params?.get('create_error');
+
   return (
     <div className="min-h-screen bg-slate-50">
+      {createError && (
+        <div className="bg-red-50 border-b border-red-200 text-red-800 text-xs px-6 py-2">
+          Couldn't auto-create that document: {createError}.{' '}
+          <button onClick={() => router.replace('/career')} className="underline">dismiss</button>
+        </div>
+      )}
       <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
         <Link href="/dashboard" className="text-xs text-slate-500 hover:text-slate-900">← Back</Link>
         <div className="h-5 w-px bg-slate-200" />
@@ -110,22 +120,49 @@ export default function CareerWorkspacePage() {
 //  Profile tab
 // =============================================================================
 
+interface ImportResult {
+  filename:        string;
+  warnings:        string[];
+  counts:          Record<string, number>;
+  debug?:          any;
+  failedMessage?:  string;
+}
+
 const ProfileTab: React.FC = () => {
   const { profile, loading, patchPersonal, importFile, importLinkedIn } = useCvProfile();
   const [busy, setBusy] = useState(false);
   const [linkedinOpen, setLinkedinOpen] = useState(false);
+  const [lastImport, setLastImport] = useState<ImportResult | null>(null);
   if (loading && !profile) return <Loader />;
   if (!profile) return <div className="text-xs text-slate-500 italic">No profile.</div>;
   const p = profile.personal || {};
 
   const onFile = async (file?: File) => {
     if (!file) return;
-    setBusy(true);
+    setBusy(true); setLastImport(null);
     try {
       const res = await importFile(file);
-      if (res?.warnings?.length) alert(`Imported with ${res.warnings.length} warning(s):\n\n${res.warnings.join('\n')}`);
-    } catch (e: any) { alert(`Import failed: ${e?.response?.data?.message || e?.message}`); }
-    finally { setBusy(false); }
+      const c: Record<string, number> = {};
+      if (res?.profile) {
+        c.Experience     = res.profile.experience?.length     || 0;
+        c.Education      = res.profile.education?.length      || 0;
+        c.Skills         = res.profile.skills?.length         || 0;
+        c.Languages      = res.profile.languages?.length      || 0;
+        c.Projects       = res.profile.projects?.length       || 0;
+        c.Certifications = res.profile.certifications?.length || 0;
+      }
+      setLastImport({
+        filename: file.name,
+        warnings: res?.warnings || [],
+        counts:   c,
+        debug:    res?.debug,
+      });
+    } catch (e: any) {
+      setLastImport({
+        filename: file.name, warnings: [], counts: {},
+        failedMessage: e?.response?.data?.message || e?.message || 'Import failed',
+      });
+    } finally { setBusy(false); }
   };
 
   return (
@@ -197,18 +234,32 @@ const ProfileTab: React.FC = () => {
         <p className="text-[10px] text-slate-500 mt-1">
           Runs through Universal Conversion → maps sections onto your profile.
         </p>
+
+        {/* Phase 42.6 — inline import-result card (replaces window.alert) */}
+        {lastImport && <ImportResultCard result={lastImport} onDismiss={() => setLastImport(null)} />}
       </section>
 
       {linkedinOpen && (
         <LinkedInImportModal
           onClose={() => setLinkedinOpen(false)}
           onImport={async (payload) => {
-            setBusy(true);
+            setBusy(true); setLastImport(null);
             try {
-              await importLinkedIn(payload);
+              const res = await importLinkedIn(payload);
               setLinkedinOpen(false);
+              const c: Record<string, number> = {};
+              if ((res as any)?.profile) {
+                const p2 = (res as any).profile;
+                c.Experience     = p2.experience?.length     || 0;
+                c.Education      = p2.education?.length      || 0;
+                c.Skills         = p2.skills?.length         || 0;
+                c.Languages      = p2.languages?.length      || 0;
+                c.Certifications = p2.certifications?.length || 0;
+              }
+              setLastImport({ filename: 'LinkedIn', warnings: (res as any)?.warnings || [], counts: c });
             } catch (e: any) {
-              alert(`Import failed: ${e?.response?.data?.message || e?.message}`);
+              setLastImport({ filename: 'LinkedIn', warnings: [], counts: {},
+                failedMessage: e?.response?.data?.message || e?.message || 'Import failed' });
             } finally {
               setBusy(false);
             }
@@ -227,6 +278,98 @@ const ProfileTab: React.FC = () => {
 //  exports from their LinkedIn settings, (2) paste a public profile URL
 //  which the backend scrapes.
 // =============================================================================
+// =============================================================================
+//  Phase 42.6 — Import result card (replaces native window.alert).
+//
+//  Shows a structured summary of what came out of the import:
+//    - extracted section counts (Experience / Education / Skills / …)
+//    - warnings (one line each, severity-tinted)
+//    - dev-mode debug accordion (raw text preview, detected / unknown headings)
+//    - "Analyze this CV" CTA that links to /career/analyze where the
+//      analyzer can do a stronger pass
+// =============================================================================
+const ImportResultCard: React.FC<{ result: ImportResult; onDismiss: () => void }> = ({ result, onDismiss }) => {
+  const total = Object.values(result.counts).reduce((s, n) => s + n, 0);
+  const sparse = !result.failedMessage && total <= 0;
+  const failed = !!result.failedMessage;
+  const partial = !failed && (result.warnings.length > 0 || sparse);
+  const tone =
+    failed  ? 'bg-red-50 border-red-200 text-red-900' :
+    partial ? 'bg-amber-50 border-amber-200 text-amber-900' :
+              'bg-green-50 border-green-200 text-green-900';
+  const Icon =
+    failed  ? require('lucide-react').XCircle :
+    partial ? require('lucide-react').AlertTriangle :
+              require('lucide-react').CheckCircle2;
+
+  return (
+    <div className={`mt-3 border rounded-lg p-3 ${tone}`}>
+      <div className="flex items-start gap-2">
+        <Icon className="w-4 h-4 flex-shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-bold">
+              {failed  ? 'Import failed'
+                : sparse ? `Imported "${result.filename}" — only personal info recognised`
+                : partial ? `Imported "${result.filename}" with warnings`
+                : `Imported "${result.filename}"`}
+            </span>
+            <button onClick={onDismiss} className="ml-auto text-[10px] opacity-70 hover:opacity-100 underline">dismiss</button>
+          </div>
+
+          {failed && <p className="text-[12px]">{result.failedMessage}</p>}
+
+          {!failed && (
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {Object.entries(result.counts).map(([k, n]) => (
+                <span key={k} className={`text-[10px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded ${n > 0 ? 'bg-white/70' : 'bg-white/30 opacity-50'}`}>
+                  {k} {n}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {result.warnings.length > 0 && (
+            <ul className="mt-2 space-y-0.5 text-[11px] list-disc ml-4">
+              {result.warnings.map((w, i) => <li key={i}>{w}</li>)}
+            </ul>
+          )}
+
+          {(sparse || partial) && !failed && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Link href="/career/analyze"
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded">
+                <Sparkles className="w-3 h-3" /> Analyze this CV
+              </Link>
+              <span className="text-[10px] opacity-70">The analyzer runs a stronger classification pass on the extracted text.</span>
+            </div>
+          )}
+
+          {result.debug && (
+            <details className="mt-2 text-[10px]">
+              <summary className="cursor-pointer font-mono opacity-80">Developer debug (mappedSections, detected/unknown headings, raw text)</summary>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                <DebugBlock title="Mapped sections" value={JSON.stringify(result.debug.mappedSections, null, 2)} />
+                <DebugBlock title="Detected headings" value={(result.debug.detectedHeadings || []).join('\n') || '— none —'} />
+                <DebugBlock title="Unknown headings"  value={(result.debug.unknownHeadings  || []).join('\n') || '— none —'} />
+                <DebugBlock title={`Raw text (first ${result.debug.rawTextPreview?.length || 0} chars)`} value={result.debug.rawTextPreview || ''} />
+              </div>
+              <p className="mt-1 italic opacity-70">used fallback heuristics: {String(result.debug.usedFallback)} · total lines: {result.debug.totalLines}</p>
+            </details>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DebugBlock: React.FC<{ title: string; value: string }> = ({ title, value }) => (
+  <div>
+    <div className="text-[9px] uppercase tracking-wide opacity-70">{title}</div>
+    <pre className="bg-white/70 border border-white/80 rounded p-1.5 text-[10px] font-mono overflow-auto max-h-28 whitespace-pre-wrap">{value}</pre>
+  </div>
+);
+
 const LinkedInImportModal: React.FC<{
   onClose:  () => void;
   onImport: (payload: any) => void | Promise<void>;
@@ -235,17 +378,18 @@ const LinkedInImportModal: React.FC<{
   const [url,  setUrl]  = useState('');
   const [json, setJson] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    setSubmitting(true);
+    setSubmitting(true); setFormError(null);
     try {
       if (mode === 'url') {
-        if (!url.trim()) { alert('Please enter a LinkedIn URL'); return; }
+        if (!url.trim()) { setFormError('Please enter a LinkedIn URL'); return; }
         await onImport({ url: url.trim() });
       } else {
         let payload: any;
         try { payload = JSON.parse(json); }
-        catch { alert('Invalid JSON'); return; }
+        catch { setFormError('That doesn\'t parse as valid JSON.'); return; }
         await onImport(payload);
       }
     } finally { setSubmitting(false); }
@@ -293,6 +437,9 @@ const LinkedInImportModal: React.FC<{
           </div>
         )}
 
+        {formError && (
+          <div className="mt-3 bg-red-50 border border-red-200 text-red-800 text-[11px] rounded p-2">{formError}</div>
+        )}
         <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
           <button onClick={handleSubmit} disabled={submitting}
             className="flex-1 h-8 px-3 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 inline-flex items-center justify-center gap-1">

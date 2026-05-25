@@ -97,7 +97,7 @@ export function useCvProfile() {
   const importFile = async (file: File) => {
     if (!profile) return null;
     const form = new FormData(); form.append('file', file);
-    const { data } = await api.post<{ profile: CvProfileDto; warnings: string[] }>(
+    const { data } = await api.post<{ profile: CvProfileDto; warnings: string[]; debug?: any }>(
       `/career/profile/${profile.id}/import/file`, form,
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );

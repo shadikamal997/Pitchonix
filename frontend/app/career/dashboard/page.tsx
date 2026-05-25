@@ -43,12 +43,21 @@ export default function CareerDashboardPage() {
   const latestInterview = snapshots.find((s) => s.kind === 'interview');
   const latestMatch     = snapshots.find((s) => s.kind === 'job-match');
 
+  // Phase 42.6 — inline toast (replaces window.alert).
+  const [toast, setToast] = useState<{ tone: 'error' | 'success'; msg: string } | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   const deleteSnapshot = async (id: string) => {
     if (!window.confirm('Delete this snapshot?')) return;
     try {
       await api.delete(`/career/analyze/snapshots/${id}`);
       loadSnapshots();
-    } catch (e: any) { alert(e?.response?.data?.message || e?.message); }
+      setToast({ tone: 'success', msg: 'Snapshot deleted.' });
+    } catch (e: any) { setToast({ tone: 'error', msg: e?.response?.data?.message || e?.message || 'Delete failed' }); }
   };
 
   const wipeHistory = async () => {
@@ -56,11 +65,19 @@ export default function CareerDashboardPage() {
     try {
       await api.delete('/career/analyze/snapshots');
       loadSnapshots();
-    } catch (e: any) { alert(e?.response?.data?.message || e?.message); }
+      setToast({ tone: 'success', msg: 'Analysis history cleared.' });
+    } catch (e: any) { setToast({ tone: 'error', msg: e?.response?.data?.message || e?.message || 'Delete failed' }); }
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 max-w-sm border rounded-lg shadow-lg px-3 py-2 text-xs ${
+          toast.tone === 'error' ? 'bg-red-50 border-red-200 text-red-900' : 'bg-green-50 border-green-200 text-green-900'
+        }`}>
+          {toast.msg}
+        </div>
+      )}
       <header className="bg-white border-b border-slate-200 px-6 h-14 flex items-center gap-3">
         <Link href="/career" className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1">
           <ArrowLeft className="w-3 h-3" /> Career
