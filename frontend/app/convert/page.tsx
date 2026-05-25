@@ -431,11 +431,13 @@ const HistoryPanel: React.FC = () => {
     } catch (e: any) { setErr(e?.response?.data?.message || e?.message); }
   };
 
+  const [restoredId, setRestoredId] = useState<string | null>(null);
   const restore = async (id: string) => {
     if (!window.confirm('Restore this conversion result?')) return;
     try {
       await api.post(`/convert/restore/${id}`);
-      alert('Restored');
+      setRestoredId(id);
+      setTimeout(() => setRestoredId(null), 3000);
       refresh();
     } catch (e: any) { setErr(e?.response?.data?.message || e?.message); }
   };
@@ -450,6 +452,11 @@ const HistoryPanel: React.FC = () => {
         </button>
       </div>
       {err && <div className="bg-red-50 border border-red-200 text-red-800 text-xs rounded p-2">{err}</div>}
+      {restoredId && (
+        <div className="bg-green-50 border border-green-200 text-green-900 text-xs rounded p-2 inline-flex items-center gap-2">
+          <CheckCircle2 className="w-3 h-3" /> Restored conversion <span className="font-mono">{restoredId}</span>
+        </div>
+      )}
       {items.length === 0 && !busy && (
         <p className="text-xs text-slate-500 italic">No past conversions yet.</p>
       )}

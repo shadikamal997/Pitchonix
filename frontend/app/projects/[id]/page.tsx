@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api';
 import { ArrowLeft, Edit, FileText, Loader2, TrendingUp, Share2, Image as ImageIcon } from 'lucide-react';
 import ShareProjectModal from '@/components/ShareProjectModal';
+import { useToast } from '@/components/ToastProvider';
 import { BrandAssetsModal } from '@/components/BrandAssetsModal';
 import { QualityScoreBadge } from '@/components/quality/QualityScoreBadge';
 import { GenerationProgress } from '@/components/quality/GenerationProgress';
@@ -36,6 +37,7 @@ interface Project {
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const toast = useToast();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
@@ -233,7 +235,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                         // Start polling for completion
                         pollIntervalRef.current = setInterval(() => fetchProject(true), 3000);
                       } catch (err: any) {
-                        alert(err?.response?.data?.message || err?.message || 'Could not start generation');
+                        toast.error(err?.response?.data?.message || err?.message || 'Could not start generation');
                       } finally {
                         setLoading(false);
                       }
@@ -272,7 +274,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                           fetchProject(); // Refresh to show generating status
                         } catch (error: any) {
                           console.error('Failed to start generation:', error);
-                          alert(error.response?.data?.message || 'Failed to start generation');
+                          toast.error(error.response?.data?.message || 'Failed to start generation');
                         } finally {
                           setLoading(false);
                         }

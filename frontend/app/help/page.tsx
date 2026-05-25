@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
-import { HelpCircle, BookOpen, MessageCircle, FileText, Zap, ExternalLink } from 'lucide-react';
+import { HelpCircle, MessageCircle, FileText, Zap, ExternalLink } from 'lucide-react';
 
 const FAQ = [
   {
@@ -115,23 +115,9 @@ export default function HelpPage() {
               </div>
             </div>
 
-            {/* Documentation — coming soon */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-start gap-4">
-                <div className="bg-green-100 rounded-lg p-3 flex-shrink-0">
-                  <BookOpen className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-xl font-semibold text-gray-900">Full Documentation</h2>
-                    <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">Coming Soon</span>
-                  </div>
-                  <p className="text-gray-600 text-sm">
-                    Detailed guides, API reference, and advanced tutorials are in development. In the meantime, refer to the FAQ below or contact support.
-                  </p>
-                </div>
-              </div>
-            </div>
+            {/* Phase Ω.3 — Removed "Full Documentation — Coming Soon" block.
+                FAQ + Getting Started below cover the same surface honestly;
+                a teaser card for non-existent docs was misleading. */}
 
             {/* FAQ */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">

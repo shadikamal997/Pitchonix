@@ -8,6 +8,7 @@ import {
   Files, Shield, Layout, Loader2,
 } from 'lucide-react';
 import { useBrandKit, importBrandKit } from '@/features/brand-kits/useBrandKits';
+import { useToast } from '@/components/ToastProvider';
 import { BrandPreviewPanel } from '@/features/brand-kits/BrandPreviewPanel';
 import { BrandAuditPanel } from '@/features/brand-kits/BrandAuditPanel';
 import { Download, Upload as UploadIcon, Share2, Archive, PackageOpen } from 'lucide-react';
@@ -498,6 +499,7 @@ const ExportButton: React.FC<{ detail: ReturnType<typeof useBrandKit> }> = ({ de
 //  Phase 37.1E — Import button (uploads brand-kit.json → POST /brand-kits/import)
 // =============================================================================
 const ImportButton: React.FC = () => {
+  const toast = useToast();
   const onFile = async (file: File | undefined) => {
     if (!file) return;
     try {
@@ -506,7 +508,7 @@ const ImportButton: React.FC = () => {
       const created = await importBrandKit(payload);
       window.location.href = `/brand-kits/${created.id}`;
     } catch (e: any) {
-      alert(`Import failed: ${e?.message || e}`);
+      toast.error(`Import failed: ${e?.message || e}`);
     }
   };
   return (
@@ -530,6 +532,7 @@ const ImportButton: React.FC = () => {
 // =============================================================================
 const ExportZipButton: React.FC<{ kitId: string; kitName: string }> = ({ kitId, kitName }) => {
   const [busy, setBusy] = React.useState(false);
+  const toast = useToast();
   const onClick = async () => {
     setBusy(true);
     try {
@@ -541,7 +544,7 @@ const ExportZipButton: React.FC<{ kitId: string; kitName: string }> = ({ kitId, 
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     } catch (e: any) {
-      alert(`Export ZIP failed: ${e?.response?.data?.message || e?.message || e}`);
+      toast.error(`Export ZIP failed: ${e?.response?.data?.message || e?.message || e}`);
     } finally { setBusy(false); }
   };
   return (
@@ -561,6 +564,7 @@ const ExportZipButton: React.FC<{ kitId: string; kitName: string }> = ({ kitId, 
 // =============================================================================
 const ImportZipButton: React.FC = () => {
   const [busy, setBusy] = React.useState(false);
+  const toast = useToast();
   const onFile = async (file: File | undefined) => {
     if (!file) return;
     setBusy(true);
@@ -572,7 +576,7 @@ const ImportZipButton: React.FC = () => {
       });
       if (data?.id) window.location.href = `/brand-kits/${data.id}`;
     } catch (e: any) {
-      alert(`Import ZIP failed: ${e?.response?.data?.message || e?.message || e}`);
+      toast.error(`Import ZIP failed: ${e?.response?.data?.message || e?.message || e}`);
     } finally { setBusy(false); }
   };
   return (

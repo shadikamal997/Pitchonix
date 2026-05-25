@@ -8,6 +8,7 @@ import {
 import { useMyBrandKits } from './useBrandKits';
 import api from '@/lib/api';
 import { BrandPreviewWall } from './BrandPreviewWall';
+import { useToast } from '@/components/ToastProvider';
 
 // =============================================================================
 //  Phase 37.3A — BrandKitPicker (canonical)
@@ -83,6 +84,8 @@ export const BrandKitPicker: React.FC<Props> = (props) => {
 // -----------------------------------------------------------------------------
 const BrandKitPickerDropdown: React.FC<Props> = (props) => {
   const { items, loading } = useMyBrandKits();
+  const toast = useToast();
+  const onApplyError = (msg: string) => toast.error(msg);
   const [open, setOpen] = useState(false);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -124,7 +127,7 @@ const BrandKitPickerDropdown: React.FC<Props> = (props) => {
               setOpen(false);
             }}
             onApply={async (kit) => {
-              await handleApply(props, kit);
+              await handleApply(props, kit, onApplyError);
               setOpen(false);
             }}
             currentValue={props.value}
@@ -141,6 +144,8 @@ const BrandKitPickerDropdown: React.FC<Props> = (props) => {
 // -----------------------------------------------------------------------------
 const BrandKitPickerGrid: React.FC<Props> = (props) => {
   const { items, loading } = useMyBrandKits();
+  const toast = useToast();
+  const onApplyError = (msg: string) => toast.error(msg);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const current = previewId ?? props.value;
 
@@ -153,7 +158,7 @@ const BrandKitPickerGrid: React.FC<Props> = (props) => {
         previewId={current}
         onPreview={setPreviewId}
         onClear={() => handleClear(props)}
-        onApply={(kit) => handleApply(props, kit)}
+        onApply={(kit) => handleApply(props, kit, onApplyError)}
         currentValue={props.value}
         mode={props.mode}
       />
@@ -450,14 +455,15 @@ const BrandKitCard: React.FC<{
 // =============================================================================
 //  Shared apply/clear handlers
 // =============================================================================
-async function handleApply(props: Props, kit: BrandKitLite | null) {
+async function handleApply(props: Props, kit: BrandKitLite | null, onError?: (msg: string) => void) {
   if (props.mode === 'apply') {
     if (!kit) return;
     try {
       await api.post(`/brand-kits/${kit.id}/apply/${props.deckId}`);
       await props.onApplied?.(kit.id, kit);
     } catch (e: any) {
-      window.alert(`Apply failed: ${e?.response?.data?.message || e?.message || e}`);
+      // Phase Ω.3 — surface via inline toast (callback supplied by hook) instead of window.alert.
+      onError?.(`Apply failed: ${e?.response?.data?.message || e?.message || e}`);
     }
   } else {
     await props.onSelect(kit?.id ?? null, kit);
