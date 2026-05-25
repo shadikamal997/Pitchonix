@@ -6,6 +6,7 @@ import { CvProfileDto } from './cv-types';
 import {
   classifyHeadingMultiLang, normaliseLatin, canonicalSkill,
   findDuplicateSkills, findDuplicateExperiences, computeConfidence, runOcrOnPdf,
+  sampleLanguageFromPdf,
   type SectionKey, type ImportConfidence,
 } from './cv-import-pro';
 import { detectOcrLanguages, ImportProgressTracker, type ImportEvent } from './cv-import-polish';
@@ -163,9 +164,25 @@ export class CvImportService {
     const shouldRunOcr = isPdf && (opts?.forceOcr || initialText.length < 200);
     if (shouldRunOcr) {
       try {
-        // Phase 42.8B — detect OCR languages from whatever text we got (or
-        // filename heuristics). When nothing's there, default to English.
-        const langs = detectOcrLanguages(initialText || filename);
+        // Phase 42.8B + 42.9B — pre-OCR language sampling.
+        // If we have very little extracted text, run a fast first-page OCR
+        // sample to detect the language BEFORE the full OCR pass, so we
+        // load the right pack from the start.
+        let langs: string[];
+        if (initialText.length < 50) {
+          const sample = await sampleLanguageFromPdf(buffer, {
+            onProgress: (info) => setProgress({
+              phase: info.phase as any,
+              percent: info.percent,
+              message: info.message,
+              detectedLang: info.detectedLang,
+            }),
+            cancelCheck,
+          });
+          langs = sample.langs;
+        } else {
+          langs = detectOcrLanguages(initialText);
+        }
         ocrLangsUsed = langs;
         this.logger.log(`CV import: triggering OCR fallback (initial=${initialText.length} chars, langs=${langs.join('+')})`);
         setProgress({ phase: 'rendering', percent: 10, message: `Preparing OCR (${langs.join(', ')})…` });
@@ -173,11 +190,16 @@ export class CvImportService {
           langs,
           maxPages: 5,
           onProgress: (info) => setProgress({
-            phase: info.phase === 'recognising' ? 'ocr-page' : 'rendering',
-            percent: info.percent,
-            message: info.message,
-            page: info.page,
-            pagesTotal: info.pagesTotal,
+            // Phase 42.9A + 42.9D — pass through the new phases.
+            phase: info.phase === 'recognising'      ? 'ocr-page'
+                 : info.phase === 'downloading-pack' ? 'downloading-pack'
+                 :                                     'rendering',
+            percent:     info.percent,
+            message:     info.message,
+            page:        info.page,
+            pagesTotal:  info.pagesTotal,
+            packLang:    info.packLang,
+            packPercent: info.packPercent,
           }),
           cancelCheck,
         });

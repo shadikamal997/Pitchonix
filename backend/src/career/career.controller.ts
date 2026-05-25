@@ -6,6 +6,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Public } from '../auth/public.decorator';
 import { GetUser } from '../auth/get-user.decorator';
 import { CvProfilesService }  from './cv-profiles.service';
 import { CvDocumentsService } from './cv-documents.service';
@@ -155,6 +156,45 @@ export class CareerController {
     const p = this.progress.get(jobId);
     if (!p) throw new BadRequestException('Unknown jobId');
     return p;
+  }
+
+  // Phase 42.9A — Server-Sent Events stream for real-time progress.
+  // Frontend uses EventSource against this endpoint; falls back to polling
+  // (GET /import/progress/:jobId) when SSE fails (e.g. behind a proxy that
+  // buffers). Endpoint is @Public because EventSource cannot send Authorization
+  // headers — the jobId itself is an unguessable UUID (random 122 bits of
+  // entropy) and the in-memory tracker self-evicts after 30 minutes. The
+  // payload contains no PII, only progress phase/percent/page counters.
+  @Public()
+  @Get('profile/import/progress/:jobId/stream')
+  importProgressStream(@Param('jobId') jobId: string, @Res() res: Response) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // disable proxy buffering
+    res.flushHeaders?.();
+
+    // Send the current state immediately so the client doesn't wait.
+    const cur = this.progress.get(jobId);
+    if (cur) res.write(`data: ${JSON.stringify(cur)}\n\n`);
+
+    const unsub = this.progress.subscribe(jobId, (p) => {
+      res.write(`data: ${JSON.stringify(p)}\n\n`);
+      if (p.phase === 'done' || p.phase === 'failed' || p.phase === 'cancelled') {
+        // Brief delay so the final event is flushed before close.
+        setTimeout(() => { try { res.end(); } catch { /* */ } }, 50);
+      }
+    });
+
+    // Heartbeat every 15s to keep the connection alive.
+    const heartbeat = setInterval(() => {
+      try { res.write(':\n\n'); } catch { /* */ }
+    }, 15_000);
+
+    // Clean up on client disconnect.
+    const cleanup = () => { clearInterval(heartbeat); unsub(); };
+    res.on('close', cleanup);
+    res.on('finish', cleanup);
   }
 
   @Post('profile/import/cancel/:jobId')

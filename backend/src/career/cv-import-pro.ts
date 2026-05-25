@@ -378,7 +378,76 @@ function clamp(n: number) { return Math.max(0, Math.min(100, Math.round(n))); }
 // =============================================================================
 
 export interface OcrProgressCallback {
-  (info: { phase: 'rendering' | 'recognising' | 'done'; page?: number; pagesTotal?: number; percent: number; message: string }): void;
+  (info: {
+    phase: 'rendering' | 'sampling-lang' | 'downloading-pack' | 'recognising' | 'done';
+    page?: number;
+    pagesTotal?: number;
+    percent: number;
+    message: string;
+    // Phase 42.9D — language-pack download details.
+    packLang?: string;
+    packPercent?: number;
+    // Phase 42.9B — language detected during the sampling pass.
+    detectedLang?: string;
+  }): void;
+}
+
+// =============================================================================
+//  Phase 42.9B — Pre-OCR language sampling.
+//
+//  Strategy:
+//    1. Rasterise just the first page at lower DPI (faster).
+//    2. Run a quick English-only OCR pass (small image, fast).
+//    3. Feed the extracted text into detectOcrLanguages().
+//    4. Return the detected lang codes (always falls back to ['eng']).
+//
+//  We sample with English first because Latin OCR can produce *some*
+//  readable output even for French/German/Spanish/Romanian/Italian/Dutch/
+//  Portuguese, which is enough for the stopword sniff to disambiguate.
+//  Arabic is detected via codepoint presence even in noisy English OCR.
+// =============================================================================
+export async function sampleLanguageFromPdf(buffer: Buffer, opts: { onProgress?: OcrProgressCallback; cancelCheck?: () => boolean } = {}): Promise<{ langs: string[]; sampleText: string }> {
+  const { spawn } = await import('child_process');
+  const fs       = await import('fs');
+  const path     = await import('path');
+  const os       = await import('os');
+  const crypto   = await import('crypto');
+
+  opts.onProgress?.({ phase: 'sampling-lang', percent: 8, message: 'Detecting CV language…' });
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cv-lang-sample-'));
+  const pdfPath = path.join(dir, `${crypto.randomUUID()}.pdf`);
+  fs.writeFileSync(pdfPath, buffer);
+
+  try {
+    // Rasterise only the first page at 100 DPI for speed.
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn('pdftoppm', [
+        '-png', '-r', '100', '-f', '1', '-l', '1',
+        pdfPath, path.join(dir, 'sample'),
+      ], { stdio: 'ignore' });
+      child.on('error', reject);
+      child.on('exit', (c) => c === 0 ? resolve() : reject(new Error(`pdftoppm exited ${c}`)));
+    });
+    if (opts.cancelCheck?.()) return { langs: ['eng'], sampleText: '' };
+
+    const files = fs.readdirSync(dir).filter((f) => f.startsWith('sample-') && f.endsWith('.png'));
+    if (files.length === 0) return { langs: ['eng'], sampleText: '' };
+
+    // Lazy-import tesseract for the sample.
+    let recognize: any;
+    try { recognize = (await import('tesseract.js')).recognize; }
+    catch { return { langs: ['eng'], sampleText: '' }; }
+
+    const { data } = await recognize(path.join(dir, files[0]), 'eng');
+    const text = data?.text || '';
+    const langs = require('./cv-import-polish').detectOcrLanguages(text);
+    const detected = langs[0] || 'eng';
+    opts.onProgress?.({ phase: 'sampling-lang', percent: 12, message: `Detected: ${detected}`, detectedLang: detected });
+    return { langs, sampleText: text };
+  } finally {
+    try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ }
+  }
 }
 
 /**
@@ -453,8 +522,22 @@ export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxP
     try {
       const { data } = await recognize(path.join(dir, page), langs, {
         // Tesseract.js exposes a `logger` callback per chunk of work.
+        // 42.9D — surface lang-pack download as a distinct sub-phase.
         logger: (m: any) => {
           if (typeof m?.progress !== 'number') return;
+          const status = (m.status || '').toLowerCase();
+          // tesseract.js emits "loading language traineddata", "downloading data"
+          // for pack downloads on first use.
+          if (status.includes('loading') && (status.includes('language') || status.includes('traineddata') || status.includes('downloading'))) {
+            opts.onProgress?.({
+              phase:    'downloading-pack',
+              packLang: (opts.langs || ['eng'])[0],
+              packPercent: Math.round(m.progress * 100),
+              percent:  Math.min(15, 5 + Math.round(m.progress * 10)),
+              message:  `Downloading ${(opts.langs || ['eng'])[0].toUpperCase()} OCR model…`,
+            });
+            return;
+          }
           const pagePct = m.progress * (75 / pages.length);
           opts.onProgress?.({
             phase:    'recognising',

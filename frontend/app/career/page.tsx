@@ -144,8 +144,8 @@ const ProfileTab: React.FC = () => {
   if (!profile) return <div className="text-xs text-slate-500 italic">No profile.</div>;
   const p = profile.personal || {};
 
-  // Phase 42.8A — live progress state.
-  const [progress, setProgress] = useState<{ jobId: string; phase: string; percent: number; message: string; page?: number; pagesTotal?: number } | null>(null);
+  // Phase 42.8A + 42.9A — live progress state (SSE-streamed, polling fallback).
+  const [progress, setProgress] = useState<{ jobId: string; phase: string; percent: number; message: string; page?: number; pagesTotal?: number; packLang?: string; packPercent?: number; detectedLang?: string } | null>(null);
 
   const runImport = async (file: File, opts?: { forceOcr?: boolean; sectionMappings?: Record<string, string> }) => {
     setBusy(true); setLastImport(null); setProgress(null);
@@ -327,20 +327,26 @@ const ProfileTab: React.FC = () => {
 //  button while phase is not done/failed/cancelled.
 // =============================================================================
 const ImportProgressCard: React.FC<{
-  p: { jobId: string; phase: string; percent: number; message: string; page?: number; pagesTotal?: number };
+  p: { jobId: string; phase: string; percent: number; message: string; page?: number; pagesTotal?: number; packLang?: string; packPercent?: number; detectedLang?: string };
   onCancel: () => void;
 }> = ({ p, onCancel }) => {
   const phaseLabel = (() => {
     switch (p.phase) {
-      case 'queued':       return 'Queued';
-      case 'extracting':   return 'Extracting text';
-      case 'rendering':    return 'Rendering pages';
-      case 'ocr-page':     return p.page && p.pagesTotal ? `OCR page ${p.page} of ${p.pagesTotal}` : 'OCR';
-      case 'classifying':  return 'Classifying sections';
-      case 'persisting':   return 'Saving';
-      case 'cancelled':    return 'Cancelled';
-      case 'failed':       return 'Failed';
-      default:             return p.phase;
+      case 'queued':            return 'Queued';
+      case 'extracting':        return 'Extracting text';
+      case 'rendering':         return 'Rendering pages';
+      case 'sampling-lang':     return (p as any).detectedLang
+                                ? `Detected language: ${((p as any).detectedLang || '').toUpperCase()}`
+                                : 'Detecting CV language…';
+      case 'downloading-pack':  return (p as any).packLang
+                                ? `Downloading ${((p as any).packLang || '').toUpperCase()} OCR model… ${(p as any).packPercent ?? 0}%`
+                                : 'Downloading OCR model…';
+      case 'ocr-page':          return p.page && p.pagesTotal ? `OCR page ${p.page} of ${p.pagesTotal}` : 'OCR';
+      case 'classifying':       return 'Classifying sections';
+      case 'persisting':        return 'Saving';
+      case 'cancelled':         return 'Cancelled';
+      case 'failed':            return 'Failed';
+      default:                  return p.phase;
     }
   })();
   const v = Math.max(0, Math.min(100, p.percent || 0));

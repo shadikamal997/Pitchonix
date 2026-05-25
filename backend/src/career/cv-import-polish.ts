@@ -17,11 +17,16 @@ import { Injectable } from '@nestjs/common';
 // -----------------------------------------------------------------------------
 export interface ImportProgress {
   jobId:         string;
-  phase:         'queued' | 'extracting' | 'rendering' | 'ocr-page' | 'classifying' | 'persisting' | 'done' | 'failed' | 'cancelled';
+  phase:         'queued' | 'extracting' | 'rendering' | 'sampling-lang' | 'downloading-pack' | 'ocr-page' | 'classifying' | 'persisting' | 'done' | 'failed' | 'cancelled';
   message:       string;
   percent:       number;        // 0..100
   page?:         number;        // current OCR page
   pagesTotal?:   number;
+  // Phase 42.9D — language-pack download visibility.
+  packLang?:     string;        // e.g. 'fra'
+  packPercent?:  number;        // 0..100
+  // Phase 42.9B — detected language on the sampled first page.
+  detectedLang?: string;
   startedAt:     number;
   updatedAt:     number;
   cancelled:     boolean;
@@ -30,14 +35,19 @@ export interface ImportProgress {
   error?:        string;
 }
 
+// New ImportProgress phases (42.9A + 42.9B + 42.9D)
+export type ImportProgressPhase =
+  | 'queued' | 'extracting' | 'rendering' | 'sampling-lang' | 'downloading-pack'
+  | 'ocr-page' | 'classifying' | 'persisting' | 'done' | 'failed' | 'cancelled';
+
 @Injectable()
 export class ImportProgressTracker {
   private jobs = new Map<string, ImportProgress>();
-  // Optional callback fired on every update (used by tests).
+  // Phase 42.9A — per-job SSE subscriber set.
+  private subs = new Map<string, Set<(p: ImportProgress) => void>>();
+
   newJob(clientId?: string): ImportProgress {
     const id = clientId || randomUUID();
-    // If the client supplied an id we already have, just return the existing
-    // entry (avoids clobbering the progress state on a retry).
     const existing = this.jobs.get(id);
     if (existing) return existing;
     const j: ImportProgress = {
@@ -50,25 +60,43 @@ export class ImportProgressTracker {
       cancelled: false,
     };
     this.jobs.set(j.jobId, j);
-    // Self-evict after 30 minutes to bound memory.
-    setTimeout(() => this.jobs.delete(j.jobId), 30 * 60_000);
+    setTimeout(() => { this.jobs.delete(j.jobId); this.subs.delete(j.jobId); }, 30 * 60_000);
     return j;
   }
+
   update(jobId: string, patch: Partial<ImportProgress>): void {
     const cur = this.jobs.get(jobId); if (!cur) return;
     Object.assign(cur, patch, { updatedAt: Date.now() });
+    // Phase 42.9A — fan out to SSE subscribers.
+    const set = this.subs.get(jobId);
+    if (set) for (const fn of set) { try { fn(cur); } catch { /* ignore failed subscriber */ } }
   }
+
   get(jobId: string): ImportProgress | null { return this.jobs.get(jobId) || null; }
+
   cancel(jobId: string): boolean {
     const cur = this.jobs.get(jobId); if (!cur) return false;
     cur.cancelled = true;
     cur.phase = 'cancelled';
     cur.message = 'Cancelled by user';
     cur.updatedAt = Date.now();
+    const set = this.subs.get(jobId);
+    if (set) for (const fn of set) { try { fn(cur); } catch { /* */ } }
     return true;
   }
+
   isCancelled(jobId: string): boolean {
     return !!this.jobs.get(jobId)?.cancelled;
+  }
+
+  // Phase 42.9A — SSE subscriber registration. Returns an unsubscribe fn.
+  subscribe(jobId: string, fn: (p: ImportProgress) => void): () => void {
+    if (!this.subs.has(jobId)) this.subs.set(jobId, new Set());
+    this.subs.get(jobId)!.add(fn);
+    return () => {
+      const set = this.subs.get(jobId);
+      if (set) { set.delete(fn); if (set.size === 0) this.subs.delete(jobId); }
+    };
   }
 }
 

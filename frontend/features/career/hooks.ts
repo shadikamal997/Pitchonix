@@ -102,22 +102,51 @@ export function useCvProfile() {
     const form = new FormData();
     form.append('file', file);
     if (opts?.sectionMappings) form.append('sectionMappings', JSON.stringify(opts.sectionMappings));
-    // Phase 42.8A — client-generated jobId so we can poll from t=0.
     const jobId = opts?.jobId || (typeof crypto !== 'undefined' && (crypto as any).randomUUID ? (crypto as any).randomUUID() : `j-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     const qs = `?jobId=${encodeURIComponent(jobId)}${opts?.forceOcr ? '&forceOcr=1' : ''}`;
 
+    // Phase 42.9A — prefer SSE for real-time streaming, fall back to
+    // polling if EventSource fails to open (proxies, older browsers).
+    let stream: EventSource | null = null;
     let pollTimer: any = null;
-    const stopPolling = () => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
-    // Start polling immediately — backend creates the job at the moment
-    // the POST handler enters importFromFile, so the first GET (200ms
-    // after submit) almost always sees phase='extracting' or beyond.
-    pollTimer = setInterval(async () => {
-      try {
-        const { data } = await api.get(`/career/profile/import/progress/${jobId}`);
-        opts?.onProgress?.(data);
-        if (data.phase === 'done' || data.phase === 'failed' || data.phase === 'cancelled') stopPolling();
-      } catch { /* not yet registered or job evicted */ }
-    }, 500);
+    const baseUrl =
+      typeof window !== 'undefined' && (window as any).NEXT_PUBLIC_API_BASE
+        ? (window as any).NEXT_PUBLIC_API_BASE
+        : (process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001');
+    const stop = () => {
+      if (stream) { try { stream.close(); } catch { /* */ } stream = null; }
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    };
+    const startPolling = () => {
+      pollTimer = setInterval(async () => {
+        try {
+          const { data } = await api.get(`/career/profile/import/progress/${jobId}`);
+          opts?.onProgress?.(data);
+          if (data.phase === 'done' || data.phase === 'failed' || data.phase === 'cancelled') stop();
+        } catch { /* */ }
+      }, 500);
+    };
+    try {
+      if (typeof window !== 'undefined' && typeof EventSource !== 'undefined') {
+        try {
+          stream = new EventSource(`${baseUrl}/api/career/profile/import/progress/${jobId}/stream`);
+          stream.onmessage = (e) => {
+            try {
+              const data = JSON.parse(e.data);
+              opts?.onProgress?.(data);
+              if (data.phase === 'done' || data.phase === 'failed' || data.phase === 'cancelled') stop();
+            } catch { /* */ }
+          };
+          stream.onerror = () => {
+            // SSE failed — close and fall back to polling.
+            if (stream) { try { stream.close(); } catch { /* */ } stream = null; }
+            if (!pollTimer) startPolling();
+          };
+        } catch { startPolling(); }
+      } else {
+        startPolling();
+      }
+    } catch { startPolling(); }
 
     try {
       const { data } = await api.post<{ jobId: string; profile: CvProfileDto; warnings: string[]; debug?: any; confidence?: any; quality?: any }>(
@@ -127,8 +156,8 @@ export function useCvProfile() {
       setProfile(data.profile);
       return { ...data, jobId };
     } finally {
-      // Let the last progress tick land then stop.
-      setTimeout(stopPolling, 800);
+      // Let the last progress tick / event land then stop.
+      setTimeout(stop, 1000);
     }
   };
 
