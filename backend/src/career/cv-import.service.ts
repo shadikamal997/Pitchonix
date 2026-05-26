@@ -243,22 +243,39 @@ export class CvImportService {
     let ocrLangsUsed: string[] | undefined;
 
     // -----------------------------------------------------------------------
-    //  Phase 42.7A — OCR fallback when text extraction is empty / sparse.
+    //  Phase 42.7A / 43.1 / 43.1D — OCR fallback for sparse PDF extraction.
     //
-    //  Phase 43.1 — tighter trigger. We only run OCR automatically when the
-    //  PDF really came back empty (< 80 chars total) AND we can't find any
-    //  obvious heading or contact signal in the extracted text. Many CVs
-    //  contain perfectly extractable text but with a low char count if the
-    //  layout is dense; running OCR on those was both slow and lossy.
+    //  Many CV templates render section *bodies* as font-glyph paths with
+    //  no ToUnicode map: the heading text comes through but the body
+    //  underneath is invisible to the PDF text layer. That's how "Gray and
+    //  Green Simple Professional CV Resume.pdf" got extracted as 4 lines
+    //  even though the file is a real CV with experience/education/skills.
+    //
+    //  Trigger OCR when ANY of the following hold for a PDF:
+    //    - caller passed forceOcr (Recovery Center button)
+    //    - total extracted text is < 80 chars (truly empty extraction)
+    //    - the parser produced fewer than 8 nodes (suspiciously thin — a
+    //      complete CV has dozens of nodes; 8 catches the "name + a few
+    //      headings + nothing else" failure mode).
     //
     //  `forceOcr` still bypasses every check for the Recovery Center button.
     // -----------------------------------------------------------------------
-    const initialText = (udm.pages || []).flatMap((p: any) => p.nodes.map((n: any) => n.text || '')).join('\n').trim();
-    const isPdf = (filename || '').toLowerCase().endsWith('.pdf') || mimetype === 'application/pdf';
-    const hasContactSignal = /[\w.+-]+@[\w.-]+\.[a-z]{2,}|\+?\d[\d\s().-]{6,}|linkedin\.com\/in\/|github\.com\//i.test(initialText);
-    const hasHeadingSignal = /\b(experience|education|skills|languages|summary|profile|contact|projects|certifications|employment|work|professional)\b/i.test(initialText);
-    const looksLikeRealCv  = hasContactSignal || hasHeadingSignal || initialText.length >= 150;
-    const shouldRunOcr     = isPdf && (opts?.forceOcr || (initialText.length < 80 && !looksLikeRealCv));
+    const initialNodes = (udm.pages || []).flatMap((p: any) => p.nodes || []);
+    const initialText  = initialNodes.map((n: any) => n.text || '').join('\n').trim();
+    const isPdf        = (filename || '').toLowerCase().endsWith('.pdf') || mimetype === 'application/pdf';
+    const extractionTooThin = initialNodes.length < 8;
+    const shouldRunOcr = isPdf && (
+      opts?.forceOcr ||
+      initialText.length < 80 ||
+      extractionTooThin
+    );
+    if (shouldRunOcr) {
+      this.logger.log(
+        `[CV-IMPORT] OCR triggered: forceOcr=${!!opts?.forceOcr} ` +
+        `chars=${initialText.length} nodes=${initialNodes.length} ` +
+        `(thinExtraction=${extractionTooThin})`
+      );
+    }
     if (shouldRunOcr) {
       try {
         // Phase 42.8B + 42.9B — pre-OCR language sampling.
