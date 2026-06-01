@@ -1,0 +1,43 @@
+{
+  "profile": {
+    "skills": [
+      "Next.js",
+      "Jira",
+      "Terraform",
+      "JavaScript",
+      "Kubernetes"
+    ],
+    "experience": [
+      {
+        "title": "Junior Software Engineer",
+        "company": "Digital Solutions",
+        "duration": "2025-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "Stanford",
+        "year": "2021",
+        "gpa": "3.9"
+      }
+    ],
+    "contact": {
+      "name": "Morgan Garcia",
+      "email": "morgan.garcia@email.com",
+      "phone": "+1-555-1962",
+      "location": "San Francisco, CA",
+      "github": "github.com/morgangarcia"
+    }
+  },
+  "document": {
+    "title": "Morgan Garcia - Junior Software Engineer",
+    "content": "Morgan Garcia\nJunior Software Engineer\n\nSkills:\nNext.js, Jira, Terraform, JavaScript, Kubernetes\n\nExperience:\nJunior Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

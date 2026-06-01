@@ -23,6 +23,9 @@ export class SlidesService {
         speakerNotes: dto.speakerNotes,
         layoutKey: dto.layoutKey,
         themeKey: dto.themeKey,
+        ...(dto.background   !== undefined ? { background:   dto.background   } : {}),
+        ...(dto.themeTokens  !== undefined ? { themeTokens:  dto.themeTokens  } : {}),
+        ...(dto.metadata     !== undefined ? { metadata:     dto.metadata     } : {}),
       },
     });
     // Phase 34.1A — broadcast structure change to every collaborator.
@@ -286,4 +289,147 @@ export class SlidesService {
     });
     return this.findAll(deckId);
   }
+
+  async applyTemplate(
+    deckId: string,
+    input: {
+      templateId: string;
+      theme: any;
+      blueprint?: { background?: Record<string, any> };
+    },
+  ) {
+    if (!input?.templateId || !input?.theme) {
+      throw new BadRequestException('templateId and theme are required');
+    }
+
+    const slides = await this.prisma.slide.findMany({
+      where: { deckId },
+      orderBy: { order: 'asc' },
+      include: { elements: true },
+    });
+    const themeTokens = stripDefaultBackground(input.theme);
+    const backgroundMap = input.blueprint?.background || {};
+    const defaultBackground = input.theme.defaultBackground || { type: 'solid', color: input.theme.background || '#ffffff' };
+    const appliedAt = new Date().toISOString();
+
+    let elementsRestyled = 0;
+    await this.prisma.$transaction(async (tx) => {
+      for (const slide of slides) {
+        const background = backgroundMap[slide.type] || defaultBackground;
+        const metadata = {
+          ...((slide.metadata as any) || {}),
+          appliedTemplateId: input.templateId,
+          appliedAt,
+        };
+        await tx.slide.update({
+          where: { id: slide.id },
+          data: {
+            background:  (background ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            themeTokens: (themeTokens ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            metadata:    metadata as Prisma.InputJsonValue,
+          },
+        });
+
+        for (const element of slide.elements) {
+          const style = {
+            ...((element.style as any) || {}),
+            ...deriveTemplateElementStyle(input.theme, element),
+          };
+          await tx.slideElement.update({
+            where: { id: element.id },
+            data: { style: style as Prisma.InputJsonValue },
+          });
+          elementsRestyled++;
+        }
+      }
+    });
+
+    this.broadcaster.toDeck(deckId, 'slide.updated', {
+      deckId,
+      templateId: input.templateId,
+      slidesApplied: slides.length,
+      templateApplied: true,
+    });
+
+    return {
+      slidesApplied: slides.length,
+      elementsRestyled,
+      templateId: input.templateId,
+      slides: await this.findAll(deckId),
+    };
+  }
+}
+
+const TEXT_TYPES = new Set(['heading', 'subheading', 'paragraph', 'quote', 'caption', 'label', 'cta', 'footer', 'pageNumber']);
+const ACCENT_TYPES = new Set(['metric', 'kpi', 'stat']);
+const NEUTRAL_FILLS = new Set(['transparent', 'none', '', 'rgba(0,0,0,0)', '#00000000']);
+const NEUTRAL_COLORS = new Set(['transparent', 'none', '']);
+
+function stripDefaultBackground(theme: any) {
+  const { defaultBackground, ...rest } = theme || {};
+  return rest;
+}
+
+function isAbsoluteNeutral(value: string | undefined): boolean {
+  if (!value) return false;
+  const normalized = value.toLowerCase().trim();
+  return normalized === '#ffffff' || normalized === '#000000' || normalized === '#fff' || normalized === '#000' ||
+    normalized === 'white' || normalized === 'black';
+}
+
+function deriveTemplateElementStyle(theme: any, element: any): Record<string, any> {
+  const existing = (element.style || {}) as Record<string, any>;
+  const content = (element.content || {}) as Record<string, any>;
+  const out: Record<string, any> = {};
+
+  if (TEXT_TYPES.has(element.type)) {
+    const isHeading = element.type === 'heading' || element.type === 'subheading';
+    out.fontFamily = isHeading ? theme.fontHeading : theme.fontBody;
+    out.color = ['footer', 'pageNumber', 'caption'].includes(element.type) ? theme.muted : theme.text;
+  }
+
+  if (ACCENT_TYPES.has(element.type)) {
+    out.color = theme.accent;
+    out.fontFamily = theme.fontHeading;
+  }
+
+  if (element.type === 'cta') {
+    out.fill = theme.primary;
+    out.color = '#ffffff';
+    out.fontFamily = theme.fontBody;
+  }
+
+  if (['testimonial', 'teamCard', 'pricingCard', 'comparison', 'swot', 'featureGrid', 'processSteps', 'timeline', 'roadmap'].includes(element.type)) {
+    out.fontFamily = theme.fontBody;
+    out.color = theme.text;
+  }
+
+  if (element.type === 'shape') {
+    const currentFill = existing.fill || content.fill;
+    if (currentFill && !NEUTRAL_FILLS.has(String(currentFill)) && !isAbsoluteNeutral(String(currentFill))) {
+      const lower = String(currentFill).toLowerCase();
+      const looksLikeAccent = lower.includes('accent') || lower.includes('surface');
+      out.fill = looksLikeAccent ? theme.accent : theme.primary;
+      if (existing.stroke) out.stroke = theme.primary;
+    }
+  }
+
+  if (element.type === 'line') {
+    const currentStroke = existing.stroke || content.stroke;
+    if (currentStroke && !NEUTRAL_COLORS.has(String(currentStroke))) out.stroke = theme.accent;
+  }
+
+  if (element.type === 'divider') {
+    const currentStroke = existing.stroke || content.stroke;
+    out.stroke = currentStroke && !NEUTRAL_COLORS.has(String(currentStroke)) ? theme.accent : theme.muted;
+    out.color = theme.muted;
+  }
+
+  if (element.type === 'icon') out.color = theme.primary;
+  if (element.type === 'chart') {
+    out.fill = theme.primary;
+    out.color = theme.accent;
+  }
+
+  return out;
 }

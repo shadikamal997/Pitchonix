@@ -15,7 +15,10 @@ export type ChartKind =
   | 'stackedArea' | 'percentStackedBar' | 'percentStackedArea'
   | 'dualAxis' | 'matrix2x2';
 
-export interface ChartSeries { name: string; values: number[]; color?: string; }
+export interface ChartSeries { name: string; values: number[]; color?: string; colors?: string[]; }
+
+/** When true the SVG builder uses light text/grid colours suitable for a dark card background. */
+export type ChartDarkMode = boolean;
 
 export interface ChartNumberFormat {
   kind?:     'currency' | 'percent' | 'integer' | 'decimal' | 'compact';
@@ -47,4 +50,6 @@ export interface ChartContent {
   insight?:    ChartInsight;
   familyId?:   string;
   numberFormat?: ChartNumberFormat;
+  /** Force light text/grid colors — use when embedding inside a dark card on a light-family slide. */
+  darkMode?:   boolean;
 }

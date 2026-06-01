@@ -1,0 +1,35 @@
+{
+  "title": "Mid-Level Site Reliability Engineer",
+  "category": "devops",
+  "description": "We need an SRE to ensure the reliability and performance of our production systems. We are a mid-size company looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "Linux",
+    "Python",
+    "Kubernetes",
+    "Prometheus",
+    "Grafana",
+    "Incident Response"
+  ],
+  "requiredExperience": "4+ years SRE",
+  "responsibilities": [
+    "Monitor production",
+    "Respond to incidents",
+    "Improve reliability",
+    "Automate operations"
+  ],
+  "qualifications": [
+    "Strong Linux skills",
+    "Monitoring expertise",
+    "On-call experience"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "New York, NY",
+  "employmentType": "Full-time",
+  "remote": "Hybrid"
+}

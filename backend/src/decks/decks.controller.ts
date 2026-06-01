@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DecksService } from './decks.service';
 import { CreateDeckDto, UpdateDeckDto } from './dto/deck.dto';
@@ -18,6 +19,7 @@ import { RequireRole } from '../workspaces/role.guard';
 @ApiTags('Decks')
 @Controller('decks')
 @UseGuards(JwtAuthGuard)
+@SkipThrottle({ short: true, medium: true, long: true })
 @ApiBearerAuth()
 export class DecksController {
   constructor(private readonly decksService: DecksService) {}

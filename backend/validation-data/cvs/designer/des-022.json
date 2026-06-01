@@ -1,0 +1,91 @@
+{
+  "profile": {
+    "skills": [
+      "Photoshop",
+      "Design Systems",
+      "Motion Design",
+      "UX Design",
+      "Prototyping",
+      "Figma",
+      "Illustrator",
+      "UI Design",
+      "Visual Design",
+      "After Effects"
+    ],
+    "experience": [
+      {
+        "title": "Lead Product Designer",
+        "company": "TechCorp",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2021-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "InnovateLabs",
+        "duration": "2018-2021",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "TechCorp",
+        "duration": "2015-2018",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "NexGen Tech",
+        "duration": "2014-2015",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "Georgia Tech",
+        "year": "2010"
+      }
+    ],
+    "contact": {
+      "name": "Jordan Williams",
+      "email": "jordan.williams@email.com",
+      "phone": "+1-555-7670",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/jordan-williams"
+    }
+  },
+  "document": {
+    "title": "Jordan Williams - Lead Product Designer",
+    "content": "Jordan Williams\nLead Product Designer\n\nSkills:\nPhotoshop, Design Systems, Motion Design, UX Design, Prototyping, Figma, Illustrator, UI Design, Visual Design, After Effects\n\nExperience:\nLead Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

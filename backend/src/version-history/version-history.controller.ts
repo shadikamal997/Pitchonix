@@ -1,6 +1,7 @@
 import {
   Controller, Get, Post, Patch, Delete, Param, Body, UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
@@ -11,6 +12,7 @@ import { CreateSnapshotInput, DeckVersionDTO } from './version-types';
 @ApiTags('Version History')
 @Controller()
 @UseGuards(JwtAuthGuard)
+@SkipThrottle({ short: true, medium: true, long: true })
 @ApiBearerAuth()
 export class VersionHistoryController {
   constructor(private readonly versions: VersionHistoryService) {}

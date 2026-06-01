@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import * as DOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
-import { marked } from 'marked';
 import { TemplateType, getTemplateConfig, LayoutComponentType } from '../templates/template-configs';
 import { LAYOUT_RENDERERS } from '../templates/layout-components';
 import { VisualCompositionService } from './visual-composition.service';
@@ -98,9 +95,9 @@ export class PdfExportService {
     const { pages } = document;
     const { style } = templateConfig;
 
-    // Initialize DOMPurify with jsdom
-    const window = new JSDOM('').window;
-    const purify = DOMPurify(window as any);
+    // Load the sanitizer lazily. jsdom is ESM-heavy and breaks Jest when it is
+    // pulled into the Nest module graph before any PDF export actually runs.
+    const purify = await createPurifier();
 
     // Sanitize document title
     const safeTitle = purify.sanitize(document.title || 'Untitled Document');
@@ -342,7 +339,7 @@ export class PdfExportService {
       }
     } catch (_) { /* not JSON */ }
     try {
-      return marked.parse(text, { breaks: true, gfm: true }) as string;
+      return basicMarkdownToHtml(text);
     } catch (_) {
       return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
     }
@@ -639,4 +636,44 @@ export class PdfExportService {
       }
     });
   }
+}
+
+async function createPurifier(): Promise<{ sanitize: (value: any) => string }> {
+  const nativeImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+  const [domPurifyModule, jsdomModule] = await Promise.all([
+    nativeImport('dompurify'),
+    nativeImport('jsdom'),
+  ]);
+  const createDOMPurify = domPurifyModule.default || domPurifyModule;
+  const JSDOM = jsdomModule.JSDOM || jsdomModule.default?.JSDOM;
+  const window = new JSDOM('').window;
+  const purify = createDOMPurify(window as any);
+  return {
+    sanitize(value: any) {
+      return purify.sanitize(String(value ?? ''));
+    },
+  };
+}
+
+function basicMarkdownToHtml(markdown: string): string {
+  const escaped = String(markdown || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return escaped
+    .split(/\n{2,}/)
+    .map((block) => {
+      const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+      if (!lines.length) return '';
+      if (lines.every((line) => /^[-*]\s+/.test(line))) {
+        return `<ul>${lines.map((line) => `<li>${line.replace(/^[-*]\s+/, '')}</li>`).join('')}</ul>`;
+      }
+      const first = lines[0];
+      if (/^###\s+/.test(first)) return `<h3>${first.replace(/^###\s+/, '')}</h3>`;
+      if (/^##\s+/.test(first)) return `<h2>${first.replace(/^##\s+/, '')}</h2>`;
+      if (/^#\s+/.test(first)) return `<h1>${first.replace(/^#\s+/, '')}</h1>`;
+      return `<p>${lines.join('<br>')}</p>`;
+    })
+    .filter(Boolean)
+    .join('');
 }

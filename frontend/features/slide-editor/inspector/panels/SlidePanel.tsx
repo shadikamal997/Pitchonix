@@ -125,7 +125,7 @@ export const SlidePanel: React.FC<Props> = ({ slide, onPatch }) => {
       </PanelSection>
 
       {/* Phase 38I — per-slide transition control. */}
-      <TransitionControl slideId={slide.id} />
+      <TransitionControl slideId={slide.id} autoLoad={false} />
     </>
   );
 };

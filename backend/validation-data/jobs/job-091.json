@@ -1,0 +1,34 @@
+{
+  "title": "Senior Account Executive",
+  "category": "sales",
+  "description": "We are hiring an Account Executive to drive new business and manage customer relationships. We are a enterprise looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "B2B Sales",
+    "CRM",
+    "Salesforce",
+    "Negotiation",
+    "Account Management"
+  ],
+  "requiredExperience": "3+ years B2B sales",
+  "responsibilities": [
+    "Generate leads",
+    "Close deals",
+    "Manage accounts",
+    "Meet quotas"
+  ],
+  "qualifications": [
+    "Proven sales record",
+    "Strong communication",
+    "Self-motivated"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "Austin, TX",
+  "employmentType": "Full-time",
+  "remote": "Remote"
+}

@@ -1,5 +1,13 @@
 import { SlideType, WizardInput } from './types';
 import { BaseSlideGenerator } from './base-slide.generator';
+import {
+  execSummaryTitle, execSummarySubtitle,
+  competitionTitle, competitionSubtitle,
+  roadmapTitle, roadmapSubtitle,
+  pricingTitle, pricingSubtitle,
+  featuresTitle, featuresSubtitle,
+  visionTitle, visionSubtitle,
+} from './narrative-titles';
 
 // =============================================================================
 //  Additional Slide Generators — Phase 32.75 Tier 9 cleanup
@@ -21,8 +29,8 @@ export class ExecutiveSummarySlideGenerator extends BaseSlideGenerator {
   protected usesSmartComponent() { return true; }
 
   isApplicable(input: WizardInput): boolean { return input.includeExecutiveSummary === true; }
-  getTitle(_input: WizardInput): string     { return 'Executive Summary'; }
-  getSubtitle(_input: WizardInput): string  { return 'Key highlights'; }
+  getTitle(input: WizardInput): string    { return execSummaryTitle(input); }
+  getSubtitle(input: WizardInput): string { return execSummarySubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {
@@ -48,8 +56,8 @@ export class CompetitionSlideGenerator extends BaseSlideGenerator {
     return (!!input.competitors && input.competitors.trim().length > 0) ||
            (input.structured?.competitors?.length ?? 0) > 0;
   }
-  getTitle(_input: WizardInput): string    { return 'Competitive Landscape'; }
-  getSubtitle(_input: WizardInput): string { return 'How we compare'; }
+  getTitle(input: WizardInput): string    { return competitionTitle(input); }
+  getSubtitle(input: WizardInput): string { return competitionSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {
@@ -74,8 +82,8 @@ export class RoadmapSlideGenerator extends BaseSlideGenerator {
     return (!!input.roadmap && input.roadmap.trim().length > 0) ||
            (input.structured?.roadmapPhases?.length ?? 0) > 0;
   }
-  getTitle(_input: WizardInput): string    { return 'Product Roadmap'; }
-  getSubtitle(_input: WizardInput): string { return 'Where we\'re going'; }
+  getTitle(input: WizardInput): string    { return roadmapTitle(input); }
+  getSubtitle(input: WizardInput): string { return roadmapSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return { description: input.roadmap || '' };
@@ -97,8 +105,8 @@ export class PricingSlideGenerator extends BaseSlideGenerator {
     return (!!input.pricing && input.pricing.trim().length > 20) ||
            (input.structured?.pricingTiers?.length ?? 0) > 0;
   }
-  getTitle(_input: WizardInput): string    { return 'Pricing'; }
-  getSubtitle(_input: WizardInput): string { return 'Simple, transparent pricing'; }
+  getTitle(input: WizardInput): string    { return pricingTitle(input); }
+  getSubtitle(input: WizardInput): string { return pricingSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return { description: input.pricing || '' };
@@ -119,8 +127,8 @@ export class ProductFeaturesSlideGenerator extends BaseSlideGenerator {
   isApplicable(input: WizardInput): boolean {
     return !!input.solution && input.contentDepth === 'detailed';
   }
-  getTitle(_input: WizardInput): string    { return 'Key Features'; }
-  getSubtitle(input: WizardInput): string  { return input.productService || 'What makes us powerful'; }
+  getTitle(input: WizardInput): string    { return featuresTitle(input); }
+  getSubtitle(input: WizardInput): string { return featuresSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {
@@ -144,8 +152,8 @@ export class VisionSlideGenerator extends BaseSlideGenerator {
   isApplicable(input: WizardInput): boolean {
     return input.contentDepth === 'detailed' || input.documentType === 'company_profile';
   }
-  getTitle(_input: WizardInput): string    { return 'Our Vision'; }
-  getSubtitle(_input: WizardInput): string { return 'Building the future'; }
+  getTitle(input: WizardInput): string    { return visionTitle(input); }
+  getSubtitle(input: WizardInput): string { return visionSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {

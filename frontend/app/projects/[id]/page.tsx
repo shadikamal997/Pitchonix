@@ -17,6 +17,7 @@ import { getQualityReport, getGenerationStatus } from '@/lib/quality-api';
 import type { QualityReport, GenerationStatus } from '@/types/quality';
 import { BrandKitPicker, BrandKitBadge } from '@/features/brand-kits/BrandKitPicker';
 import { useDeckBrandKit } from '@/features/brand-kits/useDeckBrandKit';
+import { SlideThumbnail } from '@/features/slide-editor/sidebar/SlideThumbnail';
 
 interface Deck {
   id: string;
@@ -420,14 +421,22 @@ function DeckCard({ deck, params, setShowBrandModal, fetchProject }: any) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {deck.slides.slice(0, 8).map((slide: any) => (
             <Link
               key={slide.id}
               href={`/projects/${params.id}/edit/${slide.id}`}
-              className="group block rounded-2xl border border-[#E3E1DA]/70 p-4 bg-white hover:shadow-soft hover:border-[#4F7563]/40 transition-all cursor-pointer"
+              className="group block rounded-2xl border border-[#E3E1DA]/70 p-3 bg-white hover:shadow-soft hover:border-[#4F7563]/40 transition-all cursor-pointer"
             >
-              <div className="text-[11px] text-[#9A9A9A] mb-1 flex items-center justify-between">
+              <SlideThumbnail
+                slideId={slide.id}
+                width={170}
+                pageNumber={slide.order}
+                totalPages={deck.slides.length}
+                background={slide.background}
+                themeTokens={slide.themeTokens}
+              />
+              <div className="text-[11px] text-[#9A9A9A] mt-3 mb-1 flex items-center justify-between">
                 <span>Slide {slide.order}</span>
                 <span className="text-[#4F7563] opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-semibold uppercase tracking-wider">Edit →</span>
               </div>

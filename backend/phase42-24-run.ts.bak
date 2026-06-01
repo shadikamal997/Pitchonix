@@ -1,0 +1,404 @@
+/**
+ * PHASE 42.24 — VISUAL CERTIFICATION SCRIPT
+ * 
+ * Purpose: Generate all 37 templates with maximum realistic data
+ * Output: HTML files for visual review and scoring
+ * 
+ * Usage:
+ *   npx ts-node test-all-templates-full-data.ts
+ * 
+ * Generates:
+ *   exports/visual-cert-phase42-24/{templateName}.html
+ */
+
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { renderCvHtml } from './src/career/cv-html-renderer';
+import { CV_TEMPLATE_LIBRARY } from './src/career/cv-templates';
+import { CvProfileDto, CvDocumentDto, CvSectionKey } from './src/career/cv-types';
+
+// Maximum realistic test data
+const FULL_PROFILE = {
+  id: 'test-profile-id',
+  userId: 'test-user-id',
+  personal: {
+    fullName: 'Alexandra Chen',
+    email: 'alexandra.chen@email.com',
+    phone: '+1 (415) 555-0142',
+    location: 'San Francisco, CA',
+    headline: 'Senior Product Manager & Strategic Growth Leader',
+    summary: 'Award-winning product leader with 12+ years driving revenue growth and market expansion for B2B SaaS companies. Scaled products from $2M to $50M ARR through data-driven strategy, customer obsession, and exceptional cross-functional leadership. Known for transforming complex technical capabilities into compelling customer value propositions that drive adoption and retention.',
+    website: 'www.alexandrachen.com',
+    linkedin: 'linkedin.com/in/alexandrachen',
+    github: 'github.com/alexchen',
+    photoUrl: 'https://i.pravatar.cc/400?img=5',
+  },
+  
+  experience: [
+    {
+      id: '1',
+      role: 'VP of Product Management',
+      company: 'CloudScale Technologies',
+      location: 'San Francisco, CA',
+      start: '2021-03',
+      end: undefined,
+      bullets: [
+        'Grew ARR from $18M to $52M in 3 years through strategic product positioning and enterprise feature development',
+        'Launched AI-powered cost optimization suite generating $8M in new revenue and achieving 125% of annual target',
+        'Reduced customer churn by 45% through predictive analytics platform and proactive customer success workflows',
+        'Built and mentored product team of 14 PMs across 4 core product lines, establishing best-in-class execution processes',
+        'Secured $35M Series B funding by developing compelling product vision and demonstrating market traction to investors'
+      ]
+    },
+    {
+      id: '2',
+      role: 'Senior Product Manager',
+      company: 'DataFlow Analytics',
+      location: 'New York, NY',
+      start: '2018-06',
+      end: '2021-02',
+      bullets: [
+        'Delivered real-time dashboard product increasing user engagement by 320% and driving $4.2M in upsell revenue',
+        'Led technical integration with Salesforce and HubSpot, expanding addressable market by $12M and adding 85 enterprise customers',
+        'Achieved 98% customer satisfaction score through obsessive focus on UX research and iterative product improvements',
+        'Implemented data-driven prioritization framework reducing time-to-market by 40% and increasing team velocity by 65%'
+      ]
+    },
+    {
+      id: '3',
+      role: 'Product Manager',
+      company: 'FinTech Innovations Inc',
+      location: 'Boston, MA',
+      start: '2015-08',
+      end: '2018-05',
+      bullets: [
+        'Launched mobile payment feature achieving 500K monthly active users in first 6 months and generating $2.8M revenue',
+        'Reduced payment processing errors by 87% through redesigned error handling and real-time validation systems',
+        'Drove App Store rating from 3.2 to 4.7 stars by implementing customer feedback loop and bi-weekly release cycle'
+      ]
+    },
+    {
+      id: '4',
+      role: 'Associate Product Manager',
+      company: 'Tech Startup Labs',
+      location: 'San Francisco, CA',
+      start: '2013-01',
+      end: '2015-07',
+      bullets: [
+        'Shipped MVP in 4 months with 10K beta users, validating product-market fit and securing $3.5M seed funding',
+        'Designed and launched freemium pricing model converting 12% of free users to paid subscriptions',
+        'Conducted 150+ customer interviews informing product roadmap and feature prioritization'
+      ]
+    }
+  ],
+  
+  education: [
+    {
+      id: '1',
+      institution: 'Stanford University',
+      degree: 'Master of Business Administration (MBA)',
+      field: 'Technology Management & Entrepreneurship',
+      start: '2011-09',
+      end: '2013-06',
+      gpa: '3.85',
+      honors: [
+        'Sloan Fellow - Top 10% of graduating class',
+        'Winner, Stanford Business Plan Competition ($50K prize)',
+        'Teaching Assistant for Product Management course'
+      ]
+    },
+    {
+      id: '2',
+      institution: 'University of California, Berkeley',
+      degree: 'Bachelor of Science (BS)',
+      field: 'Computer Science & Cognitive Science',
+      start: '2007-08',
+      end: '2011-05',
+      gpa: '3.72',
+      honors: [
+        'Cum Laude honors',
+        'Dean\'s List all semesters',
+        'Research Assistant - Human-Computer Interaction Lab'
+      ]
+    },
+    {
+      id: '3',
+      institution: 'National University of Singapore',
+      degree: 'Exchange Program',
+      field: 'Business Strategy & Innovation',
+      start: '2010-01',
+      end: '2010-06',
+      honors: [
+        'International Business Strategy Seminar',
+        'Cross-cultural product development research'
+      ]
+    }
+  ],
+  
+  skills: [
+    { id: '1', name: 'Product Strategy & Roadmapping', level: 'expert' as const, category: 'business' as const },
+    { id: '2', name: 'Agile & Scrum Leadership', level: 'expert' as const, category: 'business' as const },
+    { id: '3', name: 'User Research & Customer Discovery', level: 'expert' as const, category: 'business' as const },
+    { id: '4', name: 'A/B Testing & Experimentation', level: 'expert' as const, category: 'technical' as const },
+    { id: '5', name: 'SQL & Data Analysis', level: 'advanced' as const, category: 'technical' as const },
+    { id: '6', name: 'Product Analytics (Mixpanel, Amplitude)', level: 'expert' as const, category: 'tool' as const },
+    { id: '7', name: 'Cross-functional Leadership', level: 'expert' as const, category: 'soft' as const },
+    { id: '8', name: 'Stakeholder Management', level: 'expert' as const, category: 'soft' as const },
+    { id: '9', name: 'Go-to-Market Strategy', level: 'advanced' as const, category: 'business' as const },
+    { id: '10', name: 'Pricing & Monetization', level: 'advanced' as const, category: 'business' as const },
+    { id: '11', name: 'SaaS Business Models', level: 'expert' as const, category: 'business' as const },
+    { id: '12', name: 'Figma & Design Tools', level: 'intermediate' as const, category: 'tool' as const }
+  ],
+  
+  languages: [
+    { id: '1', name: 'English', proficiency: 'native' as const },
+    { id: '2', name: 'Mandarin Chinese', proficiency: 'fluent' as const },
+    { id: '3', name: 'Spanish', proficiency: 'conversational' as const },
+    { id: '4', name: 'French', proficiency: 'basic' as const }
+  ],
+  
+  certifications: [
+    {
+      id: '1',
+      name: 'Certified Scrum Product Owner (CSPO)',
+      issuer: 'Scrum Alliance',
+      date: '2022-03',
+      url: 'https://scrumalliance.org'
+    },
+    {
+      id: '2',
+      name: 'Product Management Certification',
+      issuer: 'Product School',
+      date: '2020-11',
+      url: 'https://productschool.com'
+    },
+    {
+      id: '3',
+      name: 'Google Analytics Individual Qualification',
+      issuer: 'Google',
+      date: '2023-01',
+      url: 'https://analytics.google.com'
+    }
+  ],
+  
+  projects: [
+    {
+      id: '1',
+      name: 'AI Cost Optimization Platform',
+      description: 'Led development of machine learning platform that reduced cloud infrastructure costs by 35% for enterprise customers, generating $8M in new revenue',
+      role: 'Product Lead',
+      start: '2022-06',
+      end: '2023-09',
+      technologies: ['Machine Learning', 'Cloud Infrastructure', 'Kubernetes', 'Cost Analytics'],
+      results: [
+        'Reduced average customer infrastructure costs by 35%',
+        'Generated $8M in new revenue within first year',
+        'Achieved 92% customer satisfaction rating'
+      ]
+    },
+    {
+      id: '2',
+      name: 'Real-time Analytics Dashboard',
+      description: 'Shipped real-time data visualization platform processing 500M+ events daily, increasing user engagement by 320%',
+      role: 'Senior PM',
+      start: '2019-03',
+      end: '2020-08',
+      technologies: ['Real-time Processing', 'Data Visualization', 'Apache Kafka', 'React'],
+      results: [
+        'Processed 500M+ events daily',
+        'Increased user engagement by 320%',
+        'Reduced query latency from 5s to <200ms'
+      ]
+    },
+    {
+      id: '3',
+      name: 'Mobile Payment Integration',
+      description: 'Launched mobile payment feature achieving 500K MAU in 6 months with 99.97% transaction success rate',
+      role: 'Product Manager',
+      start: '2016-01',
+      end: '2017-05',
+      technologies: ['Mobile Payments', 'iOS', 'Android', 'Payment Processing'],
+      results: [
+        'Achieved 500K monthly active users',
+        '99.97% transaction success rate',
+        'Generated $2.8M in revenue'
+      ]
+    }
+  ],
+  
+  awards: [
+    {
+      id: '1',
+      title: 'Product Leader of the Year',
+      issuer: 'Product Management Association',
+      date: '2023-10',
+      description: 'Recognized for outstanding product leadership and revenue impact in B2B SaaS industry'
+    },
+    {
+      id: '2',
+      title: 'Top 40 Under 40 in Tech',
+      issuer: 'TechCrunch',
+      date: '2022-06',
+      description: 'Featured among rising technology leaders driving innovation in enterprise software'
+    }
+  ],
+  
+  publications: [],
+  
+  references: [
+    {
+      id: '1',
+      name: 'Michael Rodriguez',
+      title: 'CEO',
+      company: 'CloudScale Technologies',
+      email: 'michael@cloudscale.com',
+      phone: '+1 (415) 555-0198'
+    },
+    {
+      id: '2',
+      name: 'Sarah Johnson',
+      title: 'VP of Engineering',
+      company: 'DataFlow Analytics',
+      email: 'sarah@dataflow.com',
+      phone: '+1 (212) 555-0176'
+    }
+  ],
+  
+  importSource: null,
+  importedAt: null,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
+const FULL_DOCUMENT = {
+  id: 'test-document-id',
+  userId: 'test-user-id',
+  profileId: 'test-profile-id',
+  title: 'Alexandra Chen - Product Management Executive',
+  doctype: 'cv' as const,
+  templateId: null,
+  brandKitId: null,
+  variant: null,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  thumbnailUrl: null,
+  lastExportUrl: null,
+  content: {
+    sectionOrder: ['header', 'summary', 'experience', 'education', 'skills', 'languages', 'certifications', 'projects', 'awards'] as CvSectionKey[]
+  },
+} as CvDocumentDto;
+
+async function generateAllTemplates() {
+  console.log('🚀 PHASE 42.24 — VISUAL CERTIFICATION');
+  console.log('═══════════════════════════════════════════════\n');
+  
+  // Create output directory
+  const outputDir = join(__dirname, 'exports', 'visual-cert-phase42-24');
+  mkdirSync(outputDir, { recursive: true });
+  
+  console.log(`📁 Output directory: ${outputDir}\n`);
+  console.log(`📊 Generating ${CV_TEMPLATE_LIBRARY.length} templates with full data...\n`);
+  
+  const results: Array<{
+    name: string;
+    category: string;
+    doctype: string;
+    success: boolean;
+    size: number;
+    error?: string;
+  }> = [];
+  
+  for (const template of CV_TEMPLATE_LIBRARY) {
+    try {
+      console.log(`   Rendering: ${template.name} (${template.category})...`);
+      
+      const doc = {
+        ...FULL_DOCUMENT,
+        doctype: template.doctype,
+        title: `${FULL_PROFILE.personal?.fullName} - ${template.name}`
+      };
+      
+      const html = renderCvHtml(FULL_PROFILE as any, doc as any, template.layout as any);
+      
+      const filename = `${template.name.replace(/\s+/g, '-').toLowerCase()}.html`;
+      const filepath = join(outputDir, filename);
+      
+      writeFileSync(filepath, html, 'utf-8');
+      
+      results.push({
+        name: template.name,
+        category: template.category,
+        doctype: template.doctype,
+        success: true,
+        size: html.length
+      });
+      
+      console.log(`   ✅ Generated: ${filename} (${(html.length / 1024).toFixed(1)} KB)`);
+      
+    } catch (error) {
+      console.error(`   ❌ Failed: ${template.name} - ${error.message}`);
+      results.push({
+        name: template.name,
+        category: template.category,
+        doctype: template.doctype,
+        success: false,
+        size: 0,
+        error: error.message
+      });
+    }
+  }
+  
+  console.log('\n═══════════════════════════════════════════════');
+  console.log('📊 GENERATION SUMMARY\n');
+  
+  const successCount = results.filter(r => r.success).length;
+  const failCount = results.filter(r => !r.success).length;
+  
+  console.log(`✅ Successfully generated: ${successCount}`);
+  console.log(`❌ Failed: ${failCount}`);
+  console.log(`📄 Total templates: ${results.length}\n`);
+  
+  // Group by category
+  const byCategory = results.reduce((acc, r) => {
+    if (!acc[r.category]) acc[r.category] = [];
+    acc[r.category].push(r);
+    return acc;
+  }, {} as Record<string, typeof results>);
+  
+  console.log('📁 BY CATEGORY:\n');
+  Object.entries(byCategory).forEach(([category, templates]) => {
+    console.log(`   ${category}: ${templates.length} templates`);
+    templates.forEach(t => {
+      const status = t.success ? '✅' : '❌';
+      console.log(`      ${status} ${t.name}`);
+    });
+    console.log('');
+  });
+  
+  // Save catalog
+  const catalog = {
+    generated: new Date().toISOString(),
+    totalTemplates: results.length,
+    successCount,
+    failCount,
+    byCategory,
+    templates: results
+  };
+  
+  const catalogPath = join(outputDir, '_CATALOG.json');
+  writeFileSync(catalogPath, JSON.stringify(catalog, null, 2), 'utf-8');
+  console.log(`\n📋 Catalog saved: ${catalogPath}`);
+  
+  console.log('\n═══════════════════════════════════════════════');
+  console.log('✅ GENERATION COMPLETE');
+  console.log(`📁 All files in: ${outputDir}`);
+  console.log('\n🔍 Next steps:');
+  console.log('   1. Open each HTML file in browser');
+  console.log('   2. Score each template on 7 criteria');
+  console.log('   3. Identify templates below 9/10');
+  console.log('   4. Redesign failing templates');
+  console.log('═══════════════════════════════════════════════\n');
+}
+
+// Run
+generateAllTemplates().catch(console.error);

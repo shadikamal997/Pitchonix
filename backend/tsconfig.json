@@ -20,5 +20,12 @@
     "paths": {
       "@/*": ["src/*"]
     }
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "ats-accuracy-certification.ts",
+    "direct-ats-validation.ts",
+    "phase42-24-visual-cert.ts"
+  ]
 }

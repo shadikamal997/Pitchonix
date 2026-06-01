@@ -239,6 +239,51 @@ function ensure<T>(items: T[], fallback: T[], min = 1): T[] {
   return items.length >= min ? items : fallback;
 }
 
+type FundingAllocation = { category: string; percentage: number; amount?: string };
+
+function normalizedFundingAllocations(input: WizardInput, fallback: FundingAllocation[] = [
+  { category: 'Product', percentage: 40 },
+  { category: 'Go-to-market', percentage: 35 },
+  { category: 'Operations', percentage: 15 },
+  { category: 'Runway buffer', percentage: 10 },
+]): FundingAllocation[] {
+  const raw = input.structured?.funding?.allocations || [];
+  const source = raw.length ? raw : fallback;
+  const withNumbers = source.map((item, i) => {
+    const category = item.category || fallback[i % fallback.length]?.category || `Allocation ${i + 1}`;
+    const explicit = Number(item.percentage);
+    const amountValue = item.amount ? numberish(item.amount) : 0;
+    return {
+      category,
+      amount: item.amount,
+      rawPercentage: Number.isFinite(explicit) && explicit > 0 ? explicit : 0,
+      amountValue,
+    };
+  });
+  const percentageTotal = withNumbers.reduce((sum, item) => sum + item.rawPercentage, 0);
+  const amountTotal = withNumbers.reduce((sum, item) => sum + item.amountValue, 0);
+
+  let normalized = withNumbers.map((item, i) => {
+    let percentage = item.rawPercentage;
+    if (!percentage && amountTotal > 0) {
+      percentage = Math.round((item.amountValue / amountTotal) * 100);
+    }
+    if (!percentage) {
+      percentage = fallback[i % fallback.length]?.percentage || Math.max(5, Math.round(100 / withNumbers.length));
+    }
+    return { category: item.category, percentage, amount: item.amount };
+  });
+
+  const total = normalized.reduce((sum, item) => sum + item.percentage, 0);
+  if (total > 0 && Math.abs(total - 100) > 2) {
+    normalized = normalized.map((item) => ({
+      ...item,
+      percentage: Math.max(5, Math.round((item.percentage / total) * 100)),
+    }));
+  }
+  return normalized.slice(0, 4);
+}
+
 function marketSizing(input: WizardInput) {
   const s = input.structured?.marketSizing;
   const found = valuesFromText(input.marketOpportunity || '');
@@ -1749,12 +1794,12 @@ function designAsk(input: WizardInput) {
 function designAskInvestor(input: WizardInput) {
   const funding = input.structured?.funding;
   const amount = funding?.amount || valuesFromText(input.fundingAsk || '')[0]?.value || '$8M';
-  const allocations = ensure(funding?.allocations || [], [
+  const allocations = normalizedFundingAllocations(input, [
     { category: 'Product', percentage: 40 },
     { category: 'Go-to-market', percentage: 35 },
     { category: 'Operations', percentage: 15 },
     { category: 'Runway buffer', percentage: 10 },
-  ], 3);
+  ]);
   // Derive a 4-color set from the family palette so the donut segments are family-aware
   const sliceColors = [palette.accent, palette.accent2, palette.muted, palette.line];
   const allocationColors = allocations.map((_, i) => sliceColors[i % sliceColors.length]);
@@ -2132,11 +2177,11 @@ function designAskLuxury(input: WizardInput) {
   const funding = input.structured?.funding;
   const amount = funding?.amount || input.fundingAsk?.match(/\$[\d.]+[MK]/)?.[0] || '$—';
   const runway = funding?.runway || '24 mo';
-  const allocations = (funding?.allocations || [
+  const allocations = normalizedFundingAllocations(input, [
     { category: 'Product', percentage: 45 },
     { category: 'Go-to-market', percentage: 35 },
     { category: 'Operations', percentage: 20 },
-  ]).slice(0, 4);
+  ]);
 
   const milestoneMetric = (() => {
     const arrKpi = kpis(input).find(k => /arr|revenue/i.test(k.label));
@@ -2340,7 +2385,7 @@ function designAskStartup(input: WizardInput) {
   const funding = input.structured?.funding;
   const amount = funding?.amount || input.fundingAsk?.match(/\$[\d.]+[MK]/)?.[0] || '$—';
   const runway = funding?.runway || '24 mo';
-  const allocations = (funding?.allocations || [
+  const allocations = normalizedFundingAllocations(input, [
     { category: 'Product', percentage: 45 },
     { category: 'Go-to-market', percentage: 35 },
     { category: 'Operations', percentage: 20 },
@@ -2535,11 +2580,11 @@ function designAskConsulting(input: WizardInput) {
   const funding = input.structured?.funding;
   const amount = funding?.amount || input.fundingAsk?.match(/\$[\d.]+[MK]/)?.[0] || '$—';
   const runway = funding?.runway || '24 mo';
-  const allocations = (funding?.allocations || [
+  const allocations = normalizedFundingAllocations(input, [
     { category: 'Product Engineering', percentage: 45 },
     { category: 'Go-to-market', percentage: 35 },
     { category: 'Operations', percentage: 20 },
-  ]).slice(0, 4);
+  ]);
 
   const milestones = [
     { quarter: 'Q1–Q2', outcome: 'Enterprise feature parity + SOC 2 certification', gate: '200% ARR growth' },
@@ -2758,7 +2803,7 @@ function designAskTech(input: WizardInput) {
   const funding = input.structured?.funding;
   const amount = funding?.amount || input.fundingAsk?.match(/\$[\d.]+[MK]/)?.[0] || '$—';
   const runway = funding?.runway || '24 mo';
-  const allocations = (funding?.allocations || [
+  const allocations = normalizedFundingAllocations(input, [
     { category: 'Product Engineering', percentage: 45 },
     { category: 'Go-to-market', percentage: 35 },
     { category: 'Operations', percentage: 20 },

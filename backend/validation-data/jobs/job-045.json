@@ -1,0 +1,35 @@
+{
+  "title": "Senior Full Stack Developer",
+  "category": "fullstack",
+  "description": "Looking for a Senior Full Stack Developer to lead technical initiatives and mentor team members. We are a startup looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "React",
+    "Python",
+    "Django",
+    "PostgreSQL",
+    "Docker",
+    "CI/CD"
+  ],
+  "requiredExperience": "7+ years full stack",
+  "responsibilities": [
+    "Lead projects",
+    "Mentor engineers",
+    "Make architectural decisions",
+    "Code reviews"
+  ],
+  "qualifications": [
+    "Leadership experience",
+    "Strong technical skills",
+    "Communication skills"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "San Francisco, CA",
+  "employmentType": "Full-time",
+  "remote": "Remote"
+}

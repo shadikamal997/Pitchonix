@@ -1,0 +1,83 @@
+{
+  "profile": {
+    "skills": [
+      "Social Media",
+      "Email Marketing",
+      "SEM",
+      "Content Marketing",
+      "Content Strategy",
+      "Google Analytics",
+      "Brand Management",
+      "Data Analysis",
+      "Copywriting",
+      "SEO"
+    ],
+    "experience": [
+      {
+        "title": "Senior Marketing Manager",
+        "company": "Apex Digital",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "Cloud Systems",
+        "duration": "2021-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "NexGen Tech",
+        "duration": "2018-2021",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "InnovateLabs",
+        "duration": "2017-2018",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "University of Washington",
+        "year": "2013"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Jamie Davis",
+      "email": "jamie.davis@email.com",
+      "phone": "+1-555-1180",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Jamie Davis - Senior Marketing Manager",
+    "content": "Jamie Davis\nSenior Marketing Manager\n\nSkills:\nSocial Media, Email Marketing, SEM, Content Marketing, Content Strategy, Google Analytics, Brand Management, Data Analysis, Copywriting, SEO\n\nExperience:\nSenior Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

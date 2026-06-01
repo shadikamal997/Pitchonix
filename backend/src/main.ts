@@ -46,6 +46,7 @@ async function bootstrap() {
   app.use(helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
 
   // Enable CORS — support comma-separated FRONTEND_URL list for multi-origin setups

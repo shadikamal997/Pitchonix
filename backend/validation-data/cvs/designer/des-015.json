@@ -1,0 +1,58 @@
+{
+  "profile": {
+    "skills": [
+      "Interaction Design",
+      "UX Design",
+      "Figma",
+      "Motion Design",
+      "UI Design",
+      "Sketch",
+      "Adobe XD",
+      "Design Systems",
+      "Prototyping",
+      "Photoshop"
+    ],
+    "experience": [
+      {
+        "title": "Senior Product Designer",
+        "company": "NexGen Tech",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "TechCorp",
+        "duration": "2020-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "Cornell",
+        "year": "2016"
+      }
+    ],
+    "contact": {
+      "name": "Morgan Miller",
+      "email": "morgan.miller@email.com",
+      "phone": "+1-555-9317",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/morgan-miller"
+    }
+  },
+  "document": {
+    "title": "Morgan Miller - Senior Product Designer",
+    "content": "Morgan Miller\nSenior Product Designer\n\nSkills:\nInteraction Design, UX Design, Figma, Motion Design, UI Design, Sketch, Adobe XD, Design Systems, Prototyping, Photoshop\n\nExperience:\nSenior Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

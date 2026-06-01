@@ -123,6 +123,7 @@ export interface GenerationContext {
     smartComponentsAttached: number;
     elementsCreated:    number;
     qualityScore:       number;
+    narrativeScore?:    number;
   };
 }
 

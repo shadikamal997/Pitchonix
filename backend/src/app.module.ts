@@ -80,7 +80,7 @@ import { CareerModule } from './career/career.module';
       {
         name: 'short',
         ttl: 1000, // 1 second
-        limit: 10, // 10 requests per second
+        limit: 60, // 60 requests per second (SPA loads many slides simultaneously)
       },
       {
         name: 'medium',

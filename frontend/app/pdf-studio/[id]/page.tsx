@@ -1,14 +1,17 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function PdfEditorRedirectPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    router.replace(`/pdf-studio/editor/${params.id}`);
-  }, [params.id, router]);
+    const qs = searchParams.toString();
+    const target = `/pdf-studio/editor/${params.id}${qs ? `?${qs}` : ''}`;
+    router.replace(target);
+  }, [params.id, router, searchParams]);
 
   return (
     <div className="flex items-center justify-center h-screen bg-[#EDEBE6]">

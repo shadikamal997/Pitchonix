@@ -1,0 +1,58 @@
+{
+  "profile": {
+    "skills": [
+      "Visual Design",
+      "Figma",
+      "Wireframing",
+      "Illustrator",
+      "Usability Testing",
+      "User Research",
+      "UX Design",
+      "Motion Design",
+      "Sketch",
+      "After Effects"
+    ],
+    "experience": [
+      {
+        "title": "Product Designer",
+        "company": "Quantum Labs",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2023-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "Cornell",
+        "year": "2019"
+      }
+    ],
+    "contact": {
+      "name": "Jamie Rodriguez",
+      "email": "jamie.rodriguez@email.com",
+      "phone": "+1-555-3120",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/jamie-rodriguez"
+    }
+  },
+  "document": {
+    "title": "Jamie Rodriguez - Mid Product Designer",
+    "content": "Jamie Rodriguez\nMid Product Designer\n\nSkills:\nVisual Design, Figma, Wireframing, Illustrator, Usability Testing, User Research, UX Design, Motion Design, Sketch, After Effects\n\nExperience:\nMid Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

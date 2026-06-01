@@ -1,0 +1,43 @@
+{
+  "profile": {
+    "skills": [
+      "React",
+      "MySQL",
+      "Elasticsearch",
+      "Kubernetes",
+      "Java"
+    ],
+    "experience": [
+      {
+        "title": "Junior Software Engineer",
+        "company": "InnovateLabs",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "UC Berkeley",
+        "year": "2020",
+        "gpa": "3.6"
+      }
+    ],
+    "contact": {
+      "name": "Sage Jones",
+      "email": "sage.jones@email.com",
+      "phone": "+1-555-9026",
+      "location": "San Francisco, CA",
+      "github": "github.com/sagejones"
+    }
+  },
+  "document": {
+    "title": "Sage Jones - Junior Software Engineer",
+    "content": "Sage Jones\nJunior Software Engineer\n\nSkills:\nReact, MySQL, Elasticsearch, Kubernetes, Java\n\nExperience:\nJunior Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

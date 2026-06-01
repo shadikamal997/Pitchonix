@@ -1,0 +1,34 @@
+{
+  "title": "Mid-Level UI Engineer",
+  "category": "frontend",
+  "description": "We need a UI Engineer who is passionate about creating pixel-perfect interfaces and smooth user experiences. We are a mid-size company looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "HTML",
+    "CSS",
+    "JavaScript",
+    "React",
+    "SCSS",
+    "Figma"
+  ],
+  "requiredExperience": "1+ years UI development",
+  "responsibilities": [
+    "Implement designs",
+    "Build reusable components",
+    "Ensure cross-browser compatibility"
+  ],
+  "qualifications": [
+    "Strong CSS/SCSS skills",
+    "Experience with design tools",
+    "Attention to detail"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "New York, NY",
+  "employmentType": "Full-time",
+  "remote": "Hybrid"
+}

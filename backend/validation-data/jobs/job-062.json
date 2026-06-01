@@ -1,0 +1,35 @@
+{
+  "title": "Mid-Level Cloud Engineer",
+  "category": "devops",
+  "description": "Looking for a Cloud Engineer to design and implement cloud solutions on AWS. We are a mid-size company looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "AWS",
+    "CloudFormation",
+    "Lambda",
+    "EC2",
+    "S3",
+    "Networking"
+  ],
+  "requiredExperience": "2+ years cloud",
+  "responsibilities": [
+    "Design cloud architecture",
+    "Implement solutions",
+    "Optimize costs",
+    "Ensure security"
+  ],
+  "qualifications": [
+    "AWS certifications",
+    "Architecture experience",
+    "Cost optimization skills"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "New York, NY",
+  "employmentType": "Full-time",
+  "remote": "Hybrid"
+}

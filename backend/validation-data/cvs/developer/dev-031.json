@@ -1,0 +1,87 @@
+{
+  "profile": {
+    "skills": [
+      "HTML/CSS",
+      "Node.js",
+      "Kubernetes",
+      "Jenkins",
+      "Redis",
+      "Tailwind",
+      "Express",
+      "Agile",
+      "Django",
+      "Jira",
+      "MongoDB",
+      "Redux"
+    ],
+    "experience": [
+      {
+        "title": "Senior Software Engineer",
+        "company": "InnovateLabs",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "InnovateLabs",
+        "duration": "2020-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "DataFlow Inc",
+        "duration": "2018-2020",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "Digital Solutions",
+        "duration": "2017-2018",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "Stanford",
+        "year": "2013",
+        "gpa": "3.9"
+      }
+    ],
+    "certifications": [
+      "AWS Certified Solutions Architect",
+      "MongoDB Certified Developer"
+    ],
+    "contact": {
+      "name": "Taylor Garcia",
+      "email": "taylor.garcia@email.com",
+      "phone": "+1-555-1550",
+      "location": "San Francisco, CA",
+      "github": "github.com/taylorgarcia"
+    }
+  },
+  "document": {
+    "title": "Taylor Garcia - Senior Software Engineer",
+    "content": "Taylor Garcia\nSenior Software Engineer\n\nSkills:\nHTML/CSS, Node.js, Kubernetes, Jenkins, Redis, Tailwind, Express, Agile, Django, Jira, MongoDB, Redux\n\nExperience:\nSenior Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

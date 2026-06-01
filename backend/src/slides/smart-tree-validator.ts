@@ -31,7 +31,7 @@ const VALID_ELEMENT_TYPES: ReadonlySet<ElementType> = new Set<ElementType>([
   'metric', 'kpi', 'chart', 'table',
   'image', 'icon', 'logo', 'videoPlaceholder', 'embeddedMediaPlaceholder',
   'testimonial', 'teamCard', 'pricingCard', 'comparison', 'swot',
-  'featureGrid', 'processSteps', 'timeline', 'roadmap',
+  'featureGrid', 'processSteps', 'timeline', 'roadmap', 'fundsAllocation',
   'shape', 'line', 'divider',
 ]);
 

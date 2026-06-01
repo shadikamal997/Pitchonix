@@ -55,28 +55,43 @@ const FAMILY_ACCENT: Record<string, string> = {
   'crimson-dark':         '#ef4444',
   'light-blue-business':  '#2563eb',
   'editorial-report':     '#0f172a',
-  'investor-minimal':     '#3b82f6',
+  'investor-minimal':     '#ea580c',
   'corporate-monochrome': '#475569',
   'luxury-dark':          '#d4af37',
   'soft-geometric-blue':  '#60a5fa',
   'startup-gradient':     '#a855f7',
+  'ocean-deep':           '#0ea5e9',
+  'forest-executive':     '#22c55e',
+  'ember-orange':         '#f97316',
+  'arctic-white':         '#334155',
+  'slate-pro':            '#6366f1',
+  'emerald-fintech':      '#059669',
+  'midnight-tech':        '#06b6d4',
+  'rose-modern':          '#f43f5e',
+  'cobalt-impact':        '#60a5fa',
+  'warm-sand':            '#92400e',
+  'violet-creative':      '#7c3aed',
+  'teal-health':          '#0d9488',
 };
-const FAMILY_DARK_BG = new Set(['crimson-dark', 'luxury-dark', 'editorial-report']);
+const FAMILY_DARK_BG = new Set([
+  'crimson-dark', 'luxury-dark', 'startup-gradient',
+  'ocean-deep', 'forest-executive', 'ember-orange',
+  'slate-pro', 'midnight-tech', 'cobalt-impact', 'violet-creative',
+]);
 
-function themeFor(familyId?: string | null): ChartTheme {
-  if (!familyId || !FAMILY_ACCENT[familyId]) return DEFAULT_THEME;
-  const accent = FAMILY_ACCENT[familyId];
-  const isDark = FAMILY_DARK_BG.has(familyId);
-  // Lead with the family accent, then dedupe + extend from the legacy palette.
+function themeFor(familyId?: string | null, darkMode?: boolean): ChartTheme {
+  const accent = (familyId && FAMILY_ACCENT[familyId]) ? FAMILY_ACCENT[familyId] : DEFAULT_THEME.accent;
+  const isDark = darkMode || FAMILY_DARK_BG.has(familyId || '');
+  if (!familyId || (!FAMILY_ACCENT[familyId] && !darkMode)) return DEFAULT_THEME;
   const palette = [accent, ...LEGACY_PALETTE.filter((c) => c.toLowerCase() !== accent.toLowerCase())].slice(0, 8);
   return {
     palette,
     accent,
     text:     isDark ? '#f9fafb' : '#111827',
     muted:    isDark ? '#cbd5e1' : '#6b7280',
-    grid:     isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
-    positive: '#16a34a',
-    negative: '#ef4444',
+    grid:     isDark ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.08)',
+    positive: isDark ? '#4ade80' : '#16a34a',
+    negative: isDark ? '#f87171' : '#ef4444',
   };
 }
 
@@ -126,7 +141,7 @@ function truncate(s: string, n: number): string {
 // =============================================================================
 
 export function buildChartSvg(content: ChartContent, opts?: { width?: number; height?: number }): string {
-  const theme = themeFor(content.familyId);
+  const theme = themeFor(content.familyId, content.darkMode);
   const width  = opts?.width  ?? W;
   const height = opts?.height ?? H;
   const inner  = innerBox(content);
@@ -414,7 +429,7 @@ function drawPie(content: ChartContent, theme: ChartTheme, b: Box, kind: 'pie' |
     const x2 = cx + r * Math.cos(end   - Math.PI / 2);
     const y2 = cy + r * Math.sin(end   - Math.PI / 2);
     const largeArc = sweep > Math.PI ? 1 : 0;
-    const color = theme.palette[i % theme.palette.length];
+    const color = content.series[0]?.colors?.[i] ?? theme.palette[i % theme.palette.length];
     out += `<path d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${color}" stroke="#ffffff" stroke-width="1.5" />`;
     start = end;
   });

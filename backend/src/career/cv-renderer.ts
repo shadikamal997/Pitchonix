@@ -101,7 +101,11 @@ function renderSection(
         out.push(paragraph(`${e.role} — ${e.company}`, [{ text: `${e.role} — ${e.company}`, bold: true }]));
         const meta = [e.location, formatRange(e.start, e.end)].filter(Boolean).join('  •  ');
         if (meta) out.push(paragraph(meta, [{ text: meta, italic: true, color: '#64748B' }]));
-        if (e.bullets?.length) out.push({ type: 'list', ordered: false, items: e.bullets });
+        for (const description of splitDetailLines(e.description)) {
+          out.push(paragraph(description));
+        }
+        const detailItems = richExperienceItems(e);
+        if (detailItems.length) out.push({ type: 'list', ordered: false, items: detailItems });
       }
       return out;
     }
@@ -351,4 +355,69 @@ function formatRange(start?: string, end?: string): string {
 
 function capitalise(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function splitDetailLines(value: unknown): string[] {
+  if (!value) return [];
+  const source = Array.isArray(value) ? value : String(value).split(/\r?\n+/);
+  return uniqueStrings(source.map((line) => String(line || '').trim()).filter(Boolean));
+}
+
+function richExperienceItems(exp: any): string[] {
+  const bullets = splitDetailLines(exp?.bullets);
+  const bulletKeys = new Set(bullets.map((item) => item.toLowerCase()));
+  const achievements = splitDetailLines(exp?.achievements)
+    .filter((item) => !bulletKeys.has(item.toLowerCase()))
+    .map((item) => `Achievement: ${item}`);
+  const metrics = splitDetailLines(exp?.metrics)
+    .filter((item) => !bulletKeys.has(item.toLowerCase()))
+    .map((item) => `Metric: ${item}`);
+  const projects = splitDetailLines(exp?.projects)
+    .filter((item) => !bulletKeys.has(item.toLowerCase()))
+    .map((item) => `Project: ${item}`);
+  const technologies = splitDetailLines(exp?.technologies);
+  const rawFallback = !bullets.length && !exp?.description
+    ? rawExperienceFallbackLines(exp)
+    : [];
+
+  return uniqueStrings([
+    ...bullets,
+    ...rawFallback,
+    ...achievements,
+    ...metrics,
+    ...(technologies.length ? [`Technologies: ${technologies.join(', ')}`] : []),
+    ...projects,
+  ]);
+}
+
+function rawExperienceFallbackLines(exp: any): string[] {
+  const rawLines = splitDetailLines(exp?.rawText);
+  if (!rawLines.length) return [];
+  const headerKeys = new Set([
+    exp?.role,
+    exp?.company,
+    exp?.location,
+    exp?.start,
+    exp?.end,
+    formatRange(exp?.start, exp?.end),
+  ].filter(Boolean).map((value) => String(value).trim().toLowerCase()));
+
+  return rawLines
+    .filter((line) => !headerKeys.has(line.toLowerCase()))
+    .filter((line) => !/^\d{4}(?:\s*[–-]\s*(?:\d{4}|present|current))?$/i.test(line))
+    .filter((line) => line.split(/\s+/).length >= 3 || /\d/.test(line));
+}
+
+function uniqueStrings(values: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const value of values) {
+    const text = String(value || '').trim();
+    if (!text) continue;
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
+  }
+  return out;
 }

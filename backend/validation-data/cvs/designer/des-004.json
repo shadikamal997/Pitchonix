@@ -1,0 +1,47 @@
+{
+  "profile": {
+    "skills": [
+      "Visual Design",
+      "Illustrator",
+      "After Effects",
+      "Prototyping",
+      "Wireframing",
+      "Motion Design",
+      "Adobe XD",
+      "Design Systems",
+      "Photoshop",
+      "UX Design"
+    ],
+    "experience": [
+      {
+        "title": "Junior Product Designer",
+        "company": "Cloud Systems",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "UC Berkeley",
+        "year": "2020"
+      }
+    ],
+    "contact": {
+      "name": "Sage Smith",
+      "email": "sage.smith@email.com",
+      "phone": "+1-555-2936",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/sage-smith"
+    }
+  },
+  "document": {
+    "title": "Sage Smith - Junior Product Designer",
+    "content": "Sage Smith\nJunior Product Designer\n\nSkills:\nVisual Design, Illustrator, After Effects, Prototyping, Wireframing, Motion Design, Adobe XD, Design Systems, Photoshop, UX Design\n\nExperience:\nJunior Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

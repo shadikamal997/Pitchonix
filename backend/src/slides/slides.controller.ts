@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SlidesService } from './slides.service';
 import { CreateSlideDto, UpdateSlideDto } from './dto/slide.dto';
@@ -17,6 +18,7 @@ import { GetUser } from '../auth/get-user.decorator';
 @ApiTags('Slides')
 @Controller('slides')
 @UseGuards(JwtAuthGuard)
+@SkipThrottle({ short: true, medium: true, long: true })
 @ApiBearerAuth()
 export class SlidesController {
   constructor(private readonly slidesService: SlidesService) {}
@@ -88,5 +90,20 @@ export class SlidesController {
   ) {
     await this.slidesService.verifyDeckOwnership(deckId, user.id);
     return this.slidesService.reorder(deckId, body.entries);
+  }
+
+  @Post('deck/:deckId/apply-template')
+  @ApiOperation({ summary: 'Apply a visual template to all slides in a deck in one request' })
+  async applyTemplate(
+    @Param('deckId') deckId: string,
+    @Body() body: {
+      templateId: string;
+      theme: any;
+      blueprint?: { background?: Record<string, any> };
+    },
+    @GetUser() user: any,
+  ) {
+    await this.slidesService.verifyDeckOwnership(deckId, user.id);
+    return this.slidesService.applyTemplate(deckId, body);
   }
 }

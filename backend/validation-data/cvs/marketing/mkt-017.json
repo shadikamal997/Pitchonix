@@ -1,0 +1,61 @@
+{
+  "profile": {
+    "skills": [
+      "Facebook Ads",
+      "Content Marketing",
+      "SEO",
+      "Content Strategy",
+      "Data Analysis",
+      "SEM",
+      "Email Marketing",
+      "A/B Testing",
+      "Social Media",
+      "Copywriting"
+    ],
+    "experience": [
+      {
+        "title": "Senior Marketing Manager",
+        "company": "Digital Solutions",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "Apex Digital",
+        "duration": "2020-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "UC Berkeley",
+        "year": "2016"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Avery Brown",
+      "email": "avery.brown@email.com",
+      "phone": "+1-555-6327",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Avery Brown - Senior Marketing Manager",
+    "content": "Avery Brown\nSenior Marketing Manager\n\nSkills:\nFacebook Ads, Content Marketing, SEO, Content Strategy, Data Analysis, SEM, Email Marketing, A/B Testing, Social Media, Copywriting\n\nExperience:\nSenior Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

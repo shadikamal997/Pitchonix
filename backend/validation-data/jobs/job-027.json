@@ -1,0 +1,35 @@
+{
+  "title": "Senior Python Developer",
+  "category": "backend",
+  "description": "Join our team as a Python Developer to build robust backend services and data pipelines. We are a enterprise looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "Python",
+    "Django",
+    "Flask",
+    "PostgreSQL",
+    "Redis",
+    "Celery"
+  ],
+  "requiredExperience": "4+ years Python development",
+  "responsibilities": [
+    "Develop backend services",
+    "Write APIs",
+    "Optimize performance",
+    "Write tests"
+  ],
+  "qualifications": [
+    "Strong Python skills",
+    "Experience with Django/Flask",
+    "Database expertise"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "Austin, TX",
+  "employmentType": "Full-time",
+  "remote": "Remote"
+}

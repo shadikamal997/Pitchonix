@@ -11,13 +11,28 @@ import { UniversalDocument, emptyDocument, newPage, heading, paragraph } from '.
 //       reasonable plain-text approximation that preserves paragraph breaks.
 // =============================================================================
 
+/** Decode a buffer as UTF-8, falling back to latin1 if UTF-8 is invalid. */
+function decodeBuffer(buf: Buffer): string {
+  try {
+    const decoded = buf.toString('utf8');
+    // If the result contains the UTF-8 replacement character, the input was
+    // not valid UTF-8 — fall back to latin1 which is lossless for 8-bit data.
+    if (decoded.includes('�') && buf.length > 0) {
+      return buf.toString('latin1');
+    }
+    return decoded;
+  } catch {
+    return buf.toString('latin1');
+  }
+}
+
 export function importText(buffer: Buffer, filename = 'document.txt'): UniversalDocument {
-  const txt = buffer.toString('utf8');
+  const txt = decodeBuffer(buffer);
   return buildFromPlainText(txt, 'txt', filename.replace(/\.[a-z]+$/i, ''));
 }
 
 export function importRtf(buffer: Buffer, filename = 'document.rtf'): UniversalDocument {
-  const raw = buffer.toString('utf8');
+  const raw = decodeBuffer(buffer);
   // Strip RTF header / control words / groups. This is intentionally simple;
   // for enterprise-grade RTF, convert through DOCX first.
   const stripped = raw

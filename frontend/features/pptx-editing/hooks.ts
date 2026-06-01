@@ -187,18 +187,22 @@ export interface SlideTransitionDTO {
   advanceOnClick?: boolean; advanceAfter?: number;
 }
 
-export function useSlideTransition(slideId: string | null | undefined) {
+export function useSlideTransition(slideId: string | null | undefined, autoLoad = true) {
   const [transition, setTransition] = useState<SlideTransitionDTO | null>(null);
   const [loading, setLoading] = useState(false);
   const refresh = useCallback(async () => {
+    if (!autoLoad) return;
     if (!slideId) { setTransition(null); return; }
     setLoading(true);
     try {
       const { data } = await api.get<SlideTransitionDTO | null>(`/slides/${slideId}/transition`);
       setTransition(data || null);
     } finally { setLoading(false); }
-  }, [slideId]);
-  useEffect(() => { refresh(); }, [refresh]);
+  }, [slideId, autoLoad]);
+  useEffect(() => {
+    if (!autoLoad) return;
+    refresh();
+  }, [refresh, autoLoad]);
 
   const set   = (t: SlideTransitionDTO) => api.put(`/slides/${slideId}/transition`, t).then((r) => { setTransition(r.data); return r.data; });
   const clear = () => api.delete(`/slides/${slideId}/transition`).then(() => setTransition(null));

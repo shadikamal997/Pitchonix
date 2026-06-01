@@ -1,0 +1,102 @@
+{
+  "profile": {
+    "skills": [
+      "Usability Testing",
+      "User Research",
+      "UI Design",
+      "Prototyping",
+      "Design Systems",
+      "After Effects",
+      "Figma",
+      "Sketch",
+      "Interaction Design",
+      "Adobe XD"
+    ],
+    "experience": [
+      {
+        "title": "Lead Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "NexGen Tech",
+        "duration": "2021-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "Quantum Labs",
+        "duration": "2019-2021",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "InnovateLabs",
+        "duration": "2017-2019",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "Quantum Labs",
+        "duration": "2015-2017",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "Cloud Systems",
+        "duration": "2012-2015",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "Stanford",
+        "year": "2008"
+      }
+    ],
+    "contact": {
+      "name": "Alex Brown",
+      "email": "alex.brown@email.com",
+      "phone": "+1-555-0263",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/alex-brown"
+    }
+  },
+  "document": {
+    "title": "Alex Brown - Lead Product Designer",
+    "content": "Alex Brown\nLead Product Designer\n\nSkills:\nUsability Testing, User Research, UI Design, Prototyping, Design Systems, After Effects, Figma, Sketch, Interaction Design, Adobe XD\n\nExperience:\nLead Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

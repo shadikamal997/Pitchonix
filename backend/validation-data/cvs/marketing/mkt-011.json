@@ -1,0 +1,61 @@
+{
+  "profile": {
+    "skills": [
+      "Brand Management",
+      "Facebook Ads",
+      "Google Ads",
+      "Data Analysis",
+      "Social Media",
+      "Copywriting",
+      "Content Strategy",
+      "Google Analytics",
+      "A/B Testing",
+      "Email Marketing"
+    ],
+    "experience": [
+      {
+        "title": "Marketing Manager",
+        "company": "Cloud Systems",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "Digital Solutions",
+        "duration": "2021-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "Cornell",
+        "year": "2017"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Morgan Davis",
+      "email": "morgan.davis@email.com",
+      "phone": "+1-555-0540",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Morgan Davis - Mid Marketing Manager",
+    "content": "Morgan Davis\nMid Marketing Manager\n\nSkills:\nBrand Management, Facebook Ads, Google Ads, Data Analysis, Social Media, Copywriting, Content Strategy, Google Analytics, A/B Testing, Email Marketing\n\nExperience:\nMid Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

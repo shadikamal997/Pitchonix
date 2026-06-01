@@ -26,6 +26,10 @@ import {
 } from './types';
 import type { WizardInput } from '../slide-types/types';
 import type { SmartFamilyId } from '../../components/smart/smart-types';
+import { getFamilyTokens } from '../../components/smart/family-tokens';
+import { analyzeNarrativeFlow } from './narrative-flow';
+import { contentRichness, visualCoverage, compositeScore } from './quality-signals';
+import { familyForTemplate } from '../template-family-map';
 
 @Injectable()
 export class UnifiedGenerationPipeline {
@@ -164,16 +168,24 @@ export class UnifiedGenerationPipeline {
       ...(command.wizardInput || {}),
     } as WizardInput;
 
-    // Family resolution: command override wins, else stored on deck.metadata.familyId,
-    // else inferred later by the smart adapter.
-    if (command.familyId) ctx.familyId = command.familyId;
-
-    // Pick target deck (REFRESH / FAMILY_SWITCH / TEMPLATE_SWITCH need an explicit one)
+    // Pick target deck. Project-level update commands must reuse the latest
+    // existing deck; otherwise "regenerate" silently creates duplicate decks.
     if (command.deckId) {
       ctx.deckId = command.deckId;
     } else {
-      // Reuse an empty deck or create a new one (REGENERATE / REBUILD)
-      let deck: any = project.decks.find((d) => d.slides.length === 0);
+      const decksByRecentActivity = [...project.decks].sort((a, b) => {
+        const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+        const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+        return bTime - aTime;
+      });
+
+      let deck: any;
+      if (command.type === 'GENERATE') {
+        deck = decksByRecentActivity.find((d) => d.slides.length === 0);
+      } else {
+        deck = decksByRecentActivity[0] || project.decks.find((d) => d.slides.length === 0);
+      }
+
       if (!deck) {
         deck = await this.decksService.create(project.id, {
           title: `${ctx.wizardInput.companyName} ${formatDocumentType(ctx.wizardInput.documentType)}`,
@@ -184,19 +196,60 @@ export class UnifiedGenerationPipeline {
       ctx.deckId = deck.id;
     }
 
+    const targetDeck = await this.prisma.deck.findUnique({ where: { id: ctx.deckId } });
+    const deckMetadata = ((targetDeck?.metadata as any) || {}) as Record<string, any>;
+    const storedTemplateId = targetDeck?.templateId || (typeof deckMetadata.templateId === 'string' ? deckMetadata.templateId : null);
+    if (storedTemplateId && !ctx.templateId) ctx.templateId = storedTemplateId;
+    const storedFamily = typeof deckMetadata.familyId === 'string'
+      ? deckMetadata.familyId as SmartFamilyId
+      : null;
+    const storedTemplateFamily = familyForTemplate(storedTemplateId);
+
+    // Family resolution: command override wins, then template choice, then stored
+    // deck family. Downstream generation, renderer metadata, preview and export all
+    // read this single family id.
+    if (command.familyId) ctx.familyId = command.familyId;
+    else if (command.templateId) ctx.familyId = familyForTemplate(command.templateId) || undefined;
+    else if (storedTemplateFamily) ctx.familyId = storedTemplateFamily;
+    else if (storedFamily) ctx.familyId = storedFamily;
+
     // Apply template / family side-effects right here so downstream stages see them.
     if (command.type === 'FAMILY_SWITCH' && command.familyId) {
       await this.prisma.project.update({
         where: { id: project.id },
         data:  { businessInfo: { ...businessInfo, theme: command.familyId } as any },
       });
+      await this.prisma.deck.update({
+        where: { id: ctx.deckId },
+        data: { metadata: { ...deckMetadata, familyId: command.familyId } as any },
+      });
       ctx.wizardInput.theme = command.familyId;
       this.bus.emit('family.changed', { projectId: project.id, deckId: ctx.deckId, familyId: command.familyId });
     }
     if (command.type === 'TEMPLATE_SWITCH' && command.templateId) {
-      await this.prisma.deck.update({ where: { id: ctx.deckId }, data: { templateId: command.templateId } });
+      const familyId = familyForTemplate(command.templateId);
+      const templateRow = await this.prisma.template.findUnique({ where: { id: command.templateId }, select: { id: true } });
+      if (familyId) {
+        ctx.familyId = familyId;
+        ctx.wizardInput.theme = familyId;
+        await this.prisma.project.update({
+          where: { id: project.id },
+          data:  { businessInfo: { ...businessInfo, theme: familyId } as any },
+        });
+      }
+      await this.prisma.deck.update({
+        where: { id: ctx.deckId },
+        data: {
+          ...(templateRow ? { templateId: command.templateId } : {}),
+          metadata: {
+            ...deckMetadata,
+            templateId: command.templateId,
+            familyId: familyId || ctx.familyId || storedFamily || null,
+          } as any,
+        },
+      });
       ctx.templateId = command.templateId;
-      this.bus.emit('template.changed', { deckId: ctx.deckId, templateId: command.templateId });
+      this.bus.emit('template.changed', { deckId: ctx.deckId, templateId: command.templateId, familyId });
     }
     if (command.type === 'WIZARD_UPDATE' || command.type === 'STRUCTURED_UPDATE') {
       await this.prisma.project.update({
@@ -221,7 +274,7 @@ export class UnifiedGenerationPipeline {
     input.includeFinancials = input.includeFinancials === true;
     input.includeSpeakerNotes = input.includeSpeakerNotes !== false;
     input.includeExecutiveSummary = input.includeExecutiveSummary === true;
-    input.theme = input.theme || ctx.familyId || (input as any).family || 'investor-minimal';
+    input.theme = ctx.familyId || input.theme || (input as any).family || 'investor-minimal';
     input.brandColors = input.brandColors || { primary: '#16a34a', secondary: '#0ea5e9', accent: '#a855f7' };
     input.fontStyle = input.fontStyle || 'inter';
     input.visualStyle = input.visualStyle || 'data_heavy';
@@ -307,9 +360,27 @@ export class UnifiedGenerationPipeline {
         smartComponent: (s.content as any)?.smartComponent,
       })) as any;
     }
-    const score = this.scorecardService.build(ctx.wizardInput!, ctx.slides || []);
-    ctx.metrics = { ...(ctx.metrics || { slidesGenerated: 0, smartComponentsAttached: 0, elementsCreated: 0, qualityScore: 0 }), qualityScore: (score as any)?.total ?? 0 };
-    this.bus.emit('quality.completed', { deckId: ctx.deckId, score });
+    const slideTypes = (ctx.slides || []).map((s: any) => s.type);
+    const flow       = analyzeNarrativeFlow(slideTypes, ctx.wizardInput?.documentType);
+    const richness   = ctx.wizardInput ? contentRichness(ctx.wizardInput) : 0;
+    const coverage   = visualCoverage(ctx.slides || []);
+    const score      = this.scorecardService.build(ctx.wizardInput!, ctx.slides || [], coverage);
+    const scorecardTotal = (score as any)?.overall ?? (score as any)?.total ?? 0;
+    const finalScore = compositeScore({
+      scorecardTotal,
+      narrativeScore:  flow.narrativeScore,
+      contentRichness: richness,
+      visualCoverage:  coverage,
+    });
+    ctx.metrics = {
+      ...(ctx.metrics || { slidesGenerated: 0, smartComponentsAttached: 0, elementsCreated: 0, qualityScore: 0 }),
+      qualityScore:   finalScore,
+      narrativeScore: flow.narrativeScore,
+    };
+    this.bus.emit('quality.completed', {
+      deckId: ctx.deckId, score, narrativeScore: flow.narrativeScore, flowGaps: flow.gaps,
+      signals: { richness, coverage, scorecardTotal, finalScore },
+    });
   }
 
   /** Stage 8 — DB persistence + smart-component-driven element materialisation. */
@@ -318,16 +389,53 @@ export class UnifiedGenerationPipeline {
     if (!ctx.deckId) throw new PipelineError('migration', 'deckId missing');
 
     // Persist SlideContent rows first, then migrate each into SlideElement rows.
-    const baseSlides = ctx.slides.map((s: any, i: number) => ({
-      type:         s.type,
-      order:        i,
-      title:        s.title || '',
-      subtitle:     s.subtitle,
-      // Carry smartComponent inside content JSON so the migration service
-      // sees it (matches the persisted shape).
-      content:      { ...(s.content || {}), smartComponent: s.smartComponent },
-      speakerNotes: s.speakerNotes,
-    }));
+    const baseSlides = ctx.slides.map((s: any, i: number) => {
+      // Resolve family tokens for background + theme so the export pipeline
+      // renders the correct family colours instead of defaulting to #ffffff.
+      const family: SmartFamilyId | undefined = (ctx.familyId || s.smartComponent?.family || ctx.wizardInput?.theme) as SmartFamilyId | undefined;
+      let background: any = undefined;
+      let themeTokens: any = undefined;
+      if (family) {
+        try {
+          const tok = getFamilyTokens(family);
+          // Store raw CSS in themeTokens.background — element-html-renderer reads
+          // `theme.background` directly, so gradients work without extra parsing.
+          themeTokens = {
+            background:  tok.bg,
+            accent:      tok.accent,
+            accent2:     tok.accent2,
+            text:        tok.text,
+            muted:       tok.muted,
+            surface:     tok.surface,
+            border:      tok.border,
+            fontHeading: tok.fontHeading,
+            fontBody:    tok.fontBody,
+          };
+          // Also populate the structured SlideBackground for any renderer that
+          // prefers the explicit format (PPTX exporter, etc.).
+          if (!tok.bg.includes('gradient')) {
+            background = { type: 'solid', color: tok.bg };
+          }
+        } catch { /* unknown family — leave undefined */ }
+      }
+      return {
+        type:         s.type,
+        order:        i,
+        title:        s.title || '',
+        subtitle:     s.subtitle,
+        // Carry smartComponent inside content JSON so the migration service
+        // sees it (matches the persisted shape).
+        content:      { ...(s.content || {}), smartComponent: s.smartComponent },
+        metadata:     {
+          ...((s.metadata as any) || {}),
+          ...(ctx.templateId ? { appliedTemplateId: ctx.templateId } : {}),
+          ...(family ? { familyId: family } : {}),
+        },
+        speakerNotes: s.speakerNotes,
+        ...(background  !== undefined ? { background  } : {}),
+        ...(themeTokens !== undefined ? { themeTokens } : {}),
+      };
+    });
 
     // FAMILY_SWITCH / TEMPLATE_SWITCH / REGENERATE / REBUILD all start with
     // a clean deck — wipe and rewrite. GENERATE uses an empty deck already.

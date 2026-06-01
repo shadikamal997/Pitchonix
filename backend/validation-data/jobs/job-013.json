@@ -1,0 +1,34 @@
+{
+  "title": "UI Engineer",
+  "category": "frontend",
+  "description": "We need a UI Engineer who is passionate about creating pixel-perfect interfaces and smooth user experiences. We are a startup looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "HTML",
+    "CSS",
+    "JavaScript",
+    "React",
+    "SCSS",
+    "Figma"
+  ],
+  "requiredExperience": "3+ years UI development",
+  "responsibilities": [
+    "Implement designs",
+    "Build reusable components",
+    "Ensure cross-browser compatibility"
+  ],
+  "qualifications": [
+    "Strong CSS/SCSS skills",
+    "Experience with design tools",
+    "Attention to detail"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "San Francisco, CA",
+  "employmentType": "Full-time",
+  "remote": "Remote"
+}

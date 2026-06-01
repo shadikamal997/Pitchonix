@@ -1,0 +1,48 @@
+{
+  "profile": {
+    "skills": [
+      "Research",
+      "Teaching",
+      "Grant Writing",
+      "Machine Learning",
+      "Data Science",
+      "Academic Publishing"
+    ],
+    "experience": [
+      {
+        "title": "Associate Professor",
+        "company": "MIT",
+        "duration": "2020-Present",
+        "description": "Teaching machine learning and AI courses. Leading research lab with 8 PhD students. Published 25+ papers in top-tier conferences."
+      },
+      {
+        "title": "Assistant Professor",
+        "company": "Stanford University",
+        "duration": "2016-2020",
+        "description": "Established research program in deep learning. Secured $2M in NSF funding. Advised 5 PhD students to completion."
+      }
+    ],
+    "education": [
+      {
+        "degree": "PhD Computer Science",
+        "institution": "Carnegie Mellon",
+        "year": "2016"
+      },
+      {
+        "degree": "MS Computer Science",
+        "institution": "UC Berkeley",
+        "year": "2012"
+      }
+    ],
+    "contact": {
+      "name": "Jamie Garcia",
+      "email": "jamie.garcia@university.edu",
+      "phone": "+1-555-4592",
+      "location": "Cambridge, MA"
+    }
+  },
+  "document": {
+    "title": "Jamie Garcia - Associate Professor",
+    "content": "Jamie Garcia\nAssociate Professor, Computer Science\n\nResearch Interests:\nMachine learning, deep learning, natural language processing..."
+  }
+}

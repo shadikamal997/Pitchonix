@@ -4,9 +4,6 @@ import { VisualCompositionService } from './visual-composition.service';
 import { LAYOUT_RENDERERS, LayoutComponentType } from '../templates/layout-components';
 import { getTemplateConfig } from '../templates/template-configs';
 import { ProTemplateRendererService } from '../pro-templates/renderers/pro-template-renderer.service';
-import * as DOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
-import { marked } from 'marked';
 
 interface PreviewCache {
   html: string;
@@ -113,9 +110,9 @@ export class PreviewService {
   private async generatePreviewHTML(document: any, colorScheme?: string, templateTypeOverride?: string, proTemplateId?: string | null): Promise<string> {
     const { pages } = document;
 
-    // Initialize DOMPurify
-    const window = new JSDOM('').window;
-    const purify = DOMPurify(window as any);
+    // Load the sanitizer lazily so importing the Nest app does not pull ESM
+    // jsdom dependencies through Jest before any preview is requested.
+    const purify = await createPurifier();
 
     const safeTitle = purify.sanitize(document.title || 'Untitled Document');
 
@@ -752,7 +749,7 @@ export class PreviewService {
 
     // Convert markdown to HTML using marked
     try {
-      return marked.parse(markdown, { breaks: true, gfm: true }) as string;
+      return basicMarkdownToHtml(markdown);
     } catch (e) {
       this.logger.warn('Failed to parse markdown, returning raw text', e);
       // Fallback: basic HTML escaping and line breaks
@@ -819,4 +816,44 @@ export class PreviewService {
       keys: Array.from(this.cache.keys()),
     };
   }
+}
+
+async function createPurifier(): Promise<{ sanitize: (value: any) => string }> {
+  const nativeImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+  const [domPurifyModule, jsdomModule] = await Promise.all([
+    nativeImport('dompurify'),
+    nativeImport('jsdom'),
+  ]);
+  const createDOMPurify = domPurifyModule.default || domPurifyModule;
+  const JSDOM = jsdomModule.JSDOM || jsdomModule.default?.JSDOM;
+  const window = new JSDOM('').window;
+  const purify = createDOMPurify(window as any);
+  return {
+    sanitize(value: any) {
+      return purify.sanitize(String(value ?? ''));
+    },
+  };
+}
+
+function basicMarkdownToHtml(markdown: string): string {
+  const escaped = String(markdown || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return escaped
+    .split(/\n{2,}/)
+    .map((block) => {
+      const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+      if (!lines.length) return '';
+      if (lines.every((line) => /^[-*]\s+/.test(line))) {
+        return `<ul>${lines.map((line) => `<li>${line.replace(/^[-*]\s+/, '')}</li>`).join('')}</ul>`;
+      }
+      const first = lines[0];
+      if (/^###\s+/.test(first)) return `<h3>${first.replace(/^###\s+/, '')}</h3>`;
+      if (/^##\s+/.test(first)) return `<h2>${first.replace(/^##\s+/, '')}</h2>`;
+      if (/^#\s+/.test(first)) return `<h1>${first.replace(/^#\s+/, '')}</h1>`;
+      return `<p>${lines.join('<br>')}</p>`;
+    })
+    .filter(Boolean)
+    .join('');
 }

@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PROTECTED_PATHS = ['/dashboard', '/create', '/projects', '/editor', '/onboarding', '/settings', '/pdf-studio', '/brand-kits', '/templates', '/analytics'];
+const PROTECTED_PATHS = ['/dashboard', '/create', '/projects', '/editor', '/onboarding', '/settings', '/pdf-studio', '/brand-kits', '/templates', '/analytics', '/career'];
 const AUTH_PATHS = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('pitchonix-auth')?.value;
+  const rawToken = request.cookies.get('pitchonix-auth')?.value;
   const { pathname } = request.nextUrl;
+
+  // Treat suspiciously short or clearly empty tokens as absent so a stale
+  // cookie doesn't send the user into a /login → /dashboard redirect loop.
+  const token = rawToken && rawToken.length > 20 ? rawToken : undefined;
 
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
@@ -38,6 +42,7 @@ export const config = {
     '/brand-kits/:path*',
     '/templates/:path*',
     '/analytics/:path*',
+    '/career/:path*',
     '/login',
     '/register',
   ],

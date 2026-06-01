@@ -37,6 +37,21 @@ export class CreateSlideDto {
   @IsOptional()
   @IsString()
   themeKey?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsObject()
+  background?: any;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsObject()
+  themeTokens?: any;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsObject()
+  metadata?: any;
 }
 
 export class UpdateSlideDto {

@@ -1,0 +1,94 @@
+{
+  "profile": {
+    "skills": [
+      "SEM",
+      "Brand Management",
+      "A/B Testing",
+      "Email Marketing",
+      "Conversion Optimization",
+      "Content Strategy",
+      "Content Marketing",
+      "SEO",
+      "Google Ads",
+      "Data Analysis"
+    ],
+    "experience": [
+      {
+        "title": "Lead Marketing Manager",
+        "company": "Cloud Systems",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "InnovateLabs",
+        "duration": "2020-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "Digital Solutions",
+        "duration": "2018-2020",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "TechCorp",
+        "duration": "2016-2018",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "Cloud Systems",
+        "duration": "2015-2016",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "MIT",
+        "year": "2011"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Sage Jones",
+      "email": "sage.jones@email.com",
+      "phone": "+1-555-3817",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Sage Jones - Lead Marketing Manager",
+    "content": "Sage Jones\nLead Marketing Manager\n\nSkills:\nSEM, Brand Management, A/B Testing, Email Marketing, Conversion Optimization, Content Strategy, Content Marketing, SEO, Google Ads, Data Analysis\n\nExperience:\nLead Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

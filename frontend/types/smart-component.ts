@@ -32,6 +32,7 @@ export const SMART_COMPONENT_TYPES: SmartComponentType[] = [
 ];
 
 export type SmartFamilyId =
+  // Original 8
   | 'crimson-dark'
   | 'light-blue-business'
   | 'luxury-dark'
@@ -39,11 +40,29 @@ export type SmartFamilyId =
   | 'corporate-monochrome'
   | 'editorial-report'
   | 'investor-minimal'
-  | 'soft-geometric-blue';
+  | 'soft-geometric-blue'
+  // Phase 4 — 12 new premium families
+  | 'ocean-deep'
+  | 'forest-executive'
+  | 'ember-orange'
+  | 'arctic-white'
+  | 'slate-pro'
+  | 'emerald-fintech'
+  | 'midnight-tech'
+  | 'rose-modern'
+  | 'cobalt-impact'
+  | 'warm-sand'
+  | 'violet-creative'
+  | 'teal-health';
 
 export const SMART_FAMILIES: SmartFamilyId[] = [
+  // Original 8
   'crimson-dark', 'light-blue-business', 'luxury-dark', 'startup-gradient',
   'corporate-monochrome', 'editorial-report', 'investor-minimal', 'soft-geometric-blue',
+  // Phase 4 — 12 new premium families
+  'ocean-deep', 'forest-executive', 'ember-orange', 'arctic-white',
+  'slate-pro', 'emerald-fintech', 'midnight-tech', 'rose-modern',
+  'cobalt-impact', 'warm-sand', 'violet-creative', 'teal-health',
 ];
 
 export type SmartUseCase = 'Business' | 'Investor' | 'Sales' | 'Board' | 'Strategy' | 'Marketing';
@@ -62,6 +81,7 @@ export const SMART_TYPE_LABEL: Record<SmartComponentType, string> = {
 };
 
 export const SMART_FAMILY_LABEL: Record<SmartFamilyId, string> = {
+  // Original 8
   'crimson-dark':         'Crimson Dark',
   'light-blue-business':  'Light Blue Business',
   'luxury-dark':          'Luxury Dark',
@@ -70,6 +90,19 @@ export const SMART_FAMILY_LABEL: Record<SmartFamilyId, string> = {
   'editorial-report':     'Editorial Report',
   'investor-minimal':     'Investor Minimal',
   'soft-geometric-blue':  'Soft Geometric Blue',
+  // Phase 4 — 12 new premium families
+  'ocean-deep':           'Ocean Deep',
+  'forest-executive':     'Forest Executive',
+  'ember-orange':         'Ember Orange',
+  'arctic-white':         'Arctic White',
+  'slate-pro':            'Slate Pro',
+  'emerald-fintech':      'Emerald Fintech',
+  'midnight-tech':        'Midnight Tech',
+  'rose-modern':          'Rose Modern',
+  'cobalt-impact':        'Cobalt Impact',
+  'warm-sand':            'Warm Sand',
+  'violet-creative':      'Violet Creative',
+  'teal-health':          'Teal Health',
 };
 
 export interface SmartComponentDTO {

@@ -35,10 +35,13 @@ const CAPABILITIES: { Icon: any; label: string; desc: string; tone: 'ok' | 'part
   { Icon: BookOpenCheck,  label: 'Masters & layouts',desc: 'Slide master + layout placeholders preserved',      tone: 'partial' },
 ];
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function PptxImportPage() {
   const router = useRouter();
   const [projectId, setProjectId] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const isValidProjectId = UUID_RE.test(projectId.trim());
   const [busy, setBusy] = useState<'parse' | 'import' | null>(null);
   const [report, setReport] = useState<any | null>(null);
   const [preview, setPreview] = useState<any | null>(null);
@@ -59,7 +62,7 @@ export default function PptxImportPage() {
   };
 
   const handleImport = async () => {
-    if (!file || !projectId.trim()) return;
+    if (!file || !isValidProjectId) return;
     setBusy('import');
     try {
       const res = await importPptx(file, projectId.trim());
@@ -223,7 +226,12 @@ export default function PptxImportPage() {
                   placeholder="paste-project-uuid"
                   className="w-full h-11 px-4 text-sm font-mono bg-white border border-[#E3E1DA] rounded-[14px] text-[#111111] placeholder:text-[#9A9A9A] focus:outline-none focus:border-[#4F7563] focus:shadow-[0_0_0_3px_rgba(79,117,99,0.15)] transition"
                 />
-                <p className="text-[10px] text-[#9A9A9A] mt-1">Find this in the URL when you open a project from the dashboard.</p>
+                {projectId.trim() && !isValidProjectId && (
+                  <p className="text-[10px] text-red-500 mt-1">Must be a valid UUID (e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)</p>
+                )}
+                {(!projectId.trim() || isValidProjectId) && (
+                  <p className="text-[10px] text-[#9A9A9A] mt-1">Find this in the URL when you open a project from the dashboard.</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#6B6B6B] mb-1.5">PPTX file</label>
@@ -249,7 +257,7 @@ export default function PptxImportPage() {
                 {busy === 'parse' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} Preview only
               </button>
               <button
-                onClick={handleImport} disabled={!file || !projectId.trim() || busy !== null}
+                onClick={handleImport} disabled={!file || !isValidProjectId || busy !== null}
                 className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-[#4F7563] hover:bg-[#355846] text-white font-semibold text-sm shadow-[0_14px_30px_rgba(79,117,99,0.22)] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {busy === 'import' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />} Import to project

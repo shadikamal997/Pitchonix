@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATS Human Review Interface</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    
+    .content {
+      padding: 40px;
+    }
+    
+    .reviewer-info {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    
+    .reviewer-info label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    
+    .reviewer-info input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    
+    .reviewer-info input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .cv-viewer {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .cv-viewer h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+    
+    .cv-viewer textarea {
+      width: 100%;
+      min-height: 300px;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      resize: vertical;
+    }
+    
+    .rating-section {
+      margin-bottom: 30px;
+    }
+    
+    .rating-item {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .rating-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .rating-item label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #333;
+      font-size: 15px;
+    }
+    
+    .rating-item small {
+      display: block;
+      color: #666;
+      margin-bottom: 15px;
+      font-size: 13px;
+    }
+    
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(to right, #ef4444 0%, #f59e0b 50%, #10b981 100%);
+      outline: none;
+    }
+    
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      border: 3px solid #667eea;
+    }
+    
+    .slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      border: 3px solid #667eea;
+    }
+    
+    .score-display {
+      min-width: 60px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      color: #667eea;
+    }
+    
+    .comments {
+      margin-top: 30px;
+    }
+    
+    .comments label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #333;
+      font-size: 15px;
+    }
+    
+    .comments textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      transition: border-color 0.3s;
+    }
+    
+    .comments textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .overall-score {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .overall-score h3 {
+      margin-bottom: 15px;
+      font-size: 18px;
+      opacity: 0.9;
+    }
+    
+    .overall-score .score {
+      font-size: 64px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    
+    .overall-score p {
+      opacity: 0.8;
+      font-size: 14px;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 16px 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+    
+    .success-message {
+      background: #10b981;
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      margin-top: 20px;
+      display: none;
+    }
+    
+    .instructions {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    
+    .instructions h4 {
+      color: #856404;
+      margin-bottom: 10px;
+    }
+    
+    .instructions ol {
+      margin-left: 20px;
+      color: #856404;
+    }
+    
+    .instructions li {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎯 ATS Human Review Interface</h1>
+      <p>Phase Ω.3A — Real-World Accuracy Certification</p>
+    </div>
+    
+    <div class="content">
+      <div class="instructions">
+        <h4>📋 Review Instructions</h4>
+        <ol>
+          <li>Read the CV carefully and completely</li>
+          <li>Score each category from 0-100 based on your professional assessment</li>
+          <li>Compare your mental "ideal CV" to what you're reviewing</li>
+          <li>Be consistent across all CVs you review</li>
+          <li>Add comments explaining your scores (optional but helpful)</li>
+          <li>Click "Save Review" to export JSON file</li>
+        </ol>
+      </div>
+      
+      <div class="reviewer-info">
+        <label for="reviewerId">Reviewer ID</label>
+        <input type="text" id="reviewerId" placeholder="e.g., reviewer-1, john-smith, etc." required>
+      </div>
+      
+      <div class="cv-viewer">
+        <h3>📄 CV Content</h3>
+        <textarea id="cvContent" placeholder="Paste CV content here or load from file..."></textarea>
+        <input type="file" id="cvFile" accept=".json,.txt" style="margin-top: 10px;">
+      </div>
+      
+      <div class="rating-section">
+        <h2 style="margin-bottom: 20px; color: #333;">Rate This CV</h2>
+        
+        <div class="rating-item">
+          <label>🎯 ATS Readiness</label>
+          <small>How well-optimized is this CV for Applicant Tracking Systems?</small>
+          <div class="slider-container">
+            <input type="range" min="0" max="100" value="50" class="slider" id="atsReadiness">
+            <span class="score-display" id="atsReadinessScore">50</span>
+          </div>
+        </div>
+        
+        <div class="rating-item">
+          <label>💼 Skill Relevance</label>
+          <small>How relevant and strong are the candidate's skills?</small>
+          <div class="slider-container">
+            <input type="range" min="0" max="100" value="50" class="slider" id="skillRelevance">
+            <span class="score-display" id="skillRelevanceScore">50</span>
+          </div>
+        </div>
+        
+        <div class="rating-item">
+          <label>⭐ Experience Strength</label>
+          <small>How strong and relevant is the candidate's work experience?</small>
+          <div class="slider-container">
+            <input type="range" min="0" max="100" value="50" class="slider" id="experienceStrength">
+            <span class="score-display" id="experienceStrengthScore">50</span>
+          </div>
+        </div>
+        
+        <div class="rating-item">
+          <label>📐 Formatting Quality</label>
+          <small>How professional and readable is the CV formatting?</small>
+          <div class="slider-container">
+            <input type="range" min="0" max="100" value="50" class="slider" id="formattingQuality">
+            <span class="score-display" id="formattingQualityScore">50</span>
+          </div>
+        </div>
+        
+        <div class="rating-item">
+          <label>🔑 Keyword Coverage</label>
+          <small>Does the CV include relevant keywords and terminology?</small>
+          <div class="slider-container">
+            <input type="range" min="0" max="100" value="50" class="slider" id="keywordCoverage">
+            <span class="score-display" id="keywordCoverageScore">50</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="overall-score">
+        <h3>Overall Score</h3>
+        <div class="score" id="overallScore">50</div>
+        <p>Calculated as average of all categories</p>
+      </div>
+      
+      <div class="comments">
+        <label>💬 Comments (Optional)</label>
+        <textarea id="comments" placeholder="Add any additional observations, strengths, weaknesses, or recommendations..."></textarea>
+      </div>
+      
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="resetForm()">Reset Form</button>
+        <button class="btn btn-primary" onclick="saveReview()">Save Review</button>
+      </div>
+      
+      <div class="success-message" id="successMessage">
+        ✅ Review saved successfully! Check your downloads folder.
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Initialize sliders
+    const sliders = ['atsReadiness', 'skillRelevance', 'experienceStrength', 'formattingQuality', 'keywordCoverage'];
+    
+    sliders.forEach(id => {
+      const slider = document.getElementById(id);
+      const scoreDisplay = document.getElementById(id + 'Score');
+      
+      slider.addEventListener('input', (e) => {
+        scoreDisplay.textContent = e.target.value;
+        updateOverallScore();
+      });
+    });
+    
+    // Update overall score
+    function updateOverallScore() {
+      const scores = sliders.map(id => parseInt(document.getElementById(id).value));
+      const average = scores.reduce((a, b) => a + b, 0) / scores.length;
+      document.getElementById('overallScore').textContent = Math.round(average);
+    }
+    
+    // Load CV from file
+    document.getElementById('cvFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const content = event.target.result;
+          if (file.name.endsWith('.json')) {
+            const json = JSON.parse(content);
+            document.getElementById('cvContent').value = JSON.stringify(json, null, 2);
+          } else {
+            document.getElementById('cvContent').value = content;
+          }
+        } catch (error) {
+          alert('Error loading file: ' + error.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+    
+    // Reset form
+    function resetForm() {
+      if (!confirm('Are you sure you want to reset all fields?')) return;
+      
+      document.getElementById('reviewerId').value = '';
+      document.getElementById('cvContent').value = '';
+      document.getElementById('comments').value = '';
+      
+      sliders.forEach(id => {
+        document.getElementById(id).value = 50;
+        document.getElementById(id + 'Score').textContent = 50;
+      });
+      
+      updateOverallScore();
+      document.getElementById('successMessage').style.display = 'none';
+    }
+    
+    // Save review
+    function saveReview() {
+      const reviewerId = document.getElementById('reviewerId').value.trim();
+      
+      if (!reviewerId) {
+        alert('Please enter a Reviewer ID');
+        document.getElementById('reviewerId').focus();
+        return;
+      }
+      
+      const cvContent = document.getElementById('cvContent').value.trim();
+      
+      if (!cvContent) {
+        alert('Please load or paste CV content');
+        document.getElementById('cvContent').focus();
+        return;
+      }
+      
+      const review = {
+        reviewerId,
+        atsReadiness: parseInt(document.getElementById('atsReadiness').value),
+        skillRelevance: parseInt(document.getElementById('skillRelevance').value),
+        experienceStrength: parseInt(document.getElementById('experienceStrength').value),
+        formattingQuality: parseInt(document.getElementById('formattingQuality').value),
+        keywordCoverage: parseInt(document.getElementById('keywordCoverage').value),
+        overallScore: Math.round(
+          (parseInt(document.getElementById('atsReadiness').value) +
+           parseInt(document.getElementById('skillRelevance').value) +
+           parseInt(document.getElementById('experienceStrength').value) +
+           parseInt(document.getElementById('formattingQuality').value) +
+           parseInt(document.getElementById('keywordCoverage').value)) / 5
+        ),
+        comments: document.getElementById('comments').value.trim() || undefined,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Download as JSON
+      const blob = new Blob([JSON.stringify([review], null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `review-${reviewerId}-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // Show success message
+      const successMessage = document.getElementById('successMessage');
+      successMessage.style.display = 'block';
+      setTimeout(() => {
+        successMessage.style.display = 'none';
+      }, 3000);
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(JSON.stringify([review], null, 2))
+        .then(() => console.log('Review copied to clipboard'))
+        .catch(() => console.log('Clipboard copy failed'));
+    }
+    
+    // Initialize
+    updateOverallScore();
+  </script>
+</body>
+</html>

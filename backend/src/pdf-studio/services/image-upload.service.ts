@@ -110,13 +110,13 @@ export class ImageUploadService {
   /**
    * Delete image
    */
-  async deleteImage(imageId: string): Promise<void> {
+  async deleteImage(imageId: string, userId?: string): Promise<void> {
     try {
       const image = await this.prisma.uploadedImage.findUnique({
         where: { id: imageId },
       });
 
-      if (!image) {
+      if (!image || (image.userId && image.userId !== userId)) {
         throw new Error('Image not found');
       }
 
@@ -138,7 +138,19 @@ export class ImageUploadService {
   /**
    * Get image by ID
    */
-  async getImage(imageId: string) {
+  async getImage(imageId: string, userId?: string) {
+    const image = await this.prisma.uploadedImage.findUnique({
+      where: { id: imageId },
+    });
+
+    if (!image || (image.userId && image.userId !== userId)) {
+      return null;
+    }
+
+    return image;
+  }
+
+  async getImageByIdUnsafe(imageId: string) {
     return await this.prisma.uploadedImage.findUnique({
       where: { id: imageId },
     });

@@ -1,9 +1,7 @@
 'use client';
 
 import api from '@/lib/api';
-import type { SlideElementDTO } from '@/types/slide-element';
 import type { TemplateSpec } from './registry';
-import { deriveElementStyle } from './registry';
 
 // =============================================================================
 //  applyTemplate
@@ -34,51 +32,29 @@ interface ApplyOpts {
 interface DeckSlide {
   id: string;
   type: string;
+  order?: number;
 }
 
 export async function applyTemplate(
+  projectId: string,
   deckId: string,
   template: TemplateSpec,
   opts: ApplyOpts = {},
-): Promise<{ slidesApplied: number; elementsRestyled: number }> {
-  // 1. Load deck slides via the existing endpoint
-  const { data: slides } = await api.get<DeckSlide[]>(`/slides/deck/${deckId}`);
-  const target: DeckSlide[] = opts.fullDeck === false
-    ? slides.filter((s) => (opts.slideIds || []).includes(s.id))
-    : slides;
-
-  let elementsRestyled = 0;
-
-  for (const slide of target) {
-    // 2. Compute per-slide background (type-specific override beats default)
-    const background = template.blueprint.background[slide.type] || template.theme.defaultBackground;
-
-    // 3. PATCH slide-level fields
-    await api.patch(`/slides/${slide.id}`, {
-      themeTokens: stripDefaultBackground(template.theme),
-      background,
-      metadata: { appliedTemplateId: template.id, appliedAt: new Date().toISOString() },
-    });
-
-    // 4. Restyle elements: GET, transform each, syncAll back
-    const { data: elements } = await api.get<SlideElementDTO[]>(`/slides/${slide.id}/elements`);
-    const restyled = elements.map((el) => {
-      const themeStyle = deriveElementStyle(template, el);
-      const mergedStyle = { ...(el.style || {}), ...themeStyle };
-      return { ...el, style: mergedStyle };
-    });
-    await api.post(`/slides/${slide.id}/elements/sync`, { elements: restyled });
-    elementsRestyled += elements.length;
-
-    opts.onSlideDone?.(slide.id);
+): Promise<{ slidesApplied: number; elementsRestyled: number; slides: DeckSlide[] }> {
+  if (opts.fullDeck === false && opts.slideIds?.length) {
+    // The bulk endpoint is deck-wide by design. Keep a guarded escape hatch for
+    // future partial-template UX without returning to request-per-slide storms.
+    throw new Error('Partial template application is not supported yet.');
   }
 
-  return { slidesApplied: target.length, elementsRestyled };
-}
+  await api.post(`/generate/template-switch/${projectId}`, {
+    deckId,
+    templateId: template.id,
+  });
 
-function stripDefaultBackground(theme: TemplateSpec['theme']) {
-  // `theme.defaultBackground` is a registry-only field; it doesn't belong
-  // in the persisted themeTokens shape.
-  const { defaultBackground, ...rest } = theme;
-  return rest;
+  const { data: slides } = await api.get<DeckSlide[]>(`/slides/deck/${deckId}`);
+  const normalizedSlides = Array.isArray(slides) ? slides : [];
+
+  for (const slide of normalizedSlides) opts.onSlideDone?.(slide.id);
+  return { slidesApplied: normalizedSlides.length, elementsRestyled: 0, slides: normalizedSlides };
 }

@@ -35,13 +35,17 @@ export default function SlideEditorPage({ params }: PageProps) {
   useEffect(() => {
     let cancelled = false;
 
+    const isAuthError = (err: any) => err?.response?.status === 401 || err?.status === 401 || err?.statusCode === 401;
+
     const resolve = async () => {
       // Try slide first — the common case.
       try {
         const { data: slide } = await api.get(`/slides/${params.slideId}`);
         if (cancelled) return;
         if (slide?.id) { setResolved({ state: 'ready', slideId: slide.id }); return; }
-      } catch { /* fall through */ }
+      } catch (err) {
+        if (isAuthError(err)) return; // 401 interceptor already redirects to /login
+      }
 
       if (cancelled) return;
 
@@ -60,7 +64,9 @@ export default function SlideEditorPage({ params }: PageProps) {
           setResolved({ state: 'empty', deckId: deck.id });
           return;
         }
-      } catch { /* fall through */ }
+      } catch (err) {
+        if (isAuthError(err)) return; // 401 interceptor already redirects to /login
+      }
 
       if (!cancelled) setResolved({ state: 'error', message: 'Slide not found and the URL is not a known deck.' });
     };

@@ -1,0 +1,129 @@
+{
+  "timestamp": "2026-05-27T16:08:44.215Z",
+  "summary": {
+    "total": 7,
+    "passed": 6,
+    "failed": 1,
+    "successRate": "85.71",
+    "totalDuration": 335.6666666666667
+  },
+  "tests": [
+    {
+      "name": "Backend Health",
+      "passed": true,
+      "duration": 40,
+      "details": {
+        "status": "ok",
+        "timestamp": "2026-05-27T16:08:43.905Z",
+        "uptime": 886.08781375
+      }
+    },
+    {
+      "name": "Authentication",
+      "passed": true,
+      "duration": 176,
+      "details": {
+        "userId": "28e312a1-77bf-45a6-bf7f-5f5a399148f6"
+      }
+    },
+    {
+      "name": "Create Document",
+      "passed": false,
+      "duration": 52,
+      "error": "Request failed with status code 404"
+    },
+    {
+      "name": "ATS Analysis (No Job)",
+      "passed": true,
+      "duration": 21,
+      "details": {
+        "score": 46,
+        "checks": {
+          "hasOverallScore": true,
+          "hasBreakdown": true,
+          "hasRecommendations": true,
+          "hasParsedData": true,
+          "hasRisks": true,
+          "hasStrengths": true,
+          "scoreInRange": true
+        }
+      }
+    },
+    {
+      "name": "ATS Analysis (With Job)",
+      "passed": true,
+      "duration": 6,
+      "details": {
+        "score": 18,
+        "checks": {
+          "hasOverallScore": true,
+          "hasBreakdown": true,
+          "hasKeywordsCategory": {
+            "score": 0,
+            "weight": 0.25,
+            "status": "poor",
+            "details": "0 of 35 job keywords found in CV",
+            "issues": [
+              "Missing 35 important keywords from job description"
+            ],
+            "suggestions": [
+              "Add keyword: \"senior\"",
+              "Add keyword: \"full\"",
+              "Add keyword: \"stack\"",
+              "Add keyword: \"developer\"",
+              "Add keyword: \"seeking\""
+            ]
+          },
+          "hasSkillsCategory": {
+            "score": 0,
+            "weight": 0.2,
+            "status": "poor",
+            "details": "0 of 10 required skills found",
+            "issues": [
+              "Missing 10 skills from job requirements"
+            ],
+            "suggestions": [
+              "Add skill: \"typescript\"",
+              "Add skill: \"react\"",
+              "Add skill: \"node.js\"",
+              "Add skill: \"express\"",
+              "Add skill: \"aws\""
+            ]
+          },
+          "hasRecommendations": true,
+          "scoreInRange": true
+        }
+      }
+    },
+    {
+      "name": "Job Matching",
+      "passed": true,
+      "duration": 8,
+      "details": {
+        "match": 20,
+        "recommendation": "weak-match",
+        "checks": {
+          "hasOverallMatch": true,
+          "hasRecommendation": true,
+          "hasBreakdown": true,
+          "hasGaps": true,
+          "hasStrengths": true,
+          "hasImprovements": true,
+          "matchInRange": true,
+          "validRecommendation": true
+        }
+      }
+    },
+    {
+      "name": "Performance",
+      "passed": true,
+      "duration": 32.66666666666667,
+      "details": {
+        "atsAvg": 25.666666666666668,
+        "atsMax": 32,
+        "matchAvg": 7,
+        "matchMax": 7
+      }
+    }
+  ]
+}

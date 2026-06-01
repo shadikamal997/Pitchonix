@@ -1,0 +1,76 @@
+{
+  "profile": {
+    "skills": [
+      "PHP",
+      "JavaScript",
+      "Kubernetes",
+      "Node.js",
+      "HTML/CSS",
+      "Jenkins",
+      "Redux",
+      "Django",
+      "Go",
+      "Tailwind",
+      "Elasticsearch",
+      "Microservices"
+    ],
+    "experience": [
+      {
+        "title": "Senior Software Engineer",
+        "company": "InnovateLabs",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "InnovateLabs",
+        "duration": "2021-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "NexGen Tech",
+        "duration": "2020-2021",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "Georgia Tech",
+        "year": "2016",
+        "gpa": "3.8"
+      }
+    ],
+    "certifications": [
+      "AWS Certified Solutions Architect",
+      "MongoDB Certified Developer"
+    ],
+    "contact": {
+      "name": "Morgan Martinez",
+      "email": "morgan.martinez@email.com",
+      "phone": "+1-555-0531",
+      "location": "San Francisco, CA",
+      "github": "github.com/morganmartinez"
+    }
+  },
+  "document": {
+    "title": "Morgan Martinez - Senior Software Engineer",
+    "content": "Morgan Martinez\nSenior Software Engineer\n\nSkills:\nPHP, JavaScript, Kubernetes, Node.js, HTML/CSS, Jenkins, Redux, Django, Go, Tailwind, Elasticsearch, Microservices\n\nExperience:\nSenior Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

@@ -320,14 +320,19 @@ export class ProTemplateRendererService {
     const chips = content.bullets.slice(0, 4)
       .map((b: string) => `<span>${b.split(/\s+/).slice(0, 3).join(' ')}</span>`)
       .join('');
-    return `<section class="pro-sheet pro-cover">
+    return `<section class="pro-sheet pro-cover pro-stationery-cover">
+      <div class="pro-brand-lockup">
+        <span class="pro-brand-mark"></span>
+        <span class="pro-brand-text">${content.documentTitle}</span>
+      </div>
+      <div class="pro-cover-ribbon">${content.label || 'Brand Identity Package'}</div>
       <div class="pro-cover-left">
         <div class="pro-eyebrow">${content.label}</div>
         <h1>${content.documentTitle}</h1>
         ${content.paragraphs[0] ? `<p class="pro-cover-lead">${content.paragraphs[0]}</p>` : ''}
         ${chips ? `<div class="pro-chip-row">${chips}</div>` : ''}
       </div>
-      <div class="pro-hero-art">
+      <div class="pro-hero-art pro-diagonal-frame">
         <div class="pro-hero-card">
           <strong>01</strong>
           <span>${content.label || 'Document'}</span>
@@ -953,7 +958,8 @@ export class ProTemplateRendererService {
           <span class="fam-exec-check">&#10003;</span>
           <span>${b}</span>
         </div>`).join('');
-      return `<section class="pro-sheet pro-content fam-exec-page">
+      return `<section class="pro-sheet pro-content fam-exec-page pro-letterhead-page">
+        <div class="pro-letterhead-logo"><span class="pro-brand-mark"></span><b>${content.documentTitle}</b></div>
         <div class="fam-exec-bar"></div>
         <div class="fam-exec-inner">
           <div class="pro-label"><span></span>${content.label}</div>
@@ -973,7 +979,8 @@ export class ProTemplateRendererService {
           <div class="fam-st-num">${String(i + 1).padStart(2, '0')}</div>
           <div class="fam-st-text">${b}</div>
         </div>`).join('');
-      return `<section class="pro-sheet pro-content">
+      return `<section class="pro-sheet pro-content pro-letterhead-page">
+        <div class="pro-letterhead-logo"><span class="pro-brand-mark"></span><b>${content.documentTitle}</b></div>
         <div class="fam-st-top-strip"></div>
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -991,7 +998,8 @@ export class ProTemplateRendererService {
           <span class="fam-fin-idx">${String(i + 1).padStart(2, '0')}</span>
           <span class="fam-fin-cell">${b}</span>
         </div>`).join('');
-      return `<section class="pro-sheet pro-content">
+      return `<section class="pro-sheet pro-content pro-letterhead-page">
+        <div class="pro-letterhead-logo"><span class="pro-brand-mark"></span><b>${content.documentTitle}</b></div>
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
         <div class="fam-fin-divider"></div>
@@ -1204,15 +1212,32 @@ export class ProTemplateRendererService {
         width: 210mm; min-height: 297mm; position: relative; overflow: hidden;
         background: ${c.paper}; color: ${c.ink};
         font-family: '${body}', Inter, -apple-system, sans-serif;
-        padding: 22mm 21mm 24mm;
+        padding: 25mm 21mm 25mm;
         box-sizing: border-box;
       }
       .pro-sheet > * { position: relative; z-index: 1; }
       .pro-sheet::before {
-        content: ''; position: absolute; right: -38mm; top: -44mm;
-        width: 108mm; height: 108mm; border-radius: 999px;
-        background: ${c.accentSoft}; z-index: 0; opacity: .7;
+        content: ''; position: absolute; right: -48mm; top: 36mm;
+        width: 128mm; height: 210mm;
+        background:
+          linear-gradient(135deg, rgba(255,255,255,.55), rgba(255,255,255,0) 36%),
+          ${c.accentSoft};
+        z-index: 0; opacity: .8;
+        transform: skewX(-28deg);
+        border-left: 1px solid ${c.line};
       }
+      .pro-sheet::after {
+        content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+        height: 7mm;
+        background:
+          linear-gradient(90deg, ${c.charcoal} 0 58%, transparent 58% 61%, ${c.accent} 61% 100%);
+        z-index: 0;
+      }
+      .pro-sheet:not(.fam-lux-page) { border-top: 6mm solid ${c.accent}; }
+      .pro-cover.pro-stationery-cover { border-top: 0; }
+      .fam-lux-page::after,
+      .pro-divider::after,
+      .pro-closing::after { opacity: .42; }
 
       /* ── Typography ── */
       .pro-sheet h1 {
@@ -1263,9 +1288,49 @@ export class ProTemplateRendererService {
         font-size: 8.5px; font-weight: 900; text-transform: uppercase;
         letter-spacing: 1.4px; color: ${c.muted};
       }
+      .pro-brand-lockup {
+        position: absolute; left: 18mm; top: 17mm;
+        display: inline-flex; align-items: center; gap: 9px;
+        color: ${c.ink}; z-index: 3;
+      }
+      .pro-brand-mark {
+        width: 22px; height: 22px; border-radius: 999px;
+        background:
+          radial-gradient(circle at 50% 50%, rgba(255,255,255,.9) 0 18%, transparent 19%),
+          conic-gradient(from 12deg, ${c.accent}, ${c.accentSoft}, ${c.accent}, ${c.charcoal}, ${c.accent});
+        box-shadow: 0 0 0 3px ${c.accentSoft};
+        display: inline-block; flex-shrink: 0;
+      }
+      .pro-brand-text {
+        font-family: '${display}', Inter, sans-serif;
+        font-size: 16px; line-height: 1; font-weight: 950;
+        text-transform: uppercase; letter-spacing: .3px;
+      }
+      .pro-cover-ribbon {
+        position: absolute; right: 0; top: 19mm;
+        min-width: 82mm; padding: 9px 18mm 9px 14mm;
+        background: ${c.charcoal};
+        color: white; text-align: center;
+        font-size: 13px; font-weight: 800; text-transform: uppercase;
+        letter-spacing: 1.9px; z-index: 3;
+      }
+      .pro-letterhead-logo {
+        display: inline-flex; align-items: center; gap: 8px;
+        margin-bottom: 10mm; color: ${c.ink};
+      }
+      .pro-letterhead-logo b {
+        font-family: '${display}', Inter, sans-serif;
+        font-size: 12px; text-transform: uppercase;
+        letter-spacing: 1px; line-height: 1;
+      }
 
       /* ── Cover ── */
-      .pro-cover { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16mm; align-items: center; }
+      .pro-cover { display: grid; grid-template-columns: 1.04fr .96fr; gap: 15mm; align-items: center; }
+      .pro-stationery-cover {
+        padding-top: 43mm;
+        background:
+          linear-gradient(180deg, ${c.paper} 0 64%, ${c.accentSoft} 64% 100%);
+      }
       .pro-cover-left { display: flex; flex-direction: column; justify-content: center; }
       .pro-cover-lead { font-size: 14px; line-height: 1.6; max-width: 100mm; margin-bottom: 0; }
       .pro-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12mm; }
@@ -1280,6 +1345,16 @@ export class ProTemplateRendererService {
                     linear-gradient(145deg, ${c.charcoal}, ${c.accent});
         position: relative; overflow: hidden;
         box-shadow: 0 22px 52px rgba(31,41,51,.18);
+      }
+      .pro-diagonal-frame {
+        clip-path: polygon(7% 0, 100% 0, 100% 84%, 24% 100%, 0 88%, 0 10%);
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .pro-diagonal-frame::before {
+        content: ''; position: absolute; left: 8mm; top: 8mm; right: 8mm; bottom: 8mm;
+        border: 2px solid rgba(255,255,255,.78);
+        clip-path: polygon(7% 0, 100% 0, 100% 84%, 24% 100%, 0 88%, 0 10%);
       }
       .pro-hero-art i {
         position: absolute; right: -22mm; top: 16mm;

@@ -1,0 +1,50 @@
+{
+  "profile": {
+    "skills": [
+      "Scrum",
+      "PHP",
+      "Azure",
+      "TypeScript",
+      "AWS",
+      "Angular",
+      "Python",
+      "MongoDB"
+    ],
+    "experience": [
+      {
+        "title": "Software Engineer",
+        "company": "Quantum Labs",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "Carnegie Mellon",
+        "year": "2019",
+        "gpa": "3.9"
+      }
+    ],
+    "certifications": [
+      "AWS Certified Solutions Architect",
+      "MongoDB Certified Developer"
+    ],
+    "contact": {
+      "name": "Quinn Garcia",
+      "email": "quinn.garcia@email.com",
+      "phone": "+1-555-4980",
+      "location": "San Francisco, CA",
+      "github": "github.com/quinngarcia"
+    }
+  },
+  "document": {
+    "title": "Quinn Garcia - Mid Software Engineer",
+    "content": "Quinn Garcia\nMid Software Engineer\n\nSkills:\nScrum, PHP, Azure, TypeScript, AWS, Angular, Python, MongoDB\n\nExperience:\nMid Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

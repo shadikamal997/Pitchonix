@@ -17,7 +17,14 @@ const pdfParse = require('pdf-parse');
 
 export async function importPdf(buffer: Buffer): Promise<UniversalDocument> {
   const doc = emptyDocument('pdf');
-  const result = await pdfParse(buffer);
+  let result: any;
+  try {
+    result = await pdfParse(buffer);
+  } catch (err: any) {
+    const msg = err?.message || String(err);
+    // pdf-parse throws on corrupted/encrypted/non-PDF buffers
+    throw new Error(`Invalid or unreadable PDF: ${msg}`);
+  }
   const text = String(result?.text || '');
   if (!text) {
     doc.pages.push({ ...newPage('Imported PDF'), nodes: [paragraph('(empty PDF)')] });

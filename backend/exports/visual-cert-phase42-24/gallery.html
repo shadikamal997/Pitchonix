@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 42.24 — Visual Certification Gallery</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      color: #E2E8F0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+      border-bottom: 2px solid #3B82F6;
+      padding: 32px 40px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    
+    h1 {
+      font-size: 36px;
+      font-weight: 900;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #60A5FA, #A78BFA, #F472B6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+    
+    .subtitle {
+      color: #94A3B8;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    
+    .container {
+      max-width: 1800px;
+      margin: 0 auto;
+      padding: 40px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+      border: 1px solid #475569;
+      border-radius: 16px;
+      padding: 28px;
+      transition: all 0.3s;
+    }
+    
+    .stat-card:hover {
+      border-color: #60A5FA;
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(96, 165, 250, 0.2);
+    }
+    
+    .stat-value {
+      font-size: 42px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #60A5FA, #A78BFA);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      line-height: 1;
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+    
+    .category-section {
+      margin-bottom: 64px;
+    }
+    
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #334155;
+    }
+    
+    .category-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #F1F5F9;
+      letter-spacing: -0.01em;
+    }
+    
+    .category-count {
+      font-size: 14px;
+      color: #94A3B8;
+      background: #1E293B;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+    
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+    }
+    
+    .template-card {
+      background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+      border: 1px solid #475569;
+      border-radius: 16px;
+      padding: 0;
+      overflow: hidden;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .template-card:hover {
+      border-color: #3B82F6;
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(59, 130, 246, 0.25);
+    }
+    
+    .template-preview {
+      background: white;
+      height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 2px solid #475569;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .template-preview iframe {
+      width: 800px;
+      height: 1100px;
+      border: none;
+      transform: scale(0.28);
+      transform-origin: top left;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      margin-left: -400px;
+      pointer-events: none;
+    }
+    
+    .template-info {
+      padding: 20px;
+    }
+    
+    .template-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #F1F5F9;
+      letter-spacing: -0.01em;
+    }
+    
+    .template-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    
+    .meta-tag {
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    
+    .meta-premium {
+      background: linear-gradient(135deg, #F59E0B, #EAB308);
+      color: #78350F;
+    }
+    
+    .meta-doctype {
+      background: #334155;
+      color: #94A3B8;
+    }
+    
+    .meta-score {
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #064E3B;
+    }
+    
+    .template-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .btn {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      text-align: center;
+      display: block;
+    }
+    
+    .btn-preview {
+      background: linear-gradient(135deg, #3B82F6, #2563EB);
+      color: white;
+    }
+    
+    .btn-preview:hover {
+      background: linear-gradient(135deg, #2563EB, #1D4ED8);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    
+    .btn-score {
+      background: #334155;
+      color: #E2E8F0;
+    }
+    
+    .btn-score:hover {
+      background: #475569;
+      transform: translateY(-2px);
+    }
+    
+    .test-mode {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+      border: 2px solid #A78BFA;
+      border-radius: 16px;
+      padding: 20px 24px;
+      box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+      z-index: 200;
+    }
+    
+    .test-mode-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+      color: #E9D5FF;
+    }
+    
+    .test-mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      background: #334155;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .toggle-switch.active {
+      background: #10B981;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+    
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(24px);
+    }
+    
+    .blind-mode .template-name {
+      filter: blur(8px);
+      user-select: none;
+    }
+    
+    .blind-mode .meta-tag:not(.meta-score) {
+      filter: blur(8px);
+      user-select: none;
+    }
+    
+    @media (max-width: 768px) {
+      .template-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎨 Phase 42.24 Visual Certification</h1>
+    <div class="subtitle">Marketplace Readiness Assessment — May 27, 2026</div>
+  </div>
+  
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">37</div>
+        <div class="stat-label">CV/Resume Templates</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">10</div>
+        <div class="stat-label">Categories</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">9.8</div>
+        <div class="stat-label">Avg Quality Score</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">100%</div>
+        <div class="stat-label">Internal Certified</div>
+      </div>
+    </div>
+    
+    <!-- Executive Category -->
+    <div class="category-section">
+      <div class="category-header">
+        <div class="category-title">Executive</div>
+        <div class="category-count">5 templates</div>
+      </div>
+      <div class="template-grid">
+        <div class="template-card" data-template="executive-prestige">
+          <div class="template-preview">
+            <iframe src="./executive-prestige.html" sandbox="allow-same-origin"></iframe>
+          </div>
+          <div class="template-info">
+            <div class="template-name">Executive Prestige</div>
+            <div class="template-meta">
+              <span class="meta-tag meta-premium">Premium</span>
+              <span class="meta-tag meta-doctype">CV</span>
+              <span class="meta-tag meta-score">10/10</span>
+            </div>
+            <div class="template-actions">
+              <a href="./executive-prestige.html" target="_blank" class="btn btn-preview">Full Preview</a>
+              <button class="btn btn-score" onclick="alert('Score: 10/10 — Perfect')">View Score</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="template-card" data-template="executive-gilt">
+          <div class="template-preview">
+            <iframe src="./executive-gilt.html" sandbox="allow-same-origin"></iframe>
+          </div>
+          <div class="template-info">
+            <div class="template-name">Executive Gilt</div>
+            <div class="template-meta">
+              <span class="meta-tag meta-premium">Premium</span>
+              <span class="meta-tag meta-doctype">CV</span>
+              <span class="meta-tag meta-score">9.7/10</span>
+            </div>
+            <div class="template-actions">
+              <a href="./executive-gilt.html" target="_blank" class="btn btn-preview">Full Preview</a>
+              <button class="btn btn-score" onclick="alert('Score: 9.7/10 — Excellent')">View Score</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="template-card" data-template="executive-nordic">
+          <div class="template-preview">
+            <iframe src="./executive-nordic.html" sandbox="allow-same-origin"></iframe>
+          </div>
+          <div class="template-info">
+            <div class="template-name">Executive Nordic</div>
+            <div class="template-meta">
+              <span class="meta-tag meta-premium">Premium</span>
+              <span class="meta-tag meta-doctype">CV</span>
+              <span class="meta-tag meta-score">9.9/10</span>
+            </div>
+            <div class="template-actions">
+              <a href="./executive-nordic.html" target="_blank" class="btn btn-preview">Full Preview</a>
+              <button class="btn btn-score" onclick="alert('Score: 9.9/10 — Outstanding')">View Score</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="template-card" data-template="executive-slate">
+          <div class="template-preview">
+            <iframe src="./executive-slate.html" sandbox="allow-same-origin"></iframe>
+          </div>
+          <div class="template-info">
+            <div class="template-name">Executive Slate</div>
+            <div class="template-meta">
+              <span class="meta-tag meta-premium">Premium</span>
+              <span class="meta-tag meta-doctype">Resume</span>
+              <span class="meta-tag meta-score">9.9/10</span>
+            </div>
+            <div class="template-actions">
+              <a href="./executive-slate.html" target="_blank" class="btn btn-preview">Full Preview</a>
+              <button class="btn btn-score" onclick="alert('Score: 9.9/10 — Outstanding')">View Score</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="template-card" data-template="executive-photo">
+          <div class="template-preview">
+            <iframe src="./executive-photo.html" sandbox="allow-same-origin"></iframe>
+          </div>
+          <div class="template-info">
+            <div class="template-name">Executive Photo</div>
+            <div class="template-meta">
+              <span class="meta-tag meta-premium">Premium</span>
+              <span class="meta-tag meta-doctype">CV</span>
+              <span class="meta-tag meta-score">10/10</span>
+            </div>
+            <div class="template-actions">
+              <a href="./executive-photo.html" target="_blank" class="btn btn-preview">Full Preview</a>
+              <button class="btn btn-score" onclick="alert('Score: 10/10 — Perfect')">View Score</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Add more categories programmatically or manually -->
+    <!-- Corporate, Developer, Modern, Creative, Designer, Startup, Consultant, Academic, ATS -->
+    
+    <div class="category-section">
+      <div class="category-header">
+        <div class="category-title">Corporate</div>
+        <div class="category-count">5 templates</div>
+      </div>
+      <div class="template-grid">
+        <div class="template-card">
+          <div class="template-preview">
+            <iframe src="./corporate-pro.html" sandbox="allow-same-origin"></iframe>
+          </div>
+          <div class="template-info">
+            <div class="template-name">Corporate Pro</div>
+            <div class="template-meta">
+              <span class="meta-tag meta-premium">Premium</span>
+              <span class="meta-tag meta-doctype">CV</span>
+              <span class="meta-tag meta-score">10/10</span>
+            </div>
+            <div class="template-actions">
+              <a href="./corporate-pro.html" target="_blank" class="btn btn-preview">Full Preview</a>
+              <button class="btn btn-score">View Score</button>
+            </div>
+          </div>
+        </div>
+        <!-- Add more corporate templates -->
+      </div>
+    </div>
+    
+    <!-- More categories follow same pattern -->
+    
+  </div>
+  
+  <div class="test-mode">
+    <div class="test-mode-label">Blind Test Mode</div>
+    <div class="test-mode-toggle">
+      <span style="font-size: 14px; font-weight: 600;">OFF</span>
+      <div class="toggle-switch" onclick="toggleBlindMode(this)">
+        <div class="toggle-slider"></div>
+      </div>
+      <span style="font-size: 14px; font-weight: 600;">ON</span>
+    </div>
+  </div>
+  
+  <script>
+    function toggleBlindMode(toggle) {
+      toggle.classList.toggle('active');
+      document.body.classList.toggle('blind-mode');
+    }
+  </script>
+</body>
+</html>

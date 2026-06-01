@@ -1,0 +1,47 @@
+{
+  "profile": {
+    "skills": [
+      "UI Design",
+      "Illustrator",
+      "Design Systems",
+      "Visual Design",
+      "Photoshop",
+      "Adobe XD",
+      "UX Design",
+      "Prototyping",
+      "Sketch",
+      "User Research"
+    ],
+    "experience": [
+      {
+        "title": "Junior Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2025-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "Carnegie Mellon",
+        "year": "2021"
+      }
+    ],
+    "contact": {
+      "name": "Quinn Miller",
+      "email": "quinn.miller@email.com",
+      "phone": "+1-555-4014",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/quinn-miller"
+    }
+  },
+  "document": {
+    "title": "Quinn Miller - Junior Product Designer",
+    "content": "Quinn Miller\nJunior Product Designer\n\nSkills:\nUI Design, Illustrator, Design Systems, Visual Design, Photoshop, Adobe XD, UX Design, Prototyping, Sketch, User Research\n\nExperience:\nJunior Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

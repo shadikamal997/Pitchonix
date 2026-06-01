@@ -88,10 +88,23 @@ export default function StructuredDocumentsPage() {
       setCreatingDocument(templateId);
 
       // Create a new structured document using Smart PDF Builder endpoint
+      // Map template IDs to the closest pdf-export template types
+      const TEMPLATE_TYPE_MAP: Record<string, string> = {
+        business_plan:        'business_plan_pro',
+        proposal:             'client_proposal_pro',
+        company_profile:      'corporate_overview',
+        executive_summary:    'clean_business_report',
+        marketing_plan:       'strategy_document',
+        financial_projection: 'financial_report',
+        partnership_proposal: 'partnership_proposal',
+        case_study:           'clean_business_report',
+      };
+
       const response = await api.post('/pdf-studio/smart-builder/generate', {
         rawContent: `# ${templateName}\n\n## Executive Summary\n\nProvide a brief overview of your ${templateName.toLowerCase()}.\n\n## Introduction\n\nStart creating your ${templateName.toLowerCase()} here...\n\n## Main Content\n\nAdd your detailed content in this section.\n\n### Key Points\n\n- Point 1\n- Point 2\n- Point 3\n\n## Conclusion\n\nSummarize your key points here.`,
         config: {
           title: templateName,
+          templateType: TEMPLATE_TYPE_MAP[templateId] || 'clean_business_report',
           tone: 'professional',
           designStyle: 'corporate',
           improveWriting: true,

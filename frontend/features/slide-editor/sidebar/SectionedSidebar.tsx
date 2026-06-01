@@ -539,7 +539,15 @@ export const SectionedSidebar: React.FC<Props> = ({
             {row.index}
           </span>
           <div className="flex-1 min-w-0">
-            <SlideThumbnail slideId={row.slide.id} width={170} pageNumber={row.index} totalPages={row.total} />
+            <SlideThumbnail
+              key={row.slide.id}
+              slideId={row.slide.id}
+              width={170}
+              pageNumber={row.index}
+              totalPages={row.total}
+              background={row.slide.background}
+              themeTokens={row.slide.themeTokens}
+            />
             <div className="mt-1 flex items-center gap-1">
               {isRenaming ? (
                 <input

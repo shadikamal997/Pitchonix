@@ -1,6 +1,10 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { parseApiError, AppError, isRetryable, sleep, logError, DEFAULT_RETRY_CONFIG } from './errors';
 
+// Guard so simultaneous 401s from multiple in-flight requests only trigger
+// one redirect instead of a rapid-fire navigation loop that freezes the browser.
+let _redirectingToLogin = false;
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 export const api = axios.create({
@@ -34,18 +38,50 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    // If the error response is a Blob (happens when responseType: 'blob' is set),
+    // parse it to get the actual error message
+    if (error.response?.data instanceof Blob) {
+      try {
+        const text = await error.response.data.text();
+        const data = JSON.parse(text);
+        // Replace the Blob with the parsed JSON so parseApiError can read it
+        error.response.data = data;
+      } catch {
+        // If we can't parse the Blob, leave it as is
+      }
+    }
+
     const appError = parseApiError(error);
     logError(appError, 'Response Error');
 
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized — deduped so concurrent 401s don't cause a
+    // rapid-fire navigation loop that freezes the browser.
     if (error.response?.status === 401) {
-      // Only access localStorage and document on client side
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        // Clear the auth cookie so the middleware doesn't loop-redirect back to dashboard
-        document.cookie = 'pitchonix-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
-        window.location.href = '/login';
+        // Auth endpoints (login/register/magic-link) use 401 to mean "wrong
+        // credentials" — not an expired session. Skip session cleanup so the
+        // login form can display the actual backend error message.
+        const requestUrl = error.config?.url ?? '';
+        const isAuthEndpoint = ['/auth/login', '/auth/register', '/auth/magic-link', '/auth/verify'].some(
+          (p) => requestUrl.includes(p)
+        );
+
+        if (!isAuthEndpoint) {
+          // Expired session — clear stale auth state.
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          document.cookie = 'pitchonix-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
+          try { localStorage.removeItem('auth-storage'); } catch { /* */ }
+
+          // Only navigate to /login if not already on an auth page — prevents
+          // the WorkspaceProvider (in root layout) from 401-looping on /login.
+          const onAuthPage = ['/login', '/register'].some((p) => window.location.pathname.startsWith(p));
+          if (!onAuthPage && !_redirectingToLogin) {
+            _redirectingToLogin = true;
+            window.location.replace('/login');
+            setTimeout(() => { _redirectingToLogin = false; }, 3000);
+          }
+        }
       }
     }
 

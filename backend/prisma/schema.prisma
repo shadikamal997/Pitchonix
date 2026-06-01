@@ -1591,7 +1591,7 @@ model CvProfile {
   /// All long-form sections live as Json arrays so the schema doesn't have
   /// to change every time we add a new credential type. Each entry carries
   /// a stable `id` so reorder / edit / delete keep referential integrity.
-  experience    Json?    // Array<{ id, company, role, start, end, location, bullets[] }>
+  experience    Json?    // Array<{ id, company, role, start, end, location, description, bullets[], achievements[], technologies[], metrics[], projects[], rawText }>
   education     Json?    // Array<{ id, institution, degree, field, start, end, gpa, honors[] }>
   skills        Json?    // Array<{ id, name, category, level }>
   languages     Json?    // Array<{ id, name, proficiency }>
@@ -1721,6 +1721,49 @@ model CvSectionMappingMemory {
   @@map("cv_section_mapping_memory")
 }
 
+// =============================================================================
+//  Phase Ω.3C — Beta feedback.
+//
+//  Lightweight widget: "Report a bug", "Wrong ATS score", "Bad recommendation".
+//  type: 'bug' | 'ats_score' | 'recommendation' | 'other'
+// =============================================================================
+// =============================================================================
+//  Phase Ω.4 — Beta telemetry events.
+//
+//  Lightweight structured event log for upload / export / ATS / job-match
+//  flows. Stored in Postgres so admin can query without ELK.
+//  event: 'upload' | 'export' | 'ats_analyze' | 'job_match' | 'template_switch'
+//         | 'import_start' | 'import_done' | 'import_fail' | 'export_fail'
+//         | 'ats_fail' | 'ocr_start' | 'ocr_done' | 'ocr_fail'
+// =============================================================================
+model BetaTelemetry {
+  id        String   @id @default(uuid())
+  userId    String?
+  event     String
+  durationMs Int?
+  success   Boolean  @default(true)
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([event, createdAt])
+  @@index([userId, createdAt])
+  @@index([success, createdAt])
+  @@map("beta_telemetry")
+}
+
+model BetaFeedback {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String
+  message     String   @db.Text
+  context     Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+  @@map("beta_feedback")
+}
+
 model CvTemplate {
   id            String   @id @default(uuid())
   /// 'cv' | 'resume' | 'coverLetter' | 'portfolio' — matches CvDocument.doctype
@@ -1749,5 +1792,4 @@ model CvTemplate {
   @@index([workspaceId])
   @@map("cv_templates")
 }
-
 

@@ -54,7 +54,16 @@ export async function exportDeckToPptx(deck: RenderDeckInput): Promise<Buffer> {
 
     // Background
     if (slide.background) applyBackground(ps, slide.background);
-    else if (slide.themeTokens?.background) ps.background = { color: stripHash(slide.themeTokens.background) };
+    else if (slide.themeTokens?.background) {
+      const tbg: string = slide.themeTokens.background;
+      if (tbg.includes('gradient')) {
+        // Extract the first hex stop from a CSS gradient string.
+        const hex = tbg.match(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})/)?.[1] || 'FFFFFF';
+        ps.background = { color: hex.toUpperCase().padEnd(6, '0') };
+      } else {
+        ps.background = { color: stripHash(tbg) };
+      }
+    }
 
     const sorted = [...(slide.elements || [])]
       .filter((e) => e.visible !== false)
@@ -237,6 +246,7 @@ function addElement(_pptx: any, slide: any, el: SlideElementDTO, chartImages: Ch
     case 'featureGrid':   return addFeatureGrid(slide, el);
     case 'timeline':      return addTimeline(slide, el);
     case 'roadmap':       return addRoadmap(slide, el);
+    case 'fundsAllocation': return addFundsAllocation(slide, el);
     case 'teamCard':      return addTeam(slide, el);
     case 'swot':          return addSwot(slide, el);
     case 'comparison':    return addComparison(slide, el);
@@ -408,6 +418,42 @@ function addKpi(slide: any, el: SlideElementDTO) {
   slide.addText(c.value || '—', { x: r.x + 0.15, y: r.y + 0.1, w: r.w - 0.3, h: r.h * 0.55, fontSize: Math.min(fit?.fontSize ?? 28, 40), bold: true, color: '16A34A', fit: 'shrink', margin: 0, charSpace: fit?.letterSpacing });
   slide.addText(c.label || '', { x: r.x + 0.15, y: r.y + r.h * 0.6, w: r.w - 0.3, h: r.h * 0.25, fontSize: 12, bold: true, color: '111827' });
   if (c.sublabel) slide.addText(c.sublabel, { x: r.x + 0.15, y: r.y + r.h * 0.8, w: r.w - 0.3, h: r.h * 0.2, fontSize: 11, color: '6B7280' });
+}
+
+function addFundsAllocation(slide: any, el: SlideElementDTO) {
+  const c = (el.content as any) || {};
+  const items: any[] = Array.isArray(c.items) ? c.items : [];
+  const r = rect(el);
+  const rowH = items.length > 0 ? r.h / items.length : r.h;
+  const maxPct = Math.max(...items.map((item) => Number(item.percentage) || 0), 1);
+
+  if (items.length === 0) {
+    slide.addText('Funding allocation', { ...r, fontSize: 12, color: '6B7280', margin: 0, fit: 'shrink' });
+    return;
+  }
+
+  items.forEach((item, idx) => {
+    const pct = Number(item.percentage) || 0;
+    const color = stripHash(item.color || ['dc2626', '2563eb', '16a34a', 'f59e0b'][idx % 4]);
+    const y = r.y + idx * rowH;
+    slide.addText(`${item.category || 'Allocation'}`, {
+      x: r.x, y, w: r.w * 0.72, h: Math.max(0.16, rowH * 0.42),
+      fontSize: 9, bold: true, color: '111827', margin: 0, fit: 'shrink',
+    });
+    slide.addText(`${pct}%`, {
+      x: r.x + r.w * 0.74, y, w: r.w * 0.26, h: Math.max(0.16, rowH * 0.42),
+      fontSize: 9, bold: true, color, margin: 0, align: 'right', fit: 'shrink',
+    });
+    const barY = y + Math.max(0.16, rowH * 0.46);
+    slide.addShape('rect', {
+      x: r.x, y: barY, w: r.w, h: 0.05,
+      fill: { color: 'E5E7EB' }, line: { color: 'E5E7EB', transparency: 100 },
+    });
+    slide.addShape('rect', {
+      x: r.x, y: barY, w: r.w * (pct / maxPct), h: 0.05,
+      fill: { color }, line: { color, transparency: 100 },
+    });
+  });
 }
 
 function addChart(slide: any, el: SlideElementDTO, chartImages: ChartImageMap) {

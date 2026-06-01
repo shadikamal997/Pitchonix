@@ -230,8 +230,9 @@ export function useCvDocuments(doctype?: CvDoctype) {
     return data;
   };
 
-  const exportDoc = async (id: string, format: 'pdf' | 'docx' | 'pptx' | 'html' | 'md', filename: string) => {
-    const res = await api.post(`/career/documents/${id}/export?format=${format}`, null, { responseType: 'blob' });
+  const exportDoc = async (id: string, format: 'pdf' | 'docx' | 'pptx' | 'html' | 'md', filename: string, templateId?: string | null) => {
+    const body = templateId !== undefined ? { templateId } : {};
+    const res = await api.post(`/career/documents/${id}/export?format=${format}`, body, { responseType: 'blob' });
     const url = URL.createObjectURL(res.data as Blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();

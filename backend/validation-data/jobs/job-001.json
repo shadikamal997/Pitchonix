@@ -1,0 +1,35 @@
+{
+  "title": "Senior Frontend Engineer",
+  "category": "frontend",
+  "description": "We are seeking an experienced Senior Frontend Engineer to join our growing team. You will build scalable web applications using modern JavaScript frameworks and work closely with designers and backend engineers. We are a startup looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "React",
+    "TypeScript",
+    "JavaScript",
+    "HTML/CSS",
+    "Redux",
+    "REST APIs"
+  ],
+  "requiredExperience": "5+ years in frontend development",
+  "responsibilities": [
+    "Build responsive web applications",
+    "Collaborate with design team",
+    "Code review and mentoring",
+    "Optimize performance"
+  ],
+  "qualifications": [
+    "BS in Computer Science or equivalent",
+    "Strong JavaScript fundamentals",
+    "Experience with React ecosystem"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "San Francisco, CA",
+  "employmentType": "Full-time",
+  "remote": "Remote"
+}

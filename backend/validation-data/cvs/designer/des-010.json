@@ -1,0 +1,58 @@
+{
+  "profile": {
+    "skills": [
+      "Prototyping",
+      "Figma",
+      "Sketch",
+      "Adobe XD",
+      "Interaction Design",
+      "Design Systems",
+      "User Research",
+      "UX Design",
+      "Motion Design",
+      "Wireframing"
+    ],
+    "experience": [
+      {
+        "title": "Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "Digital Solutions",
+        "duration": "2023-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "MIT",
+        "year": "2019"
+      }
+    ],
+    "contact": {
+      "name": "Morgan Miller",
+      "email": "morgan.miller@email.com",
+      "phone": "+1-555-4345",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/morgan-miller"
+    }
+  },
+  "document": {
+    "title": "Morgan Miller - Mid Product Designer",
+    "content": "Morgan Miller\nMid Product Designer\n\nSkills:\nPrototyping, Figma, Sketch, Adobe XD, Interaction Design, Design Systems, User Research, UX Design, Motion Design, Wireframing\n\nExperience:\nMid Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

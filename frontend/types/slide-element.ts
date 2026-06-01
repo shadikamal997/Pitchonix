@@ -40,6 +40,7 @@ export type ElementType =
   | 'processSteps'
   | 'timeline'
   | 'roadmap'
+  | 'fundsAllocation'
   // Shapes / decor
   | 'shape'
   | 'line'
@@ -51,7 +52,7 @@ export const ELEMENT_TYPES: ElementType[] = [
   'metric', 'kpi', 'chart', 'table',
   'image', 'icon', 'logo', 'videoPlaceholder', 'embeddedMediaPlaceholder',
   'testimonial', 'teamCard', 'pricingCard', 'comparison', 'swot', 'featureGrid', 'processSteps',
-  'timeline', 'roadmap',
+  'timeline', 'roadmap', 'fundsAllocation',
   'shape', 'line', 'divider',
 ];
 

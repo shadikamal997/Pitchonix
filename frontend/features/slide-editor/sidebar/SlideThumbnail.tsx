@@ -22,6 +22,22 @@ interface CacheEntry { elements: SlideElementDTO[]; background?: any; themeToken
 const ELEMENT_CACHE = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 30_000;
 
+// Global semaphore: limits concurrent thumbnail fetches across all mounted thumbnails.
+// Prevents a burst of N×2 requests when a deck with many slides first renders.
+let _semActive = 0;
+const _semMax = 5;
+const _semQueue: Array<() => void> = [];
+function acquireSlot(): Promise<void> {
+  return new Promise((res) => {
+    if (_semActive < _semMax) { _semActive++; res(); }
+    else { _semQueue.push(() => { _semActive++; res(); }); }
+  });
+}
+function releaseSlot() {
+  const next = _semQueue.shift();
+  if (next) next(); else _semActive--;
+}
+
 function backgroundStyle(bg: any | null | undefined, theme: any | null | undefined): React.CSSProperties {
   if (bg) {
     if (bg.type === 'solid' && bg.color)        return { background: bg.color };
@@ -59,12 +75,16 @@ interface Props {
   totalPages?: number;
   /** Optional pre-loaded elements (skips API fetch). */
   elements?:  SlideElementDTO[];
+  /** Optional pre-loaded slide visual data (skips the slide-row API fetch). */
+  background?: any | null;
+  themeTokens?: any | null;
 }
 
-export const SlideThumbnail: React.FC<Props> = ({ slideId, width, pageNumber, totalPages, elements: preloaded }) => {
-  const [elements, setElements] = useState<SlideElementDTO[] | null>(preloaded || null);
-  const [background, setBackground] = useState<any | null>(null);
-  const [themeTokens, setThemeTokens] = useState<any | null>(null);
+export const SlideThumbnail: React.FC<Props> = ({ slideId, width, pageNumber, totalPages, elements: preloaded, background: preloadedBackground, themeTokens: preloadedThemeTokens }) => {
+  const hasPreloadedElements = Array.isArray(preloaded) && preloaded.length > 0;
+  const [elements, setElements] = useState<SlideElementDTO[] | null>(hasPreloadedElements ? preloaded! : null);
+  const [background, setBackground] = useState<any | null>(preloadedBackground ?? null);
+  const [themeTokens, setThemeTokens] = useState<any | null>(preloadedThemeTokens ?? null);
   const [error, setError] = useState(false);
   const bump = REFRESH_BUMP.get(slideId);
 
@@ -73,18 +93,22 @@ export const SlideThumbnail: React.FC<Props> = ({ slideId, width, pageNumber, to
 
     const cached = ELEMENT_CACHE.get(slideId);
     if (cached && Date.now() - cached.ts < CACHE_TTL_MS && !bump) {
-      if (!preloaded) setElements(cached.elements);
+      if (!hasPreloadedElements) setElements(cached.elements);
       setBackground(cached.background || null);
       setThemeTokens(cached.themeTokens || null);
       return;
     }
 
     (async () => {
+      await acquireSlot();
       try {
-        // Fetch elements (unless preloaded) AND the slide row (for background/theme).
+        if (cancelled) return;
+        // Fetch elements unless preloaded. Fetch the slide row only if the
+        // caller did not already pass background/themeTokens from the deck list.
+        const needsSlideRow = preloadedBackground === undefined && preloadedThemeTokens === undefined;
         const [elsRes, slideRes] = await Promise.all([
-          preloaded ? Promise.resolve({ data: preloaded }) : api.get<SlideElementDTO[]>(`/slides/${slideId}/elements`),
-          api.get(`/slides/${slideId}`),
+          hasPreloadedElements ? Promise.resolve({ data: preloaded! }) : api.get<SlideElementDTO[]>(`/slides/${slideId}/elements`),
+          needsSlideRow ? api.get(`/slides/${slideId}`) : Promise.resolve({ data: { background: preloadedBackground, themeTokens: preloadedThemeTokens } }),
         ]);
         if (cancelled) return;
         const els = elsRes.data;
@@ -96,10 +120,12 @@ export const SlideThumbnail: React.FC<Props> = ({ slideId, width, pageNumber, to
         setThemeTokens(tt);
       } catch {
         if (!cancelled) setError(true);
+      } finally {
+        releaseSlot();
       }
     })();
     return () => { cancelled = true; };
-  }, [slideId, bump, preloaded]);
+  }, [slideId, bump, preloaded, hasPreloadedElements, preloadedBackground, preloadedThemeTokens]);
 
   // 16:9 thumb sized by parent
   const height = (width * 9) / 16;
@@ -115,7 +141,10 @@ export const SlideThumbnail: React.FC<Props> = ({ slideId, width, pageNumber, to
 
   if (!elements) {
     return (
-      <div style={{ width, height }} className="bg-[#F1F0EC] border border-[#E3E1DA] rounded animate-pulse" />
+      <div
+        style={{ width, height, ...backgroundStyle(background, themeTokens) }}
+        className="border border-[#E3E1DA] rounded animate-pulse"
+      />
     );
   }
 

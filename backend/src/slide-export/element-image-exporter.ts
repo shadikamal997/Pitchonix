@@ -52,7 +52,7 @@ export async function exportDeckToPngs(deck: RenderDeckInput): Promise<Buffer[]>
     // captures without scrolling.
     const totalH = SLIDE_VIEWPORT_HEIGHT * Math.max(1, deck.slides.length);
     await page.setViewport({ width: SLIDE_VIEWPORT_WIDTH, height: totalH });
-    await page.setContent(html, { waitUntil: 'load' });
+    await page.setContent(html, { waitUntil: 'networkidle0' as any, timeout: 30_000 });
     const pages: Buffer[] = [];
     for (let i = 0; i < deck.slides.length; i++) {
       const buf = await page.screenshot({

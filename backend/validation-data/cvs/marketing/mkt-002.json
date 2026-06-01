@@ -1,0 +1,50 @@
+{
+  "profile": {
+    "skills": [
+      "A/B Testing",
+      "Conversion Optimization",
+      "SEM",
+      "Data Analysis",
+      "Brand Management",
+      "Content Marketing",
+      "Google Ads",
+      "Google Analytics",
+      "SEO",
+      "Email Marketing"
+    ],
+    "experience": [
+      {
+        "title": "Junior Marketing Manager",
+        "company": "Digital Solutions",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "MIT",
+        "year": "2020"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Riley Brown",
+      "email": "riley.brown@email.com",
+      "phone": "+1-555-7892",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Riley Brown - Junior Marketing Manager",
+    "content": "Riley Brown\nJunior Marketing Manager\n\nSkills:\nA/B Testing, Conversion Optimization, SEM, Data Analysis, Brand Management, Content Marketing, Google Ads, Google Analytics, SEO, Email Marketing\n\nExperience:\nJunior Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

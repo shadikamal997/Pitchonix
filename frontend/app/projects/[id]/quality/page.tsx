@@ -40,6 +40,7 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'history'>('overview');
+  const [exportReadinessTrigger, setExportReadinessTrigger] = useState(0);
 
   useEffect(() => {
     fetchAllData();
@@ -116,8 +117,9 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
     setRefreshing(true);
     try {
       await runQualityCheck(project.decks[0].id);
-      // Refresh all data after quality check
+      // Refresh all data after quality check, then tell ExportReadinessIndicator to re-fetch too.
       await fetchAllData();
+      setExportReadinessTrigger((n) => n + 1);
     } catch (err) {
       console.error('Failed to run quality check:', err);
     } finally {
@@ -213,7 +215,7 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
           {/* Top Row: Overall Score and Dimensions */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Overall Quality Score */}
-            {qualityReport && (
+            {qualityReport && qualityReport.overall !== null ? (
               <QualityScoreBadge
                 score={qualityReport.overall}
                 grade={qualityReport.grade}
@@ -221,15 +223,42 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
                 size="lg"
                 showTrend={false}
               />
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                  <div className="text-5xl font-bold text-[#C9C6BD]">/100</div>
+                  <p className="text-sm font-semibold text-[#111111]">Quality Score</p>
+                  <p className="text-xs text-[#9A9A9A] max-w-[200px]">No quality check has been run yet for this deck.</p>
+                  <Button size="sm" onClick={handleRunQualityCheck} disabled={refreshing}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                    Run Quality Check
+                  </Button>
+                </CardContent>
+              </Card>
             )}
 
             {/* Quality Dimensions Chart */}
-            {qualityReport && (
+            {qualityReport && qualityReport.overall !== null ? (
               <QualityDimensionChart
                 dimensions={qualityReport.dimensions}
                 title="Quality Breakdown"
                 description="Detailed analysis across four dimensions"
               />
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center gap-2">
+                  <div className="grid grid-cols-2 gap-3 w-full max-w-[240px]">
+                    {['Content', 'Visual', 'AI', 'Export'].map((d) => (
+                      <div key={d} className="bg-[#F1F0EC] rounded-lg p-3">
+                        <div className="text-xs text-[#9A9A9A] mb-1">{d}</div>
+                        <div className="text-lg font-bold text-[#C9C6BD]">/100</div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-[#C9C6BD] mt-2">Avg: —</p>
+                  <p className="text-[11px] text-[#9A9A9A]">Detailed analysis across four dimensions</p>
+                </CardContent>
+              </Card>
             )}
           </div>
 
@@ -246,9 +275,11 @@ export default function QualityDashboardPage({ params }: { params: { id: string 
           <ExportReadinessIndicator
             deckId={project.decks[0].id}
             showExportButton={true}
+            refreshTrigger={exportReadinessTrigger}
             onExport={() => {
               router.push(`/editor/${project.decks[0].id}`);
             }}
+            onFixIssues={handleRunQualityCheck}
           />
 
           {/* Recommendations */}

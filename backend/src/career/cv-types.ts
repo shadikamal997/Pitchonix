@@ -27,7 +27,13 @@ export interface CvExperience {
   location?: string;
   start:     string;          // YYYY-MM or YYYY
   end?:      string;          // null/undefined = "Present"
-  bullets:   string[];        // achievements
+  description?: string;       // preserved paragraph/context text
+  bullets:   string[];        // responsibilities / achievements, in source order
+  achievements?: string[];
+  technologies?: string[];
+  metrics?: string[];
+  projects?: string[];
+  rawText?: string;           // original grouped import text for audit/debug
 }
 
 export interface CvEducation {

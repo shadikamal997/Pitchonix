@@ -2,6 +2,7 @@ import {
   Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query,
   UploadedFile, UseInterceptors, Res, BadRequestException,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -36,6 +37,7 @@ import { GetUser } from '../auth/get-user.decorator';
 
 @ApiTags('Brand Kits')
 @UseGuards(JwtAuthGuard)
+@SkipThrottle({ short: true, medium: true, long: true })
 @ApiBearerAuth()
 @Controller()
 export class BrandKitsController {

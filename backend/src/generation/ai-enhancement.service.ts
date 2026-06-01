@@ -256,13 +256,20 @@ Style & Tone: Write in a ${tone} style.
 Target Audience: ${input.audience} - ${audience}.
 Industry: ${input.industry}
 
-Your task is to enhance slide content while maintaining accuracy and authenticity. 
+Your task is to enhance slide content while maintaining accuracy and authenticity.
 - Improve clarity and impact
 - Adapt language to the audience
 - Keep technical details accurate
 - Make content more compelling and memorable
 - Use active voice and strong verbs
 - Avoid clichés and buzzwords unless industry-appropriate
+
+CRITICAL DATA INTEGRITY RULES (never violate):
+- Preserve ALL numbers, percentages, dollar amounts, dates, company names, and product names exactly as given
+- Do NOT invent metrics, market sizes, revenue figures, headcounts, or claims not present in the input
+- Do NOT use placeholder names like "Company X", "Client A", or "Team Member 1"
+- If you have no data for a field, keep the original value — never fabricate a replacement
+- Generic phrases like "innovative solution", "cutting-edge", "world-class" are forbidden unless from input
 
 Return only valid JSON. Do not add explanations or markdown formatting.`;
   }
@@ -408,7 +415,7 @@ Write a concise, impactful summary that captures the essence of the business.`;
                 content: prompt,
               },
             ],
-            temperature: 0.8,
+            temperature: 0.5,
             max_tokens: 200,
           });
         },
@@ -523,6 +530,8 @@ Make it:
 - Better structured
 - More professional
 
+CRITICAL: Preserve ALL numbers, metrics, names, and dates exactly as given. Do not invent new figures.
+
 Return enhanced content as valid JSON with the same structure.`;
 
     try {
@@ -626,6 +635,8 @@ Add:
 - More explanation
 - Keep it professional and valuable
 
+CRITICAL: Preserve ALL numbers, metrics, names, and dates exactly as given. Do not invent new figures or examples.
+
 Return expanded content as valid JSON with the same structure.`;
 
     try {
@@ -639,7 +650,7 @@ Return expanded content as valid JSON with the same structure.`;
               { role: 'system', content: 'You are an expert content editor. Return only valid JSON.' },
               { role: 'user', content: prompt },
             ],
-            temperature: 0.8,
+            temperature: 0.5,
             max_tokens: 1000,
           });
         },
@@ -677,6 +688,8 @@ Improve:
 - Add credibility and gravitas
 - Use industry-appropriate terminology
 - Sound more executive-level
+
+CRITICAL: Preserve ALL numbers, metrics, names, percentages, and dates exactly as given. Do not invent figures or substitute placeholder names.
 
 Return professional content as valid JSON with the same structure.`;
 
@@ -732,6 +745,8 @@ Focus on:
 - Clear value proposition
 - Data-driven insights
 
+CRITICAL: Preserve ALL numbers, metrics, names, percentages, and dates exactly as given in the input. Never invent market sizes, funding figures, revenue projections, or other financial data. Investors will verify every number — fabricated data destroys credibility.
+
 Return investor-optimized content as valid JSON with the same structure.`;
 
     try {
@@ -745,7 +760,7 @@ Return investor-optimized content as valid JSON with the same structure.`;
               { role: 'system', content: 'You are an expert investor pitch consultant. Return only valid JSON.' },
               { role: 'user', content: prompt },
             ],
-            temperature: 0.7,
+            temperature: 0.3,
             max_tokens: 900,
           });
         },

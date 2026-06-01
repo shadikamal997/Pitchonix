@@ -26,6 +26,8 @@ export interface SlideListItem {
   speakerNotes: string | null;
   layoutKey?:   string | null;
   themeKey?:    string | null;
+  background?:  any | null;
+  themeTokens?: any | null;
   /** Phase 32F — slide.metadata.sectionId is consumed by the sectioned sidebar. */
   metadata?:    any | null;
 }

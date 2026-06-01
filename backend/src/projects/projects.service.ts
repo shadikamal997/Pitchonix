@@ -7,6 +7,7 @@ export class ProjectsService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateProjectDto) {
+    const workspaceId = await this.resolveUserWorkspaceId(userId);
     return this.prisma.project.create({
       data: {
         userId,
@@ -17,6 +18,7 @@ export class ProjectsService {
         audience: dto.audience,
         tone: dto.tone,
         businessInfo: dto.businessInfo || {},
+        ...(workspaceId ? { workspaceId } : {}),
       },
       include: {
         decks: true,
@@ -153,6 +155,7 @@ export class ProjectsService {
         businessInfo: originalProject.businessInfo,
         audience: originalProject.audience,
         tone: originalProject.tone,
+        ...((originalProject as any).workspaceId ? { workspaceId: (originalProject as any).workspaceId } : {}),
       },
     });
 
@@ -285,5 +288,13 @@ export class ProjectsService {
 
   async incrementExport(id: string) {
     await this.prisma.project.update({ where: { id }, data: { exportCount: { increment: 1 } } });
+  }
+
+  private async resolveUserWorkspaceId(userId: string): Promise<string | null> {
+    const member = await this.prisma.workspaceMember.findFirst({
+      where: { userId },
+      select: { workspaceId: true },
+    });
+    return member?.workspaceId ?? null;
   }
 }

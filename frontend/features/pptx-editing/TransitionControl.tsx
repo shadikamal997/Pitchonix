@@ -28,10 +28,11 @@ const HAS_DIRECTION = new Set(['push', 'reveal', 'cover']);
 
 interface Props {
   slideId: string | null | undefined;
+  autoLoad?: boolean;
 }
 
-export const TransitionControl: React.FC<Props> = ({ slideId }) => {
-  const { transition, set, clear } = useSlideTransition(slideId);
+export const TransitionControl: React.FC<Props> = ({ slideId, autoLoad = true }) => {
+  const { transition, set, clear } = useSlideTransition(slideId, autoLoad);
 
   if (!slideId) return null;
   const t: SlideTransitionDTO = transition || { effect: 'fade', duration: 400 };

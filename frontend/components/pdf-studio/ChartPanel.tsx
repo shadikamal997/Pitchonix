@@ -146,7 +146,9 @@ function ChartEditor({ chart, onChange, onDelete }: {
     onChange({ ...chart, data: chart.data.map((d, j) => j === i ? { ...d, label } : d) });
 
   const setRowValue = (i: number, raw: string) => {
-    const value = parseFloat(raw) || 0;
+    const parsed = parseFloat(raw);
+    // Clamp to 0 minimum — negative values break bar/pie chart rendering
+    const value = isNaN(parsed) ? 0 : Math.max(0, parsed);
     onChange({ ...chart, data: chart.data.map((d, j) => j === i ? { ...d, value } : d) });
   };
 
@@ -220,6 +222,7 @@ function ChartEditor({ chart, onChange, onDelete }: {
                 />
                 <input
                   type="number"
+                  min="0"
                   value={row.value}
                   onChange={e => setRowValue(i, e.target.value)}
                   className="w-16 text-[10px] border border-[#E3E1DA] rounded px-2 py-1 focus:outline-none focus:border-[#A8B9AE] text-right"

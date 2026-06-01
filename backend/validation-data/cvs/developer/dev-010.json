@@ -1,0 +1,61 @@
+{
+  "profile": {
+    "skills": [
+      "TypeScript",
+      "AWS",
+      "MongoDB",
+      "Python",
+      "Jira",
+      "HTML/CSS",
+      "Django",
+      "C#"
+    ],
+    "experience": [
+      {
+        "title": "Software Engineer",
+        "company": "Digital Solutions",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "Apex Digital",
+        "duration": "2022-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "UT Austin",
+        "year": "2018",
+        "gpa": "3.5"
+      }
+    ],
+    "certifications": [
+      "AWS Certified Solutions Architect",
+      "MongoDB Certified Developer"
+    ],
+    "contact": {
+      "name": "Jamie Smith",
+      "email": "jamie.smith@email.com",
+      "phone": "+1-555-0967",
+      "location": "San Francisco, CA",
+      "github": "github.com/jamiesmith"
+    }
+  },
+  "document": {
+    "title": "Jamie Smith - Mid Software Engineer",
+    "content": "Jamie Smith\nMid Software Engineer\n\nSkills:\nTypeScript, AWS, MongoDB, Python, Jira, HTML/CSS, Django, C#\n\nExperience:\nMid Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

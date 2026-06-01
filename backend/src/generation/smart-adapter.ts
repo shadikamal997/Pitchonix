@@ -84,6 +84,7 @@ const DOC_TYPE_TO_FAMILY: Record<string, SmartFamilyId> = {
 
 /** Lower-case heuristics for the WizardInput.theme string. */
 const THEME_HINT_TO_FAMILY: Array<{ pattern: RegExp; family: SmartFamilyId }> = [
+  // Original 8
   { pattern: /crimson|red|bold/i,               family: 'crimson-dark' },
   { pattern: /luxury|gold|premium|elegant/i,    family: 'luxury-dark' },
   { pattern: /startup|gradient|vibrant|fun/i,   family: 'startup-gradient' },
@@ -92,6 +93,19 @@ const THEME_HINT_TO_FAMILY: Array<{ pattern: RegExp; family: SmartFamilyId }> = 
   { pattern: /editorial|report|magazine|serif/i,family: 'editorial-report' },
   { pattern: /geometric|soft|playful/i,         family: 'soft-geometric-blue' },
   { pattern: /business|blue/i,                  family: 'light-blue-business' },
+  // Phase 4 — 12 new families
+  { pattern: /ocean|navy|deep.*blue|finance/i,  family: 'ocean-deep' },
+  { pattern: /forest|executive|esg|nature/i,    family: 'forest-executive' },
+  { pattern: /ember|orange|energetic|consumer/i,family: 'ember-orange' },
+  { pattern: /arctic|white|ultra.minimal|clean/i,family: 'arctic-white' },
+  { pattern: /slate.*pro|saas|indigo|software/i,family: 'slate-pro' },
+  { pattern: /emerald|fintech|growth.*green/i,  family: 'emerald-fintech' },
+  { pattern: /midnight.*tech|cyber|neon|dev/i,  family: 'midnight-tech' },
+  { pattern: /rose|pink|health|wellness/i,      family: 'rose-modern' },
+  { pattern: /cobalt|enterprise.*blue|impact/i, family: 'cobalt-impact' },
+  { pattern: /sand|warm.*earth|lifestyle/i,     family: 'warm-sand' },
+  { pattern: /violet|creative|purple|agency/i,  family: 'violet-creative' },
+  { pattern: /teal|aqua|biotech|medical/i,      family: 'teal-health' },
 ];
 
 @Injectable()

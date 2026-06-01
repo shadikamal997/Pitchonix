@@ -1,0 +1,94 @@
+{
+  "profile": {
+    "skills": [
+      "SEO",
+      "Copywriting",
+      "Content Marketing",
+      "Email Marketing",
+      "A/B Testing",
+      "Conversion Optimization",
+      "Google Ads",
+      "Content Strategy",
+      "Facebook Ads",
+      "Social Media"
+    ],
+    "experience": [
+      {
+        "title": "Lead Marketing Manager",
+        "company": "TechCorp",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "Apex Digital",
+        "duration": "2021-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "Quantum Labs",
+        "duration": "2018-2021",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "Quantum Labs",
+        "duration": "2016-2018",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "TechCorp",
+        "duration": "2015-2016",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "UT Austin",
+        "year": "2011"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Casey Brown",
+      "email": "casey.brown@email.com",
+      "phone": "+1-555-0030",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Casey Brown - Lead Marketing Manager",
+    "content": "Casey Brown\nLead Marketing Manager\n\nSkills:\nSEO, Copywriting, Content Marketing, Email Marketing, A/B Testing, Conversion Optimization, Google Ads, Content Strategy, Facebook Ads, Social Media\n\nExperience:\nLead Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

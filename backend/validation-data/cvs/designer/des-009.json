@@ -1,0 +1,47 @@
+{
+  "profile": {
+    "skills": [
+      "Wireframing",
+      "Prototyping",
+      "Figma",
+      "Sketch",
+      "Photoshop",
+      "Interaction Design",
+      "Illustrator",
+      "After Effects",
+      "UX Design",
+      "Usability Testing"
+    ],
+    "experience": [
+      {
+        "title": "Product Designer",
+        "company": "Quantum Labs",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "University of Washington",
+        "year": "2019"
+      }
+    ],
+    "contact": {
+      "name": "Taylor Rodriguez",
+      "email": "taylor.rodriguez@email.com",
+      "phone": "+1-555-5252",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/taylor-rodriguez"
+    }
+  },
+  "document": {
+    "title": "Taylor Rodriguez - Mid Product Designer",
+    "content": "Taylor Rodriguez\nMid Product Designer\n\nSkills:\nWireframing, Prototyping, Figma, Sketch, Photoshop, Interaction Design, Illustrator, After Effects, UX Design, Usability Testing\n\nExperience:\nMid Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

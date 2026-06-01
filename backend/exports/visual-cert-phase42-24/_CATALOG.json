@@ -1,0 +1,716 @@
+{
+  "generated": "2026-05-27T15:05:31.603Z",
+  "totalTemplates": 49,
+  "successCount": 49,
+  "failCount": 0,
+  "byCategory": {
+    "Executive": [
+      {
+        "name": "Executive Prestige",
+        "category": "Executive",
+        "doctype": "cv",
+        "success": true,
+        "size": 28251
+      },
+      {
+        "name": "Executive Gilt",
+        "category": "Executive",
+        "doctype": "cv",
+        "success": true,
+        "size": 27487
+      },
+      {
+        "name": "Executive Nordic",
+        "category": "Executive",
+        "doctype": "cv",
+        "success": true,
+        "size": 27994
+      },
+      {
+        "name": "Executive Slate",
+        "category": "Executive",
+        "doctype": "resume",
+        "success": true,
+        "size": 27400
+      },
+      {
+        "name": "Executive Photo",
+        "category": "Executive",
+        "doctype": "cv",
+        "success": true,
+        "size": 28164
+      },
+      {
+        "name": "Cover Letter Executive",
+        "category": "Executive",
+        "doctype": "coverLetter",
+        "success": true,
+        "size": 14650
+      },
+      {
+        "name": "Portfolio Executive",
+        "category": "Executive",
+        "doctype": "portfolio",
+        "success": true,
+        "size": 14590
+      }
+    ],
+    "Corporate": [
+      {
+        "name": "Corporate Pro",
+        "category": "Corporate",
+        "doctype": "cv",
+        "success": true,
+        "size": 27619
+      },
+      {
+        "name": "Corporate Classic",
+        "category": "Corporate",
+        "doctype": "resume",
+        "success": true,
+        "size": 27498
+      },
+      {
+        "name": "Corporate Timeline",
+        "category": "Corporate",
+        "doctype": "cv",
+        "success": true,
+        "size": 27596
+      },
+      {
+        "name": "Corporate Bold",
+        "category": "Corporate",
+        "doctype": "resume",
+        "success": true,
+        "size": 27851
+      },
+      {
+        "name": "Civic Government",
+        "category": "Corporate",
+        "doctype": "cv",
+        "success": true,
+        "size": 27489
+      },
+      {
+        "name": "Cover Letter Classic",
+        "category": "Corporate",
+        "doctype": "coverLetter",
+        "success": true,
+        "size": 14566
+      }
+    ],
+    "ATS": [
+      {
+        "name": "ATS Universal",
+        "category": "ATS",
+        "doctype": "cv",
+        "success": true,
+        "size": 25926
+      },
+      {
+        "name": "ATS Resume",
+        "category": "ATS",
+        "doctype": "resume",
+        "success": true,
+        "size": 25921
+      },
+      {
+        "name": "ATS Professional",
+        "category": "ATS",
+        "doctype": "cv",
+        "success": true,
+        "size": 25958
+      }
+    ],
+    "Modern": [
+      {
+        "name": "Modern Teal Pro",
+        "category": "Modern",
+        "doctype": "cv",
+        "success": true,
+        "size": 28052
+      },
+      {
+        "name": "Modern Split",
+        "category": "Modern",
+        "doctype": "resume",
+        "success": true,
+        "size": 28055
+      },
+      {
+        "name": "Modern Indigo",
+        "category": "Modern",
+        "doctype": "cv",
+        "success": true,
+        "size": 27637
+      },
+      {
+        "name": "Modern Dark",
+        "category": "Modern",
+        "doctype": "cv",
+        "success": true,
+        "size": 28141
+      },
+      {
+        "name": "Cover Letter Modern",
+        "category": "Modern",
+        "doctype": "coverLetter",
+        "success": true,
+        "size": 14592
+      }
+    ],
+    "Creative": [
+      {
+        "name": "Creative Dark",
+        "category": "Creative",
+        "doctype": "cv",
+        "success": true,
+        "size": 28065
+      },
+      {
+        "name": "Creative Coral",
+        "category": "Creative",
+        "doctype": "cv",
+        "success": true,
+        "size": 28106
+      },
+      {
+        "name": "Creative Purple",
+        "category": "Creative",
+        "doctype": "resume",
+        "success": true,
+        "size": 27160
+      },
+      {
+        "name": "Creative Magazine",
+        "category": "Creative",
+        "doctype": "cv",
+        "success": true,
+        "size": 28315
+      },
+      {
+        "name": "Cover Letter Creative",
+        "category": "Creative",
+        "doctype": "coverLetter",
+        "success": true,
+        "size": 14609
+      },
+      {
+        "name": "Portfolio Creative",
+        "category": "Creative",
+        "doctype": "portfolio",
+        "success": true,
+        "size": 14549
+      }
+    ],
+    "Developer": [
+      {
+        "name": "Dev Terminal",
+        "category": "Developer",
+        "doctype": "cv",
+        "success": true,
+        "size": 28252
+      },
+      {
+        "name": "Dev GitHub",
+        "category": "Developer",
+        "doctype": "resume",
+        "success": true,
+        "size": 27588
+      },
+      {
+        "name": "Dev Full Stack",
+        "category": "Developer",
+        "doctype": "cv",
+        "success": true,
+        "size": 28279
+      },
+      {
+        "name": "Dev Data",
+        "category": "Developer",
+        "doctype": "resume",
+        "success": true,
+        "size": 27876
+      },
+      {
+        "name": "Cover Letter Developer",
+        "category": "Developer",
+        "doctype": "coverLetter",
+        "success": true,
+        "size": 14616
+      },
+      {
+        "name": "Portfolio Developer",
+        "category": "Developer",
+        "doctype": "portfolio",
+        "success": true,
+        "size": 14556
+      }
+    ],
+    "Designer": [
+      {
+        "name": "Designer Editorial",
+        "category": "Designer",
+        "doctype": "cv",
+        "success": true,
+        "size": 28715
+      },
+      {
+        "name": "Designer Studio",
+        "category": "Designer",
+        "doctype": "cv",
+        "success": true,
+        "size": 28107
+      },
+      {
+        "name": "Designer Minimal",
+        "category": "Designer",
+        "doctype": "resume",
+        "success": true,
+        "size": 27524
+      },
+      {
+        "name": "Portfolio Designer",
+        "category": "Designer",
+        "doctype": "portfolio",
+        "success": true,
+        "size": 14643
+      }
+    ],
+    "Startup": [
+      {
+        "name": "Startup Founder",
+        "category": "Startup",
+        "doctype": "cv",
+        "success": true,
+        "size": 27390
+      },
+      {
+        "name": "Startup Growth",
+        "category": "Startup",
+        "doctype": "resume",
+        "success": true,
+        "size": 27698
+      },
+      {
+        "name": "Startup PM",
+        "category": "Startup",
+        "doctype": "cv",
+        "success": true,
+        "size": 28228
+      }
+    ],
+    "Consultant": [
+      {
+        "name": "Consultant Premium",
+        "category": "Consultant",
+        "doctype": "cv",
+        "success": true,
+        "size": 28047
+      },
+      {
+        "name": "Consultant Brief",
+        "category": "Consultant",
+        "doctype": "resume",
+        "success": true,
+        "size": 27003
+      },
+      {
+        "name": "Consulting Strategic",
+        "category": "Consultant",
+        "doctype": "cv",
+        "success": true,
+        "size": 27599
+      },
+      {
+        "name": "Cover Letter Consultant",
+        "category": "Consultant",
+        "doctype": "coverLetter",
+        "success": true,
+        "size": 14651
+      }
+    ],
+    "Academic": [
+      {
+        "name": "Academic Formal",
+        "category": "Academic",
+        "doctype": "cv",
+        "success": true,
+        "size": 27433
+      },
+      {
+        "name": "Academic Modern",
+        "category": "Academic",
+        "doctype": "cv",
+        "success": true,
+        "size": 27543
+      },
+      {
+        "name": "Academic European",
+        "category": "Academic",
+        "doctype": "cv",
+        "success": true,
+        "size": 28374
+      },
+      {
+        "name": "Cover Letter Academic",
+        "category": "Academic",
+        "doctype": "coverLetter",
+        "success": true,
+        "size": 14573
+      },
+      {
+        "name": "Portfolio Minimal",
+        "category": "Academic",
+        "doctype": "portfolio",
+        "success": true,
+        "size": 14533
+      }
+    ]
+  },
+  "templates": [
+    {
+      "name": "Executive Prestige",
+      "category": "Executive",
+      "doctype": "cv",
+      "success": true,
+      "size": 28251
+    },
+    {
+      "name": "Executive Gilt",
+      "category": "Executive",
+      "doctype": "cv",
+      "success": true,
+      "size": 27487
+    },
+    {
+      "name": "Executive Nordic",
+      "category": "Executive",
+      "doctype": "cv",
+      "success": true,
+      "size": 27994
+    },
+    {
+      "name": "Executive Slate",
+      "category": "Executive",
+      "doctype": "resume",
+      "success": true,
+      "size": 27400
+    },
+    {
+      "name": "Executive Photo",
+      "category": "Executive",
+      "doctype": "cv",
+      "success": true,
+      "size": 28164
+    },
+    {
+      "name": "Corporate Pro",
+      "category": "Corporate",
+      "doctype": "cv",
+      "success": true,
+      "size": 27619
+    },
+    {
+      "name": "Corporate Classic",
+      "category": "Corporate",
+      "doctype": "resume",
+      "success": true,
+      "size": 27498
+    },
+    {
+      "name": "Corporate Timeline",
+      "category": "Corporate",
+      "doctype": "cv",
+      "success": true,
+      "size": 27596
+    },
+    {
+      "name": "Corporate Bold",
+      "category": "Corporate",
+      "doctype": "resume",
+      "success": true,
+      "size": 27851
+    },
+    {
+      "name": "Civic Government",
+      "category": "Corporate",
+      "doctype": "cv",
+      "success": true,
+      "size": 27489
+    },
+    {
+      "name": "ATS Universal",
+      "category": "ATS",
+      "doctype": "cv",
+      "success": true,
+      "size": 25926
+    },
+    {
+      "name": "ATS Resume",
+      "category": "ATS",
+      "doctype": "resume",
+      "success": true,
+      "size": 25921
+    },
+    {
+      "name": "ATS Professional",
+      "category": "ATS",
+      "doctype": "cv",
+      "success": true,
+      "size": 25958
+    },
+    {
+      "name": "Modern Teal Pro",
+      "category": "Modern",
+      "doctype": "cv",
+      "success": true,
+      "size": 28052
+    },
+    {
+      "name": "Modern Split",
+      "category": "Modern",
+      "doctype": "resume",
+      "success": true,
+      "size": 28055
+    },
+    {
+      "name": "Modern Indigo",
+      "category": "Modern",
+      "doctype": "cv",
+      "success": true,
+      "size": 27637
+    },
+    {
+      "name": "Modern Dark",
+      "category": "Modern",
+      "doctype": "cv",
+      "success": true,
+      "size": 28141
+    },
+    {
+      "name": "Creative Dark",
+      "category": "Creative",
+      "doctype": "cv",
+      "success": true,
+      "size": 28065
+    },
+    {
+      "name": "Creative Coral",
+      "category": "Creative",
+      "doctype": "cv",
+      "success": true,
+      "size": 28106
+    },
+    {
+      "name": "Creative Purple",
+      "category": "Creative",
+      "doctype": "resume",
+      "success": true,
+      "size": 27160
+    },
+    {
+      "name": "Creative Magazine",
+      "category": "Creative",
+      "doctype": "cv",
+      "success": true,
+      "size": 28315
+    },
+    {
+      "name": "Dev Terminal",
+      "category": "Developer",
+      "doctype": "cv",
+      "success": true,
+      "size": 28252
+    },
+    {
+      "name": "Dev GitHub",
+      "category": "Developer",
+      "doctype": "resume",
+      "success": true,
+      "size": 27588
+    },
+    {
+      "name": "Dev Full Stack",
+      "category": "Developer",
+      "doctype": "cv",
+      "success": true,
+      "size": 28279
+    },
+    {
+      "name": "Dev Data",
+      "category": "Developer",
+      "doctype": "resume",
+      "success": true,
+      "size": 27876
+    },
+    {
+      "name": "Designer Editorial",
+      "category": "Designer",
+      "doctype": "cv",
+      "success": true,
+      "size": 28715
+    },
+    {
+      "name": "Designer Studio",
+      "category": "Designer",
+      "doctype": "cv",
+      "success": true,
+      "size": 28107
+    },
+    {
+      "name": "Designer Minimal",
+      "category": "Designer",
+      "doctype": "resume",
+      "success": true,
+      "size": 27524
+    },
+    {
+      "name": "Startup Founder",
+      "category": "Startup",
+      "doctype": "cv",
+      "success": true,
+      "size": 27390
+    },
+    {
+      "name": "Startup Growth",
+      "category": "Startup",
+      "doctype": "resume",
+      "success": true,
+      "size": 27698
+    },
+    {
+      "name": "Startup PM",
+      "category": "Startup",
+      "doctype": "cv",
+      "success": true,
+      "size": 28228
+    },
+    {
+      "name": "Consultant Premium",
+      "category": "Consultant",
+      "doctype": "cv",
+      "success": true,
+      "size": 28047
+    },
+    {
+      "name": "Consultant Brief",
+      "category": "Consultant",
+      "doctype": "resume",
+      "success": true,
+      "size": 27003
+    },
+    {
+      "name": "Consulting Strategic",
+      "category": "Consultant",
+      "doctype": "cv",
+      "success": true,
+      "size": 27599
+    },
+    {
+      "name": "Academic Formal",
+      "category": "Academic",
+      "doctype": "cv",
+      "success": true,
+      "size": 27433
+    },
+    {
+      "name": "Academic Modern",
+      "category": "Academic",
+      "doctype": "cv",
+      "success": true,
+      "size": 27543
+    },
+    {
+      "name": "Academic European",
+      "category": "Academic",
+      "doctype": "cv",
+      "success": true,
+      "size": 28374
+    },
+    {
+      "name": "Cover Letter Classic",
+      "category": "Corporate",
+      "doctype": "coverLetter",
+      "success": true,
+      "size": 14566
+    },
+    {
+      "name": "Cover Letter Executive",
+      "category": "Executive",
+      "doctype": "coverLetter",
+      "success": true,
+      "size": 14650
+    },
+    {
+      "name": "Cover Letter Modern",
+      "category": "Modern",
+      "doctype": "coverLetter",
+      "success": true,
+      "size": 14592
+    },
+    {
+      "name": "Cover Letter Creative",
+      "category": "Creative",
+      "doctype": "coverLetter",
+      "success": true,
+      "size": 14609
+    },
+    {
+      "name": "Cover Letter Developer",
+      "category": "Developer",
+      "doctype": "coverLetter",
+      "success": true,
+      "size": 14616
+    },
+    {
+      "name": "Cover Letter Consultant",
+      "category": "Consultant",
+      "doctype": "coverLetter",
+      "success": true,
+      "size": 14651
+    },
+    {
+      "name": "Cover Letter Academic",
+      "category": "Academic",
+      "doctype": "coverLetter",
+      "success": true,
+      "size": 14573
+    },
+    {
+      "name": "Portfolio Executive",
+      "category": "Executive",
+      "doctype": "portfolio",
+      "success": true,
+      "size": 14590
+    },
+    {
+      "name": "Portfolio Creative",
+      "category": "Creative",
+      "doctype": "portfolio",
+      "success": true,
+      "size": 14549
+    },
+    {
+      "name": "Portfolio Developer",
+      "category": "Developer",
+      "doctype": "portfolio",
+      "success": true,
+      "size": 14556
+    },
+    {
+      "name": "Portfolio Designer",
+      "category": "Designer",
+      "doctype": "portfolio",
+      "success": true,
+      "size": 14643
+    },
+    {
+      "name": "Portfolio Minimal",
+      "category": "Academic",
+      "doctype": "portfolio",
+      "success": true,
+      "size": 14533
+    }
+  ]
+}

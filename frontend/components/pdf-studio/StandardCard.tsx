@@ -47,45 +47,45 @@ export default function StandardCard({
       transition={{ duration: 0.6, delay }}
     >
       <Link href={href}>
-        <div className="group pn-card p-7 h-full transition-all hover:-translate-y-0.5 hover:shadow-lifted relative">
+        <div className="group pn-card p-5 h-full transition-all hover:-translate-y-0.5 hover:shadow-lifted relative">
           {/* Badge */}
           {badge && (
-            <div className="absolute top-5 right-5 px-3 py-1 bg-[#111114] text-white text-[11px] font-bold rounded-full">
+            <div className="absolute top-4 right-4 px-2.5 py-0.5 bg-[#111114] text-white text-[10px] font-bold rounded-full">
               {badge.text}
             </div>
           )}
 
           {/* Icon */}
-          <div className="w-14 h-14 bg-[#EEF5F1] text-[#4F7563] rounded-2xl flex items-center justify-center mb-5 group-hover:bg-[#DDE8E1] transition-colors">
-            <Icon className="w-6 h-6" />
+          <div className="w-10 h-10 bg-[#EEF5F1] text-[#4F7563] rounded-xl flex items-center justify-center mb-3 group-hover:bg-[#DDE8E1] transition-colors">
+            <Icon className="w-5 h-5" />
           </div>
 
-          <h3 className="pn-h3 mb-1.5">{title}</h3>
-          <p className="text-sm text-[#6B6B6B] mb-6 leading-relaxed">{subtitle}</p>
+          <h3 className="text-base font-bold text-[#111111] mb-1">{title}</h3>
+          <p className="text-xs text-[#6B6B6B] mb-4 leading-relaxed">{subtitle}</p>
 
           {/* Features */}
-          <div className="space-y-3 mb-6">
+          <div className="space-y-2 mb-4">
             {features.map((feature, index) => {
               const FeatureIcon = feature.icon;
               return (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#EEF5F1] text-[#4F7563] flex items-center justify-center flex-shrink-0">
-                    <FeatureIcon className="w-4 h-4" />
+                <div key={index} className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-[#EEF5F1] text-[#4F7563] flex items-center justify-center flex-shrink-0">
+                    <FeatureIcon className="w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-[#111111]">{feature.title}</p>
-                    <p className="text-xs text-[#6B6B6B]">{feature.subtitle}</p>
+                    <p className="text-xs font-semibold text-[#111111] leading-tight">{feature.title}</p>
+                    <p className="text-[11px] text-[#9A9A9A] leading-tight">{feature.subtitle}</p>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-[#F1F0EC]">
-            <span className="text-sm font-semibold text-[#4F7563] group-hover:text-[#355846]">
+          <div className="flex items-center justify-between pt-3 border-t border-[#F1F0EC]">
+            <span className="text-xs font-semibold text-[#4F7563] group-hover:text-[#355846]">
               {ctaText}
             </span>
-            <ArrowRight className="w-5 h-5 text-[#4F7563] group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-4 h-4 text-[#4F7563] group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
       </Link>

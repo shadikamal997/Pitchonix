@@ -1,0 +1,80 @@
+{
+  "profile": {
+    "skills": [
+      "Sketch",
+      "Design Systems",
+      "Figma",
+      "UX Design",
+      "Visual Design",
+      "After Effects",
+      "Motion Design",
+      "Adobe XD",
+      "Illustrator",
+      "Interaction Design"
+    ],
+    "experience": [
+      {
+        "title": "Senior Product Designer",
+        "company": "NexGen Tech",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "NexGen Tech",
+        "duration": "2020-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2018-2020",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "InnovateLabs",
+        "duration": "2017-2018",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "UC Berkeley",
+        "year": "2013"
+      }
+    ],
+    "contact": {
+      "name": "Quinn Johnson",
+      "email": "quinn.johnson@email.com",
+      "phone": "+1-555-2511",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/quinn-johnson"
+    }
+  },
+  "document": {
+    "title": "Quinn Johnson - Senior Product Designer",
+    "content": "Quinn Johnson\nSenior Product Designer\n\nSkills:\nSketch, Design Systems, Figma, UX Design, Visual Design, After Effects, Motion Design, Adobe XD, Illustrator, Interaction Design\n\nExperience:\nSenior Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

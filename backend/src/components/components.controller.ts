@@ -1,6 +1,7 @@
 import {
   Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
@@ -38,6 +39,7 @@ import {
 @ApiTags('Components')
 @Controller()
 @UseGuards(JwtAuthGuard)
+@SkipThrottle({ short: true, medium: true, long: true })
 @ApiBearerAuth()
 export class ComponentsController {
   constructor(private readonly components: ComponentsService) {}

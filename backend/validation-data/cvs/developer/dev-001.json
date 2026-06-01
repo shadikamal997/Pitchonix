@@ -1,0 +1,43 @@
+{
+  "profile": {
+    "skills": [
+      "Python",
+      "JavaScript",
+      "Node.js",
+      "TypeScript",
+      "Jenkins"
+    ],
+    "experience": [
+      {
+        "title": "Junior Software Engineer",
+        "company": "NexGen Tech",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "MIT",
+        "year": "2020",
+        "gpa": "3.9"
+      }
+    ],
+    "contact": {
+      "name": "Jamie Martinez",
+      "email": "jamie.martinez@email.com",
+      "phone": "+1-555-2365",
+      "location": "San Francisco, CA",
+      "github": "github.com/jamiemartinez"
+    }
+  },
+  "document": {
+    "title": "Jamie Martinez - Junior Software Engineer",
+    "content": "Jamie Martinez\nJunior Software Engineer\n\nSkills:\nPython, JavaScript, Node.js, TypeScript, Jenkins\n\nExperience:\nJunior Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

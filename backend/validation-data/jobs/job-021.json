@@ -1,0 +1,35 @@
+{
+  "title": "Senior Backend Engineer",
+  "category": "backend",
+  "description": "Seeking a Senior Backend Engineer to design and build scalable APIs and microservices. You will work with Node.js, Python, and cloud infrastructure. We are a startup looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "Node.js",
+    "Python",
+    "PostgreSQL",
+    "AWS",
+    "Docker",
+    "Kubernetes"
+  ],
+  "requiredExperience": "6+ years backend development",
+  "responsibilities": [
+    "Design APIs",
+    "Build microservices",
+    "Optimize database queries",
+    "Mentor junior engineers"
+  ],
+  "qualifications": [
+    "Strong CS fundamentals",
+    "Experience with distributed systems",
+    "Cloud platform expertise"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "San Francisco, CA",
+  "employmentType": "Full-time",
+  "remote": "Remote"
+}

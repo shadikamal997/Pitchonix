@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DeckSectionsService, SectionInput } from './deck-sections.service';
@@ -18,6 +19,7 @@ import { DeckSectionsService, SectionInput } from './deck-sections.service';
 
 @ApiTags('Deck Sections')
 @UseGuards(JwtAuthGuard)
+@SkipThrottle({ short: true, medium: true, long: true })
 @ApiBearerAuth()
 @Controller()
 export class DeckSectionsController {

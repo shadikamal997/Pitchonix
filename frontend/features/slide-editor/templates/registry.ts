@@ -697,35 +697,104 @@ const TEXT_TYPES: ElementType[] = [
 ];
 const ACCENT_TYPES: ElementType[] = ['metric', 'kpi'];
 
+// Neutral fill values that are considered "un-set" (won't be re-themed).
+const NEUTRAL_FILLS = new Set(['transparent', 'none', '', 'rgba(0,0,0,0)', '#00000000']);
+const NEUTRAL_COLORS = new Set(['transparent', 'none', '']);
+
+// True if the value looks like a hex/hsl/rgb that is very close to white or black
+// (i.e. an absolute colour the user intentionally chose, not a template relic).
+function isAbsoluteNeutral(v: string | undefined): boolean {
+  if (!v) return false;
+  const lc = v.toLowerCase().trim();
+  return lc === '#ffffff' || lc === '#000000' || lc === '#fff' || lc === '#000'
+    || lc === 'white' || lc === 'black';
+}
+
 export function deriveElementStyle(template: TemplateSpec, el: SlideElementDTO): Partial<ElementStyle> {
   const t = template.theme;
   const existing = (el.style || {}) as ElementStyle;
   const out: Partial<ElementStyle> = {};
 
+  // ── Text elements ───────────────────────────────────────────────────────────
   if (TEXT_TYPES.includes(el.type)) {
-    // Headings use the heading font; others use body font
     const isHeading = el.type === 'heading' || el.type === 'subheading';
     out.fontFamily = isHeading ? t.fontHeading : t.fontBody;
-    // Text color: text token for body / muted for footer-pageNumber-caption
+
     if (el.type === 'footer' || el.type === 'pageNumber' || el.type === 'caption') {
       out.color = t.muted;
-    } else if (el.type === 'heading' || el.type === 'subheading') {
-      out.color = t.text;
     } else {
       out.color = t.text;
     }
   }
+
+  // ── Numeric accent elements ─────────────────────────────────────────────────
   if (ACCENT_TYPES.includes(el.type)) {
-    // Color the metric value through theme.accent; rendering happens in MetricRenderer
+    out.color  = t.accent;
+    out.fontFamily = t.fontHeading;
+  }
+
+  // ── CTA button ──────────────────────────────────────────────────────────────
+  if (el.type === 'cta') {
+    out.fill  = t.primary;
+    out.color = '#ffffff';
+    out.fontFamily = t.fontBody;
+  }
+
+  // ── Composite blocks that contain text ─────────────────────────────────────
+  // Pass the body font through so inner text renders in the right family.
+  if (['testimonial', 'teamCard', 'pricingCard', 'comparison',
+       'swot', 'featureGrid', 'processSteps', 'timeline', 'roadmap', 'fundsAllocation'].includes(el.type)) {
+    out.fontFamily = t.fontBody;
+    out.color      = t.text;
+  }
+
+  // ── Shapes ──────────────────────────────────────────────────────────────────
+  // Only re-theme shapes that already have a non-neutral fill, so that
+  // user-placed transparent/image shapes are left alone.
+  if (el.type === 'shape') {
+    const currentFill = existing.fill || (el.content as any)?.fill;
+    if (currentFill && !NEUTRAL_FILLS.has(currentFill) && !isAbsoluteNeutral(currentFill)) {
+      // Map the shape to primary or accent based on its current role:
+      //  – if the shape's fill looks like the previous accent/secondary, use accent
+      //  – otherwise use primary
+      const lc = currentFill.toLowerCase();
+      const looksLikeAccent = lc.includes('accent') || lc.includes('surface');
+      out.fill   = looksLikeAccent ? t.accent : t.primary;
+      out.stroke = existing.stroke ? t.primary : undefined;
+    }
+  }
+
+  // ── Lines ───────────────────────────────────────────────────────────────────
+  if (el.type === 'line') {
+    const currentStroke = existing.stroke || (el.content as any)?.stroke;
+    if (currentStroke && !NEUTRAL_COLORS.has(currentStroke)) {
+      out.stroke = t.accent;
+    }
+  }
+
+  // ── Dividers ────────────────────────────────────────────────────────────────
+  if (el.type === 'divider') {
+    const currentStroke = existing.stroke || (el.content as any)?.stroke;
+    if (currentStroke && !NEUTRAL_COLORS.has(currentStroke)) {
+      out.stroke = t.accent;
+    } else {
+      // Default dividers to muted
+      out.stroke = t.muted;
+    }
+    out.color = t.muted;
+  }
+
+  // ── Icons ───────────────────────────────────────────────────────────────────
+  if (el.type === 'icon') {
+    out.color = t.primary;
+  }
+
+  // ── Charts ──────────────────────────────────────────────────────────────────
+  // The chart color is driven by the fill field; renderers should pick this up.
+  if (el.type === 'chart') {
+    out.fill  = t.primary;
     out.color = t.accent;
   }
-  // CTA gets the primary as background, preserving user-chosen radius
-  if (el.type === 'cta') {
-    out.fill = t.primary;
-    out.color = '#ffffff';
-  }
-  // Footer / pageNumber don't get fill changes
-  // Shapes / icons / images: leave alone — they're user-driven art
 
   // Preserve fontSize / weight / alignment / decoration / line-height etc.
   return out;

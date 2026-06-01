@@ -1,0 +1,35 @@
+[
+  {
+    "reviewerId": "reviewer-1",
+    "atsReadiness": 88,
+    "skillRelevance": 75,
+    "experienceStrength": 83,
+    "formattingQuality": 76,
+    "keywordCoverage": 84,
+    "overallScore": 81,
+    "comments": "Strong candidate with excellent CV structure. Solid experience background.",
+    "timestamp": "2026-05-27T16:49:18.754Z"
+  },
+  {
+    "reviewerId": "reviewer-2",
+    "atsReadiness": 87,
+    "skillRelevance": 72,
+    "experienceStrength": 78,
+    "formattingQuality": 74,
+    "keywordCoverage": 79,
+    "overallScore": 78,
+    "comments": "Good candidate with room for improvement.",
+    "timestamp": "2026-05-27T16:49:18.754Z"
+  },
+  {
+    "reviewerId": "reviewer-3",
+    "atsReadiness": 86,
+    "skillRelevance": 83,
+    "experienceStrength": 85,
+    "formattingQuality": 77,
+    "keywordCoverage": 87,
+    "overallScore": 83,
+    "comments": "Strong candidate with excellent CV structure. Solid experience background.",
+    "timestamp": "2026-05-27T16:49:18.754Z"
+  }
+]

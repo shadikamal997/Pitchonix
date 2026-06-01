@@ -36,15 +36,15 @@ function template(
 }
 
 const palettes = {
-  minimal: tokens({ paper: '#FAFAF7', ink: '#171717', muted: '#68625B', charcoal: '#25211D', accent: '#7C8C5A', accentSoft: '#ECEFDF', line: '#E3DFD4' }, 'Inter', 'Inter'),
-  executive: tokens({ paper: '#F7F8F8', ink: '#17211F', muted: '#60706B', charcoal: '#18312D', accent: '#8DB7A7', accentSoft: '#E5F0EC', line: '#D7E2DE' }, 'Libre Baskerville', 'Manrope'),
-  startup: tokens({ paper: '#F8FBFF', ink: '#14213D', muted: '#5E6D82', charcoal: '#111827', accent: '#3B82F6', accentSoft: '#DBEAFE', line: '#D6E4F5' }, 'Space Grotesk', 'Inter'),
-  fintech: tokens({ paper: '#F6FBF9', ink: '#092E2A', muted: '#58726C', charcoal: '#123B36', accent: '#17A887', accentSoft: '#DDF7F0', line: '#CFE6DF' }, 'DM Sans', 'DM Sans'),
+  minimal: tokens({ paper: '#FBFAF7', ink: '#1E2224', muted: '#6C7072', charcoal: '#303133', accent: '#FF842B', accentSoft: '#FFF0E3', line: '#E6E1DA' }, 'Inter', 'Inter'),
+  executive: tokens({ paper: '#F8F9F8', ink: '#17211F', muted: '#66736F', charcoal: '#3F4143', accent: '#F0183E', accentSoft: '#FFE8ED', line: '#DCE2DF' }, 'Libre Baskerville', 'Manrope'),
+  startup: tokens({ paper: '#F8FBFF', ink: '#14213D', muted: '#5E6D82', charcoal: '#30343B', accent: '#00A889', accentSoft: '#DDF7F0', line: '#D6E4F5' }, 'Space Grotesk', 'Inter'),
+  fintech: tokens({ paper: '#F6FBF9', ink: '#092E2A', muted: '#58726C', charcoal: '#3D4142', accent: '#13B86F', accentSoft: '#DDF7F0', line: '#CFE6DF' }, 'DM Sans', 'DM Sans'),
   luxury: tokens({ paper: '#11100E', ink: '#F8F1E5', muted: '#C4B8A4', charcoal: '#070707', accent: '#C7A45D', accentSoft: '#2B2418', line: '#3E3425' }, 'Playfair Display', 'Lora'),
-  editorial: tokens({ paper: '#FFFDF8', ink: '#1C1A17', muted: '#756C5F', charcoal: '#25201A', accent: '#B35432', accentSoft: '#F5E5DB', line: '#E9DFD4' }, 'Cormorant Garamond', 'Lora'),
-  futuristic: tokens({ paper: '#F7F9FF', ink: '#151733', muted: '#687099', charcoal: '#17152F', accent: '#7C3AED', accentSoft: '#EDE9FE', line: '#DCD7F6' }, 'Syne', 'Space Grotesk'),
-  agency: tokens({ paper: '#FFFBF2', ink: '#211917', muted: '#796661', charcoal: '#2B1E1B', accent: '#EF6C4D', accentSoft: '#FDE7DF', line: '#EED9D0' }, 'Outfit', 'Nunito'),
-  analytics: tokens({ paper: '#F5F8FB', ink: '#182536', muted: '#627086', charcoal: '#1F2937', accent: '#0EA5E9', accentSoft: '#E0F2FE', line: '#D4E3EF' }, 'IBM Plex Sans', 'IBM Plex Sans'),
+  editorial: tokens({ paper: '#FFFDF8', ink: '#1C1A17', muted: '#756C5F', charcoal: '#33302D', accent: '#FF7A1A', accentSoft: '#FCE7D8', line: '#E9DFD4' }, 'Cormorant Garamond', 'Lora'),
+  futuristic: tokens({ paper: '#F7F9FF', ink: '#151733', muted: '#687099', charcoal: '#343241', accent: '#0FA3B1', accentSoft: '#E0F7FA', line: '#DCD7F6' }, 'Syne', 'Space Grotesk'),
+  agency: tokens({ paper: '#FFFBF2', ink: '#211917', muted: '#796661', charcoal: '#322B2A', accent: '#FF5C35', accentSoft: '#FDE7DF', line: '#EED9D0' }, 'Outfit', 'Nunito'),
+  analytics: tokens({ paper: '#F5F8FB', ink: '#182536', muted: '#627086', charcoal: '#394049', accent: '#1583D8', accentSoft: '#E0F2FE', line: '#D4E3EF' }, 'IBM Plex Sans', 'IBM Plex Sans'),
   healthcare: tokens({ paper: '#F8FEFC', ink: '#11352F', muted: '#5C766F', charcoal: '#163D38', accent: '#2DD4BF', accentSoft: '#CCFBF1', line: '#CFEAE5' }, 'Nunito', 'Nunito'),
 };
 

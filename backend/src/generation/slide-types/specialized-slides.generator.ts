@@ -1,5 +1,10 @@
 import { SlideType, WizardInput } from './types';
 import { BaseSlideGenerator } from './base-slide.generator';
+import {
+  gtmTitle, gtmSubtitle,
+  financialsTitle, financialsSubtitle,
+  companyOverviewTitle, companyOverviewSubtitle,
+} from './narrative-titles';
 
 // =============================================================================
 //  Specialized Slide Generators — Phase 32.75 Tier 9 cleanup
@@ -24,8 +29,8 @@ export class GoToMarketSlideGenerator extends BaseSlideGenerator {
       (input.contentDepth === 'detailed' && !!input.targetCustomers)
     );
   }
-  getTitle(_input: WizardInput): string    { return 'Go-to-Market Strategy'; }
-  getSubtitle(_input: WizardInput): string { return 'How we acquire customers'; }
+  getTitle(input: WizardInput): string    { return gtmTitle(input); }
+  getSubtitle(input: WizardInput): string { return gtmSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {
@@ -47,8 +52,8 @@ export class FinancialsSlideGenerator extends BaseSlideGenerator {
   protected usesSmartComponent() { return true; }
 
   isApplicable(input: WizardInput): boolean { return input.includeFinancials === true; }
-  getTitle(_input: WizardInput): string    { return 'Financial Projections'; }
-  getSubtitle(_input: WizardInput): string { return '3-year outlook'; }
+  getTitle(input: WizardInput): string    { return financialsTitle(input); }
+  getSubtitle(input: WizardInput): string { return financialsSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {
@@ -74,7 +79,7 @@ export class CaseStudySlideGenerator extends BaseSlideGenerator {
       (!!input.traction && input.traction.toLowerCase().includes('customer'))
     );
   }
-  getTitle(_input: WizardInput): string    { return 'Customer Success Story'; }
+  getTitle(input: WizardInput): string    { return `${input.companyName || 'Customer'} Success Story`; }
   getSubtitle(_input: WizardInput): string { return 'Real results, real impact'; }
 
   generateContent(input: WizardInput): any {
@@ -99,8 +104,8 @@ export class CompanyOverviewSlideGenerator extends BaseSlideGenerator {
   isApplicable(input: WizardInput): boolean {
     return input.documentType === 'company_profile' || input.contentDepth === 'detailed';
   }
-  getTitle(_input: WizardInput): string    { return 'About Us'; }
-  getSubtitle(input: WizardInput): string  { return input.companyName; }
+  getTitle(input: WizardInput): string    { return companyOverviewTitle(input); }
+  getSubtitle(input: WizardInput): string { return companyOverviewSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {

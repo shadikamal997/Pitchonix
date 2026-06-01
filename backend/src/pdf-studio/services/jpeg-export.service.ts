@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BrowserPoolService } from './browser-pool.service';
 import { PreviewService } from './preview.service';
-import * as archiver from 'archiver';
 
 export interface JpegExportOptions {
   quality?: number; // 1-100
@@ -91,7 +90,8 @@ export class JpegExportService {
   /**
    * Create ZIP archive from multiple JPEG buffers
    */
-  createZipArchive(jpegBuffers: Buffer[], filename: string): Promise<Buffer> {
+  async createZipArchive(jpegBuffers: Buffer[], filename: string): Promise<Buffer> {
+    const archiver = await getArchiverFactory();
     return new Promise((resolve, reject) => {
       const archive = archiver('zip', { zlib: { level: 9 } });
       const chunks: Buffer[] = [];
@@ -109,4 +109,10 @@ export class JpegExportService {
       archive.finalize();
     });
   }
+}
+
+async function getArchiverFactory(): Promise<any> {
+  const nativeImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+  const mod: any = await nativeImport('archiver');
+  return mod.default || mod;
 }

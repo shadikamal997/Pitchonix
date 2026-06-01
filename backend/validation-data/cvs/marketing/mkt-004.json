@@ -1,0 +1,50 @@
+{
+  "profile": {
+    "skills": [
+      "Conversion Optimization",
+      "SEO",
+      "Social Media",
+      "SEM",
+      "Brand Management",
+      "Data Analysis",
+      "Copywriting",
+      "Content Strategy",
+      "Google Ads",
+      "Facebook Ads"
+    ],
+    "experience": [
+      {
+        "title": "Junior Marketing Manager",
+        "company": "DataFlow Inc",
+        "duration": "2025-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "Carnegie Mellon",
+        "year": "2021"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Alex Brown",
+      "email": "alex.brown@email.com",
+      "phone": "+1-555-2255",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Alex Brown - Junior Marketing Manager",
+    "content": "Alex Brown\nJunior Marketing Manager\n\nSkills:\nConversion Optimization, SEO, Social Media, SEM, Brand Management, Data Analysis, Copywriting, Content Strategy, Google Ads, Facebook Ads\n\nExperience:\nJunior Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

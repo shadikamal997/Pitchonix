@@ -1,0 +1,34 @@
+{
+  "title": "React Developer",
+  "category": "frontend",
+  "description": "Looking for a passionate React Developer to build cutting-edge user interfaces. You will work on a fast-paced agile team delivering features to millions of users. We are a startup looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "React",
+    "JavaScript",
+    "CSS",
+    "Webpack",
+    "Git"
+  ],
+  "requiredExperience": "3+ years with React",
+  "responsibilities": [
+    "Develop React components",
+    "Implement designs",
+    "Write tests",
+    "Participate in code reviews"
+  ],
+  "qualifications": [
+    "Experience with modern React patterns",
+    "Strong CSS skills",
+    "Knowledge of testing frameworks"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "San Francisco, CA",
+  "employmentType": "Full-time",
+  "remote": "Remote"
+}

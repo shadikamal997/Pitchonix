@@ -25,6 +25,24 @@ import type { SlideListItem } from './sidebar/useDeckSlides';
 //  or modifies that slide.
 // =============================================================================
 
+async function fetchWithConcurrency(ids: string[], concurrency: number): Promise<[string, SlideElementDTO[]][]> {
+  const results: [string, SlideElementDTO[]][] = new Array(ids.length);
+  let next = 0;
+  async function worker() {
+    while (next < ids.length) {
+      const i = next++;
+      try {
+        const { data } = await api.get<SlideElementDTO[]>(`/slides/${ids[i]}/elements`);
+        results[i] = [ids[i], Array.isArray(data) ? data : []];
+      } catch {
+        results[i] = [ids[i], []];
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, ids.length) }, worker));
+  return results;
+}
+
 export interface UseDeckElements {
   /** Map: slideId → elements array. Loaded slides only. */
   byId:    Record<string, SlideElementDTO[]>;
@@ -56,16 +74,7 @@ export function useDeckElements(slides: SlideListItem[]): UseDeckElements {
     setLoading(true);
     for (const id of missing) inflight.current.add(id);
 
-    Promise.all(
-      missing.map(async (id): Promise<[string, SlideElementDTO[]]> => {
-        try {
-          const { data } = await api.get<SlideElementDTO[]>(`/slides/${id}/elements`);
-          return [id, Array.isArray(data) ? data : []];
-        } catch {
-          return [id, []];
-        }
-      }),
-    )
+    fetchWithConcurrency(missing, 3)
       .then((pairs) => {
         if (cancelled) return;
         setById((prev) => {

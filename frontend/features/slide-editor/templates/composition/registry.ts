@@ -17,8 +17,9 @@ import { LIGHT_BLUE_BUSINESS   } from './families/light-blue-business';
 import { CORPORATE_MONOCHROME  } from './families/corporate-monochrome';
 import { SOFT_GEOMETRIC_BLUE   } from './families/soft-geometric-blue';
 import { validateFamily        } from './overlap-validator';
+import { TEMPLATE_TO_SMART_FAMILY } from '../templateFamilyMap';
 
-export const COMPOSITION_FAMILIES: TemplateFamily[] = [
+const BASE_FAMILIES: TemplateFamily[] = [
   INVESTOR_MINIMAL,
   LUXURY_DARK,
   EDITORIAL_REPORT,
@@ -29,58 +30,91 @@ export const COMPOSITION_FAMILIES: TemplateFamily[] = [
   SOFT_GEOMETRIC_BLUE,
 ];
 
+const SMART_FAMILY_TO_BASE: Record<string, TemplateFamily> = {
+  'investor-minimal': INVESTOR_MINIMAL,
+  'luxury-dark': LUXURY_DARK,
+  'editorial-report': EDITORIAL_REPORT,
+  'startup-gradient': STARTUP_GRADIENT,
+  'crimson-dark': CRIMSON_DARK_BUSINESS,
+  'crimson-dark-business': CRIMSON_DARK_BUSINESS,
+  'light-blue-business': LIGHT_BLUE_BUSINESS,
+  'corporate-monochrome': CORPORATE_MONOCHROME,
+  'soft-geometric-blue': SOFT_GEOMETRIC_BLUE,
+  'ocean-deep': CORPORATE_MONOCHROME,
+  'forest-executive': EDITORIAL_REPORT,
+  'ember-orange': STARTUP_GRADIENT,
+  'arctic-white': INVESTOR_MINIMAL,
+  'slate-pro': CORPORATE_MONOCHROME,
+  'emerald-fintech': LIGHT_BLUE_BUSINESS,
+  'midnight-tech': LUXURY_DARK,
+  'rose-modern': SOFT_GEOMETRIC_BLUE,
+  'cobalt-impact': LIGHT_BLUE_BUSINESS,
+  'warm-sand': EDITORIAL_REPORT,
+  'violet-creative': STARTUP_GRADIENT,
+  'teal-health': SOFT_GEOMETRIC_BLUE,
+};
+
+const TEMPLATE_NAMES: Record<string, string> = {
+  'crimson-dark-business': 'Crimson Dark Business',
+  'purple-gradient-startup': 'Purple Gradient Startup',
+  'editorial-business-report': 'Editorial Business Report',
+  'dark-luxury-proposal': 'Dark Luxury Proposal',
+  'ultra-minimal-swiss': 'Ultra Minimal Swiss',
+  'investor-geometric-beige': 'Investor Geometric Beige',
+  'yellow-digital-course': 'Yellow Digital Course',
+  'light-blue-business-marketing': 'Light Blue Business Marketing',
+  'teal-business-plan': 'Teal Business Plan',
+  'monochrome-corporate-strategy': 'Monochrome Corporate Strategy',
+  'fintech-investor-deck': 'Fintech Investor Deck',
+  'startup-pitch-modern': 'Startup Pitch Modern',
+  'product-launch-showcase': 'Product Launch Showcase',
+  'training-course-pro': 'Training Course Pro',
+  'board-meeting-executive': 'Board Meeting Executive',
+  'sales-deck-conversion': 'Sales Deck Conversion',
+  'strategy-roadmap': 'Strategy Roadmap',
+  'agency-campaign-deck': 'Agency Campaign Deck',
+  'healthcare-clean-brief': 'Healthcare Clean Brief',
+  'sustainability-impact-deck': 'Sustainability Impact Deck',
+};
+
+function templateFamily(templateId: string, smartFamilyId: string): TemplateFamily {
+  const base = SMART_FAMILY_TO_BASE[smartFamilyId] || INVESTOR_MINIMAL;
+  return {
+    ...base,
+    id: templateId,
+    name: TEMPLATE_NAMES[templateId] || base.name,
+    category: base.category,
+    theme: { ...base.theme },
+    typography: { ...base.typography },
+    chrome: { ...base.chrome },
+    variants: base.variants.map((variant) => ({
+      ...variant,
+      slots: variant.slots.map((slot) => ({ ...slot, acceptsTypes: [...slot.acceptsTypes] })),
+      chrome: variant.chrome ? { ...variant.chrome } : undefined,
+      typography: variant.typography ? { ...variant.typography } : undefined,
+    })),
+  };
+}
+
+const TEMPLATE_FAMILIES = Object.entries(TEMPLATE_TO_SMART_FAMILY).map(([templateId, familyId]) =>
+  templateFamily(templateId, familyId),
+);
+
+export const COMPOSITION_FAMILIES: TemplateFamily[] = [
+  ...BASE_FAMILIES,
+  ...TEMPLATE_FAMILIES,
+];
+
 // Run overlap validator on each family at module load (dev only).
 if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   for (const f of COMPOSITION_FAMILIES) validateFamily(f);
 }
 
-// Template id → family id mapping. Each template gets the family whose visual
-// identity actually matches it. Templates not listed here render with theme
-// tokens only (no family chrome).
-const TEMPLATE_TO_FAMILY: Record<string, string> = {
-  // Native ids
-  'investor-minimal':              'investor-minimal',
-  'luxury-dark':                   'luxury-dark',
-  'editorial-report':              'editorial-report',
-  'startup-gradient':              'startup-gradient',
-  'crimson-dark-business':         'crimson-dark-business',
-  'corporate-monochrome':          'corporate-monochrome',
-  'soft-geometric-blue':           'soft-geometric-blue',
-
-  // Phase 10 template ids → matching family by visual identity
-  'investor-geometric-beige':      'corporate-monochrome',
-  'monochrome-corporate-strategy': 'investor-minimal',
-  'ultra-minimal-swiss':           'investor-minimal',
-  'strategy-roadmap':              'investor-minimal',
-  'board-meeting-executive':       'corporate-monochrome',
-
-  'dark-luxury-proposal':          'luxury-dark',
-
-  'editorial-business-report':     'editorial-report',
-  'sustainability-impact-deck':    'editorial-report',
-
-  'light-blue-business-marketing': 'soft-geometric-blue',
-  'teal-business-plan':            'soft-geometric-blue',
-  'healthcare-clean-brief':        'soft-geometric-blue',
-
-  'purple-gradient-startup':       'startup-gradient',
-  'startup-pitch-modern':          'startup-gradient',
-  'product-launch-showcase':       'startup-gradient',
-  'agency-campaign-deck':          'startup-gradient',
-
-  'fintech-investor-deck':         'crimson-dark-business',
-  'yellow-digital-course':         'startup-gradient',
-  'training-course-pro':           'editorial-report',
-  'sales-deck-conversion':         'crimson-dark-business',
-};
-
 export function findCompositionFamily(templateId: string | null | undefined): TemplateFamily | null {
   if (!templateId) return null;
   const direct = COMPOSITION_FAMILIES.find((f) => f.id === templateId);
   if (direct) return direct;
-  const aliasId = TEMPLATE_TO_FAMILY[templateId];
-  if (!aliasId) return null;
-  return COMPOSITION_FAMILIES.find((f) => f.id === aliasId) || null;
+  return SMART_FAMILY_TO_BASE[templateId] || null;
 }
 
 /** Returns a debug snapshot of which family + variant would be used. */

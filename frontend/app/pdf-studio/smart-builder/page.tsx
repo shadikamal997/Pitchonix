@@ -160,6 +160,7 @@ export default function SmartBuilderPage() {
           ...config,
           title: title || analysis?.suggestedTitle || 'Untitled Document',
           templateType: selectedTemplate,
+          brandKitId: brandKitId || undefined,
           improveWriting: false,
           fixGrammar: false,
           addStructure: true,

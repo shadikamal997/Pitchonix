@@ -100,15 +100,29 @@ export interface BatchJob {
   error?:    string;
 }
 
+const BATCH_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 @Injectable()
 export class UniversalConversionService {
   private readonly logger = new Logger(UniversalConversionService.name);
-  private batches = new Map<string, BatchJob>();
+  private batches = new Map<string, BatchJob & { completedAt?: number }>();
 
   constructor(
     private readonly pptxImport: PptxImportService,
     private readonly prisma:     PrismaService,
-  ) {}
+  ) {
+    // Purge completed jobs older than 24h every hour to prevent memory leak.
+    setInterval(() => this.purgeStaleBatches(), 60 * 60 * 1000).unref();
+  }
+
+  private purgeStaleBatches(): void {
+    const cutoff = Date.now() - BATCH_TTL_MS;
+    for (const [id, job] of this.batches) {
+      if ((job.status === 'complete' || job.status === 'failed') && (job.completedAt ?? 0) < cutoff) {
+        this.batches.delete(id);
+      }
+    }
+  }
 
   // =========================================================================
   //  Phase Ω.1 — applyBrandKit
@@ -192,7 +206,7 @@ export class UniversalConversionService {
   // ---------------------------------------------------------------------------
 
   startBatch(items: ConvertInput[]): BatchJob {
-    const id  = `batch-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const id = `batch-${require('crypto').randomUUID()}`;
     const job: BatchJob = {
       id, total: items.length, done: 0, status: 'queued',
       startedAt: new Date().toISOString(), results: [],
@@ -200,7 +214,8 @@ export class UniversalConversionService {
     this.batches.set(id, job);
     // Fire-and-forget worker.
     this.runBatch(job, items).catch((e) => {
-      job.status = 'failed'; job.error = e?.message || String(e);
+      this.logger.error(`Batch job ${id} failed: ${e?.message}`, e?.stack);
+      job.status = 'failed'; job.error = e?.message || String(e); (job as any).completedAt = Date.now();
     });
     return job;
   }
@@ -234,6 +249,7 @@ export class UniversalConversionService {
       }
     }
     job.status = 'complete';
+    (job as any).completedAt = Date.now();
   }
 
   // ---------------------------------------------------------------------------

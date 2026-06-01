@@ -1,5 +1,11 @@
 import { SlideType, WizardInput } from './types';
 import { BaseSlideGenerator } from './base-slide.generator';
+import {
+  businessModelTitle, businessModelSubtitle,
+  tractionTitle, tractionSubtitle,
+  teamTitle, teamSubtitle,
+  askTitle, askSubtitle,
+} from './narrative-titles';
 
 // =============================================================================
 //  Core Slide Generators — Phase 32.75 Tier 9 cleanup
@@ -40,8 +46,8 @@ export class BusinessModelSlideGenerator extends BaseSlideGenerator {
     return !!(input.revenueModel || input.pricing) ||
            (input.structured?.pricingTiers?.length ?? 0) > 0;
   }
-  getTitle(_input: WizardInput): string    { return 'Business Model'; }
-  getSubtitle(_input: WizardInput): string { return 'How we make money'; }
+  getTitle(input: WizardInput): string    { return businessModelTitle(input); }
+  getSubtitle(input: WizardInput): string { return businessModelSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return { description: input.revenueModel || 'Revenue model' };
@@ -64,8 +70,8 @@ export class TractionSlideGenerator extends BaseSlideGenerator {
     return (!!input.traction && input.traction.trim().length > 0) ||
            (input.structured?.kpis?.length ?? 0) > 0;
   }
-  getTitle(_input: WizardInput): string    { return 'Traction & Metrics'; }
-  getSubtitle(_input: WizardInput): string { return 'Our progress so far'; }
+  getTitle(input: WizardInput): string    { return tractionTitle(input); }
+  getSubtitle(input: WizardInput): string { return tractionSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return { description: input.traction || '' };
@@ -87,8 +93,8 @@ export class TeamSlideGenerator extends BaseSlideGenerator {
     return (!!input.team && input.team.trim().length > 0) ||
            (input.structured?.teamMembers?.length ?? 0) > 0;
   }
-  getTitle(_input: WizardInput): string    { return 'The Team'; }
-  getSubtitle(_input: WizardInput): string { return 'Who we are'; }
+  getTitle(input: WizardInput): string    { return teamTitle(input); }
+  getSubtitle(input: WizardInput): string { return teamSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return { description: input.team || '' };
@@ -113,8 +119,8 @@ export class AskSlideGenerator extends BaseSlideGenerator {
            !!input.structured?.funding?.amount ||
            (input.structured?.funding?.allocations?.length ?? 0) > 0;
   }
-  getTitle(input: WizardInput): string    { return input.fundingAsk ? 'The Ask' : 'Next Steps'; }
-  getSubtitle(input: WizardInput): string { return input.desiredAction || 'Join us on this journey'; }
+  getTitle(input: WizardInput): string    { return askTitle(input); }
+  getSubtitle(input: WizardInput): string { return askSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {

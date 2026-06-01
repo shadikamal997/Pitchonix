@@ -1,0 +1,47 @@
+{
+  "profile": {
+    "skills": [
+      "User Research",
+      "Adobe XD",
+      "UI Design",
+      "Interaction Design",
+      "Sketch",
+      "Usability Testing",
+      "Illustrator",
+      "UX Design",
+      "Visual Design",
+      "Prototyping"
+    ],
+    "experience": [
+      {
+        "title": "Junior Product Designer",
+        "company": "Quantum Labs",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "MIT",
+        "year": "2020"
+      }
+    ],
+    "contact": {
+      "name": "Jordan Miller",
+      "email": "jordan.miller@email.com",
+      "phone": "+1-555-3267",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/jordan-miller"
+    }
+  },
+  "document": {
+    "title": "Jordan Miller - Junior Product Designer",
+    "content": "Jordan Miller\nJunior Product Designer\n\nSkills:\nUser Research, Adobe XD, UI Design, Interaction Design, Sketch, Usability Testing, Illustrator, UX Design, Visual Design, Prototyping\n\nExperience:\nJunior Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

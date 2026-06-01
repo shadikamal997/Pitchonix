@@ -1,0 +1,33 @@
+{
+  "title": "Senior Frontend Engineer",
+  "category": "frontend",
+  "description": "Join our team as a Frontend Engineer to create beautiful, performant web experiences. You will work with React, TypeScript, and modern tooling. We are a enterprise looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "React",
+    "TypeScript",
+    "Next.js",
+    "Tailwind CSS",
+    "GraphQL"
+  ],
+  "requiredExperience": "4+ years frontend development",
+  "responsibilities": [
+    "Build features",
+    "Optimize performance",
+    "Collaborate cross-functionally"
+  ],
+  "qualifications": [
+    "Strong TypeScript skills",
+    "Experience with Next.js",
+    "Good design sense"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "Austin, TX",
+  "employmentType": "Full-time",
+  "remote": "Remote"
+}

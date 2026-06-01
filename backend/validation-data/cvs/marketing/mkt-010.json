@@ -1,0 +1,61 @@
+{
+  "profile": {
+    "skills": [
+      "A/B Testing",
+      "Copywriting",
+      "Social Media",
+      "Data Analysis",
+      "Facebook Ads",
+      "Google Analytics",
+      "Conversion Optimization",
+      "Email Marketing",
+      "Content Strategy",
+      "SEM"
+    ],
+    "experience": [
+      {
+        "title": "Marketing Manager",
+        "company": "Digital Solutions",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "Apex Digital",
+        "duration": "2021-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "MIT",
+        "year": "2017"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Morgan Miller",
+      "email": "morgan.miller@email.com",
+      "phone": "+1-555-8404",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Morgan Miller - Mid Marketing Manager",
+    "content": "Morgan Miller\nMid Marketing Manager\n\nSkills:\nA/B Testing, Copywriting, Social Media, Data Analysis, Facebook Ads, Google Analytics, Conversion Optimization, Email Marketing, Content Strategy, SEM\n\nExperience:\nMid Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

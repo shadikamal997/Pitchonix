@@ -1,5 +1,6 @@
 import { SlideType, SlideContent, WizardInput, ISlideGenerator } from './types';
 import { generationAdapter } from '../smart-adapter';
+import { designInvestorSlide } from '../presentation-designer';
 
 /**
  * Base abstract class for all slide generators
@@ -48,7 +49,8 @@ export abstract class BaseSlideGenerator implements ISlideGenerator {
     if (this.usesSmartComponent()) {
       const req = generationAdapter.requestFor(this.type, input);
       if (req) {
-        out.smartComponent = { family: req.family, type: req.type, elementTree: req.elementTree };
+        const designedTree = designInvestorSlide(input, out, req.family) || req.elementTree;
+        out.smartComponent = { family: req.family, type: req.type, elementTree: designedTree };
       }
     }
     return out;

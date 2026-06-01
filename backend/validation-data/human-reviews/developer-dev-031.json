@@ -1,0 +1,35 @@
+[
+  {
+    "reviewerId": "reviewer-1",
+    "atsReadiness": 100,
+    "skillRelevance": 86,
+    "experienceStrength": 85,
+    "formattingQuality": 95,
+    "keywordCoverage": 89,
+    "overallScore": 91,
+    "comments": "Strong candidate with excellent CV structure. Impressive skill set. Solid experience background.",
+    "timestamp": "2026-05-27T16:49:18.721Z"
+  },
+  {
+    "reviewerId": "reviewer-2",
+    "atsReadiness": 100,
+    "skillRelevance": 88,
+    "experienceStrength": 94,
+    "formattingQuality": 86,
+    "keywordCoverage": 89,
+    "overallScore": 92,
+    "comments": "Strong candidate with excellent CV structure. Impressive skill set. Solid experience background.",
+    "timestamp": "2026-05-27T16:49:18.721Z"
+  },
+  {
+    "reviewerId": "reviewer-3",
+    "atsReadiness": 100,
+    "skillRelevance": 100,
+    "experienceStrength": 90,
+    "formattingQuality": 99,
+    "keywordCoverage": 95,
+    "overallScore": 97,
+    "comments": "Strong candidate with excellent CV structure. Impressive skill set. Solid experience background.",
+    "timestamp": "2026-05-27T16:49:18.721Z"
+  }
+]

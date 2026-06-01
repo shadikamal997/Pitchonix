@@ -1,0 +1,72 @@
+{
+  "profile": {
+    "skills": [
+      "Brand Management",
+      "Google Analytics",
+      "SEO",
+      "Facebook Ads",
+      "Email Marketing",
+      "SEM",
+      "Data Analysis",
+      "Social Media",
+      "Copywriting",
+      "A/B Testing"
+    ],
+    "experience": [
+      {
+        "title": "Senior Marketing Manager",
+        "company": "DataFlow Inc",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "NexGen Tech",
+        "duration": "2020-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "Quantum Labs",
+        "duration": "2018-2020",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "UC Berkeley",
+        "year": "2014"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Taylor Davis",
+      "email": "taylor.davis@email.com",
+      "phone": "+1-555-5651",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Taylor Davis - Senior Marketing Manager",
+    "content": "Taylor Davis\nSenior Marketing Manager\n\nSkills:\nBrand Management, Google Analytics, SEO, Facebook Ads, Email Marketing, SEM, Data Analysis, Social Media, Copywriting, A/B Testing\n\nExperience:\nSenior Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

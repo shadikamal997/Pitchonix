@@ -299,7 +299,7 @@ export default function DashboardPage() {
 
   // Calculate stats
   const totalProjects = projects.length;
-  const totalDecks = projects.reduce((sum, p) => sum + p.decks.length, 0);
+  const totalDecks = projects.reduce((sum, p) => sum + (p.decks?.length ?? 0), 0);
   
   // Calculate average quality score - only for projects that have scores
   const projectsWithScores = projects.filter(p => p.qualityScore !== null && p.qualityScore !== undefined);
@@ -767,7 +767,7 @@ export default function DashboardPage() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Layers className="h-3 w-3" />
-                            {project.decks.length}
+                            {project.decks?.length ?? 0}
                           </span>
                         </div>
                       </div>
@@ -779,8 +779,8 @@ export default function DashboardPage() {
                             View
                           </Button>
                         </Link>
-                        {project.decks.length > 0 && (
-                          <Link href={`/editor/${project.decks[0].id}`} className="flex-1">
+                        {(project.decks?.length ?? 0) > 0 && (
+                          <Link href={`/editor/${project.decks?.[0]?.id}`} className="flex-1">
                             <Button size="sm" className="w-full">
                               <Edit className="h-4 w-4 mr-2" />
                               Edit

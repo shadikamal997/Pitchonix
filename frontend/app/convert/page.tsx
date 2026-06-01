@@ -136,7 +136,7 @@ export default function ConvertPage() {
                 Convert anything to anything — with a fidelity score.
               </h2>
               <p className="text-[#DDE8E1] text-sm leading-relaxed max-w-md">
-                PPTX, PDF, DOCX, HTML, Markdown, RTF, plain text, spreadsheets. Apply a Brand Kit, preview the quality report, then download in one click.
+                Convert PPTX, PDF, DOCX, HTML, Markdown, RTF, plain text and more into any of 7 output formats. Apply a Brand Kit, preview the fidelity report, then download in one click.
               </p>
               <div className="flex flex-col sm:flex-row gap-2 pt-1">
                 <button
@@ -452,14 +452,23 @@ const BatchPanel: React.FC<{
   const [busy,   setBusy]   = useState(false);
   const [err,    setErr]    = useState<string | null>(null);
 
-  // Poll job status while running.
+  // Poll job status while running. Stop after 5 consecutive network failures.
   React.useEffect(() => {
     if (!job?.id || job.status === 'complete' || job.status === 'failed') return;
+    let consecutiveFails = 0;
     const t = setInterval(async () => {
       try {
         const { data } = await api.get(`/convert/status/${job.id}`);
         setJob(data);
-      } catch { /* ignore */ }
+        consecutiveFails = 0;
+      } catch (e: any) {
+        consecutiveFails++;
+        if (consecutiveFails >= 5) {
+          clearInterval(t);
+          setErr(`Batch job lost after ${consecutiveFails} failed status checks — the server may have restarted. Please retry.`);
+          setJob((prev: any) => prev ? { ...prev, status: 'failed' } : prev);
+        }
+      }
     }, 1500);
     return () => clearInterval(t);
   }, [job?.id, job?.status]);

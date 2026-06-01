@@ -62,10 +62,19 @@ export class DocumentScorecardService {
       Math.round(frameworkReport.completeness * 0.6 + (100 - Math.min(100, totalWarnings * 12)) * 0.4),
     );
 
-    // Visual readiness — Phase 27 if available, else executive visual balance.
-    const visualReadiness = structureScore !== undefined
-      ? Math.round(structureScore)
-      : executiveReport.visualBalance;
+    const smartVisualCoverage = slides.length
+      ? Math.round((slides.filter((s: any) => {
+          const sc = s.smartComponent || s.content?.smartComponent;
+          return sc?.elementTree?.length > 0;
+        }).length / slides.length) * 100)
+      : 0;
+
+    // Visual readiness — Phase 27 if available, smart component coverage if the
+    // deck has already been composed, else executive visual balance.
+    const visualReadiness = Math.max(
+      structureScore !== undefined ? Math.round(structureScore) : executiveReport.visualBalance,
+      smartVisualCoverage,
+    );
 
     // Narrative readiness — blend executive narrative + framework arc.
     const narrativeReadiness = Math.round(

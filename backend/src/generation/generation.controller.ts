@@ -1,4 +1,5 @@
 import { Controller, Post, Body, UseGuards, Get, Param, NotFoundException } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
@@ -301,7 +302,18 @@ export class GenerationController {
     }
 
     if (!deck.qualityScore || !deck.validationResult) {
-      throw new NotFoundException(`Quality report not available for deck ${deckId}`);
+      // Deck exists but hasn't been quality-scored yet — return a "pending" stub
+      // so callers get 200 instead of 404 and can show a "not yet analyzed" state.
+      return {
+        deckId: deck.id,
+        overall: null,
+        grade: null,
+        dimensions: { content: null, visual: null, aiEnhancement: null, exportReadiness: null },
+        validation: { isValid: null, errorCount: 0, warningCount: 0, infoCount: 0, totalIssues: 0 },
+        recommendations: [],
+        exportReady: deck.exportReady ?? false,
+        lastQualityCheck: null,
+      } as any;
     }
 
     const qualityScore = deck.qualityScore as any;
@@ -467,6 +479,7 @@ export class GenerationController {
   }
 
   @Post('template-switch/:projectId')
+  @SkipThrottle({ short: true, medium: true, long: true })
   @ApiOperation({ summary: 'Switch template and rebuild (TEMPLATE_SWITCH command)' })
   async templateSwitch(
     @Param('projectId') projectId: string,
@@ -836,16 +849,38 @@ export class GenerationController {
       throw new NotFoundException('Deck not found');
     }
     
-    // Convert slides to VisualSlideContent format
-    const visualSlides = deck.slides.map((slide: any, index: number) => ({
-      type: slide.type,
-      order: index,
-      title: slide.title,
-      subtitle: slide.subtitle || '',
-      content: slide.content,
-      layout: slide.layoutKey || 'title-content',
-      theme: slide.themeKey || 'modern',
-    }));
+    // Convert slides to VisualSlideContent format.
+    // Build a ThemeConfig object from the persisted themeTokens so that
+    // scoring/validation services can access theme.colors.primary without crashing.
+    const visualSlides = deck.slides.map((slide: any, index: number) => {
+      const tt = (slide.themeTokens as any) || {};
+      return {
+        type:     slide.type,
+        order:    index,
+        title:    slide.title,
+        subtitle: slide.subtitle || '',
+        content:  slide.content,
+        layout: {
+          type:    slide.layoutKey || 'title-content',
+          regions: [],
+        },
+        theme: {
+          name:        slide.themeKey || 'default',
+          displayName: slide.themeKey || 'Default',
+          colors: {
+            primary:       tt.accent       || '#4F7563',
+            secondary:     tt.accent2      || '#355846',
+            accent:        tt.accent       || '#4F7563',
+            background:    tt.background   || '#ffffff',
+            text:          tt.text         || '#111111',
+            textSecondary: tt.muted        || '#9A9A9A',
+          },
+          fonts:    { heading: tt.fontHeading || 'Inter', body: tt.fontBody || 'Inter' },
+          fontSize: { h1: 36, h2: 28, h3: 22, body: 14, small: 11 },
+          spacing:  { small: 8, medium: 16, large: 32 },
+        },
+      };
+    });
     
     // Run quality check
     const qualityScore = await this.qualityControlService.quickQualityCheck(
@@ -859,10 +894,23 @@ export class GenerationController {
       deck.project.businessInfo as any,
     );
     
+    // Persist results onto the deck so checkExportReady / getQualityReport
+    // can read them without requiring a full pipeline re-run.
+    const exportReady = validation.isValid && qualityScore.overall >= 60 && deck.slides.length > 0;
+    await this.prisma.deck.update({
+      where: { id: deckId },
+      data: {
+        qualityScore:    qualityScore as any,
+        validationResult: validation  as any,
+        exportReady,
+        lastQualityCheck: new Date(),
+      },
+    });
+
     // Record in history
     const { QualityHistoryService } = await import('../export/services');
     const historyService = new QualityHistoryService(this.prisma);
-    
+
     await historyService.recordQualityCheck({
       deckId,
       qualityMetrics: {

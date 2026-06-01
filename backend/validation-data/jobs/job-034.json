@@ -1,0 +1,34 @@
+{
+  "title": "Mid-Level API Developer",
+  "category": "backend",
+  "description": "Looking for an API Developer to design and implement RESTful and GraphQL APIs. We are a mid-size company looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "REST APIs",
+    "GraphQL",
+    "Node.js",
+    "PostgreSQL",
+    "API Design"
+  ],
+  "requiredExperience": "2+ years API development",
+  "responsibilities": [
+    "Design API architecture",
+    "Implement endpoints",
+    "Write documentation",
+    "Ensure security"
+  ],
+  "qualifications": [
+    "API design experience",
+    "Strong documentation skills",
+    "Security awareness"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "New York, NY",
+  "employmentType": "Full-time",
+  "remote": "Hybrid"
+}

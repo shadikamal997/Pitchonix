@@ -2,10 +2,8 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
-// `archiver` is the existing zip writer used elsewhere in the codebase.
-// adm-zip handles the read side without needing streaming.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const archiverFactory: any = require('archiver');
+// `archiver` is ESM-only in v8; load it lazily so Jest/Nest CJS transforms
+// can import this service without parsing the package at module-load time.
 import AdmZip = require('adm-zip');
 import { BrandKitsService, BrandKitExportV1 } from './brand-kits.service';
 
@@ -56,6 +54,7 @@ export class BrandKitZipService {
 
   async exportZip(brandKitId: string, userId: string): Promise<Buffer> {
     const json = await this.kits.exportKit(brandKitId, userId);
+    const archiverFactory = await getArchiverFactory();
     const archive = archiverFactory('zip', { zlib: { level: 9 } });
     const chunks: Buffer[] = [];
     archive.on('data', (c: Buffer) => chunks.push(c));
@@ -170,6 +169,12 @@ export class BrandKitZipService {
     }
     return `${PUBLIC_PREFIX}/${safe}`;
   }
+}
+
+async function getArchiverFactory(): Promise<any> {
+  const nativeImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+  const mod: any = await nativeImport('archiver');
+  return mod.default || mod;
 }
 
 // =============================================================================

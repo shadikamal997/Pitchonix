@@ -4,6 +4,7 @@ import {
   CvDoctype, CvDocumentDto, CvDocumentContent,
   DEFAULT_CV_SECTION_ORDER, DEFAULT_RESUME_SECTION_ORDER,
 } from './cv-types';
+import { rebuildCvContentFromProfile, sanitizeCvDocumentContent } from './cv-document-sanitizer';
 
 // =============================================================================
 //  Phase 42B-E + 42H-I — CvDocumentsService.
@@ -37,8 +38,10 @@ export class CvDocumentsService {
     }).then((rows) => rows.map(toDto));
   }
 
-  async findOne(id: string): Promise<CvDocumentDto> {
-    const row = await this.prisma.cvDocument.findUnique({ where: { id } });
+  async findOne(id: string, userId?: string): Promise<CvDocumentDto> {
+    const row = userId
+      ? await this.prisma.cvDocument.findFirst({ where: { id, userId } })
+      : await this.prisma.cvDocument.findUnique({ where: { id } });
     if (!row) throw new NotFoundException('CvDocument not found');
     return toDto(row);
   }
@@ -73,8 +76,8 @@ export class CvDocumentsService {
     return toDto(row);
   }
 
-  async update(id: string, patch: Partial<Pick<CvDocumentDto, 'title'|'templateId'|'brandKitId'|'variant'|'content'|'thumbnailUrl'|'lastExportUrl'>>): Promise<CvDocumentDto> {
-    await this.findOne(id);
+  async update(id: string, patch: Partial<Pick<CvDocumentDto, 'title'|'templateId'|'brandKitId'|'variant'|'content'|'thumbnailUrl'|'lastExportUrl'>>, userId?: string): Promise<CvDocumentDto> {
+    await this.findOne(id, userId);
     const row = await this.prisma.cvDocument.update({
       where: { id },
       data:  patch as any,
@@ -82,13 +85,31 @@ export class CvDocumentsService {
     return toDto(row);
   }
 
-  /** Phase 42G — swap template without losing content. */
-  async switchTemplate(id: string, templateId: string | null): Promise<CvDocumentDto> {
-    return this.update(id, { templateId });
+  async repairContent(id: string, userId?: string): Promise<{ document: CvDocumentDto; report: any }> {
+    const doc = await this.findOne(id, userId);
+    if (doc.doctype !== 'cv' && doc.doctype !== 'resume') {
+      return { document: doc, report: { anyChange: false, issues: [] } };
+    }
+    const { content, report } = sanitizeCvDocumentContent(doc.content, doc.doctype);
+    const document = report.anyChange
+      ? await this.update(id, { content }, userId)
+      : doc;
+    return { document, report };
   }
 
-  async duplicate(id: string, newTitle?: string, newVariant?: string): Promise<CvDocumentDto> {
-    const src = await this.findOne(id);
+  async rebuildFromProfile(id: string, userId?: string): Promise<CvDocumentDto> {
+    const doc = await this.findOne(id, userId);
+    if (doc.doctype !== 'cv' && doc.doctype !== 'resume') return doc;
+    return this.update(id, { content: rebuildCvContentFromProfile(doc.doctype) as any }, userId);
+  }
+
+  /** Phase 42G — swap template without losing content. */
+  async switchTemplate(id: string, templateId: string | null, userId?: string): Promise<CvDocumentDto> {
+    return this.update(id, { templateId }, userId);
+  }
+
+  async duplicate(id: string, newTitle?: string, newVariant?: string, userId?: string): Promise<CvDocumentDto> {
+    const src = await this.findOne(id, userId);
     const row = await this.prisma.cvDocument.create({
       data: {
         userId:     src.userId,
@@ -104,8 +125,8 @@ export class CvDocumentsService {
     return toDto(row);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string, userId?: string): Promise<void> {
+    await this.findOne(id, userId);
     await this.prisma.cvDocument.delete({ where: { id } });
   }
 }

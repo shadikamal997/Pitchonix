@@ -1,6 +1,7 @@
 import {
   Controller, Get, Post, Patch, Body, Param, UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ReviewsService, CreateReviewRequestInput } from './reviews.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -22,6 +23,7 @@ import { RequireRole } from '../workspaces/role.guard';
 
 @ApiTags('Reviews')
 @UseGuards(JwtAuthGuard)
+@SkipThrottle({ short: true, medium: true, long: true })
 @ApiBearerAuth()
 @Controller()
 export class ReviewsController {

@@ -352,9 +352,10 @@ export class ScoringService {
 
     // Check if all slides use the same theme
     const firstTheme = slides[0].theme;
-    const allSameTheme = slides.every(s => 
-      s.theme.name === firstTheme.name &&
-      s.theme.colors.primary === firstTheme.colors.primary
+    if (!firstTheme?.colors?.primary) return 85;
+    const allSameTheme = slides.every(s =>
+      s.theme?.name === firstTheme?.name &&
+      (s.theme?.colors?.primary || null) === firstTheme.colors.primary
     );
 
     return allSameTheme ? 100 : 70;

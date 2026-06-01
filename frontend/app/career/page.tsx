@@ -9,13 +9,14 @@ import {
   Download, Upload, ExternalLink, Loader2,
   CheckCircle2, AlertTriangle, XCircle, Eye, X,
   TrendingUp, Award, BarChart3, Target, Compass, ArrowUpRight,
-  History, BookOpenCheck, Wand2, Gauge, ArrowRight, Inbox,
+  History, BookOpenCheck, Wand2, Gauge, ArrowRight, Inbox, Shield,
 } from 'lucide-react';
 import {
   useCvProfile, useCvDocuments, useCvTemplates, CvDoctype,
   CvDocumentDto, CvProfileDto,
 } from '@/features/career/hooks';
 import { useConfirm } from '@/components/ConfirmDialog';
+import { FeedbackWidget } from '@/features/career/FeedbackWidget';
 
 // =============================================================================
 //  Phase 43.0 — Career Docs Dashboard.
@@ -59,9 +60,13 @@ const DOCTYPE_GROUPS: { key: DoctypeKey; label: string; icon: React.ComponentTyp
 // =============================================================================
 export default function CareerWorkspacePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#EDEBE6]" />}>
-      <CareerWorkspaceBody />
-    </Suspense>
+    <>
+      <Suspense fallback={<div className="min-h-screen bg-[#EDEBE6]" />}>
+        <CareerWorkspaceBody />
+      </Suspense>
+      {/* Phase Ω.4 — beta feedback widget, visible on all career pages */}
+      <FeedbackWidget context={{ page: 'career-dashboard' }} />
+    </>
   );
 }
 
@@ -297,6 +302,47 @@ function CareerWorkspaceBody() {
               <div className="text-[13px] font-semibold text-[#111111]">Analyze CV</div>
               <div className="text-[11px] text-[#9A9A9A] mt-0.5 leading-snug">AI improvements + ATS</div>
             </Link>
+          </div>
+        </section>
+
+        {/* --- ATS OPTIMIZATION PROMO BANNER (Phase Ω.2) -------------- */}
+        <section className="pn-card overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">NEW</div>
+                <span className="text-sm font-medium opacity-90">Phase Ω.2</span>
+              </div>
+              <h2 className="text-2xl font-bold mb-2">ATS Optimization & Job Matching</h2>
+              <p className="text-white/90 mb-4 max-w-2xl">
+                Get your CV past applicant tracking systems. See keyword matches, missing skills, 
+                formatting risks, and get one-click fixes. Match your CV against job descriptions 
+                and see exactly what's missing.
+              </p>
+              <div className="flex gap-3">
+                <Link
+                  href="/career/ats"
+                  className="px-6 py-3 bg-white text-emerald-600 rounded-lg font-semibold hover:bg-white/90 transition-colors inline-flex items-center gap-2"
+                >
+                  <Target className="w-5 h-5" />
+                  Analyze ATS Compatibility
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <button className="px-6 py-3 bg-white/20 text-white rounded-lg font-semibold hover:bg-white/30 transition-colors">
+                  Learn More
+                </button>
+              </div>
+            </div>
+            <div className="hidden lg:flex items-center justify-center">
+              <div className="relative w-48 h-48">
+                <div className="absolute inset-0 bg-white/10 rounded-full flex items-center justify-center">
+                  <Target className="w-24 h-24 text-white/50" />
+                </div>
+                <div className="absolute top-4 right-4 w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -695,14 +741,36 @@ const RecentDocumentsCard: React.FC<{
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
-                  <button
-                    onClick={async () => { setBusy(d.id); try { await onExport(d.id, 'pdf', `${d.title}.pdf`); } finally { setBusy(null); } }}
-                    disabled={busy === d.id}
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[#6B6B6B] hover:bg-[#F1F0EC] hover:text-[#111111]"
-                    title="Export PDF"
-                  >
-                    {busy === d.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                  </button>
+                  <div className="relative inline-flex items-center">
+                    <button
+                      onClick={async () => { setBusy(d.id); try { await onExport(d.id, 'pdf', `${d.title}.pdf`); } finally { setBusy(null); } }}
+                      disabled={busy === d.id}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-l-full text-[#6B6B6B] hover:bg-[#F1F0EC] hover:text-[#111111]"
+                      title="Export PDF"
+                    >
+                      {busy === d.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                    </button>
+                    <select
+                      disabled={busy === d.id}
+                      onChange={async (e) => {
+                        const fmt = e.target.value as 'pdf' | 'docx' | 'html' | 'pptx' | 'md';
+                        e.target.value = '';
+                        if (!fmt) return;
+                        setBusy(d.id);
+                        try { await onExport(d.id, fmt, `${d.title}.${fmt === 'md' ? 'md' : fmt}`); } finally { setBusy(null); }
+                      }}
+                      value=""
+                      title="Export format"
+                      className="h-8 w-5 rounded-r-full text-[#6B6B6B] hover:bg-[#F1F0EC] bg-transparent border-none outline-none cursor-pointer text-[10px] appearance-none pl-0.5"
+                    >
+                      <option value="" disabled> </option>
+                      <option value="pdf">PDF</option>
+                      <option value="docx">DOCX</option>
+                      <option value="html">HTML</option>
+                      <option value="pptx">PPTX</option>
+                      <option value="md">MD</option>
+                    </select>
+                  </div>
                   <button
                     onClick={() => onDuplicate(d.id)}
                     className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[#6B6B6B] hover:bg-[#F1F0EC] hover:text-[#111111]"
@@ -861,7 +929,9 @@ interface ImportResult {
 }
 
 const ImportPanel: React.FC<{ profile: ReturnType<typeof useCvProfile> }> = ({ profile }) => {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [openingEditor, setOpeningEditor] = useState(false);
   const [linkedinOpen, setLinkedinOpen] = useState(false);
   const [lastImport, setLastImport] = useState<ImportResult | null>(null);
   const [lastFile, setLastFile] = useState<File | null>(null);
@@ -919,6 +989,24 @@ const ImportPanel: React.FC<{ profile: ReturnType<typeof useCvProfile> }> = ({ p
     await runImport(file);
   };
 
+  const openImportedCvInEditor = async () => {
+    if (!lastImport || lastImport.failedMessage) return;
+    setOpeningEditor(true);
+    try {
+      const baseName = lastImport.filename.replace(/\.[^.]+$/, '').trim();
+      const title = baseName ? `${baseName} CV` : 'Imported CV';
+      const { data } = await api.post('/career/documents', { doctype: 'cv', title });
+      router.push(`/career/builder/${data.id}`);
+    } catch (e: any) {
+      const message = e?.response?.data?.message || e?.message || 'Could not open editor';
+      setLastImport((current) => current
+        ? { ...current, warnings: [...(current.warnings || []), message] }
+        : current);
+    } finally {
+      setOpeningEditor(false);
+    }
+  };
+
   return (
     <div className="pn-card p-6">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -974,6 +1062,8 @@ const ImportPanel: React.FC<{ profile: ReturnType<typeof useCvProfile> }> = ({ p
           onDismiss={() => setLastImport(null)}
           onRetryOcr={lastFile ? () => runImport(lastFile, { forceOcr: true }) : undefined}
           onApplyMappings={lastFile ? (m) => runImport(lastFile, { sectionMappings: m }) : undefined}
+          onOpenEditor={openImportedCvInEditor}
+          openingEditor={openingEditor}
           busy={busy}
         />
       )}
@@ -1137,8 +1227,10 @@ const ImportResultCard: React.FC<{
   onDismiss:       () => void;
   onRetryOcr?:     () => void;
   onApplyMappings?: (mappings: Record<string, string>) => void;
+  onOpenEditor?:   () => void;
+  openingEditor?:  boolean;
   busy?:           boolean;
-}> = ({ result, onDismiss, onRetryOcr, onApplyMappings, busy }) => {
+}> = ({ result, onDismiss, onRetryOcr, onApplyMappings, onOpenEditor, openingEditor, busy }) => {
   const total = Object.values(result.counts).reduce((s, n) => s + n, 0);
   const sparse = !result.failedMessage && total <= 0;
   const failed = !!result.failedMessage;
@@ -1239,6 +1331,23 @@ const ImportResultCard: React.FC<{
             <ul className="mt-2 space-y-0.5 text-[11px] list-disc ml-4">
               {result.warnings.map((w, i) => <li key={i}>{w}</li>)}
             </ul>
+          )}
+
+          {!failed && onOpenEditor && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={onOpenEditor}
+                disabled={busy || openingEditor}
+                className="inline-flex items-center gap-1.5 h-9 px-4 text-[12px] font-semibold bg-[#111114] hover:bg-black text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {openingEditor ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                Create CV & Open Editor
+              </button>
+              <span className="text-[11px] opacity-75">
+                Uses this imported profile as the editor source.
+              </span>
+            </div>
           )}
 
           {showRecovery && !failed && (

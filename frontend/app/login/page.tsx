@@ -45,7 +45,9 @@ export default function LoginPage() {
       login(user, token);
       router.push(user.onboardingCompleted ? '/dashboard' : '/onboarding');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong');
+      // err is an AppError (no .response). Use .message which contains the
+      // backend's original error text (e.g. "Invalid credentials").
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }

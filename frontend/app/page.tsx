@@ -102,8 +102,8 @@ export default function HomePage() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="text-center group cursor-default"
             >
-              <div className="text-5xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">AI</div>
-              <div className="text-slate-600 font-medium">Smart PDF Builder</div>
+              <div className="text-5xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">3</div>
+              <div className="text-slate-600 font-medium">Product Suites</div>
             </motion.div>
           </div>
         </div>
@@ -181,24 +181,24 @@ export default function HomePage() {
                   {
                     number: '01',
                     icon: FileText,
-                    title: 'Paste Your Content',
-                    description: 'Paste raw notes, ideas, or documents into Pitchonix.',
+                    title: 'Choose Your Document',
+                    description: 'Select from CVs, Resumes, Presentations, or PDF documents.',
                     color: 'blue',
                     gradient: 'from-blue-500 to-cyan-600',
                   },
                   {
                     number: '02',
                     icon: Sparkles,
-                    title: 'Analyze & Improve',
-                    description: 'Smart analysis detects issues, improves structure, and enhances clarity.',
+                    title: 'Fill Structured Forms',
+                    description: 'Answer guided questions with smart forms - no chatbots, just clarity.',
                     color: 'purple',
                     gradient: 'from-purple-500 to-pink-600',
                   },
                   {
                     number: '03',
                     icon: Layers,
-                    title: 'Generate Professional Layouts',
-                    description: 'Automatically transform content into premium presentations and PDFs.',
+                    title: 'Apply Professional Templates',
+                    description: 'Choose from 20+ premium templates designed by professionals.',
                     color: 'emerald',
                     gradient: 'from-emerald-500 to-teal-600',
                   },
@@ -277,26 +277,26 @@ export default function HomePage() {
                   Why Pitchonix
                 </h2>
                 <p className="text-base text-slate-600 leading-relaxed mb-6">
-                  More than a document generator. A smarter way to create professional business presentations, PDFs, and reports.
+                  Professional document creation platform. Create CVs, presentations, and PDFs with structured workflows and premium templates.
                 </p>
 
                 {/* Mini Floating UI Elements */}
                 <div className="space-y-2.5 opacity-70">
                   <div className="flex items-center gap-2">
                     <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-white" />
+                      <Briefcase className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-xs font-medium text-slate-700">AI-Powered Analysis</span>
+                    <span className="text-xs font-medium text-slate-700">CV & Resume Builder</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-                      <Award className="w-4 h-4 text-white" />
+                      <Presentation className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-xs font-medium text-slate-700">Quality Scoring</span>
+                    <span className="text-xs font-medium text-slate-700">PPTX Presentations</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                      <Layers className="w-4 h-4 text-white" />
+                      <FileText className="w-4 h-4 text-white" />
                     </div>
                     <span className="text-xs font-medium text-slate-700">Professional Templates</span>
                   </div>
@@ -304,7 +304,7 @@ export default function HomePage() {
               </div>
             </motion.div>
 
-            {/* TOP RIGHT SMALL CARD #1 - Smart Content Analysis */}
+            {/* TOP RIGHT SMALL CARD #1 - Content Quality Checking */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -314,11 +314,11 @@ export default function HomePage() {
             >
               <div className="relative z-10 mb-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center mb-3">
-                  <Sparkles className="w-5 h-5 text-white" />
+                  <CheckCircle className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">Smart Content Analysis</h3>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Content Quality Checking</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Automatically detect issues, improve clarity, and structure your content professionally.
+                  Detect issues, improve clarity, and structure your content professionally.
                 </p>
               </div>
 
@@ -459,8 +459,142 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 4: Smart PDF Builder */}
+      {/* SECTION 4: Three Product Suites */}
       <section className="bg-slate-50 py-32">
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Section Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-5xl font-bold text-slate-900 mb-6">
+              Three Powerful Product Suites
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Professional tools for CVs, Presentations, and PDF documents.
+            </p>
+          </motion.div>
+
+          {/* Three Cards */}
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Card 1: CV & Resume Builder */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="bg-white rounded-2xl p-8 shadow-xl border border-slate-200 hover:shadow-2xl transition-all"
+            >
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center mb-6">
+                <Briefcase className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">CV & Resume Builder</h3>
+              <p className="text-slate-600 mb-6 leading-relaxed">
+                Professional CV and resume templates with ATS optimization, skill analysis, and multiple export formats.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  'ATS-optimized templates',
+                  'Cover letter generator',
+                  'Skills & experience tracking',
+                  'PDF & DOCX export',
+                  'Portfolio builder',
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-slate-700">
+                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/career">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                  Build Your CV
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </motion.div>
+
+            {/* Card 2: Presentations & Slides */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="bg-white rounded-2xl p-8 shadow-xl border border-slate-200 hover:shadow-2xl transition-all"
+            >
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center mb-6">
+                <Presentation className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Presentations & Slides</h3>
+              <p className="text-slate-600 mb-6 leading-relaxed">
+                Create professional business presentations with structured workflows and premium PPTX export.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  '16 document types',
+                  'Pitch decks & proposals',
+                  'Business plans & reports',
+                  'Visual editor with themes',
+                  'PPTX export',
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-slate-700">
+                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/dashboard">
+                <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                  Create Presentation
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </motion.div>
+
+            {/* Card 3: PDF Studio */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-white rounded-2xl p-8 shadow-xl border border-slate-200 hover:shadow-2xl transition-all"
+            >
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-6">
+                <FileText className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">PDF Studio</h3>
+              <p className="text-slate-600 mb-6 leading-relaxed">
+                Professional PDF editor with visual layout tools, templates, and high-quality export.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  'Visual PDF editor',
+                  'Professional templates',
+                  'Layout customization',
+                  'Typography control',
+                  'High-quality PDF export',
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-slate-700">
+                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/pdf-studio">
+                <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                  Open PDF Studio
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4B: How It Works - No AI */}
+      <section className="bg-white py-32">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left: Text Content */}
@@ -470,27 +604,26 @@ export default function HomePage() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#4F7563]/10 border border-blue-200/50 mb-6">
-                <Sparkles className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-semibold text-blue-700">Smart PDF Builder</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#4F7563]/10 border border-green-200/50 mb-6">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-semibold text-green-700">Professional Workflow</span>
               </div>
               
               <h2 className="text-5xl font-bold text-slate-900 mb-6 leading-tight">
-                Turn messy notes into professional PDFs
+                Structured forms, not chatbots
               </h2>
               
               <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-                Paste your raw content and watch as AI analyzes structure, improves writing, 
-                designs pages automatically, and exports a polished PDF ready to share.
+                Fill guided forms with clear questions about your content. Choose professional templates. Export polished documents.
               </p>
 
               <ul className="space-y-4 mb-8">
                 {[
-                  { icon: CheckSquare, text: 'Paste raw content or bullet points' },
-                  { icon: Sparkles, text: 'AI analyzes and identifies issues' },
-                  { icon: Zap, text: 'Auto-improve writing and structure' },
-                  { icon: Layers, text: 'Generate professional layouts' },
-                  { icon: Download, text: 'Export polished PDF instantly' },
+                  { icon: CheckSquare, text: 'Select your document type' },
+                  { icon: FileText, text: 'Fill structured smart forms' },
+                  { icon: Layers, text: 'Choose from 20+ templates' },
+                  { icon: Eye, text: 'Preview and customize' },
+                  { icon: Download, text: 'Export PDF or PPTX' },
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#4F7563] flex items-center justify-center flex-shrink-0">
@@ -501,9 +634,9 @@ export default function HomePage() {
                 ))}
               </ul>
 
-              <Link href="/pdf-studio/smart-builder">
+              <Link href="/create">
                 <Button size="lg" className="bg-[#4F7563] hover:bg-[#355846] text-white px-8">
-                  Try Smart PDF Builder
+                  Get Started
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
@@ -638,7 +771,7 @@ export default function HomePage() {
               </ul>
             </motion.div>
 
-            {/* Smart Documents */}
+            {/* Career Documents */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -647,12 +780,12 @@ export default function HomePage() {
             >
               <div className="mb-6">
                 <div className="w-14 h-14 rounded-xl bg-purple-600 flex items-center justify-center mb-4">
-                  <Sparkles className="w-7 h-7 text-white" />
+                  <Briefcase className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Smart Documents</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">Career Documents</h3>
               </div>
               <ul className="space-y-3">
-                {['Smart PDF Builder', 'PRD', 'Technical Docs', 'Meeting Notes'].map((item) => (
+                {['CV & Resume', 'Cover Letter', 'Portfolio', 'LinkedIn Profile'].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-slate-700 hover:text-[#4F7563] transition-colors cursor-pointer">
                     <div className="w-1.5 h-1.5 rounded-full bg-purple-600"></div>
                     <span className="font-medium">{item}</span>
@@ -692,7 +825,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-4xl font-bold text-slate-900 mb-4">Structure Analysis</h3>
                 <p className="text-lg text-slate-600 mb-6 leading-relaxed">
-                  Automatically detect missing sections, inconsistent formatting, and structural issues 
+                  Comprehensive detection of missing sections, inconsistent formatting, and structural issues 
                   that could weaken your presentation.
                 </p>
                 <ul className="space-y-3">
@@ -776,13 +909,13 @@ export default function HomePage() {
                 <div className="w-12 h-12 rounded-lg bg-emerald-600 flex items-center justify-center mb-6">
                   <Award className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-4xl font-bold text-slate-900 mb-4">Content Enhancement</h3>
+                <h3 className="text-4xl font-bold text-slate-900 mb-4">Professional Templates</h3>
                 <p className="text-lg text-slate-600 mb-6 leading-relaxed">
-                  AI-powered suggestions to improve clarity, strengthen messaging, 
-                  and ensure investor-ready quality.
+                  20+ professionally designed templates for every document type, 
+                  ensuring high-quality, polished output.
                 </p>
                 <ul className="space-y-3">
-                  {['Clarity improvements', 'Data-driven insights', 'Professional formatting'].map((item) => (
+                  {['Premium designs', 'Multiple styles', 'Fully customizable'].map((item) => (
                     <li key={item} className="flex items-center gap-3">
                       <CheckCircle className="w-5 h-5 text-green-600" />
                       <span className="text-slate-700">{item}</span>
@@ -896,8 +1029,8 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">About Pitchonix</h2>
             <p className="text-xl text-gray-600 leading-relaxed">
-              Pitchonix is a smart business content generation platform designed for entrepreneurs,
-              founders, and professionals who need investor-ready presentations fast.
+              Pitchonix is a professional document creation platform designed for entrepreneurs,
+              founders, and professionals who need high-quality presentations and documents fast.
             </p>
           </div>
 
@@ -941,9 +1074,9 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="bg-gradient-to-br from-orange-50 to-white p-6 rounded-xl border border-orange-100">
-                <h4 className="font-semibold text-lg mb-2">📊 Smart Content</h4>
+                <h4 className="font-semibold text-lg mb-2">📊 Structured Content</h4>
                 <p className="text-gray-600">
-                  Structured generation with charts, metrics, financials, and speaker notes.
+                  Organized creation with charts, metrics, financials, and speaker notes.
                 </p>
               </div>
             </div>
@@ -1137,8 +1270,8 @@ export default function HomePage() {
             {[
               {
                 color: 'text-blue-600',
-                q: 'How is Pitchonix different from other AI tools?',
-                a: 'Unlike chatbot-based tools, Pitchonix uses a structured workflow with smart forms and templates. You fill in business details step-by-step, ensuring complete, professional content every time.',
+                q: 'How is Pitchonix different from other tools?',
+                a: 'Pitchonix uses structured workflows with smart forms and templates - no chatbots. You fill in business details step-by-step through guided questions, ensuring complete, professional content every time.',
               },
               {
                 color: 'text-[#4F7563]',
@@ -1200,7 +1333,7 @@ export default function HomePage() {
             </h2>
 
             <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Pitch decks, reports, proposals, and PDFs designed for modern businesses.
+              CVs, Presentations, and PDFs designed for modern professionals and businesses.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -1242,7 +1375,7 @@ export default function HomePage() {
                 <span className="text-xl font-bold text-white">Pitchonix</span>
               </div>
               <p className="text-gray-400 leading-relaxed mb-4">
-                The smart way to create investor-ready presentations. Built for entrepreneurs who move fast.
+                Professional document creation platform. Built for entrepreneurs and businesses who need quality content fast.
               </p>
               <div className="flex space-x-4">
                 <Globe className="h-5 w-5 text-gray-400" />

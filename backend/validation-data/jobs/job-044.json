@@ -1,0 +1,34 @@
+{
+  "title": "Lead Full Stack Engineer",
+  "category": "fullstack",
+  "description": "We are hiring a Full Stack Engineer to work across the entire stack, from React frontends to Node.js backends. We are a startup looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "React",
+    "Node.js",
+    "TypeScript",
+    "PostgreSQL",
+    "AWS"
+  ],
+  "requiredExperience": "7+ years full stack",
+  "responsibilities": [
+    "Build features end-to-end",
+    "Design systems",
+    "Collaborate with teams",
+    "Deploy to production"
+  ],
+  "qualifications": [
+    "Strong frontend and backend skills",
+    "Cloud experience",
+    "Agile mindset"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "Seattle, WA",
+  "employmentType": "Full-time",
+  "remote": "Hybrid"
+}

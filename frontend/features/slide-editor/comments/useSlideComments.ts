@@ -69,7 +69,11 @@ export interface UseSlideCommentsResult {
   resolveAll:      () => Promise<number>;
 }
 
-export function useSlideComments(projectId: string | null | undefined, slideId: string | null | undefined): UseSlideCommentsResult {
+export function useSlideComments(
+  projectId: string | null | undefined,
+  slideId: string | null | undefined,
+  enabled = true,
+): UseSlideCommentsResult {
   const [comments, setComments] = useState<CommentDTO[]>([]);
   const [elementCounts, setElementCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
@@ -79,6 +83,7 @@ export function useSlideComments(projectId: string | null | undefined, slideId: 
   const lastReqIdRef = useRef<string>('');
 
   const refresh = useCallback(async () => {
+    if (!enabled) return;
     if (!slideId) { setComments([]); setElementCounts({}); return; }
     const reqId = slideId + ':' + Date.now();
     lastReqIdRef.current = reqId;
@@ -97,16 +102,19 @@ export function useSlideComments(projectId: string | null | undefined, slideId: 
     } finally {
       if (lastReqIdRef.current === reqId) setLoading(false);
     }
-  }, [slideId]);
+  }, [slideId, enabled]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    if (!enabled) return;
+    refresh();
+  }, [refresh, enabled]);
 
   // Poll for collaborator updates.
   useEffect(() => {
-    if (!slideId) return;
+    if (!enabled || !slideId) return;
     const id = window.setInterval(refresh, 10000);
     return () => window.clearInterval(id);
-  }, [slideId, refresh]);
+  }, [slideId, refresh, enabled]);
 
   const addComment = useCallback(async (input: { content: string; slideElementId?: string; anchorX?: number; anchorY?: number }) => {
     if (!projectId || !slideId) return null;

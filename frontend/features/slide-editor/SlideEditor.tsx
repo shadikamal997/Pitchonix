@@ -36,10 +36,8 @@ import { analyzeSlideOverflow } from './smart/overflow-analyzer';
 import { expandSelectionToGroups, groupSelection, ungroupSelection, groupIdOf, groupMembers, groupBounds } from './smart/group-utils';
 import { tidySlide } from './smart/tidy-engine';
 import { PresenterMode } from './presenter/PresenterMode';
-import { CompositionDebugBadge } from './templates/composition/DebugBadge';
 import { useDeckPlan, logDeckPlan, type DeckSlideInput } from './templates/composition/deck-context';
 import { useDeckElements } from './useDeckElements';
-import { NarrativeDebugPanel } from './templates/composition/NarrativeDebugPanel';
 import { CommentsPanel } from './comments/CommentsPanel';
 import { useSlideComments } from './comments/useSlideComments';
 import { ElementCommentBadge } from './comments/ElementCommentBadge';
@@ -127,8 +125,9 @@ const DisabledWhilePreviewing: React.FC<{
   );
 };
 
-export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) => {
+export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId: routeSlideId }) => {
   const router = useRouter();
+  const [slideId, setActiveSlideId] = useState(routeSlideId);
   const [slide, setSlide] = useState<Slide | null>(null);
   const [loadingSlide, setLoadingSlide] = useState(true);
   const [zoom, setZoom] = useState(1);
@@ -138,6 +137,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   const editingBoxRef = useRef<HTMLDivElement | null>(null);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
+  const [templateApplying, setTemplateApplying] = useState(false);
   const [presenterOpen, setPresenterOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   // Phase 36E — comment creation mode. Toggle with the toolbar Comment-Mode
@@ -147,6 +147,19 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [commentsFocusElementId, setCommentsFocusElementId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActiveSlideId(routeSlideId);
+  }, [routeSlideId]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const id = window.location.pathname.split('/').filter(Boolean).at(-1);
+      if (id) setActiveSlideId(id);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   // Read the currently-applied template from the slide's metadata
   const appliedTemplate = (slide?.metadata as any)?.appliedTemplateId
@@ -182,6 +195,12 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
     ? PREVIEW_DISABLE_TIP
     : (isReviewerMode ? 'Editing disabled — you are reviewing this deck' : '');
 
+  // Deck-wide element cache powers the narrative analyzer and, once loaded,
+  // slide navigation. Opening a cold direct URL may still fetch the active
+  // slide once; moving between already-loaded thumbnails stays local.
+  const activeDeckSlides = templateApplying ? [] : deckSlides.slides;
+  const deckElements = useDeckElements(activeDeckSlides);
+
   // Phase 35-final-B Task 1 — when previewing, locate the snapshot slide
   // that corresponds to the active live slideId (matched by order, not id,
   // since snapshot ids are historical) and pin its elements as the canvas
@@ -198,15 +217,17 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   // snapshots before destructive element deletes.
   // Phase 35-final-B Task 1 — `previewElements` pins the snapshot data
   // source onto the canvas during preview.
-  const api$ = useElementsApi(slideId, slide?.deckId || null, previewElements);
+  const activeSlideIdForNetwork = templateApplying ? null : slideId;
+  const cachedActiveElements = activeSlideIdForNetwork ? deckElements.byId[activeSlideIdForNetwork] : undefined;
+  const api$ = useElementsApi(activeSlideIdForNetwork, slide?.deckId || null, previewElements, cachedActiveElements);
 
   // Phase 35-final-B Task 2 — give the sidebar a preview-aware view of the
   // slides list. Shallow-clone deckSlides and replace just `slides`; all
   // mutators stay intact (they already short-circuit during preview).
   const sidebarApi = useMemo(() => ({
     ...deckSlides,
-    slides: slidesForRender as typeof deckSlides.slides,
-  }), [deckSlides, slidesForRender]);
+    slides: (templateApplying ? [] : slidesForRender) as typeof deckSlides.slides,
+  }), [deckSlides, slidesForRender, templateApplying]);
 
   // Phase 32M — in-memory clipboard for ⌘C / ⌘V (slide-scoped; survives until
   // the next copy or page reload). Holds full SlideElementDTO snapshots so a
@@ -318,6 +339,16 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   // the current slide's title / subtitle / speakerNotes / background.)
   useEffect(() => {
     let cancelled = false;
+    if (templateApplying) {
+      setLoadingSlide(false);
+      return () => { cancelled = true; };
+    }
+    const cachedSlide = deckSlides.slides.find((s) => s.id === slideId);
+    if (cachedSlide) {
+      setSlide(cachedSlide as Slide);
+      setLoadingSlide(false);
+      return () => { cancelled = true; };
+    }
     (async () => {
       try {
         setLoadingSlide(true);
@@ -331,7 +362,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
       }
     })();
     return () => { cancelled = true; };
-  }, [slideId]);
+  }, [slideId, deckSlides.slides, templateApplying]);
 
   // Clear selection when slide changes
   useEffect(() => { setSelectedIds([]); }, [slideId]);
@@ -402,7 +433,12 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   }, []);
 
   // Slide-scoped comments (counts + the panel reuses its own hook for the list).
-  const slideComments = useSlideComments(slide?.deckId ? (slide as any).deck?.projectId || projectId : null, slideId);
+  const commentsEnabled = commentsOpen || commentMode;
+  const slideComments = useSlideComments(
+    slide?.deckId ? (slide as any).deck?.projectId || projectId : null,
+    slideId,
+    commentsEnabled,
+  );
   const elementCounts = slideComments.elementCounts;
   const totalOpenComments = Object.values(elementCounts).reduce((a, n) => a + n, 0)
     + slideComments.comments.filter((c) => !c.resolved && !c.slideElementId).length;
@@ -730,7 +766,12 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   const prevSlide = slideIdx > 0 ? deckSlides.slides[slideIdx - 1] : null;
   const nextSlide = slideIdx >= 0 && slideIdx < deckSlides.slides.length - 1 ? deckSlides.slides[slideIdx + 1] : null;
 
-  const gotoSlide = (id: string) => router.push(`/projects/${projectId}/edit/${id}`);
+  const gotoSlide = (id: string) => {
+    setActiveSlideId(id);
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', `/projects/${projectId}/edit/${id}`);
+    }
+  };
 
   // When the current slide is deleted, navigate to a neighbour or back to project
   const handleCurrentDeleted = useCallback((nextId: string | null) => {
@@ -748,24 +789,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
   // analyse the full deck. The current slide's elements come from api$ (live,
   // includes in-progress edits); other slides come from a per-slide fetch
   // cached in useDeckElements.
-  const deckElements = useDeckElements(deckSlides.slides);
   const compositionFamilyId = (slide?.metadata as any)?.appliedTemplateId || null;
-
-  // Fix 2 — when the user navigates to a different slide we already have
-  // cached, re-fetch in case it was edited elsewhere (another tab/session
-  // or a sibling editor instance).
-  const lastRefreshedSlide = useRef<string | null>(null);
-  useEffect(() => {
-    if (!slideId) return;
-    if (lastRefreshedSlide.current === slideId) return;
-    lastRefreshedSlide.current = slideId;
-    if (slideId in deckElements.byId) {
-      // Re-fetch in background; the live api$.elements still drive the active
-      // slide so this is purely about correcting other-slide staleness.
-      void deckElements.refresh(slideId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slideId]);
 
   // Fix 3 — debounce active-slide element changes by 350ms so analyzeDeck
   // doesn't re-run on every keystroke. The active slide still renders
@@ -1236,9 +1260,6 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
             />
           )}
 
-          {/* Phase 26.5 — Narrative debug panel (dev-only) */}
-          <NarrativeDebugPanel plan={deckPlan} currentContext={currentSlideContext} ready={deckElements.ready} />
-
           {/* Element comment badges (Phase 14) */}
           {Object.keys(elementCounts).length > 0 && (
             <ElementCommentBadge
@@ -1302,7 +1323,7 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
           />
 
           {/* Overflow badges (Phase 15) */}
-          {overflowCount > 0 && (
+          {overflowCount > 0 && selectedIds.length > 0 && !preview.isPreviewing && (
             <OverflowBadgeLayer
               elements={api$.elements}
               reports={overflowReports}
@@ -1419,19 +1440,27 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
       {/* Template gallery modal */}
       {templateGalleryOpen && slide?.deckId && (
         <TemplateGallery
+          projectId={projectId}
           deckId={slide.deckId}
           currentTemplateId={appliedTemplate?.id || null}
           onClose={() => setTemplateGalleryOpen(false)}
-          onApplied={async () => {
-            // Refresh current slide so its background + themeTokens repopulate,
-            // and refresh elements so their re-styled state appears.
+          onApplyingChange={setTemplateApplying}
+          onApplied={async (_templateId, firstSlideId) => {
+            const nextSlideId = firstSlideId || slideId;
+            // Bust cache BEFORE refresh so new slide IDs never hit stale cache entries.
+            bumpAllSlideThumbnails();
+            await deckSlides.refresh?.();
+            if (nextSlideId !== slideId) {
+              setActiveSlideId(nextSlideId);
+              router.replace(`/projects/${projectId}/edit/${nextSlideId}`);
+            }
+            // Refresh the regenerated slide so its background, theme tokens, and
+            // smart-family metadata repopulate after the template rebuild.
             try {
-              const { data: slideRow } = await api.get(`/slides/${slideId}`);
+              const { data: slideRow } = await api.get(`/slides/${nextSlideId}`);
               setSlide(slideRow);
             } catch (_) {}
-            await api$.refresh();
-            // Bust every sidebar thumbnail so the new theme background paints there too.
-            bumpAllSlideThumbnails();
+            if (nextSlideId === slideId) await api$.refresh();
             // Reset undo stack — template apply is a major checkpoint
             history.reset(apiRef.current.elements);
           }}
@@ -1500,11 +1529,6 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId }) 
       {/* Keyboard shortcuts dialog (Phase 16) */}
       <KeyboardShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
 
-      {/* Dev-only composition debug badge */}
-      <CompositionDebugBadge
-        templateId={(slide?.metadata as any)?.appliedTemplateId || null}
-        slideType={(slide as any)?.type || undefined}
-      />
     </div>
   );
 };

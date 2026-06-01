@@ -1,0 +1,33 @@
+{
+  "title": "Mid-Level Frontend Engineer",
+  "category": "frontend",
+  "description": "Join our team as a Frontend Engineer to create beautiful, performant web experiences. You will work with React, TypeScript, and modern tooling. We are a mid-size company looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "React",
+    "TypeScript",
+    "Next.js",
+    "Tailwind CSS",
+    "GraphQL"
+  ],
+  "requiredExperience": "2+ years frontend development",
+  "responsibilities": [
+    "Build features",
+    "Optimize performance",
+    "Collaborate cross-functionally"
+  ],
+  "qualifications": [
+    "Strong TypeScript skills",
+    "Experience with Next.js",
+    "Good design sense"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "New York, NY",
+  "employmentType": "Full-time",
+  "remote": "Hybrid"
+}

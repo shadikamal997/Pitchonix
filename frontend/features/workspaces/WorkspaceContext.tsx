@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import api from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 import type { WorkspaceMembershipDTO, ResolvedPermissionsDTO, WorkspaceAction, WorkspaceRole } from '@/types/workspace';
 
 // =============================================================================
@@ -31,21 +32,29 @@ interface WorkspaceContextValue {
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const _hasHydrated    = useAuthStore((state) => state._hasHydrated);
+
   const [workspaces, setWorkspaces]   = useState<WorkspaceMembershipDTO[]>([]);
   const [currentId,  setCurrentId]    = useState<string | null>(null);
   const [permissions, setPermissions] = useState<ResolvedPermissionsDTO | null>(null);
   const [loading,    setLoading]      = useState(false);
   const [error,      setError]        = useState<string | null>(null);
 
-  // Restore selection from localStorage on mount.
+  // Restore selection from localStorage — only when authenticated so a stale
+  // workspace ID doesn't trigger a permission fetch on the login page.
   useEffect(() => {
+    if (!isAuthenticated) return;
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
       if (saved) setCurrentId(saved);
     } catch { /* SSR / privacy mode */ }
-  }, []);
+  }, [isAuthenticated]);
 
   const refresh = useCallback(async () => {
+    // Never attempt workspace API calls when not authenticated — prevents a
+    // 401 redirect loop on the login/register pages.
+    if (!isAuthenticated) { setWorkspaces([]); setCurrentId(null); setLoading(false); return; }
     setLoading(true);
     setError(null);
     try {
@@ -66,11 +75,15 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  // Only fetch workspaces once the Zustand store has hydrated and the user
+  // is confirmed authenticated — avoids 401s on login/register pages.
+  useEffect(() => {
+    if (_hasHydrated) refresh();
+  }, [refresh, _hasHydrated, isAuthenticated]);
 
   // Persist + fetch permissions whenever the selected workspace changes.
   useEffect(() => {
-    if (!currentId) { setPermissions(null); return; }
+    if (!currentId || !isAuthenticated) { setPermissions(null); return; }
     try { window.localStorage.setItem(STORAGE_KEY, currentId); } catch { /* ignore */ }
     let cancelled = false;
     api.get<ResolvedPermissionsDTO>(`/workspaces/${currentId}/permissions`).then(({ data }) => {

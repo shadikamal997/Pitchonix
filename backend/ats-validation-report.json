@@ -1,0 +1,77 @@
+{
+  "timestamp": "2026-05-27T15:34:52.461Z",
+  "readinessScore": 0,
+  "results": [
+    {
+      "testName": "End-to-End Flow",
+      "passed": false,
+      "errors": [
+        "Backend not responding at http://localhost:4000"
+      ],
+      "warnings": []
+    },
+    {
+      "testName": "Score Validation",
+      "passed": false,
+      "errors": [
+        "Senior Full Stack Developer (Strong): Analysis failed - ",
+        "Junior Developer (Weak): Analysis failed - ",
+        "Senior UX Designer (Strong): Analysis failed - ",
+        "Marketing Manager (Strong): Analysis failed - ",
+        "VP of Engineering (Strong): Analysis failed - ",
+        "Developer (Poor Formatting): Analysis failed - "
+      ],
+      "warnings": []
+    },
+    {
+      "testName": "Job Description Parsing",
+      "passed": false,
+      "errors": [
+        "Senior Full Stack Developer: Parsing failed - ",
+        "Senior UX Designer: Parsing failed - ",
+        "Digital Marketing Manager: Parsing failed - "
+      ],
+      "warnings": []
+    },
+    {
+      "testName": "Recommendation Quality",
+      "passed": false,
+      "errors": [
+        ""
+      ],
+      "warnings": []
+    },
+    {
+      "testName": "ATS Simulator Accuracy",
+      "passed": false,
+      "errors": [
+        ""
+      ],
+      "warnings": []
+    },
+    {
+      "testName": "Performance Benchmarks",
+      "passed": false,
+      "errors": [
+        "ATS analysis failed: ",
+        "Job matching failed: "
+      ],
+      "warnings": []
+    },
+    {
+      "testName": "Error Handling",
+      "passed": true,
+      "errors": [],
+      "warnings": [
+        "Empty profile should return 400 error",
+        "Empty job description should return 400 error"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 6,
+    "totalErrors": 14,
+    "totalWarnings": 2
+  }
+}

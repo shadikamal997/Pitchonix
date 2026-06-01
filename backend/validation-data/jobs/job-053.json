@@ -1,0 +1,35 @@
+{
+  "title": "DevOps Engineer",
+  "category": "devops",
+  "description": "Seeking a DevOps Engineer to build and maintain our cloud infrastructure and CI/CD pipelines. We are a startup looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "AWS",
+    "Docker",
+    "Kubernetes",
+    "Terraform",
+    "Jenkins",
+    "Python"
+  ],
+  "requiredExperience": "5+ years DevOps",
+  "responsibilities": [
+    "Manage cloud infrastructure",
+    "Build CI/CD pipelines",
+    "Monitor systems",
+    "Automate processes"
+  ],
+  "qualifications": [
+    "AWS expertise",
+    "Container orchestration",
+    "Infrastructure as code"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "San Francisco, CA",
+  "employmentType": "Full-time",
+  "remote": "Remote"
+}

@@ -1,0 +1,35 @@
+{
+  "title": "Mid-Level DevOps Engineer",
+  "category": "devops",
+  "description": "Seeking a DevOps Engineer to build and maintain our cloud infrastructure and CI/CD pipelines. We are a mid-size company looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "AWS",
+    "Docker",
+    "Kubernetes",
+    "Terraform",
+    "Jenkins",
+    "Python"
+  ],
+  "requiredExperience": "3+ years DevOps",
+  "responsibilities": [
+    "Manage cloud infrastructure",
+    "Build CI/CD pipelines",
+    "Monitor systems",
+    "Automate processes"
+  ],
+  "qualifications": [
+    "AWS expertise",
+    "Container orchestration",
+    "Infrastructure as code"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "New York, NY",
+  "employmentType": "Full-time",
+  "remote": "Hybrid"
+}

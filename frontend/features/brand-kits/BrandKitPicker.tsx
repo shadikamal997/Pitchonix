@@ -113,7 +113,7 @@ const BrandKitPickerDropdown: React.FC<Props> = (props) => {
       />
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-[420px] max-w-[95vw] bg-white border border-[#E3E1DA] rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-[380px] max-w-[95vw] bg-white border border-[#E3E1DA] rounded-xl shadow-2xl z-50 overflow-hidden">
           <PickerHeader
             currentKitName={selected?.name || null}
             onClose={() => setOpen(false)}
@@ -223,13 +223,18 @@ const TriggerButton: React.FC<{
 //  Picker header (used by both layouts)
 // =============================================================================
 const PickerHeader: React.FC<{ currentKitName: string | null; onClose?: () => void }> = ({ currentKitName, onClose }) => (
-  <div className="px-4 py-3 border-b border-[#F1F0EC] bg-[#EDEBE6]/60">
-    <div className="flex items-start justify-between">
-      <div>
-        <div className="text-xs font-bold uppercase tracking-wider text-[#111111]">Brand Kit</div>
-        <div className="text-[11px] text-[#9A9A9A] mt-0.5">
-          {currentKitName ? <>Currently applied: <strong className="text-[#111111]">{currentKitName}</strong></> : 'No brand kit applied yet.'}
-        </div>
+  <div className="px-4 py-2.5 border-b border-[#F1F0EC] bg-white">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Palette className="w-3.5 h-3.5 text-[#4F7563]" />
+        <span className="text-xs font-bold text-[#111111]">Brand Kit</span>
+        {currentKitName ? (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#EEF5F1] border border-[#DDE8E1] rounded text-[10px] font-semibold text-[#355846]">
+            <Check className="w-2.5 h-2.5" /> {currentKitName}
+          </span>
+        ) : (
+          <span className="text-[10px] text-[#C9C6BD]">None applied</span>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <a
@@ -245,11 +250,6 @@ const PickerHeader: React.FC<{ currentKitName: string | null; onClose?: () => vo
         )}
       </div>
     </div>
-    {/* Phase Ω.2 — clarify the "Default" semantic. Users have been confused
-        whether the default kit auto-applies; it does not, by design. */}
-    <p className="text-[10px] text-[#C9C6BD] mt-1.5 italic">
-      The <span className="font-semibold text-[#9A9A9A]">Default</span> badge is a preference label only — kits are never applied automatically. Pick one explicitly to apply.
-    </p>
   </div>
 );
 
@@ -314,20 +314,20 @@ const PickerBody: React.FC<{
       <button
         type="button"
         onClick={() => onPreview(null)}
-        className={`w-full flex items-center gap-3 px-4 py-2.5 border-b border-[#F1F0EC] text-left hover:bg-[#EDEBE6] ${previewId === null ? 'bg-[#EDEBE6]' : ''}`}
+        className={`w-full flex items-center gap-3 px-4 py-2.5 border-b border-[#F1F0EC] text-left transition-colors ${previewId === null ? 'bg-[#F1F0EC]' : 'hover:bg-[#F8F7F4]'}`}
       >
-        <div className="w-8 h-8 rounded border border-dashed border-[#C9C6BD] flex items-center justify-center">
+        <div className="w-9 h-9 rounded-lg border-2 border-dashed border-[#D4D2CB] flex items-center justify-center bg-white">
           <X className="w-3.5 h-3.5 text-[#C9C6BD]" />
         </div>
         <div className="flex-1">
           <div className="text-xs font-semibold text-[#111111]">No brand kit</div>
-          <div className="text-[10px] text-[#9A9A9A]">Use built-in default styling.</div>
+          <div className="text-[10px] text-[#9A9A9A]">Use built-in template styling</div>
         </div>
         {previewId === null && <Check className="w-4 h-4 text-[#4F7563]" />}
       </button>
 
       {/* Kit cards */}
-      <div className="max-h-[320px] overflow-y-auto">
+      <div className="max-h-[360px] overflow-y-auto">
         {items.map((k) => (
           <BrandKitCard
             key={k.id}
@@ -340,42 +340,38 @@ const PickerBody: React.FC<{
       </div>
 
       {/* Action bar */}
-      <div className="px-4 py-3 border-t border-[#F1F0EC] flex items-center gap-2 bg-[#EDEBE6]/60">
+      <div className="px-3 py-2.5 border-t border-[#F1F0EC] bg-[#F8F7F4] flex items-center gap-2">
         {currentValue && (
           <button
             type="button"
             onClick={doClear}
             disabled={busy}
-            className="h-8 px-2.5 text-xs font-semibold text-[#7a2929] hover:bg-[#FCF1F1] rounded inline-flex items-center gap-1 disabled:opacity-40"
+            className="h-7 px-2 text-[11px] font-semibold text-[#9a3737] hover:bg-[#FCF1F1] rounded inline-flex items-center gap-1 disabled:opacity-40"
           >
-            <Trash2 className="w-3 h-3" /> Clear
+            <Trash2 className="w-3 h-3" /> Remove
           </button>
         )}
         <div className="flex-1" />
-        <span className="text-[10px] text-[#9A9A9A] inline-flex items-center gap-1">
-          <Eye className="w-3 h-3" /> {selectedKit ? selectedKit.name : 'None'} — preview
-        </span>
         {selectedKit && (
           <button
             type="button"
             onClick={() => setWallKit(selectedKit)}
-            className="h-8 px-2.5 text-xs font-semibold border border-[#C9C6BD] hover:bg-white text-[#111111] rounded inline-flex items-center gap-1"
-            title="Preview wall — see how this kit looks across CV / Resume / Cover Letter / Portfolio"
+            className="h-7 px-2.5 text-[11px] font-semibold border border-[#D4D2CB] hover:border-[#9A9A9A] bg-white text-[#6B6B6B] hover:text-[#111111] rounded inline-flex items-center gap-1.5 transition-colors"
+            title="See how this kit looks across all document types"
           >
-            <Eye className="w-3 h-3" /> Preview wall
+            <Eye className="w-3 h-3" /> Preview
           </button>
         )}
         <button
           type="button"
           onClick={doApply}
           disabled={busy || (previewId === currentValue) || !selectedKit}
-          className="h-8 px-3 text-xs font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center gap-1 disabled:opacity-40"
+          className="h-7 px-3 text-[11px] font-semibold bg-[#4F7563] text-white rounded hover:bg-[#355846] inline-flex items-center gap-1.5 disabled:opacity-40 transition-colors shadow-sm"
         >
           {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-          {mode === 'apply' ? 'Apply Brand Kit' : 'Use this kit'}
+          {mode === 'apply' ? 'Apply Kit' : 'Use kit'}
         </button>
       </div>
-      {/* Phase 42.5C — Brand Preview Wall (modal, opt-in via "Preview wall") */}
       {wallKit && (
         <BrandPreviewWall
           kit={wallKit}
@@ -398,58 +394,103 @@ const BrandKitCard: React.FC<{
 }> = ({ kit, isPreview, isCurrent, onClick }) => {
   const primary   = kit.primaryColor   || kit.tokens?.colors?.primary   || '#8B5CF6';
   const secondary = kit.secondaryColor || kit.tokens?.colors?.secondary || '#06B6D4';
+  const accent    = kit.tokens?.colors?.accent || null;
   const headingFont = kit.tokens?.typography?.heading?.family || kit.fontFamily || 'Inter';
   const bodyFont    = kit.tokens?.typography?.body?.family    || kit.fontFamily || 'Inter';
+  const sameFonts   = headingFont === bodyFont;
+
+  // Build palette strips — always show primary + secondary; add accent if distinct
+  const paletteColors = [primary, secondary, ...(accent && accent !== primary && accent !== secondary ? [accent] : [])];
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-stretch gap-3 px-4 py-3 border-b border-[#F1F0EC] text-left hover:bg-[#EDEBE6] transition-colors ${isPreview ? 'bg-[#EEF5F1]/40 ring-1 ring-inset ring-[#DDE8E1]' : ''}`}
+      className={`w-full border-b border-[#F1F0EC] text-left transition-colors focus:outline-none ${
+        isPreview
+          ? 'bg-[#EEF5F1] ring-1 ring-inset ring-[#4F7563]/30'
+          : 'hover:bg-[#F8F7F4]'
+      }`}
     >
-      {/* Logo / color preview block */}
-      <div className="flex-shrink-0 w-12 h-12 rounded-md border border-[#E3E1DA] bg-[#EDEBE6] overflow-hidden flex items-center justify-center" style={{ background: primary }}>
-        {kit.logo ? (
-          <img src={kit.logo} alt="" className="max-w-[44px] max-h-[44px] object-contain" />
-        ) : (
-          <span className="text-white font-bold text-lg" style={{ fontFamily: headingFont }}>
-            {kit.name.charAt(0).toUpperCase()}
-          </span>
-        )}
+      {/* Full-width color palette strip */}
+      <div className="flex h-[6px] w-full overflow-hidden">
+        {paletteColors.map((c, i) => (
+          <div
+            key={i}
+            style={{ background: c, flex: i === 0 ? 2 : 1 }}
+          />
+        ))}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="text-sm font-bold text-[#111111] truncate">{kit.name}</div>
-          {kit.isDefault && (
-            <span className="text-[9px] font-bold tracking-wide uppercase bg-[#DDE8E1] text-[#263F34] px-1 py-0.5 rounded">Default</span>
-          )}
-          {isCurrent && (
-            <span className="text-[9px] font-bold tracking-wide uppercase bg-[#DDE8E1] text-green-800 px-1 py-0.5 rounded inline-flex items-center gap-0.5">
-              <Check className="w-2.5 h-2.5" /> Applied
+      {/* Card body */}
+      <div className="flex items-center gap-3 px-4 py-2.5">
+        {/* Logo avatar */}
+        <div
+          className="flex-shrink-0 w-10 h-10 rounded-lg shadow-sm flex items-center justify-center overflow-hidden border border-black/10"
+          style={{ background: primary }}
+        >
+          {kit.logo ? (
+            <img src={kit.logo} alt="" className="max-w-[36px] max-h-[36px] object-contain" />
+          ) : (
+            <span className="text-white font-bold text-base select-none" style={{ fontFamily: headingFont }}>
+              {kit.name.charAt(0).toUpperCase()}
             </span>
           )}
         </div>
-        {/* color row */}
-        <div className="flex items-center gap-1 mb-1">
-          <span className="w-4 h-4 rounded-sm border border-[#C9C6BD]" style={{ background: primary }} title={`Primary ${primary}`} />
-          <span className="w-4 h-4 rounded-sm border border-[#C9C6BD]" style={{ background: secondary }} title={`Secondary ${secondary}`} />
-          {kit.tokens?.colors?.accent && (
-            <span className="w-4 h-4 rounded-sm border border-[#C9C6BD]" style={{ background: kit.tokens.colors.accent }} title={`Accent ${kit.tokens.colors.accent}`} />
-          )}
-          <span className="text-[10px] font-mono text-[#C9C6BD] ml-1">{primary}</span>
-        </div>
-        {/* typography preview */}
-        <div className="text-[11px] text-[#6B6B6B] truncate" style={{ fontFamily: bodyFont }}>
-          <strong style={{ fontFamily: headingFont }}>Aa</strong> · {headingFont} / {bodyFont}
-        </div>
-      </div>
 
-      {isPreview && (
-        <div className="flex-shrink-0 flex items-center pr-1">
-          <Eye className="w-4 h-4 text-[#4F7563]" />
+        {/* Name + meta */}
+        <div className="flex-1 min-w-0">
+          {/* Row 1: name + badges */}
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="text-[13px] font-bold text-[#111111] truncate">{kit.name}</span>
+            {kit.isDefault && (
+              <span className="flex-shrink-0 text-[9px] font-bold tracking-wide uppercase bg-[#DDE8E1] text-[#263F34] px-1.5 py-0.5 rounded-full">
+                Default
+              </span>
+            )}
+            {isCurrent && (
+              <span className="flex-shrink-0 text-[9px] font-bold uppercase bg-[#4F7563] text-white px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5">
+                <Check className="w-2 h-2" /> Applied
+              </span>
+            )}
+          </div>
+
+          {/* Row 2: color chips + hex */}
+          <div className="flex items-center gap-1">
+            {paletteColors.map((c, i) => (
+              <span
+                key={i}
+                className="w-3.5 h-3.5 rounded-sm ring-1 ring-black/10 flex-shrink-0"
+                style={{ background: c }}
+                title={c}
+              />
+            ))}
+            <span className="text-[10px] font-mono text-[#9A9A9A] ml-1 truncate">{primary}</span>
+          </div>
+
+          {/* Row 3: typography */}
+          <div className="flex items-baseline gap-1.5 mt-1">
+            <span
+              className="text-[12px] font-bold text-[#111111] leading-none"
+              style={{ fontFamily: headingFont }}
+            >
+              Aa
+            </span>
+            <span className="text-[10px] text-[#9A9A9A] truncate">
+              {sameFonts ? headingFont : `${headingFont} / ${bodyFont}`}
+            </span>
+          </div>
         </div>
-      )}
+
+        {/* Selected indicator */}
+        {isPreview && (
+          <div className="flex-shrink-0">
+            <div className="w-5 h-5 rounded-full bg-[#4F7563] flex items-center justify-center">
+              <Check className="w-3 h-3 text-white" />
+            </div>
+          </div>
+        )}
+      </div>
     </button>
   );
 };

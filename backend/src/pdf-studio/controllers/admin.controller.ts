@@ -1,11 +1,15 @@
 import { Controller, Post, Body, UseGuards, Logger } from '@nestjs/common';
 import { TemplatePreviewGeneratorService } from '../services/template-preview-generator.service';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { AdminGuard } from '../guards/admin.guard';
 
 /**
  * Admin Controller for Template Management
- * Handles administrative tasks like generating template previews
+ * Handles administrative tasks like generating template previews.
+ * Protected by JWT auth + AdminGuard on every endpoint.
  */
-@Controller('api/pdf-studio/admin')
+@Controller('pdf-studio/admin')
+@UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminController {
   private readonly logger = new Logger(AdminController.name);
 
@@ -13,12 +17,7 @@ export class AdminController {
     private readonly templatePreviewGenerator: TemplatePreviewGeneratorService,
   ) {}
 
-  /**
-   * Generate previews for all templates
-   * Should be protected with admin authentication in production
-   */
   @Post('generate-template-previews')
-  // @UseGuards(JwtAuthGuard, AdminGuard) // Uncomment in production
   async generateTemplatePreviews() {
     this.logger.log('Generating template previews...');
 
@@ -36,11 +35,7 @@ export class AdminController {
     }
   }
 
-  /**
-   * Regenerate preview for a specific template
-   */
   @Post('regenerate-template-preview')
-  // @UseGuards(JwtAuthGuard, AdminGuard) // Uncomment in production
   async regenerateTemplatePreview(@Body('templateName') templateName: string) {
     if (!templateName) {
       throw new Error('Template name is required');

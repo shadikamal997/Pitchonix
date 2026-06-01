@@ -193,7 +193,7 @@ export class SlideElementsMigrationService {
         const built = this.materializeSmartTree(smart);
         if (built.length > 0) {
           this.recordSmartPath(smart);
-          const chrome = this.buildSlideChrome(slide);
+          const chrome = this.buildSlideChrome(slide, { includeTitle: false });
           return [...chrome, ...built] as Array<Prisma.SlideElementCreateManyInput>;
         }
       } else {
@@ -244,9 +244,13 @@ export class SlideElementsMigrationService {
   /** Slide chrome (title + subtitle + footer + page number) is independent of
    *  the smart body tree. Same defaults the legacy branch uses, hoisted into
    *  a small helper. */
-  private buildSlideChrome(slide: { title: string; subtitle: string | null }): Array<Omit<Prisma.SlideElementCreateManyInput, 'slideId'>> {
+  private buildSlideChrome(
+    slide: { title: string; subtitle: string | null },
+    opts: { includeTitle?: boolean } = {},
+  ): Array<Omit<Prisma.SlideElementCreateManyInput, 'slideId'>> {
     const chrome: Array<Omit<Prisma.SlideElementCreateManyInput, 'slideId'>> = [];
-    if (slide.title) {
+    const includeTitle = opts.includeTitle !== false;
+    if (includeTitle && slide.title) {
       chrome.push({
         type: 'heading', name: 'Title',
         order: 0, zIndex: 1,
@@ -256,7 +260,7 @@ export class SlideElementsMigrationService {
         animations: null, accessibility: null,
       });
     }
-    if (slide.subtitle) {
+    if (includeTitle && slide.subtitle) {
       chrome.push({
         type: 'subheading', name: 'Subtitle',
         order: 1, zIndex: 2,
@@ -266,14 +270,6 @@ export class SlideElementsMigrationService {
         animations: null, accessibility: null,
       });
     }
-    chrome.push({
-      type: 'footer', name: 'Footer',
-      order: 9998, zIndex: 9998,
-      x: 6, y: 94, width: 70, height: 4,
-      rotation: 0, locked: false, visible: true,
-      content: { text: '' }, data: null, style: null,
-      animations: null, accessibility: null,
-    });
     chrome.push({
       type: 'pageNumber', name: 'Page #',
       order: 9999, zIndex: 9999,

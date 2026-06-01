@@ -405,18 +405,18 @@ export class ValidationService {
           const firstTheme = slides[0].theme;
           
           slides.forEach((slide, index) => {
-            if (slide.theme.name !== firstTheme.name) {
+            if (slide.theme?.name !== firstTheme?.name) {
               issues.push({
                 severity: ValidationSeverity.WARNING,
                 rule: 'theme-consistency',
-                message: `Slide ${index + 1}: Using different theme (${slide.theme.name} vs ${firstTheme.name})`,
+                message: `Slide ${index + 1}: Using different theme (${slide.theme?.name} vs ${firstTheme?.name})`,
                 slideIndex: index,
                 slideType: slide.type,
                 suggestion: 'Use consistent theme across all slides',
               });
             }
 
-            if (slide.theme.colors.primary !== firstTheme.colors.primary) {
+            if (slide.theme?.colors?.primary !== firstTheme?.colors?.primary) {
               issues.push({
                 severity: ValidationSeverity.INFO,
                 rule: 'theme-consistency',

@@ -1,0 +1,34 @@
+{
+  "title": "Mid-Level Node.js Engineer",
+  "category": "backend",
+  "description": "We need a Node.js Engineer to build high-performance backend services. We are a mid-size company looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "Node.js",
+    "Express",
+    "TypeScript",
+    "MongoDB",
+    "Redis"
+  ],
+  "requiredExperience": "3+ years Node.js",
+  "responsibilities": [
+    "Build APIs",
+    "Design databases",
+    "Implement caching",
+    "Monitor performance"
+  ],
+  "qualifications": [
+    "Expert in Node.js",
+    "TypeScript proficiency",
+    "Scalability mindset"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "New York, NY",
+  "employmentType": "Full-time",
+  "remote": "Hybrid"
+}

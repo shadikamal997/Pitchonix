@@ -48,10 +48,12 @@ export class CvTemplatesService implements OnModuleInit {
     return { seeded, existing };
   }
 
-  /** Phase 42.2 — upsert layout for every library entry by name (idempotent). */
-  async refreshLayouts(): Promise<{ updated: number; created: number }> {
+  /** Phase 42.17 — upsert + prune public templates to match the current library. */
+  async refreshLayouts(): Promise<{ updated: number; created: number; deleted: number }> {
     let updated = 0;
     let created = 0;
+
+    // Upsert every entry in the library.
     for (const t of CV_TEMPLATE_LIBRARY) {
       const found = await this.prisma.cvTemplate.findFirst({ where: { name: t.name, isPublic: true } });
       if (!found) {
@@ -67,19 +69,51 @@ export class CvTemplatesService implements OnModuleInit {
         updated++;
       }
     }
+
+    // Remove public templates whose names are no longer in the library
+    // so stale rows don't pollute the template picker.
+    const currentNames = new Set(CV_TEMPLATE_LIBRARY.map((t) => t.name));
+    const stale = await this.prisma.cvTemplate.findMany({
+      where: { isPublic: true },
+      select: { id: true, name: true },
+    });
+    const toDelete = stale.filter((r) => !currentNames.has(r.name));
+    let deleted = 0;
+    for (const row of toDelete) {
+      await this.prisma.cvTemplate.delete({ where: { id: row.id } });
+      deleted++;
+    }
+    if (deleted > 0) this.logger.log(`Pruned ${deleted} obsolete public templates.`);
+
     this.logger.log(`Refreshed ${updated} CV templates (created ${created} new).`);
-    return { updated, created };
+    this.invalidateListCache();
+    return { updated, created, deleted };
   }
 
-  list(opts: { doctype?: CvDoctype; category?: string; workspaceId?: string | null } = {}) {
+  // Phase Ω.4 — in-memory cache for public template list (templates are
+  // essentially static after boot; 10-minute TTL avoids stale reads after
+  // an admin refresh while keeping DB round-trips near zero).
+  private readonly _listCache = new Map<string, { ts: number; data: any[] }>();
+  private readonly LIST_TTL_MS = 10 * 60_000;
+
+  async list(opts: { doctype?: CvDoctype; category?: string; workspaceId?: string | null } = {}) {
+    const cacheKey = `${opts.doctype ?? '*'}|${opts.category ?? '*'}|${opts.workspaceId ?? 'public'}`;
+    const cached = this._listCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < this.LIST_TTL_MS) return cached.data;
+
     const where: any = { OR: [{ isPublic: true }] };
     if (opts.workspaceId) where.OR.push({ workspaceId: opts.workspaceId });
-    if (opts.doctype)  where.doctype = opts.doctype;
+    if (opts.doctype)  where.doctype  = opts.doctype;
     if (opts.category) where.category = opts.category;
-    return this.prisma.cvTemplate.findMany({
+    const data = await this.prisma.cvTemplate.findMany({
       where, orderBy: [{ category: 'asc' }, { name: 'asc' }],
     });
+    this._listCache.set(cacheKey, { ts: Date.now(), data });
+    return data;
   }
+
+  /** Invalidate the list cache (call after seed/refresh). */
+  invalidateListCache() { this._listCache.clear(); }
 
   findOne(id: string) {
     return this.prisma.cvTemplate.findUnique({ where: { id } });

@@ -67,6 +67,9 @@ export function useElementsApi(
    *  saveStatus = 'saved'. Mutators continue to short-circuit via the
    *  existing isPreviewing guard. */
   overrideElements?: SlideElementDTO[] | null,
+  /** Deck-level cache for normal editor navigation. When present, slide
+   *  switching can render locally instead of issuing another elements GET. */
+  cachedElements?: SlideElementDTO[] | null,
 ): UseElementsApi {
   const [state, setState] = useState<ApiState>({
     elements: [], loading: !!slideId, error: null, saveStatus: 'saved',
@@ -79,6 +82,7 @@ export function useElementsApi(
   // Phase 35-final-B Task 1 — override pin. When overrideElements is set,
   // mirror them into local state and disable all network paths below.
   const hasOverride = Array.isArray(overrideElements);
+  const hasCache = !hasOverride && Array.isArray(cachedElements);
   useEffect(() => {
     if (!hasOverride) return;
     setState({ elements: overrideElements as SlideElementDTO[], loading: false, error: null, saveStatus: 'saved' });
@@ -94,6 +98,10 @@ export function useElementsApi(
     if (hasOverride) return;  // override active — no network fetch
     if (!slideId) {
       setState({ elements: [], loading: false, error: null, saveStatus: 'saved' });
+      return;
+    }
+    if (hasCache) {
+      setState({ elements: cachedElements as SlideElementDTO[], loading: false, error: null, saveStatus: 'saved' });
       return;
     }
     let cancelled = false;
@@ -115,10 +123,10 @@ export function useElementsApi(
       }
     })();
     return () => { cancelled = true; };
-    // hasOverride is in the dep array so re-mounting back to live mode after
-    // preview exit triggers a fresh fetch.
+    // hasOverride/hasCache are in the dep array so re-mounting back to live
+    // mode after preview exit, or receiving deck cache, updates the source.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slideId, hasOverride]);
+  }, [slideId, hasOverride, hasCache, cachedElements]);
 
   // ── Debounced flush ────────────────────────────────────────────────────────
   const flush = useCallback(async () => {

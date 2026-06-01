@@ -1,0 +1,336 @@
+{
+  "totalCVs": 150,
+  "totalJobs": 100,
+  "totalMatches": 25,
+  "atsAccuracy": 13.333333333333334,
+  "avgATSScore": 70.7,
+  "avgHumanScore": 87.30222222222224,
+  "jobMatchAccuracy": null,
+  "skillMatchAccuracy": null,
+  "keywordMatchAccuracy": null,
+  "experienceMatchAccuracy": null,
+  "totalRecommendations": 171,
+  "recommendationQuality": 80,
+  "duplicateRate": 0,
+  "falsePositiveRate": 0,
+  "falseNegativeRate": 0,
+  "humanCorrelation": 0.8515990365873891,
+  "productionReadiness": null,
+  "certificationStatus": "NOT CERTIFIED",
+  "cvResults": [
+    {
+      "cvId": "developer-dev-001",
+      "category": "developer",
+      "atsScore": 65,
+      "humanScore": 85.66666666666667,
+      "variance": 20.66666666666667,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-002",
+      "category": "developer",
+      "atsScore": 65,
+      "humanScore": 84.33333333333333,
+      "variance": 19.33333333333333,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-003",
+      "category": "developer",
+      "atsScore": 65,
+      "humanScore": 85.33333333333333,
+      "variance": 20.33333333333333,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-004",
+      "category": "developer",
+      "atsScore": 65,
+      "humanScore": 85.33333333333333,
+      "variance": 20.33333333333333,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-005",
+      "category": "developer",
+      "atsScore": 65,
+      "humanScore": 85.66666666666667,
+      "variance": 20.66666666666667,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-006",
+      "category": "developer",
+      "atsScore": 65,
+      "humanScore": 86,
+      "variance": 21,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-007",
+      "category": "developer",
+      "atsScore": 65,
+      "humanScore": 86,
+      "variance": 21,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-008",
+      "category": "developer",
+      "atsScore": 65,
+      "humanScore": 85,
+      "variance": 20,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-009",
+      "category": "developer",
+      "atsScore": 65,
+      "humanScore": 85.66666666666667,
+      "variance": 20.66666666666667,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-010",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 89.66666666666667,
+      "variance": 15.666666666666671,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-011",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 88.66666666666667,
+      "variance": 14.666666666666671,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-012",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 89.66666666666667,
+      "variance": 15.666666666666671,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-013",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 89.33333333333333,
+      "variance": 15.333333333333329,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-014",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 88.33333333333333,
+      "variance": 14.333333333333329,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-015",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 89.66666666666667,
+      "variance": 15.666666666666671,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-016",
+      "category": "developer",
+      "atsScore": 68,
+      "humanScore": 89.66666666666667,
+      "variance": 21.66666666666667,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-017",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 89,
+      "variance": 15,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-018",
+      "category": "developer",
+      "atsScore": 68,
+      "humanScore": 89.33333333333333,
+      "variance": 21.33333333333333,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-019",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 89.66666666666667,
+      "variance": 15.666666666666671,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-020",
+      "category": "developer",
+      "atsScore": 68,
+      "humanScore": 87.66666666666667,
+      "variance": 19.66666666666667,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-021",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 90,
+      "variance": 16,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-022",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 89.33333333333333,
+      "variance": 15.333333333333329,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-023",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 88.66666666666667,
+      "variance": 14.666666666666671,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-024",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 90.33333333333333,
+      "variance": 16.33333333333333,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-025",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 93,
+      "variance": 19,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-026",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 91.66666666666667,
+      "variance": 17.66666666666667,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-027",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 92,
+      "variance": 18,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-028",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 91.66666666666667,
+      "variance": 17.66666666666667,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-029",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 93,
+      "variance": 19,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    },
+    {
+      "cvId": "developer-dev-030",
+      "category": "developer",
+      "atsScore": 74,
+      "humanScore": 91.33333333333333,
+      "variance": 17.33333333333333,
+      "falsePositive": false,
+      "falseNegative": false,
+      "correlation": 0.8515990365873891
+    }
+  ],
+  "jobMatchResults": [],
+  "recommendations": {
+    "totalRecommendations": 171,
+    "accurateRecommendations": 0,
+    "relevantRecommendations": 0,
+    "actionableRecommendations": 0,
+    "duplicates": 0,
+    "quality": 80
+  },
+  "launchRecommendation": "❌ Platform not ready for production",
+  "remainingIssues": [
+    "ATS Accuracy below target (13.3% vs 85%)",
+    "Recommendation Quality below target (80.0% vs 85%)"
+  ]
+}

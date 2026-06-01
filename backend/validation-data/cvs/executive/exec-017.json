@@ -1,0 +1,49 @@
+{
+  "profile": {
+    "skills": [
+      "Strategic Planning",
+      "P&L Management",
+      "Team Leadership",
+      "Business Development",
+      "Fundraising",
+      "M&A"
+    ],
+    "experience": [
+      {
+        "title": "Chief Executive Officer",
+        "company": "NexGen Tech",
+        "duration": "2021-Present",
+        "description": "Leading company strategy and operations. Grew revenue from $10M to $50M ARR. Raised Series B ($30M). Built team from 50 to 200 employees."
+      },
+      {
+        "title": "VP of Product",
+        "company": "Apex Digital",
+        "duration": "2018-2021",
+        "description": "Led product organization of 40 people. Launched 3 major products. Increased user base by 300%."
+      }
+    ],
+    "education": [
+      {
+        "degree": "MBA",
+        "institution": "Harvard Business School",
+        "year": "2017"
+      },
+      {
+        "degree": "BS Engineering",
+        "institution": "Stanford University",
+        "year": "2010"
+      }
+    ],
+    "contact": {
+      "name": "Avery Rodriguez",
+      "email": "avery.rodriguez@email.com",
+      "phone": "+1-555-2895",
+      "location": "San Francisco, CA",
+      "linkedin": "linkedin.com/in/avery-rodriguez"
+    }
+  },
+  "document": {
+    "title": "Avery Rodriguez - Chief Executive Officer",
+    "content": "Avery Rodriguez\nChief Executive Officer\n\nExecutive Summary:\nExperienced technology executive with 15+ years leading high-growth startups..."
+  }
+}

@@ -1,4 +1,5 @@
 import { Controller, Get, Put, Delete, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SlideTransitionsService, SlideTransition } from './slide-transitions.service';
@@ -14,6 +15,7 @@ import { SlideTransitionsService, SlideTransition } from './slide-transitions.se
 
 @ApiTags('Slide Transitions')
 @UseGuards(JwtAuthGuard)
+@SkipThrottle({ short: true, medium: true, long: true })
 @ApiBearerAuth()
 @Controller()
 export class SlideTransitionsController {

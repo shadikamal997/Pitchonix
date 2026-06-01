@@ -1,0 +1,102 @@
+{
+  "profile": {
+    "skills": [
+      "Figma",
+      "User Research",
+      "Sketch",
+      "Usability Testing",
+      "Illustrator",
+      "Interaction Design",
+      "Motion Design",
+      "Wireframing",
+      "After Effects",
+      "UI Design"
+    ],
+    "experience": [
+      {
+        "title": "Lead Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2022-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "InnovateLabs",
+        "duration": "2020-2022",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "TechCorp",
+        "duration": "2018-2020",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "Digital Solutions",
+        "duration": "2016-2018",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2015-2016",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "Carnegie Mellon",
+        "year": "2011"
+      }
+    ],
+    "contact": {
+      "name": "Casey Rodriguez",
+      "email": "casey.rodriguez@email.com",
+      "phone": "+1-555-1351",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/casey-rodriguez"
+    }
+  },
+  "document": {
+    "title": "Casey Rodriguez - Lead Product Designer",
+    "content": "Casey Rodriguez\nLead Product Designer\n\nSkills:\nFigma, User Research, Sketch, Usability Testing, Illustrator, Interaction Design, Motion Design, Wireframing, After Effects, UI Design\n\nExperience:\nLead Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

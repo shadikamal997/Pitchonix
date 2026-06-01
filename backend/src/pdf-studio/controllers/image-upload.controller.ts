@@ -102,24 +102,6 @@ export class ImageUploadController {
   }
 
   /**
-   * Get image by ID
-   * GET /api/pdf-studio/images/:id
-   */
-  @Get(':id')
-  async getImage(@Param('id') id: string) {
-    const image = await this.imageUploadService.getImage(id);
-
-    if (!image) {
-      throw new NotFoundException('Image not found');
-    }
-
-    return {
-      success: true,
-      data: image,
-    };
-  }
-
-  /**
    * List user images
    * GET /api/pdf-studio/images/user/:userId
    */
@@ -134,13 +116,31 @@ export class ImageUploadController {
   }
 
   /**
+   * Get image by ID
+   * GET /api/pdf-studio/images/:id
+   */
+  @Get(':id')
+  async getImage(@GetUser() user: any, @Param('id') id: string) {
+    const image = await this.imageUploadService.getImage(id, user?.id);
+
+    if (!image) {
+      throw new NotFoundException('Image not found');
+    }
+
+    return {
+      success: true,
+      data: image,
+    };
+  }
+
+  /**
    * Delete image
    * DELETE /api/pdf-studio/images/:id
    */
   @Delete(':id')
-  async deleteImage(@Param('id') id: string) {
+  async deleteImage(@GetUser() user: any, @Param('id') id: string) {
     try {
-      await this.imageUploadService.deleteImage(id);
+      await this.imageUploadService.deleteImage(id, user?.id);
 
       return {
         success: true,

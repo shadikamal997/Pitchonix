@@ -1,0 +1,33 @@
+{
+  "title": "Mid-Level JavaScript Developer",
+  "category": "frontend",
+  "description": "Looking for a skilled JavaScript Developer to build interactive web applications. We are a mid-size company looking for someone passionate about technology and innovation.",
+  "requiredSkills": [
+    "JavaScript",
+    "TypeScript",
+    "Node.js",
+    "React",
+    "Vue.js"
+  ],
+  "requiredExperience": "2+ years JavaScript development",
+  "responsibilities": [
+    "Write clean JavaScript code",
+    "Build interactive features",
+    "Debug issues"
+  ],
+  "qualifications": [
+    "Deep JavaScript knowledge",
+    "Experience with frameworks",
+    "Problem-solving skills"
+  ],
+  "benefits": [
+    "Competitive salary",
+    "Health insurance",
+    "Remote work",
+    "401k matching",
+    "Professional development"
+  ],
+  "location": "New York, NY",
+  "employmentType": "Full-time",
+  "remote": "Hybrid"
+}

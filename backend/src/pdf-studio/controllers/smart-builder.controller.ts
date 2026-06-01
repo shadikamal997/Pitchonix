@@ -57,6 +57,23 @@ export class SmartBuilderController {
     private publishingIntelligenceService: PublishingIntelligenceService,
   ) {}
 
+  private async assertDocumentAccess(documentId: string, user: any) {
+    const document = await this.prisma.pdfDocument.findUnique({
+      where: { id: documentId },
+      include: { project: true },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (document.project?.userId && document.project.userId !== user?.id) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+
+    return document;
+  }
+
   /**
    * Analyze raw content
    * POST /api/pdf-studio/smart-builder/analyze
@@ -237,6 +254,7 @@ export class SmartBuilderController {
       tone?: string;
       designStyle?: string;
       brandKitId?: string;
+      proTemplateId?: string;
       title?: string;
       templateType?: string;
       improveWriting?: boolean;
@@ -253,15 +271,19 @@ export class SmartBuilderController {
       layoutType?: string;
       hasImages?: boolean;
       hasCharts?: boolean;
-    },
+    } = {},
   ) {
     try {
       if (!rawContent || rawContent.trim().length === 0) {
         throw new HttpException('Raw content is required', HttpStatus.BAD_REQUEST);
       }
 
-      const userId = user?.id || 'cf840a48-cfde-41ae-b884-5fec523e6fc9'; // Use real user for testing
-      
+      // If no authenticated user, signal the frontend to redirect to login.
+      if (!user?.id) {
+        return { success: true, data: { requiresAuth: true } };
+      }
+      const userId = user.id;
+
       this.logger.log(`Generating document for user ${userId} (${rawContent.length} chars)`);
 
       // ── Step 1: Normalize (HTML → clean markdown-preserving text) ──────────
@@ -318,12 +340,7 @@ export class SmartBuilderController {
       });
       this.logger.log(`Page plan: ${plannedPages.length} pages`);
 
-      // Debug: Check content distribution
-      const nonEmptyPages = plannedPages.filter(p => p.contentText && p.contentText.length > 50).length;
-      this.logger.log(`DEBUG: Pages with content (>50 chars): ${nonEmptyPages}/${plannedPages.length}`);
-      plannedPages.slice(0, 5).forEach((p, i) => {
-        this.logger.log(`DEBUG: Page ${i + 1}: ${p.contentText?.length || 0} chars, type=${p.sectionType}`);
-      });
+      this.logger.log(`Page plan: ${plannedPages.length} pages`);
 
       // ══ NEW: PRODUCTION-QUALITY COMPOSITION PIPELINE ═════════════════════════
       this.logger.log('🎨 Applying production-quality composition...');
@@ -458,29 +475,22 @@ export class SmartBuilderController {
 
       // ══ END COMPOSITION PIPELINE ═════════════════════════════════════════════
 
-      // ── Create or reuse project ────────────────────────────────────────────
-      let project;
-      if (userId === 'cf840a48-cfde-41ae-b884-5fec523e6fc9') {
-        // For testing: reuse existing project
-        project = await this.prisma.project.findFirst({
-          where: { userId },
-        });
-        if (!project) {
-          throw new Error('Test user project not found');
-        }
-      } else {
-        project = await this.prisma.project.create({
-          data: {
-            userId,
-            name:           config.title || outline.title || 'Smart PDF Document',
-            documentType:   'smart_pdf',
-            documentFormat: 'pdf',
-            status:         'draft',
-            audience:       config.targetAudience,
-            tone:           config.tone,
-          },
-        });
-      }
+      // ── Create project ─────────────────────────────────────────────────────
+      const _sbWsMember = await this.prisma.workspaceMember.findFirst({
+        where: { userId }, select: { workspaceId: true },
+      });
+      const project = await this.prisma.project.create({
+        data: {
+          userId,
+          name:           config.title || outline.title || 'Smart PDF Document',
+          documentType:   'smart_pdf',
+          documentFormat: 'pdf',
+          status:         'draft',
+          audience:       config.targetAudience,
+          tone:           config.tone,
+          ...(_sbWsMember?.workspaceId ? { workspaceId: _sbWsMember.workspaceId } : {}),
+        },
+      });
 
       // ── Create PDF document ────────────────────────────────────────────────
       const docTitle = config.title || outline.title || analysisResult.suggestedTitle;
@@ -490,10 +500,9 @@ export class SmartBuilderController {
           title:        docTitle,
           documentType: documentType || this.mapDetectedTypeToDocumentType(analysisResult.detectedType),
           brandKitId:   config.brandKitId,
-          // TODO: Uncomment after schema migration is applied
-          // proTemplateId: config.proTemplateId || null,
-          // templateType:  config.templateType || 'clean_business_report',
-          // layoutType:    config.layoutType || null,
+          proTemplateId: config.proTemplateId || null,
+          templateType:  config.templateType || 'clean_business_report',
+          layoutType:    config.layoutType || null,
           status:       'draft',
           outline: {
             detectedType:         analysisResult.detectedType,
@@ -511,7 +520,7 @@ export class SmartBuilderController {
             generatedSections: finalCompositions.length,
             estimatedPages:   outline.estimatedTotalPages,
             templateType:     config.templateType || 'clean_business_report',
-            proTemplateId:    (config as any).proTemplateId, // Store in metadata for now (TODO: add to schema)
+            proTemplateId:    (config as any).proTemplateId || null,
             visualStyle:      config.visualStyle,
             layoutType:       config.layoutType,
             hasImages:        config.hasImages || false,
@@ -684,8 +693,19 @@ export class SmartBuilderController {
   async enhanceDocument(
     @Body('documentId') documentId: string,
     @Body('enhancementType') enhancementType: string,
-    @Body('targetId') targetId?: string, // Optional: enhance specific page/section
+    @Body('targetId') targetId?: string,
   ) {
+    const VALID_ENHANCEMENT_TYPES = [
+      'improve_writing', 'fix_grammar', 'restructure',
+      'expand', 'shorten', 'professionalize',
+    ];
+    if (!enhancementType || !VALID_ENHANCEMENT_TYPES.includes(enhancementType)) {
+      throw new HttpException(
+        `Invalid enhancement type. Valid types: ${VALID_ENHANCEMENT_TYPES.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     try {
       const document = await this.prisma.pdfDocument.findUnique({
         where: { id: documentId },
@@ -859,16 +879,13 @@ export class SmartBuilderController {
    * Get document with pages
    * GET /api/pdf-studio/smart-builder/documents/:id
    */
-  @Public()
   @Get('documents/:id')
-  async getDocument(@Param('id') id: string) {
+  async getDocument(@Param('id') id: string, @GetUser() user: any) {
     try {
       const document = await this.prisma.pdfDocument.findUnique({
         where: { id },
         include: {
-          pages: {
-            orderBy: { order: 'asc' },
-          },
+          pages: { orderBy: { order: 'asc' } },
           brandKit: true,
           project: true,
         },
@@ -876,6 +893,11 @@ export class SmartBuilderController {
 
       if (!document) {
         throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Verify the requesting user owns this document via its project.
+      if (document.project?.userId && document.project.userId !== user?.id) {
+        throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
       }
 
       // Get analysis if available
@@ -897,6 +919,8 @@ export class SmartBuilderController {
         },
       };
     } catch (error) {
+      // Re-throw HttpExceptions as-is so 404/403 status codes are preserved.
+      if (error instanceof HttpException) throw error;
       this.logger.error('Failed to get document', error);
       throw new HttpException(
         error.message || 'Failed to get document',
@@ -1019,24 +1043,31 @@ export class SmartBuilderController {
     @Param('id') documentId: string,
     @Body('pageType') pageType: string,
     @Body('title') title: string,
+    @GetUser() user: any,
   ) {
     try {
-      const lastPage = await this.prisma.pdfPage.findFirst({
-        where: { documentId },
-        orderBy: { order: 'desc' },
-      });
-      const order = (lastPage?.order ?? 0) + 1;
-      const page = await this.prisma.pdfPage.create({
-        data: {
-          documentId,
-          order,
-          pageType: pageType || 'content',
-          title: title || `Page ${order + 1}`,
-          content: { text: '', template: null, metadata: {}, images: [], charts: [] },
-        },
+      await this.assertDocumentAccess(documentId, user);
+      // Use a transaction so the findFirst + create is atomic — prevents two
+      // concurrent requests assigning the same order number.
+      const page = await this.prisma.$transaction(async (tx) => {
+        const lastPage = await tx.pdfPage.findFirst({
+          where: { documentId },
+          orderBy: { order: 'desc' },
+        });
+        const order = (lastPage?.order ?? 0) + 1;
+        return tx.pdfPage.create({
+          data: {
+            documentId,
+            order,
+            pageType: pageType || 'content',
+            title: title || `Page ${order + 1}`,
+            content: { text: '', template: null, metadata: {}, images: [], charts: [] },
+          },
+        });
       });
       return { success: true, data: { page } };
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new HttpException(error.message || 'Failed to add page', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -1046,13 +1077,28 @@ export class SmartBuilderController {
   async deletePage(
     @Param('id') documentId: string,
     @Param('pageId') pageId: string,
+    @GetUser() user: any,
   ) {
     try {
+      // Verify page belongs to the document AND the document belongs to the user.
+      const page = await this.prisma.pdfPage.findUnique({
+        where: { id: pageId },
+        include: { document: { include: { project: true } } },
+      });
+      if (!page || page.documentId !== documentId) {
+        throw new HttpException('Page not found', HttpStatus.NOT_FOUND);
+      }
+      if (page.document?.project?.userId && page.document.project.userId !== user?.id) {
+        throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+      }
+
       const count = await this.prisma.pdfPage.count({ where: { documentId } });
       if (count <= 1) throw new HttpException('Cannot delete the only page', HttpStatus.BAD_REQUEST);
+
       await this.prisma.pdfPage.delete({ where: { id: pageId } });
       return { success: true, message: 'Page deleted' };
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new HttpException(error.message || 'Failed to delete page', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -1062,10 +1108,12 @@ export class SmartBuilderController {
   async duplicatePage(
     @Param('id') documentId: string,
     @Param('pageId') pageId: string,
+    @GetUser() user: any,
   ) {
     try {
+      await this.assertDocumentAccess(documentId, user);
       const source = await this.prisma.pdfPage.findUnique({ where: { id: pageId } });
-      if (!source) throw new HttpException('Page not found', HttpStatus.NOT_FOUND);
+      if (!source || source.documentId !== documentId) throw new HttpException('Page not found', HttpStatus.NOT_FOUND);
       const lastPage = await this.prisma.pdfPage.findFirst({
         where: { documentId },
         orderBy: { order: 'desc' },

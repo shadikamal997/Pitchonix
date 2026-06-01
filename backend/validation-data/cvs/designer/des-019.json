@@ -1,0 +1,69 @@
+{
+  "profile": {
+    "skills": [
+      "Figma",
+      "UI Design",
+      "Photoshop",
+      "Sketch",
+      "Interaction Design",
+      "Wireframing",
+      "Adobe XD",
+      "Motion Design",
+      "Visual Design",
+      "Design Systems"
+    ],
+    "experience": [
+      {
+        "title": "Senior Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2021-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2018-2021",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "UC Berkeley",
+        "year": "2014"
+      }
+    ],
+    "contact": {
+      "name": "Alex Rodriguez",
+      "email": "alex.rodriguez@email.com",
+      "phone": "+1-555-4351",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/alex-rodriguez"
+    }
+  },
+  "document": {
+    "title": "Alex Rodriguez - Senior Product Designer",
+    "content": "Alex Rodriguez\nSenior Product Designer\n\nSkills:\nFigma, UI Design, Photoshop, Sketch, Interaction Design, Wireframing, Adobe XD, Motion Design, Visual Design, Design Systems\n\nExperience:\nSenior Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

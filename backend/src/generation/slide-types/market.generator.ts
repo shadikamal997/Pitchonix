@@ -1,5 +1,6 @@
 import { SlideType, WizardInput } from './types';
 import { BaseSlideGenerator } from './base-slide.generator';
+import { marketTitle, marketSubtitle } from './narrative-titles';
 
 // =============================================================================
 //  Market Opportunity Generator — Phase 32.75 Tier 9 cleanup
@@ -20,8 +21,8 @@ export class MarketOpportunitySlideGenerator extends BaseSlideGenerator {
               input.structured?.marketSizing?.sam ||
               input.structured?.marketSizing?.som);
   }
-  getTitle(_input: WizardInput): string    { return 'Market Opportunity'; }
-  getSubtitle(_input: WizardInput): string { return 'TAM • SAM • SOM'; }
+  getTitle(input: WizardInput): string    { return marketTitle(input); }
+  getSubtitle(input: WizardInput): string { return marketSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {

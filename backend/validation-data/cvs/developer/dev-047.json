@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "skills": [
+      "JavaScript",
+      "Redux",
+      "HTML/CSS",
+      "Terraform",
+      "Scrum",
+      "Kubernetes",
+      "Python",
+      "TypeScript",
+      "Next.js",
+      "Node.js",
+      "Jenkins",
+      "PostgreSQL",
+      "Angular",
+      "Agile",
+      "PHP"
+    ],
+    "experience": [
+      {
+        "title": "Lead Software Engineer",
+        "company": "InnovateLabs",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "Apex Digital",
+        "duration": "2020-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "Quantum Labs",
+        "duration": "2018-2020",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "TechCorp",
+        "duration": "2016-2018",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "InnovateLabs",
+        "duration": "2015-2016",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "UC Berkeley",
+        "year": "2011",
+        "gpa": "3.6"
+      }
+    ],
+    "certifications": [
+      "AWS Certified Solutions Architect",
+      "MongoDB Certified Developer"
+    ],
+    "contact": {
+      "name": "Quinn Martinez",
+      "email": "quinn.martinez@email.com",
+      "phone": "+1-555-8062",
+      "location": "San Francisco, CA",
+      "github": "github.com/quinnmartinez"
+    }
+  },
+  "document": {
+    "title": "Quinn Martinez - Lead Software Engineer",
+    "content": "Quinn Martinez\nLead Software Engineer\n\nSkills:\nJavaScript, Redux, HTML/CSS, Terraform, Scrum, Kubernetes, Python, TypeScript, Next.js, Node.js, Jenkins, PostgreSQL, Angular, Agile, PHP\n\nExperience:\nLead Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

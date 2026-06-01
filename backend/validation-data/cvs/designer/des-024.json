@@ -1,0 +1,102 @@
+{
+  "profile": {
+    "skills": [
+      "Visual Design",
+      "Photoshop",
+      "Prototyping",
+      "UI Design",
+      "Usability Testing",
+      "Design Systems",
+      "Figma",
+      "Sketch",
+      "Wireframing",
+      "Adobe XD"
+    ],
+    "experience": [
+      {
+        "title": "Lead Product Designer",
+        "company": "Digital Solutions",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "InnovateLabs",
+        "duration": "2020-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2018-2020",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "Cloud Systems",
+        "duration": "2016-2018",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "Quantum Labs",
+        "duration": "2014-2016",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "Cloud Systems",
+        "duration": "2013-2014",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "MIT",
+        "year": "2009"
+      }
+    ],
+    "contact": {
+      "name": "Sage Martinez",
+      "email": "sage.martinez@email.com",
+      "phone": "+1-555-0106",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/sage-martinez"
+    }
+  },
+  "document": {
+    "title": "Sage Martinez - Lead Product Designer",
+    "content": "Sage Martinez\nLead Product Designer\n\nSkills:\nVisual Design, Photoshop, Prototyping, UI Design, Usability Testing, Design Systems, Figma, Sketch, Wireframing, Adobe XD\n\nExperience:\nLead Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

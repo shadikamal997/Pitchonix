@@ -1,0 +1,43 @@
+{
+  "profile": {
+    "skills": [
+      "Tailwind",
+      "PHP",
+      "MySQL",
+      "Jenkins",
+      "MongoDB"
+    ],
+    "experience": [
+      {
+        "title": "Junior Software Engineer",
+        "company": "TechCorp",
+        "duration": "2025-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "UT Austin",
+        "year": "2021",
+        "gpa": "3.8"
+      }
+    ],
+    "contact": {
+      "name": "Quinn Brown",
+      "email": "quinn.brown@email.com",
+      "phone": "+1-555-4905",
+      "location": "San Francisco, CA",
+      "github": "github.com/quinnbrown"
+    }
+  },
+  "document": {
+    "title": "Quinn Brown - Junior Software Engineer",
+    "content": "Quinn Brown\nJunior Software Engineer\n\nSkills:\nTailwind, PHP, MySQL, Jenkins, MongoDB\n\nExperience:\nJunior Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

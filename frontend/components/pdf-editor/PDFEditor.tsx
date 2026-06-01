@@ -35,6 +35,7 @@ interface Page {
   type: string;
   title?: string;
   content?: any;
+  elements?: any[];
 }
 
 interface PDFEditorProps {
@@ -503,8 +504,42 @@ const PDFEditor = ({
                   }`}
                 >
                   {/* Page Preview Thumbnail */}
-                  <div className="aspect-[210/297] w-full rounded-t-lg bg-white flex items-center justify-center text-[#C9C6BD] border-b">
-                    <Eye className="h-8 w-8 opacity-30" />
+                  <div className="aspect-[210/297] w-full rounded-t-lg bg-white overflow-hidden border-b">
+                    <div 
+                      className="w-full h-full p-2 text-[6px] leading-tight"
+                      style={{
+                        fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+                      }}
+                    >
+                      {/* Render miniature page preview */}
+                      {page.title && (
+                        <div className="font-bold text-[#111111] mb-1 truncate">
+                          {page.title}
+                        </div>
+                      )}
+                      {page.content && (
+                        <div 
+                          className="text-[#6B6B6B] line-clamp-6"
+                          dangerouslySetInnerHTML={{ 
+                            __html: page.content
+                              .replace(/<[^>]*>/g, ' ')
+                              .substring(0, 150) + '...'
+                          }}
+                        />
+                      )}
+                      {/* Visual indicator if page has elements */}
+                      {page.elements && page.elements.length > 0 && (
+                        <div className="mt-1 flex gap-1">
+                          {page.elements.slice(0, 3).map((el: any, i: number) => (
+                            <div 
+                              key={i}
+                              className="w-2 h-2 rounded-sm bg-[#4F7563]/20"
+                              title={el.type}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Page Info */}

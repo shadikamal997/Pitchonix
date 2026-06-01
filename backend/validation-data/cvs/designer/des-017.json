@@ -1,0 +1,58 @@
+{
+  "profile": {
+    "skills": [
+      "Figma",
+      "Wireframing",
+      "Design Systems",
+      "Sketch",
+      "UX Design",
+      "Illustrator",
+      "Motion Design",
+      "Interaction Design",
+      "Prototyping",
+      "Adobe XD"
+    ],
+    "experience": [
+      {
+        "title": "Senior Product Designer",
+        "company": "TechCorp",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "DataFlow Inc",
+        "duration": "2020-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "UC Berkeley",
+        "year": "2016"
+      }
+    ],
+    "contact": {
+      "name": "Morgan Johnson",
+      "email": "morgan.johnson@email.com",
+      "phone": "+1-555-6280",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/morgan-johnson"
+    }
+  },
+  "document": {
+    "title": "Morgan Johnson - Senior Product Designer",
+    "content": "Morgan Johnson\nSenior Product Designer\n\nSkills:\nFigma, Wireframing, Design Systems, Sketch, UX Design, Illustrator, Motion Design, Interaction Design, Prototyping, Adobe XD\n\nExperience:\nSenior Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

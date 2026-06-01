@@ -287,7 +287,14 @@ const ThumbnailRow: React.FC<{
       <div className="flex items-start gap-1.5 px-1">
         <span className="w-4 text-[10px] font-mono text-[#C9C6BD] mt-1 text-right flex-shrink-0">{index}</span>
         <div className="flex-1 min-w-0">
-          <SlideThumbnail slideId={slide.id} width={170} pageNumber={index} totalPages={total} />
+          <SlideThumbnail
+            slideId={slide.id}
+            width={170}
+            pageNumber={index}
+            totalPages={total}
+            background={slide.background}
+            themeTokens={slide.themeTokens}
+          />
           <div className="mt-1 flex items-center gap-1">
             {isRenaming ? (
               <input

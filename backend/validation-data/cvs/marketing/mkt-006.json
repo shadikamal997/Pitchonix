@@ -1,0 +1,61 @@
+{
+  "profile": {
+    "skills": [
+      "Content Marketing",
+      "Data Analysis",
+      "Email Marketing",
+      "Copywriting",
+      "Facebook Ads",
+      "Content Strategy",
+      "Brand Management",
+      "Google Ads",
+      "SEM",
+      "Google Analytics"
+    ],
+    "experience": [
+      {
+        "title": "Marketing Manager",
+        "company": "Apex Digital",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "NexGen Tech",
+        "duration": "2023-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "MIT",
+        "year": "2019"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Taylor Smith",
+      "email": "taylor.smith@email.com",
+      "phone": "+1-555-2902",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Taylor Smith - Mid Marketing Manager",
+    "content": "Taylor Smith\nMid Marketing Manager\n\nSkills:\nContent Marketing, Data Analysis, Email Marketing, Copywriting, Facebook Ads, Content Strategy, Brand Management, Google Ads, SEM, Google Analytics\n\nExperience:\nMid Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

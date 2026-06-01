@@ -1,0 +1,61 @@
+{
+  "profile": {
+    "skills": [
+      "Social Media",
+      "Brand Management",
+      "Copywriting",
+      "Google Ads",
+      "Google Analytics",
+      "Facebook Ads",
+      "Content Marketing",
+      "Data Analysis",
+      "Email Marketing",
+      "Conversion Optimization"
+    ],
+    "experience": [
+      {
+        "title": "Marketing Manager",
+        "company": "Cloud Systems",
+        "duration": "2023-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Marketing Manager",
+        "company": "InnovateLabs",
+        "duration": "2022-2023",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BA Marketing",
+        "institution": "Stanford",
+        "year": "2018"
+      }
+    ],
+    "certifications": [
+      "Google Ads Certified",
+      "HubSpot Inbound Marketing"
+    ],
+    "contact": {
+      "name": "Alex Jones",
+      "email": "alex.jones@email.com",
+      "phone": "+1-555-2910",
+      "location": "Austin, TX"
+    }
+  },
+  "document": {
+    "title": "Alex Jones - Mid Marketing Manager",
+    "content": "Alex Jones\nMid Marketing Manager\n\nSkills:\nSocial Media, Brand Management, Copywriting, Google Ads, Google Analytics, Facebook Ads, Content Marketing, Data Analysis, Email Marketing, Conversion Optimization\n\nExperience:\nMid Marketing Manager with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

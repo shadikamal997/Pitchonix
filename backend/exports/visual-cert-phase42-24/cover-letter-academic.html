@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Alexandra Chen - Cover Letter Academic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── Variables ─────────────────────────────────────── */
+:root {
+  --a:  #1F2937;
+  --a2: #64748B;
+  --tx: #0F172A;
+  --bg: #FFFFFF;
+  --sb: #F1F5F9;
+  --sf: #0F172A;
+  --hf: 'Lora', serif;
+  --bf: 'Lora', sans-serif;
+  --sp: 36px;
+  --eg: 22px;
+}
+/* ── Reset ──────────────────────────────────────────── */
+@page { size:A4; margin:0; }
+*,*::before,*::after { box-sizing:border-box; }
+body { margin:0; padding:0; font-family:var(--bf); font-size:11.5px; line-height:1.65;
+  color:var(--tx); background:#D8DCE0; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+/* ── Page containers ─────────────────────────────────── */
+.page { background:var(--bg); margin:0 auto; max-width:880px; min-height:100vh; }
+/* Single-column: page owns the padding, banner bleeds through negative margin */
+.page.single { padding:48px 48px 58px; }
+/* full-bleed banner in single-col */
+.page.single>.header.banner { margin:-48px -48px 0; margin-bottom:35px; padding:44px 48px 29px; }
+/* Sidebar grid */
+.page.sidebar-layout { display:grid; min-height:1120px; align-items:stretch; }
+.page.sidebar-layout.side-left  { grid-template-columns:275px 1fr; }
+.page.sidebar-layout.side-right { grid-template-columns:1fr 275px; }
+/* ── Sidebar ─────────────────────────────────────────── */
+.sidebar { background:var(--sb); color:var(--sf); padding:37px 22px 48px; }
+.sidebar.light { background:var(--sb); color:var(--tx); }
+.sidebar h1,.sidebar h2,.sidebar h3 { color:var(--sf); }
+.sidebar.light h1,.sidebar.light h2,.sidebar.light h3 { color:var(--tx); }
+.sidebar h2 { font-size:9.5px; letter-spacing:.18em; border-bottom:1px solid rgba(255,255,255,.22); color:rgba(255,255,255,.7); padding-bottom:5px; margin-bottom:12px; }
+.sidebar.light h2 { border-color:var(--a); color:var(--a); opacity:1; }
+.sidebar .section+.section { margin-top:22px; }
+/* ── Main column ─────────────────────────────────────── */
+.main { padding:37px 44px 48px; }
+/* Headers inside .main: strip top/side padding — .main already provides it */
+.main>.header.block,
+.main>.header.minimal,
+.main>.header.split  { padding-top:0; padding-left:0; padding-right:0; }
+/* Full-bleed banner inside .main */
+.main>.header.banner { margin:-37px -44px 0; margin-bottom:31px; padding:33px 44px 22px; }
+.main .content { padding:0; }
+/* Content for single-col: top gap between header and sections */
+.page.single .content { padding-top:32px; }
+/* Section spacing */
+.content>.section+.section { margin-top:var(--sp); }
+/* ── Typography ─────────────────────────────────────── */
+h1,h2,h3,h4 { font-family:var(--hf); margin:0; padding:0; }
+h1 { font-size:44px; font-weight:700; line-height:1.1; letter-spacing:-.025em; color:var(--tx); }
+h2 { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.13em;
+     color:var(--a); border-bottom:2px solid var(--a); padding-bottom:6px; margin-bottom:16px; }
+h3 { font-size:13px; font-weight:700; color:var(--tx); }
+p  { margin:0 0 5px; }
+a  { color:var(--a); text-decoration:none; }
+/* ── BANNER HEADER ───────────────────────────────────── */
+.header.banner { background:#1F2937; color:#fff;  }
+.banner-main { display:flex; align-items:center; gap:18px; }
+.banner-text h1 { color:#fff; font-size:44px; margin-bottom:5px; }
+.banner-text .headline { color:rgba(255,255,255,.88); font-size:18px; font-weight:400; margin:0; }
+.banner-contact { margin-top:16px; padding-top:13px; border-top:1px solid rgba(255,255,255,.22);
+  display:flex; flex-wrap:wrap; gap:3px 20px; }
+.bc-item { font-size:10.5px; color:rgba(255,255,255,.82); }
+/* Photo inside banner */
+.photo.photo-banner { width:88px; height:88px; object-fit:cover; flex-shrink:0; }
+.photo.photo-banner.photo-circle { border-radius:999px; border:3px solid rgba(255,255,255,.45); }
+.photo.photo-banner.photo-square { border-radius:8px; }
+/* ── BLOCK HEADER ────────────────────────────────────── */
+.header.block h1 { font-size:40px; color:var(--tx); margin-bottom:5px; }
+.header.block .headline { font-size:18px; color:var(--a); font-weight:500; margin:0; }
+.header.block .contact-bar { margin-top:11px; font-size:10.5px; color:#64748B;
+  display:flex; flex-wrap:wrap; gap:2px 16px; }
+.header.block { border-bottom:3px solid var(--a); padding-bottom:18px; margin-bottom:0; }
+/* ── MINIMAL HEADER ──────────────────────────────────── */
+.header.minimal h1 { font-size:42px; font-weight:300; letter-spacing:-.035em; color:var(--tx); }
+.header.minimal .headline { font-size:14px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--a); margin-top:6px; font-weight:600; }
+.header.minimal .contact-bar { margin-top:14px; font-size:10px; color:#94A3B8;
+  display:flex; flex-wrap:wrap; gap:2px 16px; }
+.header.minimal { border-bottom:1px solid #E2E8F0; padding-bottom:20px; }
+/* ── SPLIT HEADER ────────────────────────────────────── */
+.header.split { display:flex; align-items:flex-end; justify-content:space-between; gap:20px;
+  border-bottom:3px solid var(--a); padding-bottom:18px; }
+.split-left h1 { font-size:38px; color:var(--tx); margin-bottom:4px; }
+.split-left .headline { font-size:16px; color:var(--a); font-weight:500; }
+.split-right { text-align:right; }
+.split-contact { display:flex; flex-direction:column; gap:3px; font-size:10.5px; color:#64748B; }
+/* ── Sidebar head ────────────────────────────────────── */
+.sidebar-head { margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid rgba(255,255,255,.14); }
+.sidebar-head h1 { font-size:23px; line-height:1.2; color:var(--sf); }
+.sidebar.light .sidebar-head h1 { color:var(--tx); }
+.sidebar-head .s-headline { font-size:11.5px; color:var(--sf); opacity:.8; margin-top:4px; }
+.sidebar.light .sidebar-head .s-headline { color:var(--a); opacity:1; }
+/* ── Photo ───────────────────────────────────────────── */
+.sidebar-photo { display:flex; justify-content:center; margin-bottom:20px; }
+.photo { width:120px; height:120px; object-fit:cover; display:block; }
+.photo-circle { border-radius:999px; border:3px solid rgba(255,255,255,.28); }
+.photo-square { border-radius:8px; }
+/* ── Contact list (sidebar) ──────────────────────────── */
+.contact-list { font-size:10.5px; margin-bottom:20px; display:grid; gap:7px; }
+.c-row { display:flex; align-items:flex-start; gap:9px; line-height:1.4; }
+.c-ico { font-size:11px; opacity:.7; flex-shrink:0; min-width:16px; text-align:center; }
+.c-val { word-break:break-all; }
+/* ── Summary ─────────────────────────────────────────── */
+.summary-body { font-size:12px; line-height:1.75; color:#374151; }
+/* ── Entries (role/date flex row) ────────────────────── */
+.entries>.entry+.entry { margin-top:var(--eg); }
+.entry { }
+.entry-row { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.entry-main { flex:1; min-width:0; }
+.e-role { display:block; font-size:13px; font-weight:700; color:var(--tx); }
+.e-company { display:block; font-size:12px; color:var(--a); font-weight:500; font-style:italic; margin-top:1px; }
+.e-date { font-size:10px; color:#6B7280; white-space:nowrap; flex-shrink:0; padding-top:2px; font-style:italic; }
+.e-location { font-size:10px; color:#94A3B8; margin-top:2px; margin-bottom:5px; }
+.e-bullets { margin:7px 0 0 16px; padding:0; }
+.e-bullets li { font-size:11.5px; margin-bottom:4px; line-height:1.55; }
+.e-bullets li::marker { color:var(--a); font-size:1.1em; }
+/* ── Timeline ────────────────────────────────────────── */
+.tl-track { position:relative; padding-left:24px; border-left:2px solid rgba(0,0,0,.1); }
+.entry-tl { position:relative; padding-bottom:var(--eg); }
+.entry-tl+.entry-tl { margin-top:0; }
+.tl-dot { position:absolute; left:-33px; top:4px; width:13px; height:13px; border-radius:50%;
+  background:var(--a); border:2.5px solid var(--bg); box-shadow:0 0 0 2px var(--a); }
+/* ── Skills ──────────────────────────────────────────── */
+.sk-bar { margin:8px 0; }
+.sk-name { font-size:11px; margin-bottom:4px; display:flex; justify-content:space-between; }
+.sk-name em { color:var(--a); font-style:normal; font-weight:600; }
+.bar { background:rgba(0,0,0,.08); height:8px; border-radius:4px; overflow:hidden; }
+.fill { background:var(--a); height:100%; border-radius:4px; }
+.sidebar .bar { background:rgba(255,255,255,.18); }
+.sidebar .fill { background:rgba(255,255,255,.82); }
+.sk-dots { display:flex; align-items:center; justify-content:space-between; font-size:11px; padding:4px 0; }
+.dots { color:var(--a); font-size:14px; letter-spacing:2px; }
+.sidebar .dots { color:rgba(255,255,255,.9); }
+.sk-rating { display:flex; align-items:center; justify-content:space-between; font-size:11px; padding:4px 0; }
+.stars { color:var(--a); font-size:13px; letter-spacing:.5px; }
+.sk-group { font-size:11px; margin-bottom:5px; }
+/* Phase 42.22 — Chips style (expertise chips with left accent) */
+.sk-chip { display:flex; align-items:center; justify-content:space-between; padding:7px 0 7px 10px;
+  border-left:3px solid var(--a); margin-bottom:6px; }
+.chip-name { font-size:11px; font-weight:600; color:var(--tx); }
+.chip-level { font-size:9px; color:var(--a2); text-transform:uppercase; letter-spacing:.06em; font-weight:500; }
+/* Phase 42.22 — Compact style (2-column grid with 5-step level bars) */
+.sk-compact-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; }
+.sk-compact { display:flex; justify-content:space-between; align-items:center; font-size:10.5px; }
+.compact-dots { color:var(--a); font-size:12px; letter-spacing:1px; }
+/* ── Pills ───────────────────────────────────────────── */
+.pills { display:flex; flex-wrap:wrap; gap:5px; }
+.pill { display:inline-block; padding:3px 10px; border-radius:4px; background:rgba(0,0,0,.065); font-size:10px; font-weight:500; color:var(--tx); line-height:1.4; }
+.sidebar .pill { background:rgba(255,255,255,.18); color:var(--sf); }
+.sidebar.light .pill { background:rgba(0,0,0,.065); color:var(--tx); }
+.tech-pills { margin-top:5px; }
+/* ── Languages ───────────────────────────────────────── */
+.lang-row { display:flex; justify-content:space-between; align-items:center; font-size:11px; padding:4px 0; }
+.lang-text { font-size:11px; padding:2px 0; }
+.lang-text em { color:var(--a2); font-style:normal; }
+.lang-lv { color:rgba(255,255,255,.65); font-size:9px; margin-left:4px; font-style:normal; }
+/* ── Projects ────────────────────────────────────────── */
+.proj-desc { font-size:11px; margin-top:4px; color:#4B5563; }
+.proj-links { margin-top:5px; font-size:10.5px; }
+.proj-links a+a::before { content:' · '; color:#94A3B8; }
+/* Phase 42.22 — Certification badge cards (left accent border + issuer) */
+.cert-item { border-left:3px solid var(--a); padding:8px 0 8px 12px; margin-bottom:10px; }
+.cert-name { font-size:12px; font-weight:700; color:var(--tx); margin-bottom:3px; }
+.cert-issuer { font-size:10.5px; color:var(--a); font-style:italic; margin-bottom:2px; }
+.cert-date { font-size:9.5px; color:#94A3B8; }
+/* Phase 42.22 — Awards row layout (name left, meta right) */
+.award-item { display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+  padding:6px 0; border-bottom:1px solid rgba(0,0,0,.05); }
+.award-item:last-child { border-bottom:none; }
+.award-name { font-size:12px; font-weight:700; color:var(--tx); flex:1; }
+.award-meta { font-size:10px; color:#94A3B8; white-space:nowrap; }
+/* Phase 42.22 — Metric highlighting (bolded metrics in bullets) */
+.e-bullets strong.metric { color:var(--a); font-weight:700; }
+/* ── References ──────────────────────────────────────── */
+.ref-card+.ref-card { margin-top:10px; }
+.ref-contact { font-size:10px; color:#64748B; margin-top:2px; }
+/* ── Misc ────────────────────────────────────────────── */
+.headline { font-size:18px; font-weight:400; }
+.muted { color:#94A3B8; font-size:10px; }
+ul { margin:4px 0 0 18px; padding:0; }
+ul li { margin-bottom:3px; }
+.section-div { height:2px; background:var(--a); opacity:.16; margin-top:9px; }
+.brand-logo { max-height:26px; margin-bottom:8px; }
+.wm { position:fixed; top:40%; left:0; right:0; text-align:center; opacity:.05; pointer-events:none; }
+.foot-logo { position:fixed; bottom:0; right:20px; padding:6px; }
+.foot-logo img { max-height:22px; opacity:.7; }
+/* ── Letter ──────────────────────────────────────────── */
+.letter-date { color:#64748B; font-size:10px; margin-bottom:20px; }
+.letter-addr { font-weight:600; margin-bottom:12px; }
+.letter-closing { margin-top:20px; }
+.letter-sig { font-weight:600; margin-top:4px; }
+/* ── Portfolio ───────────────────────────────────────── */
+.port-cover { text-align:center; padding:80px 60px 60px; }
+.port-section { padding:40px 60px; border-top:1px solid #E2E8F0; }
+.p-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); margin-top:16px; }
+.p-card { padding:16px; border:1px solid #E2E8F0; border-radius:8px; }
+/* ── Page breaks ─────────────────────────────────────── */
+.entry,.ref-card,.sk-bar,.sk-dots,.sk-rating,.lang-row,.lang-text { page-break-inside:avoid; break-inside:avoid; }
+.section,.entries { page-break-inside:auto; }
+h2,h3 { page-break-after:avoid; break-after:avoid-page; }
+/* ── ATS overrides ───────────────────────────────────── */
+
+/* ── Print ───────────────────────────────────────────── */
+@media print {
+  body { background:white; }
+  .page { box-shadow:none; max-width:none; }
+  .page.sidebar-layout { display:grid; }
+  .sidebar { background:var(--sb)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .header.banner { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+/* ── Per-template overrides ──────────────────────────── */
+
+</style></head><body><div class="page single">
+      <header class="header block">
+        <h1>Alexandra Chen</h1>
+        <p class="headline">Senior Product Manager &amp; Strategic Growth Leader</p>
+        <div class="contact-bar">alexandra.chen@email.com · +1 (415) 555-0142 · San Francisco, CA</div>
+      </header>
+      <div class="content">
+        <p class="letter-date">May 27, 2026</p>
+        
+        
+        <p>Dear Hiring Manager,</p>
+        
+        
+        
+        <p class="letter-closing">Sincerely,</p>
+        <p class="letter-sig">Alexandra Chen</p>
+      </div>
+    </div></body></html>

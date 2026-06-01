@@ -21,6 +21,8 @@ import { ConversionLineageService } from './conversion-lineage.service';
 //    GET  /convert/formats            list supported input / output formats
 // =============================================================================
 
+const MAX_FILE_BYTES = 100 * 1024 * 1024; // 100 MB
+
 @ApiTags('Universal Conversion')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -91,6 +93,7 @@ export class UniversalConversionController {
   ) {
     if (!file?.buffer)    throw new BadRequestException('Missing file (multipart field "file")');
     if (!targetFormat)    throw new BadRequestException('Missing targetFormat query param');
+    if (file.size > MAX_FILE_BYTES) throw new BadRequestException('File exceeds the 100 MB limit');
     const target = targetFormat as OutputFormat;
     if (!OUTPUT_FORMATS.includes(target)) throw new BadRequestException(`Unsupported target "${targetFormat}"`);
 
@@ -122,6 +125,7 @@ export class UniversalConversionController {
   ) {
     if (!file?.buffer)    throw new BadRequestException('Missing file');
     if (!targetFormat)    throw new BadRequestException('Missing targetFormat query param');
+    if (file.size > MAX_FILE_BYTES) throw new BadRequestException('File exceeds the 100 MB limit');
     const target = targetFormat as OutputFormat;
     const result = await this.svc.convert({
       buffer:       file.buffer,
@@ -154,6 +158,8 @@ export class UniversalConversionController {
   ) {
     if (!files?.length) throw new BadRequestException('Missing files (multipart "files")');
     if (!targetFormat)  throw new BadRequestException('Missing targetFormat');
+    const oversized = files.filter(f => f.size > MAX_FILE_BYTES).map(f => f.originalname);
+    if (oversized.length) throw new BadRequestException(`Files exceed 100 MB limit: ${oversized.join(', ')}`);
     const job = this.svc.startBatch(files.map((f) => ({
       buffer:       f.buffer,
       filename:     f.originalname,
@@ -168,7 +174,14 @@ export class UniversalConversionController {
   status(@Param('jobId') jobId: string) {
     const job = this.svc.getBatch(jobId);
     if (!job) throw new BadRequestException('Unknown jobId');
-    return { id: job.id, total: job.total, done: job.done, status: job.status, error: job.error };
+    return {
+      id:      job.id,
+      total:   job.total,
+      done:    job.done,
+      status:  job.status,
+      error:   job.error,
+      results: job.results,   // ← was missing; frontend needs this to display per-file status
+    };
   }
 
   @Get('result/:jobId')

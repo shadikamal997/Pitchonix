@@ -1,5 +1,6 @@
 import { SlideType, WizardInput } from './types';
 import { BaseSlideGenerator } from './base-slide.generator';
+import { coverSubtitle } from './narrative-titles';
 
 // =============================================================================
 //  Cover Generator — Phase 32.75 Tier 9 cleanup
@@ -14,7 +15,7 @@ export class CoverSlideGenerator extends BaseSlideGenerator {
 
   isApplicable(_input: WizardInput): boolean { return true; }
   getTitle(input: WizardInput): string       { return input.companyName || 'Company Presentation'; }
-  getSubtitle(input: WizardInput): string    { return input.shortDescription || input.productService || 'Building the future'; }
+  getSubtitle(input: WizardInput): string    { return coverSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {

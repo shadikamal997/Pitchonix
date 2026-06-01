@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SlideType, WizardInput, SlideContent, ISlideGenerator, GenerationConfig } from './types';
+import { sortByNarrativeArc } from '../pipeline/narrative-flow';
 import { CoverSlideGenerator } from './cover.generator';
 import { ProblemSlideGenerator } from './problem.generator';
 import { SolutionSlideGenerator } from './solution.generator';
@@ -112,8 +113,10 @@ export class SlideFactory {
     // Adjust based on slide count target
     const selectedGenerators = this.selectGenerators(sortedGenerators, config, promotions);
 
-    // Generate slides
-    const slides = selectedGenerators.map((gen, index) => gen.generate(input, index + 1));
+    // Generate slides, then sort into canonical narrative arc order so optional
+    // slides land in story position rather than generator priority order.
+    const rawSlides = selectedGenerators.map((gen, index) => gen.generate(input, index + 1));
+    const slides    = sortByNarrativeArc(rawSlides, input.documentType);
 
     return slides;
   }

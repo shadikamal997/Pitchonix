@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '@/lib/api';
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import ExportDropdown from '@/components/pdf-studio/ExportDropdown';
+import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 import { BrandKitPicker, BrandKitBadge } from '@/features/brand-kits/BrandKitPicker';
 import ThemePicker, { PDF_THEMES } from '@/components/pdf-studio/ThemePicker';
 import { ChartPanel, ChartConfig } from '@/components/pdf-studio/ChartPanel';
@@ -32,7 +33,64 @@ import { PageImageOverlay } from '@/features/pdf-studio/image-placement/PageImag
 import { ImagePlacementTab } from '@/features/pdf-studio/image-placement/ImagePlacementTab';
 import type { PlacedImage } from '@/features/pdf-studio/image-placement/types';
 
-const THEME_STORAGE_KEY = 'pitchonix_pdf_theme';
+// Namespace the theme key by storing it per-user — the userId prefix is set
+// after auth loads. During SSR/before auth resolves we fall back to the
+// legacy key so existing themes are preserved.
+const THEME_STORAGE_KEY_PREFIX = 'pitchonix_pdf_theme';
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface PageContent {
+  text?: string;
+  html?: string;
+  styles?: Record<string, string | number>;
+  heroImage?: string;
+  image?: string;
+  placedImages?: import('@/features/pdf-studio/image-placement/types').PlacedImage[];
+  charts?: import('@/components/pdf-studio/ChartPanel').ChartConfig[];
+  sectionTitle?: string;
+}
+
+interface PdfPage {
+  id: string;
+  title: string;
+  pageType: string;
+  order?: number;
+  content: PageContent;
+}
+
+interface PdfDocumentMeta {
+  templateType?: string;
+  proTemplateId?: string | null;
+  templateStyle?: Record<string, string>;
+}
+
+interface PdfDocument {
+  id: string;
+  title: string;
+  pages: PdfPage[];
+  metadata?: PdfDocumentMeta;
+  qualityScore?: number;
+  brandKitId?: string | null;
+}
+
+interface PdfVersion {
+  id: string;
+  title: string;
+  createdAt: string;
+}
+
+interface PreflightIssue {
+  message: string;
+}
+
+interface PreflightResult {
+  exportReady: boolean;
+  qualityScore: number;
+  errors: PreflightIssue[];
+  warnings: PreflightIssue[];
+  suggestions: PreflightIssue[];
+}
 
 /** Safely extract display text from a page's content.text field.
  *  Old documents may have stored JSON strings there; extract readable prose from them. */
@@ -182,8 +240,8 @@ export default function PdfEditorPage() {
   const [saving, setSaving] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
   const [enhancementType, setEnhancementType] = useState<string>('');
-  const [document, setDocument] = useState<any>(null);
-  const [pages, setPages] = useState<any[]>([]);
+  const [document, setDocument] = useState<PdfDocument | null>(null);
+  const [pages, setPages] = useState<PdfPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [error, setError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -199,25 +257,55 @@ export default function PdfEditorPage() {
   const [showProTemplatePicker, setShowProTemplatePicker] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem(THEME_STORAGE_KEY) || 'blue';
+      return localStorage.getItem(THEME_STORAGE_KEY_PREFIX) || 'blue';
     }
     return 'blue';
   });
 
   // Undo/Redo history
-  const [history, setHistory] = useState<any[][]>([]);
+  const [history, setHistory] = useState<PdfPage[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  // Ref mirrors historyIndex so callbacks always read the current value
+  // even when captured in a stale closure (fixes history race condition).
+  const historyIndexRef = useRef(-1);
   const [showVersionPanel, setShowVersionPanel] = useState(false);
-  const [versions, setVersions] = useState<any[]>([]);
+  const [versions, setVersions] = useState<PdfVersion[]>([]);
   const [rightTab, setRightTab] = useState<'content' | 'images' | 'charts'>('content');
   const [showBlockPicker, setShowBlockPicker] = useState(false);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  const [preflightResult, setPreflightResult] = useState<any>(null);
+  const [preflightResult, setPreflightResult] = useState<PreflightResult | null>(null);
   const [runningPreflight, setRunningPreflight] = useState(false);
   const [addingPage, setAddingPage] = useState(false);
   const [deletingPageId, setDeletingPageId] = useState<string | null>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previewDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDirtyRef = useRef(false);
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  // Show the "Saved" pill for 2s, clearing any prior pending hide-timer.
+  const showSaveSuccess = useCallback(() => {
+    setSaveSuccess(true);
+    if (saveSuccessTimerRef.current) clearTimeout(saveSuccessTimerRef.current);
+    saveSuccessTimerRef.current = setTimeout(() => setSaveSuccess(false), 2000);
+  }, []);
+
+  // Keep the ref in sync so history closures always see the current index.
+  const setHistoryIndexSafe = useCallback((val: number) => {
+    historyIndexRef.current = val;
+    setHistoryIndex(val);
+  }, []);
+
+  // Debounced preview refresh — waits 600ms after the last edit before
+  // incrementing the trigger so the iframe doesn't reload on every keystroke.
+  const triggerPreviewRefresh = useCallback(() => {
+    if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
+    previewDebounceRef.current = setTimeout(() => {
+      setPreviewRefreshTrigger(prev => prev + 1);
+      previewDebounceRef.current = null;
+    }, 600);
+  }, []);
 
   const themePickerRef = useRef<HTMLDivElement>(null);
   const templatePickerRef = useRef<HTMLDivElement>(null);
@@ -233,6 +321,15 @@ export default function PdfEditorPage() {
 
   useEffect(() => {
     fetchTemplates();
+  }, []);
+
+  // Clear all debounce timers when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (saveSuccessTimerRef.current) clearTimeout(saveSuccessTimerRef.current);
+      if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+      if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -253,12 +350,14 @@ export default function PdfEditorPage() {
           await api.patch(`/pdf-pages/${page.id}`, { content: page.content, title: page.title });
         }
         isDirtyRef.current = false;
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
-      } catch (_) {}
+        showSaveSuccess();
+      } catch (err: unknown) {
+        console.error('[auto-save] failed:', err);
+        toast.warning('Auto-save failed — click Save to keep your changes');
+      }
     }, 3000);
     return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current); };
-  }, [pages]);
+  }, [pages, showSaveSuccess]);
 
   // Close theme picker on outside click
   useEffect(() => {
@@ -280,18 +379,19 @@ export default function PdfEditorPage() {
   const fetchDocument = async () => {
     try {
       const response = await api.get(`/pdf-studio/smart-builder/documents/${documentId}`);
-      const { document } = response.data.data;
-      const loadedPages = document.pages || [];
-      setDocument(document);
+      const doc: PdfDocument = response.data.data.document;
+      const loadedPages: PdfPage[] = doc.pages || [];
+      setDocument(doc);
       setPages(loadedPages);
-      setSelectedTemplate(document.metadata?.templateType || 'clean_business_report');
-      setSelectedProTemplateId(document.metadata?.proTemplateId || null);
+      setSelectedTemplate(doc.metadata?.templateType || 'clean_business_report');
+      setSelectedProTemplateId(doc.metadata?.proTemplateId || null);
       // Seed history with the initial state so undo starts from a clean base
       setHistory([loadedPages]);
-      setHistoryIndex(0);
+      setHistoryIndexSafe(0);
       setLoading(false);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load document');
+    } catch (err: unknown) {
+      console.error('[pdf-studio] fetchDocument failed:', err);
+      setError((err as any)?.response?.data?.message || 'Failed to load document');
       setLoading(false);
     }
   };
@@ -304,7 +404,8 @@ export default function PdfEditorPage() {
         .filter((template: PdfTemplateOption) => template.type !== 'smart_pdf_builder')
         .sort((a: PdfTemplateOption, b: PdfTemplateOption) => (a.category || '').localeCompare(b.category || '') || a.name.localeCompare(b.name));
       setTemplates(userTemplates);
-    } catch {
+    } catch (err: unknown) {
+      console.error('[pdf-studio] fetchTemplates failed:', err);
       setTemplates([]);
     }
   };
@@ -319,29 +420,31 @@ export default function PdfEditorPage() {
     if (bodyEditorRef.current && currentPageForEditor?.id === pageId) {
       bodyEditorRef.current.innerHTML = html;
     }
-    // Timeline approach: history[historyIndex] = current state.
-    // Slice off any "future" states then append the new state.
+    // Use the ref so we always slice at the real current index,
+    // even if React hasn't flushed the state update yet.
+    const currentIdx = historyIndexRef.current;
     setHistory(prev => {
-      const base = prev.slice(0, historyIndex + 1);
+      const base = prev.slice(0, currentIdx + 1);
       base.push(newPages);
       return base.length > 50 ? base.slice(-50) : base;
     });
-    setHistoryIndex(prev => Math.min(prev + 1, 49));
+    setHistoryIndexSafe(Math.min(currentIdx + 1, 49));
     setPages(newPages);
     isDirtyRef.current = true;
-    setPreviewRefreshTrigger(prev => prev + 1);
+    triggerPreviewRefresh();
   };
 
-  const updatePagesAfterEdit = (newPages: any[]) => {
+  const updatePagesAfterEdit = (newPages: PdfPage[]) => {
+    const currentIdx = historyIndexRef.current;
     setHistory(prev => {
-      const base = prev.slice(0, historyIndex + 1);
+      const base = prev.slice(0, currentIdx + 1);
       base.push(newPages);
       return base.length > 50 ? base.slice(-50) : base;
     });
-    setHistoryIndex(prev => Math.min(prev + 1, 49));
+    setHistoryIndexSafe(Math.min(currentIdx + 1, 49));
     setPages(newPages);
     isDirtyRef.current = true;
-    setPreviewRefreshTrigger(prev => prev + 1);
+    triggerPreviewRefresh();
   };
 
   const handlePageHtmlInput = (pageId: string) => {
@@ -509,32 +612,34 @@ export default function PdfEditorPage() {
     );
     setPages(newPages);
     isDirtyRef.current = true;
-    setPreviewRefreshTrigger(prev => prev + 1);
+    triggerPreviewRefresh();
   };
 
   const handleUndo = useCallback(() => {
-    if (historyIndex <= 0) return; // index 0 = initial state, nothing to undo
+    if (historyIndex <= 0) return;
     const newIndex = historyIndex - 1;
-    setHistoryIndex(newIndex);
+    setHistoryIndexSafe(newIndex);
     setPages(history[newIndex]);
     isDirtyRef.current = true;
     setPreviewRefreshTrigger(prev => prev + 1);
-  }, [history, historyIndex]);
+  }, [history, historyIndex, setHistoryIndexSafe]);
 
   const handleRedo = useCallback(() => {
     if (historyIndex >= history.length - 1) return;
     const newIndex = historyIndex + 1;
-    setHistoryIndex(newIndex);
+    setHistoryIndexSafe(newIndex);
     setPages(history[newIndex]);
     isDirtyRef.current = true;
     setPreviewRefreshTrigger(prev => prev + 1);
-  }, [history, historyIndex]);
+  }, [history, historyIndex, setHistoryIndexSafe]);
 
   const fetchVersions = async () => {
     try {
       const res = await api.get(`/pdf-documents/${documentId}/versions`);
       setVersions(res.data);
-    } catch (_) {}
+    } catch (err: unknown) {
+      console.error('[pdf-studio] fetchVersions failed:', err);
+    }
   };
 
   const saveVersion = async () => {
@@ -545,7 +650,11 @@ export default function PdfEditorPage() {
       });
       await fetchVersions();
       toast.success('Version saved!');
-    } catch (_) { toast.error('Could not save version'); }
+    } catch (err: unknown) {
+      console.error('[pdf-studio] saveVersion failed:', err);
+      const msg = (err as any)?.response?.data?.message || 'Could not save version';
+      toast.error(msg);
+    }
   };
 
   const restoreVersion = async (versionId: string) => {
@@ -553,16 +662,20 @@ export default function PdfEditorPage() {
       const res = await api.post(`/pdf-documents/${documentId}/versions/${versionId}/restore`);
       if (res.data.pages) {
         setPages(res.data.pages);
-        setPreviewRefreshTrigger(prev => prev + 1);
+        triggerPreviewRefresh();
         toast.success('Version restored!');
       }
-    } catch (_) { toast.error('Could not restore version'); }
+    } catch (err: unknown) {
+      console.error('[pdf-studio] restoreVersion failed:', err);
+      const msg = (err as any)?.response?.data?.message || 'Could not restore version';
+      toast.error(msg);
+    }
   };
 
   const handleThemeChange = (themeId: string) => {
     setSelectedTheme(themeId);
-    localStorage.setItem(THEME_STORAGE_KEY, themeId);
-    setPreviewRefreshTrigger(prev => prev + 1);
+    localStorage.setItem(THEME_STORAGE_KEY_PREFIX, themeId);
+    triggerPreviewRefresh();
   };
 
   const handleTemplateChange = async (templateType: string) => {
@@ -574,7 +687,7 @@ export default function PdfEditorPage() {
     setSelectedProTemplateId(null);
     if (templateColorScheme && PDF_THEMES.some(theme => theme.id === templateColorScheme)) {
       setSelectedTheme(templateColorScheme);
-      localStorage.setItem(THEME_STORAGE_KEY, templateColorScheme);
+      localStorage.setItem(THEME_STORAGE_KEY_PREFIX, templateColorScheme);
     }
     setShowTemplatePicker(false);
 
@@ -589,7 +702,7 @@ export default function PdfEditorPage() {
     try {
       await api.put(`/pdf-documents/${documentId}`, { metadata: nextMetadata });
       await api.post(`/pdf-studio/export/preview/${documentId}/invalidate`);
-      setPreviewRefreshTrigger(prev => prev + 1);
+      triggerPreviewRefresh();
       toast.success('Template updated');
     } catch {
       toast.error('Template changed locally, but could not save it yet');
@@ -611,7 +724,7 @@ export default function PdfEditorPage() {
     try {
       await api.put(`/pdf-documents/${documentId}`, { metadata: nextMetadata });
       await api.post(`/pdf-studio/export/preview/${documentId}/invalidate`);
-      setPreviewRefreshTrigger(prev => prev + 1);
+      triggerPreviewRefresh();
       toast.success(proTemplateId ? 'Pro Template updated' : 'Using basic templates');
     } catch {
       toast.error('Pro Template changed locally, but could not save it yet');
@@ -629,10 +742,9 @@ export default function PdfEditorPage() {
         await api.post(`/pdf-studio/export/preview/${documentId}/invalidate`);
       } catch (_) {}
 
-      setSaveSuccess(true);
+      showSaveSuccess();
       toast.success('Document saved successfully!');
-      setPreviewRefreshTrigger(prev => prev + 1);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      triggerPreviewRefresh();
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Failed to save changes';
       setError(msg);
@@ -659,7 +771,7 @@ export default function PdfEditorPage() {
 
     try {
       const response = await api.post(`/pdf-studio/smart-builder/enhance`, {
-        documentId: document.id,
+        documentId: document!.id,
         enhancementType: type,
         targetId: currentPage.id,
       });
@@ -677,8 +789,7 @@ export default function PdfEditorPage() {
         professionalize: 'Content professionalized',
       };
       toast.success(labels[type] || 'Content enhanced!');
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
+      showSaveSuccess();
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Enhancement failed.';
       setError(msg);
@@ -700,8 +811,9 @@ export default function PdfEditorPage() {
       const newPage = data.data.page;
       const updated = [...pages, newPage];
       setPages(updated);
-      setHistory(prev => { const b = prev.slice(0, historyIndex + 1); b.push(updated); return b.length > 50 ? b.slice(-50) : b; });
-      setHistoryIndex(prev => Math.min(prev + 1, 49));
+      const ci = historyIndexRef.current;
+      setHistory(prev => { const b = prev.slice(0, ci + 1); b.push(updated); return b.length > 50 ? b.slice(-50) : b; });
+      setHistoryIndexSafe(Math.min(ci + 1, 49));
       setCurrentPageIndex(updated.length - 1);
       toast.success('Page added');
     } catch { toast.error('Failed to add page'); }
@@ -715,10 +827,11 @@ export default function PdfEditorPage() {
       await api.delete(`/pdf-studio/smart-builder/documents/${documentId}/pages/${pageId}`);
       const updated = pages.filter(p => p.id !== pageId);
       setPages(updated);
-      setHistory(prev => { const b = prev.slice(0, historyIndex + 1); b.push(updated); return b.length > 50 ? b.slice(-50) : b; });
-      setHistoryIndex(prev => Math.min(prev + 1, 49));
+      const ci2 = historyIndexRef.current;
+      setHistory(prev => { const b = prev.slice(0, ci2 + 1); b.push(updated); return b.length > 50 ? b.slice(-50) : b; });
+      setHistoryIndexSafe(Math.min(ci2 + 1, 49));
       setCurrentPageIndex(Math.min(pageIndex, updated.length - 1));
-      setPreviewRefreshTrigger(t => t + 1);
+      triggerPreviewRefresh();
       toast.success('Page deleted');
     } catch (err: any) { toast.error(err.response?.data?.message || 'Failed to delete page'); }
     finally { setDeletingPageId(null); }
@@ -730,8 +843,9 @@ export default function PdfEditorPage() {
       const newPage = data.data.page;
       const updated = [...pages, newPage];
       setPages(updated);
-      setHistory(prev => { const b = prev.slice(0, historyIndex + 1); b.push(updated); return b.length > 50 ? b.slice(-50) : b; });
-      setHistoryIndex(prev => Math.min(prev + 1, 49));
+      const ci3 = historyIndexRef.current;
+      setHistory(prev => { const b = prev.slice(0, ci3 + 1); b.push(updated); return b.length > 50 ? b.slice(-50) : b; });
+      setHistoryIndexSafe(Math.min(ci3 + 1, 49));
       setCurrentPageIndex(updated.length - 1);
       toast.success('Page duplicated');
     } catch { toast.error('Failed to duplicate page'); }
@@ -743,7 +857,7 @@ export default function PdfEditorPage() {
     );
     setPages(newPages);
     isDirtyRef.current = true;
-    setPreviewRefreshTrigger(t => t + 1);
+    triggerPreviewRefresh();
   };
 
   const resolveImageUrl = (url: string) => {
@@ -775,7 +889,7 @@ export default function PdfEditorPage() {
   // ── Placed-image handlers ──────────────────────────────────────────────────
   const handleAddPlacedImage = (pageId: string, url: string) => {
     const newImage: PlacedImage = {
-      id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: `img-${crypto.randomUUID()}`,
       url,
       x: 5,
       y: 10,
@@ -805,7 +919,7 @@ export default function PdfEditorPage() {
     });
     setPages(newPages);
     isDirtyRef.current = true;
-    setPreviewRefreshTrigger(t => t + 1);
+    triggerPreviewRefresh();
   };
 
   const handleDeletePlacedImage = (pageId: string, imageId: string) => {
@@ -824,7 +938,7 @@ export default function PdfEditorPage() {
     );
     setPages(newPages);
     isDirtyRef.current = true;
-    setPreviewRefreshTrigger(t => t + 1);
+    triggerPreviewRefresh();
   };
 
   const runPreflight = async () => {
@@ -833,8 +947,16 @@ export default function PdfEditorPage() {
     try {
       const res = await api.get(`/pdf-studio/export/preflight/${document.id}`);
       setPreflightResult(res.data.data);
-    } catch (_) {
-      setPreflightResult({ errors: [{ message: 'Preflight check failed' }], warnings: [], suggestions: [], exportReady: false, qualityScore: 0 });
+    } catch (err: unknown) {
+      console.error('[pdf-studio] preflight failed:', err);
+      const msg = (err as any)?.response?.data?.message || 'Preflight check failed — please try again';
+      setPreflightResult({
+        errors: [{ message: msg }],
+        warnings: [],
+        suggestions: [],
+        exportReady: false,
+        qualityScore: 0,
+      });
     } finally {
       setRunningPreflight(false);
     }
@@ -863,8 +985,7 @@ export default function PdfEditorPage() {
       window.document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      showSaveSuccess();
     } catch (err: any) {
       let msg = err.response?.data?.message || err.message || 'Export failed';
       const responseData = err.response?.data || err.details;
@@ -874,7 +995,9 @@ export default function PdfEditorPage() {
           const parsed = JSON.parse(text);
           msg = parsed?.message || parsed?.preflight?.errors?.[0]?.message || msg;
           if (parsed?.preflight) setPreflightResult(parsed.preflight);
-        } catch (_) {}
+        } catch (blobErr: unknown) {
+          console.error('[pdf-studio] export blob parse error:', blobErr);
+        }
       } else if (responseData?.preflight) {
         msg = responseData.message || responseData.preflight?.errors?.[0]?.message || msg;
         setPreflightResult(responseData.preflight);
@@ -1119,7 +1242,7 @@ export default function PdfEditorPage() {
                 emptyLabel="Brand Kit"
                 onSelect={async (kitId) => {
                   const prev = document;
-                  setDocument({ ...document, brandKitId: kitId });
+                  if (document) setDocument({ ...document, brandKitId: kitId });
                   try {
                     await api.put(`/pdf-documents/${documentId}`, { brandKitId: kitId });
                     // Phase Ω.1 — invalidate the LivePreview cache so the
@@ -1144,6 +1267,7 @@ export default function PdfEditorPage() {
         <div className={`grid gap-4 ${showPreview ? 'lg:grid-cols-[240px_minmax(620px,1fr)_360px]' : 'lg:grid-cols-[240px_minmax(620px,1fr)]'}`}>
 
           {/* ── Page Sidebar ── */}
+          <SectionErrorBoundary sectionName="Page Sidebar">
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm p-4 sticky top-20 max-h-[calc(100vh-90px)] overflow-y-auto">
               <div className="flex items-center justify-between mb-3">
@@ -1286,8 +1410,10 @@ export default function PdfEditorPage() {
               )}
             </div>
           </div>
+          </SectionErrorBoundary>
 
           {/* ── Main A4 Editor Canvas ── */}
+          <SectionErrorBoundary sectionName="Editor Canvas">
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
               {/* Accent strip */}
@@ -1318,7 +1444,7 @@ export default function PdfEditorPage() {
                     <div className="mb-4 rounded-xl border border-gray-200 bg-white p-2 shadow-sm">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <FontPicker
-                          value={getFontKeyFromStack(currentPage.content?.styles?.fontFamily)}
+                          value={getFontKeyFromStack(currentPage.content?.styles?.fontFamily as string | undefined)}
                           returnValue="stack"
                           onChange={applyFontFamily}
                           className="h-8 w-[190px] rounded-lg border-gray-200 text-xs"
@@ -1484,7 +1610,7 @@ export default function PdfEditorPage() {
                               newPages[currentPageIndex] = { ...currentPage, title: e.target.value };
                               setPages(newPages);
                               isDirtyRef.current = true;
-                              setPreviewRefreshTrigger(prev => prev + 1);
+                              triggerPreviewRefresh();
                             }}
                             placeholder="Page title..."
                             className="w-full border-0 border-b border-gray-200 bg-transparent pb-3 text-3xl font-bold text-gray-900 focus:outline-none"
@@ -1501,11 +1627,11 @@ export default function PdfEditorPage() {
                             className="mt-8 w-full border-0 bg-transparent text-gray-700 outline-none whitespace-pre-wrap"
                             style={{
                               minHeight: 610,
-                              fontFamily: currentPage.content?.styles?.fontFamily || getFontStack('inter'),
+                              fontFamily: String(currentPage.content?.styles?.fontFamily || getFontStack('inter')),
                               fontSize: currentPage.content?.styles?.fontSize || 16,
                               lineHeight: currentPage.content?.styles?.lineHeight || 1.65,
-                              color: currentPage.content?.styles?.color || '#374151',
-                              textAlign: currentPage.content?.styles?.textAlign || 'left',
+                              color: String(currentPage.content?.styles?.color || '#374151'),
+                              textAlign: (currentPage.content?.styles?.textAlign || 'left') as React.CSSProperties['textAlign'],
                             }}
                           />
                         </div>
@@ -1597,7 +1723,10 @@ export default function PdfEditorPage() {
             </div>
           </div>
 
+          </SectionErrorBoundary>
+
           {/* ── Right: Inspector + Export Preview ── */}
+          <SectionErrorBoundary sectionName="Preview Panel">
           {showPreview && (
             <div className="lg:col-span-1">
               <div className="sticky top-20 space-y-4">
@@ -1738,7 +1867,9 @@ export default function PdfEditorPage() {
                     <span>Preflight Check</span>
                     {preflightResult && (
                       <span className={`ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${preflightResult.exportReady ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                        {preflightResult.exportReady ? 'Ready' : 'Issues'}
+                        {preflightResult.exportReady
+                          ? 'Ready'
+                          : `${(preflightResult.errors ?? []).length} issue${(preflightResult.errors ?? []).length !== 1 ? 's' : ''}`}
                       </span>
                     )}
                   </div>
@@ -1764,25 +1895,25 @@ export default function PdfEditorPage() {
                       </div>
                       <span className="font-bold text-gray-700">{preflightResult.qualityScore}</span>
                     </div>
-                    {preflightResult.errors.map((e: any, i: number) => (
+                    {(preflightResult.errors ?? []).map((e: PreflightIssue, i: number) => (
                       <div key={i} className="flex items-start gap-1.5 rounded-lg bg-red-50 px-2 py-1.5 text-red-700">
                         <span className="font-bold mt-0.5">✗</span>
                         <span>{e.message}</span>
                       </div>
                     ))}
-                    {preflightResult.warnings.map((w: any, i: number) => (
+                    {(preflightResult.warnings ?? []).map((w: PreflightIssue, i: number) => (
                       <div key={i} className="flex items-start gap-1.5 rounded-lg bg-amber-50 px-2 py-1.5 text-amber-700">
                         <span className="font-bold mt-0.5">!</span>
                         <span>{w.message}</span>
                       </div>
                     ))}
-                    {preflightResult.suggestions.slice(0, 3).map((s: any, i: number) => (
+                    {(preflightResult.suggestions ?? []).slice(0, 3).map((s: PreflightIssue, i: number) => (
                       <div key={i} className="flex items-start gap-1.5 rounded-lg bg-blue-50 px-2 py-1.5 text-blue-700">
                         <span className="font-bold mt-0.5">→</span>
                         <span>{s.message}</span>
                       </div>
                     ))}
-                    {preflightResult.errors.length === 0 && preflightResult.warnings.length === 0 && (
+                    {(preflightResult.errors ?? []).length === 0 && (preflightResult.warnings ?? []).length === 0 && (
                       <p className="text-emerald-600 font-semibold text-center py-1">Document is export-ready!</p>
                     )}
                   </div>
@@ -1795,6 +1926,7 @@ export default function PdfEditorPage() {
               </div>
             </div>
           )}
+          </SectionErrorBoundary>
         </div>
       </div>
 

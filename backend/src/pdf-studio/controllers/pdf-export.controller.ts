@@ -15,6 +15,7 @@ import { Response } from 'express';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { GetUser } from '../../auth/get-user.decorator';
 import { Public } from '../../auth/public.decorator';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PdfExportService, PdfExportOptions } from '../services/pdf-export.service';
 import { DocxExportService } from '../services/docx-export.service';
 import { PptxExportService } from '../services/pptx-export.service';
@@ -25,6 +26,7 @@ import { PreflightService } from '../services/preflight.service';
 import { TemplateType } from '../templates/template-types';
 import { TEMPLATE_CONFIGS } from '../templates/template-configs';
 import { PRO_TEMPLATE_REGISTRY } from '../pro-templates/registry/pro-template.registry';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Controller('pdf-studio/export')
 @UseGuards(JwtAuthGuard)
@@ -39,37 +41,90 @@ export class PdfExportController {
     private jpegExportService: JpegExportService,
     private previewService: PreviewService,
     private preflightService: PreflightService,
+    private prisma: PrismaService,
   ) {}
 
   /**
    * Export document in multiple formats
    * POST /api/pdf-studio/export/:id
    */
+  /** Sanitize a filename so it's safe to use in Content-Disposition. */
+  private sanitizeFilename(name: string): string {
+    return name
+      .replace(/[^\w.\-]/g, '_')   // replace unsafe chars
+      .replace(/\.{2,}/g, '_')      // collapse ..
+      .replace(/^[./]+/, '')        // strip leading dots/slashes
+      .substring(0, 200)            // max length
+      || 'document';
+  }
+
+  private async assertDocumentAccess(documentId: string, user: any) {
+    const document = await this.prisma.pdfDocument.findUnique({
+      where: { id: documentId },
+      include: { project: true },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (document.project?.userId && document.project.userId !== user?.id) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+
+    return document;
+  }
+
   @Post(':id')
   async exportDocument(
     @Param('id') documentId: string,
+    @GetUser() user: any,
     @Body('format') format: string,
     @Body('templateType') templateType?: string,
     @Body('colorScheme') colorScheme?: string,
     @Body('proTemplateId') proTemplateId?: string | null,
     @Body('exportOptions') exportOptions?: PdfExportOptions,
-    @Body('skipPreflight') skipPreflight?: boolean,
     @Res() res?: Response,
   ) {
     try {
       this.logger.log(`Export request for document ${documentId} in format ${format}`);
 
-      if (!skipPreflight) {
-        const preflight = await this.preflightService.runPreflight(documentId);
-        if (!preflight.exportReady) {
+      await this.assertDocumentAccess(documentId, user);
+
+      // Validate colorScheme if provided
+      const VALID_COLOR_SCHEMES = [
+        'blue', 'navy', 'gray', 'purple', 'green', 'red', 'teal',
+        'indigo', 'emerald', 'amber', 'orange', 'rose', 'slate', 'dark',
+      ];
+      if (colorScheme && !VALID_COLOR_SCHEMES.includes(colorScheme)) {
+        throw new HttpException(
+          `Invalid colorScheme. Valid values: ${VALID_COLOR_SCHEMES.join(', ')}`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Validate proTemplateId if provided
+      if (proTemplateId) {
+        const known = PRO_TEMPLATE_REGISTRY.some(t => t.id === proTemplateId);
+        if (!known) {
           throw new HttpException(
-            {
-              message: 'Export blocked by preflight validation',
-              preflight,
-            },
-            HttpStatus.UNPROCESSABLE_ENTITY,
+            `Unknown proTemplateId: ${proTemplateId}`,
+            HttpStatus.BAD_REQUEST,
           );
         }
+      }
+
+      // Preflight always runs — skipPreflight parameter has been removed to
+      // prevent API clients from bypassing quality checks.
+      const preflight = await this.preflightService.runPreflight(documentId);
+      if (!preflight.exportReady) {
+        throw new HttpException(
+          {
+            message: 'Export blocked by preflight validation',
+            preflight,
+          },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
       }
 
       let buffer: Buffer;
@@ -147,9 +202,10 @@ export class PdfExportController {
           );
       }
 
-      // Set response headers
+      // Sanitize and set response headers
+      const safeFilename = this.sanitizeFilename(filename);
       res.setHeader('Content-Type', contentType);
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
       res.setHeader('Content-Length', buffer.length);
 
       // Send file
@@ -172,8 +228,11 @@ export class PdfExportController {
   /**
    * Get all available Pro Templates.
    * GET /api/pdf-studio/export/pro-templates
+   * Public static data. Do not throttle: the editor may request this during
+   * template browsing and automated template certification sweeps.
    */
   @Public()
+  @SkipThrottle({ short: true, medium: true, long: true })
   @Get('pro-templates')
   async getProTemplates() {
     return {
@@ -196,8 +255,12 @@ export class PdfExportController {
   /**
    * Get live preview HTML for document
    * GET /api/pdf-studio/export/preview/:id
+   * Public iframe render endpoint. Do not throttle: preview panes, template
+   * browsing, and certification sweeps can legitimately render many previews
+   * in a short burst.
    */
   @Public()
+  @SkipThrottle({ short: true, medium: true, long: true })
   @Get('preview/:id')
   async getPreview(
     @Param('id') documentId: string,
@@ -277,13 +340,15 @@ export class PdfExportController {
   /**
    * Invalidate preview cache for document
    * POST /api/pdf-studio/export/preview/:id/invalidate
+   * Auth-required — prevents anonymous users from thrashing the cache.
    */
-  @Public()
   @Post('preview/:id/invalidate')
   async invalidatePreviewCache(
     @Param('id') documentId: string,
+    @GetUser() user: any,
   ) {
     try {
+      await this.assertDocumentAccess(documentId, user);
       this.previewService.invalidateCache(documentId);
       return {
         success: true,
@@ -303,7 +368,9 @@ export class PdfExportController {
    */
   @Get('templates')
   async getTemplates() {
-    const templates = Object.values(TEMPLATE_CONFIGS).map((config) => ({
+    const templates = Object.values(TEMPLATE_CONFIGS)
+      .filter((config) => config.type !== TemplateType.SMART_PDF_BUILDER)
+      .map((config) => ({
       type: config.type,
       name: config.name,
       description: config.description,
@@ -391,8 +458,9 @@ export class PdfExportController {
    * GET /api/pdf-studio/export/preflight/:id
    */
   @Get('preflight/:id')
-  async runPreflight(@Param('id') documentId: string) {
+  async runPreflight(@Param('id') documentId: string, @GetUser() user: any) {
     try {
+      await this.assertDocumentAccess(documentId, user);
       const result = await this.preflightService.runPreflight(documentId);
       return { success: true, data: result };
     } catch (error) {

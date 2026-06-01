@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "skills": [
+      "PostgreSQL",
+      "Jira",
+      "HTML/CSS",
+      "Kubernetes",
+      "AWS",
+      "MySQL",
+      "Microservices",
+      "CI/CD",
+      "Azure",
+      "TypeScript",
+      "Docker",
+      "PHP",
+      "Tailwind",
+      "MongoDB",
+      "Vue.js"
+    ],
+    "experience": [
+      {
+        "title": "Lead Software Engineer",
+        "company": "DataFlow Inc",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "TechCorp",
+        "duration": "2021-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "Quantum Labs",
+        "duration": "2018-2021",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "NexGen Tech",
+        "duration": "2016-2018",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "NexGen Tech",
+        "duration": "2014-2016",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "UT Austin",
+        "year": "2010",
+        "gpa": "3.6"
+      }
+    ],
+    "certifications": [
+      "AWS Certified Solutions Architect",
+      "MongoDB Certified Developer"
+    ],
+    "contact": {
+      "name": "Alex Jones",
+      "email": "alex.jones@email.com",
+      "phone": "+1-555-8875",
+      "location": "San Francisco, CA",
+      "github": "github.com/alexjones"
+    }
+  },
+  "document": {
+    "title": "Alex Jones - Lead Software Engineer",
+    "content": "Alex Jones\nLead Software Engineer\n\nSkills:\nPostgreSQL, Jira, HTML/CSS, Kubernetes, AWS, MySQL, Microservices, CI/CD, Azure, TypeScript, Docker, PHP, Tailwind, MongoDB, Vue.js\n\nExperience:\nLead Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

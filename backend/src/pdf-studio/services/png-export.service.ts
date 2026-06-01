@@ -2,8 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BrowserPoolService } from './browser-pool.service';
 import { PreviewService } from './preview.service';
-import * as archiver from 'archiver';
-import { Readable } from 'stream';
 
 export interface PngExportOptions {
   resolution?: 'low' | 'medium' | 'high';
@@ -49,7 +47,7 @@ export class PngExportService {
       false, // Don't use cache
       undefined, // colorScheme
       undefined, // templateType
-      (document as any).proTemplateId || null, // TODO: fix after schema migration
+      document.proTemplateId || null,
     );
 
     // Render full preview to PNG
@@ -109,7 +107,8 @@ export class PngExportService {
   /**
    * Create ZIP archive from multiple PNG buffers
    */
-  createZipArchive(pngBuffers: Buffer[], filename: string): Promise<Buffer> {
+  async createZipArchive(pngBuffers: Buffer[], filename: string): Promise<Buffer> {
+    const archiver = await getArchiverFactory();
     return new Promise((resolve, reject) => {
       const archive = archiver('zip', { zlib: { level: 9 } });
       const chunks: Buffer[] = [];
@@ -127,4 +126,10 @@ export class PngExportService {
       archive.finalize();
     });
   }
+}
+
+async function getArchiverFactory(): Promise<any> {
+  const nativeImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+  const mod: any = await nativeImport('archiver');
+  return mod.default || mod;
 }

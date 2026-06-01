@@ -1,5 +1,6 @@
 import { SlideType, WizardInput } from './types';
 import { BaseSlideGenerator } from './base-slide.generator';
+import { problemTitle, problemSubtitle } from './narrative-titles';
 
 // =============================================================================
 //  Problem Generator — Phase 32.75 Tier 9 cleanup
@@ -14,8 +15,8 @@ export class ProblemSlideGenerator extends BaseSlideGenerator {
   isApplicable(input: WizardInput): boolean {
     return !!input.problem && input.problem.trim().length > 0;
   }
-  getTitle(_input: WizardInput): string    { return 'The Problem'; }
-  getSubtitle(_input: WizardInput): string { return 'What challenge are we addressing?'; }
+  getTitle(input: WizardInput): string    { return problemTitle(input); }
+  getSubtitle(input: WizardInput): string { return problemSubtitle(input); }
 
   generateContent(input: WizardInput): any {
     return {

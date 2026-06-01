@@ -1,0 +1,69 @@
+{
+  "profile": {
+    "skills": [
+      "Motion Design",
+      "Figma",
+      "UX Design",
+      "After Effects",
+      "Design Systems",
+      "UI Design",
+      "Photoshop",
+      "Illustrator",
+      "Prototyping",
+      "Sketch"
+    ],
+    "experience": [
+      {
+        "title": "Senior Product Designer",
+        "company": "Apex Digital",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "TechCorp",
+        "duration": "2021-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Product Designer",
+        "company": "Cloud Systems",
+        "duration": "2019-2021",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BFA Graphic Design",
+        "institution": "Stanford",
+        "year": "2015"
+      }
+    ],
+    "contact": {
+      "name": "Sage Garcia",
+      "email": "sage.garcia@email.com",
+      "phone": "+1-555-5390",
+      "location": "New York, NY",
+      "linkedin": "linkedin.com/in/sage-garcia"
+    }
+  },
+  "document": {
+    "title": "Sage Garcia - Senior Product Designer",
+    "content": "Sage Garcia\nSenior Product Designer\n\nSkills:\nMotion Design, Figma, UX Design, After Effects, Design Systems, UI Design, Photoshop, Illustrator, Prototyping, Sketch\n\nExperience:\nSenior Product Designer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

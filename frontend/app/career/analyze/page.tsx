@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Upload, Sparkles, FileText, ShieldCheck, Wand2, Loader2,
   CheckCircle2, AlertTriangle, AlertCircle, Trash2, Eye, ChevronRight,
-  Briefcase, Lock, Award, Layers, Mic,
+  Briefcase, Lock, Award, Layers, Mic, Bug, ChevronDown,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { useCvTemplates } from '@/features/career/hooks';
@@ -70,6 +70,9 @@ export default function CvAnalyzePage() {
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [savedDocId, setSavedDocId] = useState<string | null>(null);
 
+  // Import debug trace (dev-mode only, from parse-file response)
+  const [importDebug, setImportDebug] = useState<any | null>(null);
+
   // Job target mode (optional)
   const [jdText, setJdText] = useState('');
   const [matchReport, setMatchReport] = useState<any | null>(null);
@@ -93,6 +96,7 @@ export default function CvAnalyzePage() {
       setProfile(data?.profile || null);
       setOriginalProfile(data?.profile ? JSON.parse(JSON.stringify(data.profile)) : null);
       setWarnings(data?.warnings || []);
+      setImportDebug(data?.debug || null);
       await runAnalyze(data?.profile);
       setStep('report');
     } catch (e: any) {
@@ -247,11 +251,18 @@ export default function CvAnalyzePage() {
     let cancelled = false;
     (async () => {
       try {
-        // Use the analyze/save trick? No — preview without persistence.
-        // Just render a lightweight HTML preview from the profile data.
-        const html = renderPreviewHtml(profile, templateId);
-        if (!cancelled) setPreviewHtml(html);
-      } catch { /* ignore */ }
+        const { data } = await api.post('/career/analyze/preview', {
+          profile,
+          templateId,
+          doctype: 'cv',
+          title: 'CV Preview',
+        });
+        if (!cancelled) setPreviewHtml(data?.html || '');
+      } catch (e: any) {
+        if (!cancelled) {
+          setPreviewHtml(`<div style="padding:24px;font-family:system-ui;color:#7a2929">Preview unavailable: ${esc(e?.message || 'render failed')}</div>`);
+        }
+      }
     })();
     return () => { cancelled = true; };
   }, [step, profile, templateId]);
@@ -275,7 +286,7 @@ export default function CvAnalyzePage() {
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-6 space-y-5">
-        <Stepper step={step} />
+        <Stepper step={step} onStepClick={setStep} />
 
         <PrivacyBar />
 
@@ -293,9 +304,12 @@ export default function CvAnalyzePage() {
               report={report}
               busy={busy}
               onNext={() => setStep('fixes')}
+              onSkipToTemplate={() => setStep('template')}
               jdText={jdText} setJdText={setJdText}
               matchReport={matchReport} onMatch={runMatch}
             />
+            {/* Import trace panel — only shown when debug data is available (dev mode) */}
+            {importDebug && <ImportTracePanel debug={importDebug} warnings={warnings} />}
             {/* Phase 42.4D / 42.4E / 42.4C — benchmark + interview readiness + variants */}
             <ProExtras
               benchmark={benchmark} interview={interview} variants={variants}
@@ -328,6 +342,7 @@ export default function CvAnalyzePage() {
               report={report} ignored={ignored}
               onApply={applyFix} onIgnore={ignoreFix} onApplyAllSafe={applyAllSafe}
               onBack={() => setStep('report')} onNext={() => setStep('template')}
+              onSkipToTemplate={() => setStep('template')}
               busy={busy}
             />
           </>
@@ -338,6 +353,7 @@ export default function CvAnalyzePage() {
             recommendations={recommendations}
             templateId={templateId} setTemplateId={setTemplateId}
             onBack={() => setStep('fixes')} onNext={() => setStep('preview')}
+            onSaveAndOpen={saveAndOpen}
             busy={busy}
           />
         )}
@@ -370,7 +386,7 @@ export default function CvAnalyzePage() {
 //  Components
 // =============================================================================
 
-const Stepper: React.FC<{ step: Step }> = ({ step }) => {
+const Stepper: React.FC<{ step: Step; onStepClick?: (s: Step) => void }> = ({ step, onStepClick }) => {
   const steps: Array<{ id: Step; label: string }> = [
     { id: 'upload',   label: '1. Upload'   },
     { id: 'report',   label: '2. Analysis' },
@@ -384,11 +400,14 @@ const Stepper: React.FC<{ step: Step }> = ({ step }) => {
     <div className="flex items-center gap-1.5 text-[11px] flex-wrap">
       {steps.map((s, i) => (
         <React.Fragment key={s.id}>
-          <div className={`px-2 py-1 rounded font-semibold ${
-            i === cur     ? 'bg-purple-600 text-white' :
-            i <  cur      ? 'bg-[#EEF5F1] text-[#355846]' :
-                            'bg-[#F1F0EC] text-[#9A9A9A]'
-          }`}>{s.label}</div>
+          <button
+            onClick={() => { if (i < cur) onStepClick?.(s.id); }}
+            disabled={i >= cur}
+            className={`px-2 py-1 rounded font-semibold transition-colors ${
+              i === cur ? 'bg-purple-600 text-white cursor-default' :
+              i <  cur  ? 'bg-[#EEF5F1] text-[#355846] hover:bg-[#DDE8E1] cursor-pointer' :
+                          'bg-[#F1F0EC] text-[#9A9A9A] cursor-default'
+            }`}>{s.label}</button>
           {i < steps.length - 1 && <ChevronRight className="w-3 h-3 text-[#C9C6BD]" />}
         </React.Fragment>
       ))}
@@ -435,10 +454,10 @@ const UploadStep: React.FC<{ onUpload: (f: File) => void; busy: boolean; warning
 
 // ----- REPORT --------------------------------------------------------------
 const ReportStep: React.FC<{
-  report: CvReport | null; busy: boolean; onNext: () => void;
+  report: CvReport | null; busy: boolean; onNext: () => void; onSkipToTemplate: () => void;
   jdText: string; setJdText: (s: string) => void;
   matchReport: any; onMatch: () => void;
-}> = ({ report, busy, onNext, jdText, setJdText, matchReport, onMatch }) => {
+}> = ({ report, busy, onNext, onSkipToTemplate, jdText, setJdText, matchReport, onMatch }) => {
   if (!report) return <div className="text-xs text-[#9A9A9A]"><Loader2 className="w-3 h-3 animate-spin inline mr-1" /> Analysing…</div>;
   const tone = report.overall >= 80 ? 'green' : report.overall >= 60 ? 'amber' : 'red';
   return (
@@ -519,10 +538,14 @@ const ReportStep: React.FC<{
         </div>
       </details>
 
-      <div className="flex justify-end pt-2 border-t border-[#F1F0EC]">
+      <div className="flex items-center justify-between pt-2 border-t border-[#F1F0EC]">
         <button onClick={onNext}
+          className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6] inline-flex items-center gap-1">
+          Review fixes first
+        </button>
+        <button onClick={onSkipToTemplate}
           className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center gap-1">
-          Review fixes <ChevronRight className="w-4 h-4" />
+          Continue to Template <ChevronRight className="w-4 h-4" />
         </button>
       </div>
     </section>
@@ -535,9 +558,9 @@ const FixesStep: React.FC<{
   onApply: (id: string, userInput?: string) => void;
   onIgnore: (id: string) => void;
   onApplyAllSafe: () => void;
-  onBack: () => void; onNext: () => void;
+  onBack: () => void; onNext: () => void; onSkipToTemplate: () => void;
   busy: boolean;
-}> = ({ report, ignored, onApply, onIgnore, onApplyAllSafe, onBack, onNext, busy }) => {
+}> = ({ report, ignored, onApply, onIgnore, onApplyAllSafe, onBack, onNext, onSkipToTemplate, busy }) => {
   const visible = report.issues.filter((i) => !ignored.has(i.id));
   const safeCount = visible.filter((i) => i.autoFixAvailable).length;
   return (
@@ -567,10 +590,16 @@ const FixesStep: React.FC<{
 
       <div className="flex items-center justify-between pt-2 border-t border-[#F1F0EC]">
         <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">← Back</button>
-        <button onClick={onNext}
-          className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center gap-1">
-          Choose template <ChevronRight className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={onSkipToTemplate}
+            className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">
+            Skip fixes →
+          </button>
+          <button onClick={onNext}
+            className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded inline-flex items-center gap-1">
+            Done, choose template <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -646,8 +675,8 @@ const IssueCard: React.FC<{
 // ----- TEMPLATE -----------------------------------------------------------
 const TemplateStep: React.FC<{
   recommendations: any; templateId: string | null; setTemplateId: (id: string) => void;
-  onBack: () => void; onNext: () => void; busy: boolean;
-}> = ({ recommendations, templateId, setTemplateId, onBack, onNext, busy }) => {
+  onBack: () => void; onNext: () => void; onSaveAndOpen: () => void; busy: boolean;
+}> = ({ recommendations, templateId, setTemplateId, onBack, onNext, onSaveAndOpen, busy }) => {
   const { items: all } = useCvTemplates('cv');
   // Phase 42.5A — fetch radar insights for every template.
   const [insights, setInsights] = useState<any[]>([]);
@@ -753,10 +782,17 @@ const TemplateStep: React.FC<{
 
       <div className="flex items-center justify-between pt-2 border-t border-[#F1F0EC]">
         <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">← Back</button>
-        <button onClick={onNext} disabled={!templateId}
-          className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-40 inline-flex items-center gap-1">
-          Preview <ChevronRight className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={onNext} disabled={!templateId}
+            className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6] disabled:opacity-40">
+            Preview first
+          </button>
+          <button onClick={onSaveAndOpen} disabled={!templateId || busy}
+            className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-40 inline-flex items-center gap-1">
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            Create CV &amp; Open Builder
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -799,7 +835,7 @@ const PreviewStep: React.FC<{ html: string; onBack: () => void; onNext: () => vo
     <h2 className="text-sm font-bold text-[#111111] flex items-center gap-2">
       <Eye className="w-4 h-4 text-[#4F7563]" /> Preview
     </h2>
-    <p className="text-[11px] text-[#9A9A9A]">Approximate render. The final exported file uses the full template renderer.</p>
+    <p className="text-[11px] text-[#9A9A9A]">Rendered with the same backend template engine used by the builder and export.</p>
     <iframe srcDoc={html} className="w-full h-[600px] border border-[#E3E1DA] rounded bg-white" />
     <div className="flex items-center justify-between pt-2 border-t border-[#F1F0EC]">
       <button onClick={onBack} className="px-3 py-1.5 text-xs font-semibold border border-[#C9C6BD] rounded hover:bg-[#EDEBE6]">← Back</button>
@@ -852,54 +888,172 @@ const Metric: React.FC<{ k: string; v: string }> = ({ k, v }) => (
   </div>
 );
 
-// =============================================================================
-//  Lightweight preview renderer — produces a single-page HTML preview so
-//  the user sees roughly what the chosen template will look like before
-//  saving. The final export uses the real backend renderer.
-// =============================================================================
-function renderPreviewHtml(profile: any, templateId: string | null): string {
-  const p = profile?.personal || {};
-  const exp = profile?.experience || [];
-  const edu = profile?.education || [];
-  const skills = profile?.skills || [];
-  const accent = '#7C3AED';
-  return `
-<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-  body { margin:0; padding:32px; font:14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto; color: #1F2937; background: #fff; }
-  h1 { color: ${accent}; margin: 0 0 4px; }
-  .head { border-bottom: 3px solid ${accent}; padding-bottom: 8px; margin-bottom: 16px; }
-  .meta { font-size: 12px; color: #64748B; }
-  .sect { margin-top: 18px; }
-  .sect h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .1em; color: ${accent}; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px; margin-bottom: 8px; }
-  .role { font-weight: 600; margin-top: 8px; }
-  .role span.dim { font-weight: 400; color: #64748B; font-size: 12px; margin-left: 4px; }
-  ul { margin: 4px 0 0 18px; padding: 0; }
-  li { margin: 2px 0; font-size: 13px; }
-  .skills { display: flex; flex-wrap: wrap; gap: 4px; }
-  .skills span { background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 3px; padding: 2px 6px; font-size: 11px; }
-  .tpl-note { font-size: 10px; color: #94A3B8; margin-top: 24px; font-style: italic; }
-</style></head><body>
-  <div class="head">
-    <h1>${esc(p.fullName || 'Your name')}</h1>
-    ${p.headline ? `<div style="font-size:14px;color:#475569">${esc(p.headline)}</div>` : ''}
-    <div class="meta">${[p.email, p.phone, p.location, p.linkedin].filter(Boolean).map(esc).join(' · ')}</div>
-  </div>
-  ${p.summary ? `<div class="sect"><h2>Summary</h2><p>${esc(p.summary)}</p></div>` : ''}
-  ${exp.length ? `<div class="sect"><h2>Experience</h2>${exp.map((e: any) => `
-    <div class="role">${esc(e.role || '')} <span class="dim">@ ${esc(e.company || '')} · ${esc(e.start || '')}${e.end ? '–'+esc(e.end) : '–Present'}</span></div>
-    ${e.bullets?.length ? `<ul>${e.bullets.map((b: string) => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}
-  `).join('')}</div>` : ''}
-  ${edu.length ? `<div class="sect"><h2>Education</h2>${edu.map((d: any) => `
-    <div class="role">${esc(d.degree || '')} ${d.field ? '— '+esc(d.field) : ''} <span class="dim">@ ${esc(d.institution || '')} · ${esc(d.end || d.start || '')}</span></div>
-  `).join('')}</div>` : ''}
-  ${skills.length ? `<div class="sect"><h2>Skills</h2><div class="skills">${skills.map((s: any) => `<span>${esc(s.name || '')}</span>`).join('')}</div></div>` : ''}
-  <p class="tpl-note">Preview only — exports use the full template renderer (template: ${esc(templateId || 'default')}).</p>
-</body></html>`;
-}
-
 function esc(s: any): string {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+// =============================================================================
+//  Import Trace Panel — dev-mode only, shows parsed sections + bullet counts
+// =============================================================================
+const ImportTracePanel: React.FC<{ debug: any; warnings: string[] }> = ({ debug, warnings }) => {
+  const [open, setOpen] = useState(false);
+  const [showRawLines, setShowRawLines] = useState(false);
+
+  const expAfter: any[] = debug?.parsedExpAfter || [];
+  const expBefore: any[] = debug?.parsedExpBefore || [];
+  const totalBullets = expAfter.reduce((s: number, e: any) => s + (e.bulletCount || 0), 0);
+  const thinEntries = expAfter.filter((e: any) => (e.bulletCount || 0) < 3);
+
+  return (
+    <section className="bg-[#FFFBF0] border border-[#F2DCAE] rounded-lg">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-[#735008] hover:bg-[#FFF3CC]/40"
+      >
+        <span className="flex items-center gap-2">
+          <Bug className="w-3.5 h-3.5" />
+          Import trace
+          <span className="text-[10px] font-normal text-[#9A9A9A]">
+            {expAfter.length} exp entries · {totalBullets} bullets · {debug?.totalLines ?? 0} lines
+          </span>
+          {thinEntries.length > 0 && (
+            <span className="text-[9px] uppercase tracking-wide bg-[#F7E3E3] text-[#7a2929] px-1.5 py-0.5 rounded font-bold">
+              {thinEntries.length} thin
+            </span>
+          )}
+        </span>
+        <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 space-y-4 text-[11px]">
+
+          {/* Completeness warnings */}
+          {thinEntries.length > 0 && (
+            <div className="bg-[#FCF1F1] border border-[#F7E3E3] rounded p-3 space-y-1">
+              <div className="font-bold text-[#7a2929] flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" /> Completeness warnings
+              </div>
+              {thinEntries.map((e: any, i: number) => (
+                <div key={i} className="text-[#7a2929]">
+                  "{e.role || '(no role)'}" @ {e.company || '(no company)'} — only {e.bulletCount} bullet(s). Expected ≥ 3.
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Import warnings */}
+          {warnings.length > 0 && (
+            <div className="bg-[#FAEEDB] border border-[#F2DCAE] rounded p-3 space-y-0.5">
+              <div className="font-bold text-[#735008]">Import warnings</div>
+              {warnings.map((w, i) => (
+                <div key={i} className="flex items-start gap-1 text-[#735008]">
+                  <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" /> {w}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Sections detected */}
+          <div>
+            <div className="font-bold text-[#111111] mb-1.5">Sections detected</div>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(debug?.mappedSections || {}).map(([k, v]: [string, any]) => (
+                <span key={k} className={`text-[10px] px-2 py-0.5 rounded font-mono border ${
+                  (v as number) > 0 ? 'bg-[#EEF5F1] border-[#DDE8E1] text-[#263F34]' : 'bg-[#F1F0EC] border-[#E3E1DA] text-[#9A9A9A]'
+                }`}>
+                  {k}: {v as number}
+                </span>
+              ))}
+              {debug?.usedFallback && (
+                <span className="text-[10px] px-2 py-0.5 rounded font-mono border bg-[#FAEEDB] border-[#F2DCAE] text-[#735008]">
+                  fallback heuristic
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Experience entries (after semantics) */}
+          {expAfter.length > 0 && (
+            <div>
+              <div className="font-bold text-[#111111] mb-1.5">Experience entries (after enrichment)</div>
+              <div className="space-y-2">
+                {expAfter.map((e: any, i: number) => (
+                  <div key={i} className={`border rounded p-2.5 ${(e.bulletCount || 0) < 3 ? 'border-[#F7E3E3] bg-[#FCF1F1]' : 'border-[#E3E1DA] bg-white'}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-semibold text-[#111111]">{e.role || <em className="text-[#9A9A9A]">no role</em>}</div>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 ${
+                        (e.bulletCount || 0) >= 5 ? 'bg-[#DDE8E1] text-[#263F34]' :
+                        (e.bulletCount || 0) >= 3 ? 'bg-[#F5E1B7] text-amber-800' :
+                        'bg-[#F7E3E3] text-[#7a2929]'
+                      }`}>
+                        {e.bulletCount} bullet{e.bulletCount !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="text-[#6B6B6B] mt-0.5">
+                      {e.company || <em>no company</em>}
+                      {(e.start || e.end) && <span className="ml-2 text-[#9A9A9A] font-mono">{e.start}–{e.end || 'present'}</span>}
+                      {e.location && <span className="ml-2 text-[#9A9A9A]">· {e.location}</span>}
+                    </div>
+                    {e.bullets?.length > 0 && (
+                      <ul className="mt-1.5 ml-3 list-disc space-y-0.5 text-[#111111]">
+                        {e.bullets.map((b: string, j: number) => <li key={j}>{b}</li>)}
+                      </ul>
+                    )}
+                    {e.achievements?.length > 0 && (
+                      <ul className="mt-1 ml-3 list-disc space-y-0.5 text-[#355846]">
+                        {e.achievements.map((b: string, j: number) => <li key={j}>{b}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Before/after bullet count comparison */}
+          {expBefore.length > 0 && (
+            <details className="border border-[#E3E1DA] rounded">
+              <summary className="px-3 py-2 cursor-pointer font-semibold hover:bg-[#EDEBE6] flex items-center gap-2">
+                Before semantic enrichment ({expBefore.length} entries)
+              </summary>
+              <div className="p-3 space-y-1.5">
+                {expBefore.map((e: any, i: number) => (
+                  <div key={i} className="flex items-center gap-3 border border-[#E3E1DA] rounded px-2.5 py-1.5 bg-white">
+                    <span className="flex-1 truncate font-mono text-[10px] text-[#111111]">
+                      {e.role || '(no role)'} {e.company ? `@ ${e.company}` : ''}
+                    </span>
+                    <span className="text-[10px] font-mono text-[#9A9A9A]">{e.start}–{e.end || 'present'}</span>
+                    <span className="text-[10px] font-bold font-mono bg-[#F1F0EC] px-1.5 py-0.5 rounded">
+                      {e.bulletCount} bullets
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+
+          {/* Raw lines toggle */}
+          <div>
+            <button
+              onClick={() => setShowRawLines((v) => !v)}
+              className="text-[11px] font-semibold text-[#4F7563] hover:underline flex items-center gap-1"
+            >
+              <ChevronDown className={`w-3 h-3 transition-transform ${showRawLines ? 'rotate-180' : ''}`} />
+              {showRawLines ? 'Hide' : 'Show'} all extracted lines ({debug?.allLines?.length ?? 0})
+            </button>
+            {showRawLines && (
+              <pre className="mt-2 p-2 bg-[#F1F0EC] border border-[#E3E1DA] rounded text-[10px] font-mono whitespace-pre-wrap max-h-64 overflow-auto text-[#111111]">
+                {(debug?.allLines || []).map((l: string, i: number) => `${String(i + 1).padStart(3, ' ')}  ${l}`).join('\n')}
+              </pre>
+            )}
+          </div>
+
+        </div>
+      )}
+    </section>
+  );
+};
 
 // =============================================================================
 //  Phase 42.4 — PRO+ panels (benchmark / interview readiness / variants)

@@ -300,7 +300,7 @@ const MetricRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
       <div style={{ flex: '1 1 auto', minHeight: 0, color: '#16a34a' }}>
         <AutoFitText
           text={`${c?.value || '0'}${c?.unit ? ` ${c.unit}` : ''}`}
-          minSize={TYPOGRAPHY.lg}
+          minSize={TYPOGRAPHY.sm}
           maxSize={Number(css.fontSize || TYPE_STYLES.metricBig.size)}
           maxLines={1}
           fontWeight={css.fontWeight as any}
@@ -308,6 +308,7 @@ const MetricRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
           lineHeight={Number(css.lineHeight || LINE_HEIGHT.tight)}
           letterSpacing={typeof css.letterSpacing === 'number' ? css.letterSpacing : TYPE_STYLES.metricBig.letterSpacing}
           color={(css.color || '#16a34a') as string}
+          style={{ whiteSpace: 'nowrap', wordBreak: 'normal', overflowWrap: 'normal' }}
         />
       </div>
       <div style={{ fontSize: TYPOGRAPHY.xs, fontWeight: WEIGHT.semibold, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 0 }}>{c?.label || ''}</div>
@@ -792,6 +793,49 @@ const EmbedPlaceholderRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => 
   );
 };
 
+const FundsAllocationRenderer: React.FC<{ el: SlideElementDTO }> = ({ el }) => {
+  const c: any = el.content || {};
+  const items: any[] = Array.isArray(c.items) ? c.items : [];
+  const textColor = c.textColor || (el.style as any)?.color || '#111827';
+  const mutedColor = c.mutedColor || '#6b7280';
+  const lineColor = c.lineColor || 'rgba(148, 163, 184, 0.24)';
+  const maxPct = Math.max(...items.map((item) => Number(item.percentage) || 0), 1);
+
+  if (items.length === 0) {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', color: mutedColor, fontSize: 12, ...styleToCSS(el.style) }}>
+        Funding allocation
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10, padding: '4px 0', ...styleToCSS(el.style) }}>
+      {items.map((item, idx) => {
+        const pct = Number(item.percentage) || 0;
+        const color = item.color || ['#dc2626', '#2563eb', '#16a34a', '#f59e0b'][idx % 4];
+        const width = Math.round((pct / maxPct) * 100);
+        return (
+          <div key={`${item.category || 'fund'}-${idx}`} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 999, background: color, flex: '0 0 auto' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: textColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {item.category || 'Allocation'}
+                </span>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 800, color, fontVariantNumeric: 'tabular-nums' }}>{pct}%</span>
+            </div>
+            <div style={{ width: '100%', height: 6, borderRadius: 999, background: lineColor, overflow: 'hidden' }}>
+              <div style={{ width: `${width}%`, height: '100%', borderRadius: 999, background: color }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 // =============================================================================
 //  Registry
 // =============================================================================
@@ -830,6 +874,7 @@ export const ELEMENT_RENDERERS: Record<ElementType, React.FC<{ el: SlideElementD
   processSteps: ProcessStepsRenderer,
   timeline:     TimelineRenderer,
   roadmap:      RoadmapRenderer,
+  fundsAllocation: FundsAllocationRenderer,
 
   shape:   ShapeRenderer,
   line:    LineRenderer,

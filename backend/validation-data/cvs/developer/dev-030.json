@@ -1,0 +1,76 @@
+{
+  "profile": {
+    "skills": [
+      "Next.js",
+      "Docker",
+      "Redis",
+      "Agile",
+      "Vue.js",
+      "Ruby",
+      "Jenkins",
+      "Azure",
+      "Angular",
+      "Redux",
+      "Jira",
+      "Git"
+    ],
+    "experience": [
+      {
+        "title": "Senior Software Engineer",
+        "company": "Digital Solutions",
+        "duration": "2024-Present",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "Digital Solutions",
+        "duration": "2021-2024",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      },
+      {
+        "title": "Software Engineer",
+        "company": "InnovateLabs",
+        "duration": "2020-2021",
+        "description": "Led development of key features and mentored junior team members. Improved system performance and user experience.",
+        "achievements": [
+          "Delivered projects on time and under budget",
+          "Mentored team members",
+          "Improved system performance by 40%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "BS Computer Science",
+        "institution": "Cornell",
+        "year": "2016",
+        "gpa": "3.6"
+      }
+    ],
+    "certifications": [
+      "AWS Certified Solutions Architect",
+      "MongoDB Certified Developer"
+    ],
+    "contact": {
+      "name": "Riley Davis",
+      "email": "riley.davis@email.com",
+      "phone": "+1-555-6243",
+      "location": "San Francisco, CA",
+      "github": "github.com/rileydavis"
+    }
+  },
+  "document": {
+    "title": "Riley Davis - Senior Software Engineer",
+    "content": "Riley Davis\nSenior Software Engineer\n\nSkills:\nNext.js, Docker, Redis, Agile, Vue.js, Ruby, Jenkins, Azure, Angular, Redux, Jira, Git\n\nExperience:\nSenior Software Engineer with extensive experience building scalable systems and leading cross-functional teams. Proven track record of delivering high-quality products on time and mentoring junior developers.\n\nKey Achievements:\n• Led development of mission-critical features\n• Improved system performance by 40%\n• Mentored team members and improved code quality\n• Implemented best practices and coding standards\n"
+  }
+}

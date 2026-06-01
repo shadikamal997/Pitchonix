@@ -1,5 +1,5 @@
 import {
-  Controller, Post, Get, UseInterceptors, UploadedFile, Body, BadRequestException, UseGuards,
+  Controller, Post, Get, Query, UseInterceptors, UploadedFile, Body, BadRequestException, UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
@@ -27,12 +27,25 @@ import { loadRealFixtures, certifyDirectory } from './real-fixtures';
 export class PptxImportController {
   constructor(private importer: PptxImportService) {}
 
+  private readonly MAX_PPTX_BYTES = 100 * 1024 * 1024; // 100 MB
+  private readonly ALLOWED_MIME = [
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.openxmlformats-officedocument.presentationml.template',
+    'application/vnd.ms-powerpoint',
+    'application/octet-stream', // fallback used by some browsers for PPTX
+  ];
+
   @Post('parse')
   @ApiOperation({ summary: 'Parse a PPTX/POTX file without persisting (Phase 38D MVP)' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   parse(@UploadedFile() file: any) {
     if (!file?.buffer) throw new BadRequestException('Missing PPTX file (multipart field "file")');
+    if (file.size > this.MAX_PPTX_BYTES) throw new BadRequestException('File exceeds the 100 MB limit');
+    const ext = (file.originalname || '').toLowerCase();
+    if (!ext.endsWith('.pptx') && !ext.endsWith('.potx') && !this.ALLOWED_MIME.includes(file.mimetype)) {
+      throw new BadRequestException('Only .pptx and .potx files are accepted');
+    }
     return this.importer.parseBuffer(file.buffer);
   }
 
@@ -42,11 +55,21 @@ export class PptxImportController {
   @UseInterceptors(FileInterceptor('file'))
   importIntoProject(
     @UploadedFile() file: any,
-    @Body() body: { projectId: string },
+    // projectId is sent as a FormData field by the frontend, which NestJS
+    // exposes via @Query() when multipart/form-data is used (not @Body()).
+    @Query('projectId') queryProjectId?: string,
+    @Body() body?: { projectId?: string },
   ) {
+    // Accept projectId from either query param OR FormData body field
+    const projectId = queryProjectId || body?.projectId;
     if (!file?.buffer) throw new BadRequestException('Missing PPTX file (multipart field "file")');
-    if (!body?.projectId) throw new BadRequestException('Missing projectId');
-    return this.importer.importIntoProject(file.buffer, body.projectId);
+    if (!projectId)    throw new BadRequestException('Missing projectId');
+    if (file.size > this.MAX_PPTX_BYTES) throw new BadRequestException('File exceeds the 100 MB limit');
+    const ext = (file.originalname || '').toLowerCase();
+    if (!ext.endsWith('.pptx') && !ext.endsWith('.potx') && !this.ALLOWED_MIME.includes(file.mimetype)) {
+      throw new BadRequestException('Only .pptx and .potx files are accepted');
+    }
+    return this.importer.importIntoProject(file.buffer, projectId);
   }
 
   // ---------- Phase 38.1H — Round-trip harness ----------
