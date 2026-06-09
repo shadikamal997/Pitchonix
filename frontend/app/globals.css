@@ -8,6 +8,29 @@
 @layer base {
   :root {
     /* ---------------------------------------------------------------
+     * Ω.INFRA.1 — template font CSS variables. Previously provided by
+     * next/font/google (build-time fetch → SSR 500 when offline). The web
+     * fonts themselves are loaded browser-side by the @import above; these
+     * variables just name the family with a safe system fallback so the app
+     * renders even with no network.
+     * --------------------------------------------------------------- */
+    --font-sans:          'Inter', system-ui, sans-serif;
+    --font-manrope:       'Manrope', system-ui, sans-serif;
+    --font-playfair:      'Playfair Display', Georgia, serif;
+    --font-cormorant:     'Cormorant Garamond', Georgia, serif;
+    --font-space-grotesk: 'Space Grotesk', system-ui, sans-serif;
+    --font-fraunces:      'Fraunces', Georgia, serif;
+    --font-ibm-plex:      'IBM Plex Sans', system-ui, sans-serif;
+    --font-bricolage:     'Bricolage Grotesque', system-ui, sans-serif;
+    --font-outfit:        'Outfit', system-ui, sans-serif;
+    --font-dm-serif:      'DM Serif Display', Georgia, serif;
+    --font-sora:          'Sora', system-ui, sans-serif;
+    --font-lora:          'Lora', Georgia, serif;
+    --font-nunito:        'Nunito', system-ui, sans-serif;
+    --font-poppins:       'Poppins', system-ui, sans-serif;
+    --font-lato:          'Lato', system-ui, sans-serif;
+
+    /* ---------------------------------------------------------------
      * Pitchonix Dashboard Design System tokens (Phase Δ — Soft Sage)
      * Raw HEX values so non-Tailwind contexts can read them directly.
      * --------------------------------------------------------------- */

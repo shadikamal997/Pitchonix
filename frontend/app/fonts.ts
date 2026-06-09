@@ -1,116 +1,64 @@
 // =============================================================================
-//  Template font loader — Phase 1 fix.
+//  Template font loader — Ω.INFRA.1 offline-resilient rewrite.
 //
-//  Every font referenced by a TemplateFamily is registered here via
-//  `next/font/google`. Each font is exposed as a CSS variable that template
-//  families consume via `resolveFontStack()`.
+//  Previously every family was loaded via `next/font/google`, which FETCHES the
+//  font files at compile time. When the build host has no network to
+//  fonts.googleapis.com that fetch throws inside this module → the root layout
+//  throws during SSR → every route returns 500.
 //
-//  `next/font/google` requires literal object args (no spread), so each call
-//  is self-contained.
+//  Fix: do not fetch fonts at build time. The `--font-*` CSS variables are now
+//  declared in globals.css (:root) and the actual web fonts are loaded
+//  browser-side via a <link> in the root layout. Offline, the system fallbacks
+//  in each variable apply and the app still renders — no SSR crash. The public
+//  API (inter/manrope/allFontClassNames/resolveFontStack/FONT_NAME_TO_VAR) is
+//  unchanged so consumers keep working.
 // =============================================================================
 
-import {
-  Inter,
-  Playfair_Display,
-  Cormorant_Garamond,
-  Manrope,
-  Space_Grotesk,
-  Fraunces,
-  IBM_Plex_Sans,
-  Bricolage_Grotesque,
-  Outfit,
-  DM_Serif_Display,
-  Sora,
-  Lora,
-  Nunito,
-  Poppins,
-  Lato,
-} from 'next/font/google';
+interface FontShim { className: string; variable: string; style: { fontFamily?: string } }
+const shim = (): FontShim => ({ className: '', variable: '', style: {} });
 
-export const inter = Inter({
-  subsets: ['latin'], variable: '--font-sans', display: 'swap', preload: true,
-});
+export const inter = shim();
+export const playfair = shim();
+export const cormorant = shim();
+export const manrope = shim();
+export const spaceGrotesk = shim();
+export const fraunces = shim();
+export const ibmPlexSans = shim();
+export const bricolage = shim();
+export const outfit = shim();
+export const dmSerif = shim();
+export const sora = shim();
+export const lora = shim();
+export const nunito = shim();
+export const poppins = shim();
+export const lato = shim();
 
-export const playfair = Playfair_Display({
-  subsets: ['latin'], variable: '--font-playfair', display: 'swap', preload: false,
-});
+// No build-time font classes to apply — the CSS variables live in globals.css.
+export const allFontClassNames = '';
 
-export const cormorant = Cormorant_Garamond({
-  subsets: ['latin'], weight: ['400', '500', '600', '700'],
-  variable: '--font-cormorant', display: 'swap', preload: false,
-});
-
-export const manrope = Manrope({
-  subsets: ['latin'], variable: '--font-manrope', display: 'swap', preload: false,
-});
-
-export const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'], variable: '--font-space-grotesk', display: 'swap', preload: false,
-});
-
-export const fraunces = Fraunces({
-  subsets: ['latin'], variable: '--font-fraunces', display: 'swap', preload: false,
-});
-
-export const ibmPlexSans = IBM_Plex_Sans({
-  subsets: ['latin'], weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-ibm-plex', display: 'swap', preload: false,
-});
-
-export const bricolage = Bricolage_Grotesque({
-  subsets: ['latin'], variable: '--font-bricolage', display: 'swap', preload: false,
-});
-
-export const outfit = Outfit({
-  subsets: ['latin'], variable: '--font-outfit', display: 'swap', preload: false,
-});
-
-export const dmSerif = DM_Serif_Display({
-  subsets: ['latin'], weight: '400', variable: '--font-dm-serif', display: 'swap', preload: false,
-});
-
-export const sora = Sora({
-  subsets: ['latin'], variable: '--font-sora', display: 'swap', preload: false,
-});
-
-export const lora = Lora({
-  subsets: ['latin'], variable: '--font-lora', display: 'swap', preload: false,
-});
-
-export const nunito = Nunito({
-  subsets: ['latin'], variable: '--font-nunito', display: 'swap', preload: false,
-});
-
-export const poppins = Poppins({
-  subsets: ['latin'], weight: ['300', '400', '500', '600', '700', '800', '900'],
-  variable: '--font-poppins', display: 'swap', preload: false,
-});
-
-export const lato = Lato({
-  subsets: ['latin'], weight: ['300', '400', '700', '900'],
-  variable: '--font-lato', display: 'swap', preload: false,
-});
-
-export const allFontClassNames = [
-  inter.variable,
-  playfair.variable,
-  cormorant.variable,
-  manrope.variable,
-  spaceGrotesk.variable,
-  fraunces.variable,
-  ibmPlexSans.variable,
-  bricolage.variable,
-  outfit.variable,
-  dmSerif.variable,
-  sora.variable,
-  lora.variable,
-  nunito.variable,
-  poppins.variable,
-  lato.variable,
-].join(' ');
+/** Google Fonts families to load browser-side (see RootLayout <link>). */
+export const GOOGLE_FONT_FAMILIES = [
+  'Inter:wght@400;500;600;700',
+  'Playfair+Display:wght@400;500;600;700',
+  'Cormorant+Garamond:wght@400;500;600;700',
+  'Manrope:wght@400;500;600;700',
+  'Space+Grotesk:wght@400;500;600;700',
+  'Fraunces:wght@400;500;600;700',
+  'IBM+Plex+Sans:wght@300;400;500;600;700',
+  'Bricolage+Grotesque:wght@400;500;600;700',
+  'Outfit:wght@400;500;600;700',
+  'DM+Serif+Display',
+  'Sora:wght@400;500;600;700',
+  'Lora:wght@400;500;600;700',
+  'Nunito:wght@400;500;600;700',
+  'Poppins:wght@300;400;500;600;700;800;900',
+  'Lato:wght@300;400;700;900',
+];
+export const GOOGLE_FONTS_HREF =
+  'https://fonts.googleapis.com/css2?' + GOOGLE_FONT_FAMILIES.map((f) => `family=${f}`).join('&') + '&display=swap';
 
 // =============================================================================
-//  Map family-declared font names → loaded CSS variables.
+//  Map family-declared font names → the CSS variables (declared in globals.css).
 // =============================================================================
 
 const FONT_NAME_TO_VAR: Record<string, string> = {
@@ -137,7 +85,7 @@ const FONT_NAME_TO_VAR: Record<string, string> = {
 };
 
 /** Resolve a template-declared font stack into a real CSS family value
- *  that uses the next/font CSS variables. */
+ *  that uses the CSS variables declared in globals.css. */
 export function resolveFontStack(stack: string | undefined | null): string {
   if (!stack) return 'var(--font-sans), system-ui, sans-serif';
   const first = stack.match(/"([^"]+)"|'([^']+)'|([A-Za-z][\w\- ]*)/);
