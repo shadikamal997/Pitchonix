@@ -14,7 +14,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
-    
+
     if (isPublic) {
       // For public endpoints, try to authenticate but don't fail if no token
       try {
@@ -24,7 +24,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       }
       return true;
     }
-    
+
     // For protected endpoints, enforce authentication
     return super.canActivate(context) as Promise<boolean>;
   }

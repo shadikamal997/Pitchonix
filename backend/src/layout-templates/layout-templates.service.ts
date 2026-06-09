@@ -14,15 +14,24 @@ import { PrismaService } from '../prisma/prisma.service';
 // =============================================================================
 
 export type LayoutType =
-  | 'title' | 'titleContent' | 'twoColumn' | 'comparison' | 'timeline'
-  | 'sectionDivider' | 'imageLeft' | 'imageRight' | 'dashboard'
-  | 'financial' | 'agenda' | 'custom';
+  | 'title'
+  | 'titleContent'
+  | 'twoColumn'
+  | 'comparison'
+  | 'timeline'
+  | 'sectionDivider'
+  | 'imageLeft'
+  | 'imageRight'
+  | 'dashboard'
+  | 'financial'
+  | 'agenda'
+  | 'custom';
 
 export interface LayoutTemplateInput {
-  name?:        string;
-  layoutType?:  LayoutType;
-  slots?:       any;
-  thumbnail?:   string | null;
+  name?: string;
+  layoutType?: LayoutType;
+  slots?: any;
+  thumbnail?: string | null;
   workspaceId?: string | null;
 }
 
@@ -32,9 +41,7 @@ export class LayoutTemplatesService {
 
   list(workspaceId?: string | null) {
     return this.prisma.layoutTemplate.findMany({
-      where: workspaceId
-        ? { OR: [{ workspaceId }, { workspaceId: null }] }
-        : {},
+      where: workspaceId ? { OR: [{ workspaceId }, { workspaceId: null }] } : {},
       orderBy: { updatedAt: 'desc' },
     });
   }
@@ -47,10 +54,10 @@ export class LayoutTemplatesService {
     return this.prisma.layoutTemplate.create({
       data: {
         workspaceId: input.workspaceId ?? null,
-        name:        input.name?.trim() || 'Untitled layout',
-        layoutType:  input.layoutType ?? 'custom',
-        slots:       input.slots ?? [],
-        thumbnail:   input.thumbnail ?? null,
+        name: input.name?.trim() || 'Untitled layout',
+        layoutType: input.layoutType ?? 'custom',
+        slots: input.slots ?? [],
+        thumbnail: input.thumbnail ?? null,
       },
     });
   }
@@ -75,20 +82,20 @@ export class LayoutTemplatesService {
     });
     if (!slide) throw new NotFoundException('Slide not found');
     const slots = slide.elements.map((el, i) => ({
-      id:           `slot-${i + 1}`,
-      role:         el.type,
-      x:            el.x,
-      y:            el.y,
-      w:            el.width,
-      h:            el.height,
-      defaultType:  el.type,
-      placeholder:  el.name || el.type,
+      id: `slot-${i + 1}`,
+      role: el.type,
+      x: el.x,
+      y: el.y,
+      w: el.width,
+      h: el.height,
+      defaultType: el.type,
+      placeholder: el.name || el.type,
     }));
     return this.prisma.layoutTemplate.create({
       data: {
-        workspaceId:   workspaceId ?? null,
-        name:          name?.trim() || `Layout from ${slide.title || slide.type}`,
-        layoutType:    'custom',
+        workspaceId: workspaceId ?? null,
+        name: name?.trim() || `Layout from ${slide.title || slide.type}`,
+        layoutType: 'custom',
         slots,
         sourceSlideId: slideId,
       },
@@ -103,10 +110,10 @@ export class LayoutTemplatesService {
       this.prisma.slide.findUnique({ where: { id: slideId } }),
     ]);
     if (!layout) throw new NotFoundException('Layout not found');
-    if (!slide)  throw new NotFoundException('Slide not found');
+    if (!slide) throw new NotFoundException('Slide not found');
     return this.prisma.slide.update({
       where: { id: slideId },
-      data:  { layoutTemplateId: layoutId, layoutKey: layout.layoutType },
+      data: { layoutTemplateId: layoutId, layoutKey: layout.layoutType },
     });
   }
 }

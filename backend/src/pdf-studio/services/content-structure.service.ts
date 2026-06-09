@@ -93,14 +93,17 @@ export class ContentStructureService {
     // Add main content sections (split large sections into multiple pages)
     this.logger.log(`Splitting ${contentSections.length} sections into pages`);
     contentSections.forEach((section, index) => {
-      const sectionWords = section.content.split(/\s+/).filter(w => w.trim()).length;
+      const sectionWords = section.content.split(/\s+/).filter((w) => w.trim()).length;
       const pages = this.splitSectionIntoPages(section);
       this.logger.log(`Section "${section.title}": ${sectionWords} words → ${pages.length} pages`);
 
       pages.forEach((page, pageIndex) => {
         sections.push({
           id: `section-${index}-${pageIndex}`,
-          title: pageIndex === 0 ? section.title : `${section.title} (continued)`,
+          title:
+            pageIndex === 0
+              ? this.stripContinuation(section.title)
+              : this.continuationTitle(section.title),
           type: section.type,
           content: page.content,
           order: sectionOrder++,
@@ -138,12 +141,10 @@ export class ContentStructureService {
     };
 
     // Populate TOC content now that all sections are known
-    const tocSection = sections.find(s => s.type === 'toc');
+    const tocSection = sections.find((s) => s.type === 'toc');
     if (tocSection) {
-      const contentSections = sections.filter(s => s.type !== 'cover' && s.type !== 'toc');
-      tocSection.content = contentSections
-        .map((s, i) => `${i + 1}. ${s.title}`)
-        .join('\n');
+      const contentSections = sections.filter((s) => s.type !== 'cover' && s.type !== 'toc');
+      tocSection.content = contentSections.map((s, i) => `${i + 1}. ${s.title}`).join('\n');
     }
 
     this.logger.log(
@@ -247,6 +248,17 @@ export class ContentStructureService {
       .trim();
   }
 
+  private continuationTitle(title: string): string {
+    const clean = this.stripContinuation(title);
+    return clean ? `${clean} (continued)` : 'Continued';
+  }
+
+  private stripContinuation(title: string): string {
+    return String(title || '')
+      .replace(/\s*\(continued\)\s*$/i, '')
+      .trim();
+  }
+
   /**
    * Split content by suggested structure
    */
@@ -257,9 +269,7 @@ export class ContentStructureService {
     const paragraphs = content.split(/\n\s*\n/).filter((p) => p.trim());
     const sections: Array<{ title: string; type: string; content: string }> = [];
 
-    const paragraphsPerSection = Math.ceil(
-      paragraphs.length / suggestedSections.length,
-    );
+    const paragraphsPerSection = Math.ceil(paragraphs.length / suggestedSections.length);
 
     suggestedSections.forEach((suggested, index) => {
       const start = index * paragraphsPerSection;
@@ -298,9 +308,12 @@ export class ContentStructureService {
 
     for (const paragraph of paragraphs) {
       const paragraphWords = paragraph.split(/\s+/).length;
-      
+
       // If adding this paragraph would exceed target and we have content
-      if (currentWordCount + paragraphWords > TARGET_WORDS_PER_SECTION && currentSection.length > 0) {
+      if (
+        currentWordCount + paragraphWords > TARGET_WORDS_PER_SECTION &&
+        currentSection.length > 0
+      ) {
         // Save current section and start new one
         const sectionContent = currentSection.join('\n\n');
         sections.push({
@@ -308,7 +321,7 @@ export class ContentStructureService {
           type: 'content',
           content: sectionContent,
         });
-        
+
         sectionNumber++;
         currentSection = [paragraph];
         currentWordCount = paragraphWords;
@@ -430,8 +443,8 @@ export class ContentStructureService {
     const WORDS_PER_PAGE = 300; // Target words per page (aggressive splitting for better pagination)
     const MIN_WORDS_PER_PAGE = 200; // Minimum to avoid tiny pages
     const MAX_WORDS_PER_PAGE = 400; // Maximum before forced split (set to split 418-word content)
-    
-    const words = section.content.split(/\s+/).filter(w => w.trim());
+
+    const words = section.content.split(/\s+/).filter((w) => w.trim());
     const totalWords = words.length;
 
     // If content is small enough for one page, return as-is
@@ -462,14 +475,14 @@ export class ContentStructureService {
       }
       return pages;
     }
-    
+
     const pages: Array<{ content: string }> = [];
     let currentPage: string[] = [];
     let currentWordCount = 0;
-    
+
     for (const paragraph of paragraphs) {
-      const paragraphWords = paragraph.split(/\s+/).filter(w => w.trim()).length;
-      
+      const paragraphWords = paragraph.split(/\s+/).filter((w) => w.trim()).length;
+
       // If this single paragraph is huge (>650 words), split it by word count
       if (paragraphWords > MAX_WORDS_PER_PAGE) {
         // Save current page if it has content
@@ -478,7 +491,7 @@ export class ContentStructureService {
           currentPage = [];
           currentWordCount = 0;
         }
-        
+
         // Split the huge paragraph by words
         const paraWords = paragraph.split(/\s+/);
         for (let i = 0; i < paraWords.length; i += WORDS_PER_PAGE) {
@@ -487,9 +500,12 @@ export class ContentStructureService {
         }
         continue;
       }
-      
+
       // If adding this paragraph exceeds page limit and we have content
-      if (currentWordCount + paragraphWords > WORDS_PER_PAGE && currentWordCount >= MIN_WORDS_PER_PAGE) {
+      if (
+        currentWordCount + paragraphWords > WORDS_PER_PAGE &&
+        currentWordCount >= MIN_WORDS_PER_PAGE
+      ) {
         // Save current page and start new one
         pages.push({ content: currentPage.join('\n\n') });
         currentPage = [paragraph];
@@ -500,16 +516,16 @@ export class ContentStructureService {
         currentWordCount += paragraphWords;
       }
     }
-    
+
     // Add remaining content as last page
     if (currentPage.length > 0) {
       pages.push({ content: currentPage.join('\n\n') });
     }
-    
+
     this.logger.log(
       `Split section "${section.title}" (${totalWords} words) into ${pages.length} pages`,
     );
-    
+
     return pages.length > 0 ? pages : [{ content: section.content }];
   }
 
@@ -584,10 +600,7 @@ export class ContentStructureService {
   /**
    * Generate introduction
    */
-  private generateIntroduction(
-    rawContent: string,
-    analysis: ContentAnalysisResult,
-  ): string {
+  private generateIntroduction(rawContent: string, analysis: ContentAnalysisResult): string {
     // Extract first paragraph as intro
     const paragraphs = rawContent.split(/\n\s*\n/).filter((p) => p.trim());
 
@@ -601,10 +614,7 @@ export class ContentStructureService {
   /**
    * Generate executive summary
    */
-  private generateExecutiveSummary(
-    rawContent: string,
-    analysis: ContentAnalysisResult,
-  ): string {
+  private generateExecutiveSummary(rawContent: string, analysis: ContentAnalysisResult): string {
     const paragraphs = rawContent.split(/\n\s*\n/).filter((p) => p.trim());
 
     // Extract key points from content
@@ -629,10 +639,7 @@ export class ContentStructureService {
   /**
    * Generate conclusion
    */
-  private generateConclusion(
-    rawContent: string,
-    analysis: ContentAnalysisResult,
-  ): string {
+  private generateConclusion(rawContent: string, analysis: ContentAnalysisResult): string {
     const paragraphs = rawContent.split(/\n\s*\n/).filter((p) => p.trim());
 
     // Use last paragraph or generate
@@ -673,9 +680,7 @@ export class ContentStructureService {
         merged.push(section);
         seenTitles.add(normalizedTitle);
       } else {
-        const existing = merged.find(
-          (s) => s.title.toLowerCase().trim() === normalizedTitle,
-        );
+        const existing = merged.find((s) => s.title.toLowerCase().trim() === normalizedTitle);
         if (existing) {
           existing.content += '\n\n' + section.content;
         }
@@ -683,7 +688,9 @@ export class ContentStructureService {
     });
 
     // Re-index order to close any gaps left by deduplication
-    merged.forEach((s, i) => { s.order = i; });
+    merged.forEach((s, i) => {
+      s.order = i;
+    });
 
     return merged;
   }

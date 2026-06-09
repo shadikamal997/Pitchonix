@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Post, Body, UseGuards, BadRequestException } from '@nestjs/common';
 import { UnsplashService } from './unsplash.service';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 
@@ -15,9 +15,9 @@ export class UnsplashController {
   ) {
     const pageNum = page ? parseInt(page, 10) : 1;
     const perPageNum = perPage ? parseInt(perPage, 10) : 30;
-    
+
     const images = await this.unsplashService.searchImages(query, pageNum, perPageNum);
-    
+
     return {
       images,
       query,
@@ -28,13 +28,10 @@ export class UnsplashController {
   }
 
   @Get('random')
-  async getRandomImages(
-    @Query('query') query?: string,
-    @Query('count') count?: string,
-  ) {
+  async getRandomImages(@Query('query') query?: string, @Query('count') count?: string) {
     const countNum = count ? parseInt(count, 10) : 10;
     const images = await this.unsplashService.getRandomImages(query, countNum);
-    
+
     return {
       images,
       count: images.length,
@@ -43,6 +40,18 @@ export class UnsplashController {
 
   @Post('download')
   async triggerDownload(@Body('downloadUrl') downloadUrl: string) {
+    // SSRF guard: the server fetches this URL with the Unsplash API key
+    // attached. Only allow Unsplash's own download_location hosts so a caller
+    // can't redirect the authenticated request (and leak the key) elsewhere.
+    let host: string;
+    try {
+      host = new URL(downloadUrl).hostname;
+    } catch {
+      throw new BadRequestException('Invalid downloadUrl');
+    }
+    if (host !== 'api.unsplash.com' && host !== 'images.unsplash.com') {
+      throw new BadRequestException('downloadUrl must be an Unsplash URL');
+    }
     await this.unsplashService.triggerDownload(downloadUrl);
     return { success: true };
   }

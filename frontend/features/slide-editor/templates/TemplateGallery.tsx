@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { X, Search, Check, Loader2, Sparkles, Eye, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { X, Search, Check, Loader2, Sparkles, Eye, Maximize2, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { TEMPLATES, TemplateSpec, findTemplate } from './registry';
 import { applyTemplate } from './applyTemplate';
 import { TemplatePreview } from './TemplatePreview';
+import api from '@/lib/api';
 
 // =============================================================================
 //  TemplateGallery — modal that lets the user pick + apply a template to their
@@ -26,12 +28,18 @@ interface Props {
 }
 
 export const TemplateGallery: React.FC<Props> = ({ projectId, deckId, currentTemplateId, onClose, onApplied, onApplyingChange }) => {
+  const router = useRouter();
   const [search, setSearch]           = useState('');
   const [activeId, setActiveId]       = useState<string>(currentTemplateId || TEMPLATES[0].id);
   const [applying, setApplying]       = useState(false);
   const [progress, setProgress]       = useState<{ done: number; total: number } | null>(null);
   const [error, setError]             = useState<string | null>(null);
   const [fullscreenId, setFullscreenId] = useState<string | null>(null);
+  // P0-1: applying a template rebuilds the deck and discards manual slide edits.
+  // Gate every apply behind an explicit confirmation with a safe "duplicate
+  // first" path. `confirmFor` holds the template awaiting confirmation.
+  const [confirmFor, setConfirmFor]   = useState<TemplateSpec | null>(null);
+  const [dupApplying, setDupApplying] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -59,9 +67,17 @@ export const TemplateGallery: React.FC<Props> = ({ projectId, deckId, currentTem
     return () => window.removeEventListener('keydown', onKey);
   }, [fullscreenId, fullscreenIdx, filtered]);
 
-  const handleApply = async (tpl?: TemplateSpec) => {
-    const template = tpl || active;
+  // Open the confirmation gate instead of applying immediately.
+  const requestApply = (tpl?: TemplateSpec) => {
+    if (applying || dupApplying) return;
+    setConfirmFor(tpl || active);
+  };
+
+  // "Apply Anyway" — apply the visual system to this deck in place while
+  // preserving slide content and element geometry.
+  const performApply = async (template: TemplateSpec) => {
     if (applying) return;
+    setConfirmFor(null);
     setApplying(true); setError(null); setProgress({ done: 0, total: 1 });
     onApplyingChange?.(true);
     try {
@@ -76,6 +92,30 @@ export const TemplateGallery: React.FC<Props> = ({ projectId, deckId, currentTem
       setError(err?.response?.data?.message || err?.message || 'Apply failed');
     } finally {
       setApplying(false);
+      onApplyingChange?.(false);
+    }
+  };
+
+  // "Duplicate & Apply" — preserve the original: duplicate the project, apply
+  // the template to the COPY, and open it. The original deck is untouched.
+  const performDuplicateAndApply = async (template: TemplateSpec) => {
+    if (dupApplying) return;
+    setDupApplying(true); setError(null);
+    onApplyingChange?.(true);
+    try {
+      const res = await api.post(`/projects/${projectId}/duplicate`);
+      const newProject = (res.data?.data ?? res.data) as any;
+      const newDeckId = newProject?.decks?.[0]?.id;
+      if (!newProject?.id || !newDeckId) {
+        throw new Error('Could not open the duplicated project.');
+      }
+      await applyTemplate(newProject.id, newDeckId, template, {});
+      setConfirmFor(null);
+      router.push(`/editor/${newDeckId}`);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || 'Duplicate & apply failed');
+    } finally {
+      setDupApplying(false);
       onApplyingChange?.(false);
     }
   };
@@ -220,8 +260,8 @@ export const TemplateGallery: React.FC<Props> = ({ projectId, deckId, currentTem
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleApply()}
-                  disabled={applying}
+                  onClick={() => requestApply()}
+                  disabled={applying || dupApplying}
                   className="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded shadow-md shadow-green-500/30 flex items-center gap-1.5 disabled:opacity-60"
                 >
                   {applying && <Loader2 className="w-3 h-3 animate-spin" />}
@@ -319,15 +359,68 @@ export const TemplateGallery: React.FC<Props> = ({ projectId, deckId, currentTem
                   onClick={() => {
                     setActiveId(fullscreenTemplate.id);
                     setFullscreenId(null);
-                    handleApply(fullscreenTemplate);
+                    requestApply(fullscreenTemplate);
                   }}
-                  disabled={applying}
+                  disabled={applying || dupApplying}
                   className="px-5 py-2 text-sm font-semibold bg-green-600 hover:bg-green-500 text-white rounded-lg shadow-lg shadow-green-900/40 disabled:opacity-60 flex items-center gap-2 transition-colors"
                 >
                   {applying && <Loader2 className="w-4 h-4 animate-spin" />}
                   Apply to deck
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── P0-1: destructive-apply confirmation gate ─────────────────────────── */}
+      {confirmFor && (
+        <div
+          className="fixed inset-0 z-[60] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => { if (!applying && !dupApplying) setConfirmFor(null); }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+          >
+            <div className="p-5 flex items-start gap-3 border-b border-slate-100">
+              <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Switching template rebuilds this deck</h3>
+                <p className="text-[13px] text-slate-600 mt-1 leading-relaxed">
+                  Applying <span className="font-semibold">{confirmFor.name}</span> regenerates the slides
+                  from your project content. <span className="font-semibold">Manual edits to the current
+                  slides will be discarded.</span> To keep the original, duplicate the project and apply
+                  the template to the copy.
+                </p>
+              </div>
+            </div>
+            <div className="p-4 flex flex-col gap-2">
+              <button
+                onClick={() => performDuplicateAndApply(confirmFor)}
+                disabled={applying || dupApplying}
+                className="w-full px-4 py-2.5 text-sm font-semibold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md shadow-green-500/30 flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {dupApplying && <Loader2 className="w-4 h-4 animate-spin" />}
+                Duplicate &amp; Apply (keep original)
+              </button>
+              <button
+                onClick={() => performApply(confirmFor)}
+                disabled={applying || dupApplying}
+                className="w-full px-4 py-2.5 text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {applying && <Loader2 className="w-4 h-4 animate-spin" />}
+                Apply Anyway (discard edits)
+              </button>
+              <button
+                onClick={() => setConfirmFor(null)}
+                disabled={applying || dupApplying}
+                className="w-full px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg disabled:opacity-60"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

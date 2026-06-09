@@ -4,10 +4,19 @@ import { ApiProperty } from '@nestjs/swagger';
  * Progress details for generation status
  */
 export class GenerationProgressDto {
-  @ApiProperty({ 
-    example: 'VISUAL_GENERATION', 
+  @ApiProperty({
+    example: 'VISUAL_GENERATION',
     description: 'Current generation stage',
-    enum: ['PENDING', 'BASE_GENERATION', 'AI_ENHANCEMENT', 'VISUAL_GENERATION', 'QUALITY_CHECK', 'EXPORT', 'COMPLETE', 'FAILED']
+    enum: [
+      'PENDING',
+      'BASE_GENERATION',
+      'AI_ENHANCEMENT',
+      'VISUAL_GENERATION',
+      'QUALITY_CHECK',
+      'EXPORT',
+      'COMPLETE',
+      'FAILED',
+    ],
   })
   stage: string;
 
@@ -23,7 +32,11 @@ export class GenerationProgressDto {
   @ApiProperty({ example: 10, description: 'Total number of slides' })
   totalSlides: number;
 
-  @ApiProperty({ example: 5000, required: false, description: 'Estimated time remaining in milliseconds' })
+  @ApiProperty({
+    example: 5000,
+    required: false,
+    description: 'Estimated time remaining in milliseconds',
+  })
   estimatedTimeRemaining?: number;
 }
 
@@ -57,14 +70,14 @@ export class PerformanceMetricsDto {
   @ApiProperty({ example: 2500, description: 'Average time per slide in milliseconds' })
   averageSlideTime: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: {
       BASE_GENERATION: 8000,
       AI_ENHANCEMENT: 10000,
       VISUAL_GENERATION: 6000,
-      QUALITY_CHECK: 1000
+      QUALITY_CHECK: 1000,
     },
-    description: 'Duration breakdown by stage in milliseconds'
+    description: 'Duration breakdown by stage in milliseconds',
   })
   stageTimings: Record<string, number>;
 }
@@ -76,7 +89,11 @@ export class GenerationStatusDto {
   @ApiProperty({ example: 'deck-uuid', description: 'Deck identifier' })
   deckId: string;
 
-  @ApiProperty({ example: 'generating', description: 'Current status',enum: ['queued', 'generating', 'completed', 'failed'] })
+  @ApiProperty({
+    example: 'generating',
+    description: 'Current status',
+    enum: ['queued', 'generating', 'completed', 'failed'],
+  })
   status: string;
 
   @ApiProperty({ example: false, description: 'Whether generation is complete' })
@@ -85,15 +102,27 @@ export class GenerationStatusDto {
   @ApiProperty({ type: GenerationProgressDto, description: 'Current progress details' })
   progress: GenerationProgressDto;
 
-  @ApiProperty({ type: [GenerationErrorDto], required: false, description: 'Errors encountered during generation' })
+  @ApiProperty({
+    type: [GenerationErrorDto],
+    required: false,
+    description: 'Errors encountered during generation',
+  })
   errors?: GenerationErrorDto[];
 
-  @ApiProperty({ type: PerformanceMetricsDto, required: false, description: 'Performance metrics (only available after completion)' })
+  @ApiProperty({
+    type: PerformanceMetricsDto,
+    required: false,
+    description: 'Performance metrics (only available after completion)',
+  })
   metrics?: PerformanceMetricsDto;
 
   @ApiProperty({ example: '2024-05-05T12:30:00.000Z', description: 'When generation started' })
   startTime: Date;
 
-  @ApiProperty({ example: '2024-05-05T12:30:25.000Z', required: false, description: 'When generation ended (if completed)' })
+  @ApiProperty({
+    example: '2024-05-05T12:30:25.000Z',
+    required: false,
+    description: 'When generation ended (if completed)',
+  })
   endTime?: Date;
 }

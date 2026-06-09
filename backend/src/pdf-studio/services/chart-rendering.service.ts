@@ -55,7 +55,8 @@ export class ChartRenderingService {
     // Apply default colors if not provided
     const enhancedDatasets = datasets.map((dataset, index) => ({
       ...dataset,
-      backgroundColor: dataset.backgroundColor || this.getDefaultColors(type, index, datasets.length),
+      backgroundColor:
+        dataset.backgroundColor || this.getDefaultColors(type, index, datasets.length),
       borderColor: dataset.borderColor || this.getDefaultBorderColors(index),
       borderWidth: dataset.borderWidth || 2,
     }));
@@ -163,7 +164,11 @@ export class ChartRenderingService {
   /**
    * Create sample financial chart
    */
-  async createFinancialChart(data: { months: string[], revenue: number[], expenses: number[] }): Promise<string> {
+  async createFinancialChart(data: {
+    months: string[];
+    revenue: number[];
+    expenses: number[];
+  }): Promise<string> {
     return this.renderChartToBase64({
       type: 'bar',
       title: 'Revenue vs Expenses',
@@ -188,7 +193,7 @@ export class ChartRenderingService {
   /**
    * Create sample KPI chart
    */
-  async createKPIChart(data: { labels: string[], values: number[] }): Promise<string> {
+  async createKPIChart(data: { labels: string[]; values: number[] }): Promise<string> {
     return this.renderChartToBase64({
       type: 'line',
       title: 'Key Performance Indicators',
@@ -208,7 +213,7 @@ export class ChartRenderingService {
   /**
    * Create sample metric breakdown chart
    */
-  async createMetricBreakdownChart(data: { labels: string[], values: number[] }): Promise<string> {
+  async createMetricBreakdownChart(data: { labels: string[]; values: number[] }): Promise<string> {
     return this.renderChartToBase64({
       type: 'doughnut',
       title: 'Metric Breakdown',

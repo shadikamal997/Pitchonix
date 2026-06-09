@@ -12,7 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -21,7 +21,15 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "certify:content": "ts-node scripts/certify-content.ts",
+    "certify:gate": "ts-node scripts/certify-content.ts --gate --fixture",
+    "certify:pdf-binary": "REQUIRE_PDF_BINARY_CERT=1 jest pdf-content-fidelity.spec.ts --runInBand",
+    "certify:xlsx": "jest excel-studio.service.spec.ts --runInBand",
+    "validate:corpus": "ts-node scripts/validate-corpus.ts",
+    "render:cert": "ts-node scripts/render-cert.ts",
+    "render:cert:doc": "ts-node scripts/render-cert-doc.ts",
+    "editor:live-probe": "ts-node scripts/editor-live-probe.ts"
   },
   "dependencies": {
     "@nestjs/bull": "^10.0.1",

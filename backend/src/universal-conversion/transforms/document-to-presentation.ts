@@ -41,7 +41,9 @@ export function documentToPresentation(doc: UniversalDocument): UniversalDocumen
     nodes: [
       { type: 'heading', level: 1, text: doc.metadata.title },
       ...(doc.metadata.author ? [{ type: 'paragraph' as const, text: doc.metadata.author }] : []),
-      ...(doc.metadata.description ? [{ type: 'paragraph' as const, text: doc.metadata.description }] : []),
+      ...(doc.metadata.description
+        ? [{ type: 'paragraph' as const, text: doc.metadata.description }]
+        : []),
     ],
   });
 
@@ -64,7 +66,7 @@ export function documentToPresentation(doc: UniversalDocument): UniversalDocumen
     if (node.type === 'heading' && node.level === 1) {
       flush();
       current.title = node.text;
-      pendingTitle  = node.text || null;
+      pendingTitle = node.text || null;
       current.nodes.push({ type: 'heading', level: 1, text: node.text });
       continue;
     }
@@ -77,7 +79,8 @@ export function documentToPresentation(doc: UniversalDocument): UniversalDocumen
       continue;
     }
     // Split when budget exceeded.
-    const cost = (node.text || '').length + (Array.isArray(node.items) ? node.items.length * 30 : 0);
+    const cost =
+      (node.text || '').length + (Array.isArray(node.items) ? node.items.length * 30 : 0);
     if (current.nodes.length >= MAX_NODES_PER_SLIDE || textBudget + cost > MAX_CHARS_PER_SLIDE) {
       const cont = (current.title || pendingTitle || '') + ' (continued)';
       flush();

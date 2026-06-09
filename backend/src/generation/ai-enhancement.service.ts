@@ -18,7 +18,7 @@ export class AIEnhancementService {
 
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY;
-    
+
     if (!apiKey || apiKey === 'your-openai-api-key-here') {
       this.logger.warn('OpenAI API key not configured. AI enhancement disabled.');
       this.isEnabled = false;
@@ -72,10 +72,7 @@ export class AIEnhancementService {
 
       // Enhance speaker notes
       if (enhanceSpeakerNotes && input.includeSpeakerNotes) {
-        enhancedSlide.speakerNotes = await this.enhanceSpeakerNotes(
-          enhancedSlide,
-          input,
-        );
+        enhancedSlide.speakerNotes = await this.enhanceSpeakerNotes(enhancedSlide, input);
       }
 
       return enhancedSlide;
@@ -89,10 +86,7 @@ export class AIEnhancementService {
   /**
    * Enhance entire deck
    */
-  async enhanceDeck(
-    slides: SlideContent[],
-    input: WizardInput,
-  ): Promise<SlideContent[]> {
+  async enhanceDeck(slides: SlideContent[], input: WizardInput): Promise<SlideContent[]> {
     if (!this.isEnabled) {
       this.logger.debug('Deck enhancement skipped (AI not enabled)');
       return slides;
@@ -132,33 +126,27 @@ export class AIEnhancementService {
     await this.rateLimiter.waitForToken();
 
     // Execute with retry
-    const response = await this.retryStrategy.execute(
-      async () => {
-        return await this.openai.chat.completions.create({
-          model: 'gpt-4-turbo-preview',
-          messages: [
-            {
-              role: 'system',
-              content: this.getSystemPrompt(input),
-            },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.7,
-          max_tokens: 1000,
-        });
-      },
-      `Enhance slide content [${slide.type}]`,
-    );
+    const response = await this.retryStrategy.execute(async () => {
+      return await this.openai.chat.completions.create({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          {
+            role: 'system',
+            content: this.getSystemPrompt(input),
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+    }, `Enhance slide content [${slide.type}]`);
 
     // Track usage
     if (response.usage) {
-      this.costTracker.trackRequest(
-        response.usage.prompt_tokens,
-        response.usage.completion_tokens,
-      );
+      this.costTracker.trackRequest(response.usage.prompt_tokens, response.usage.completion_tokens);
     }
 
     const enhancedContent = response.choices[0]?.message?.content;
@@ -186,43 +174,34 @@ export class AIEnhancementService {
   /**
    * Enhance speaker notes
    */
-  private async enhanceSpeakerNotes(
-    slide: SlideContent,
-    input: WizardInput,
-  ): Promise<string> {
+  private async enhanceSpeakerNotes(slide: SlideContent, input: WizardInput): Promise<string> {
     const prompt = this.buildSpeakerNotesPrompt(slide, input);
 
     // Wait for rate limiter
     await this.rateLimiter.waitForToken();
 
     // Execute with retry
-    const response = await this.retryStrategy.execute(
-      async () => {
-        return await this.openai.chat.completions.create({
-          model: 'gpt-4-turbo-preview',
-          messages: [
-            {
-              role: 'system',
-              content: this.getSystemPrompt(input),
-            },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.8,
-          max_tokens: 500,
-        });
-      },
-      `Enhance speaker notes [${slide.type}]`,
-    );
+    const response = await this.retryStrategy.execute(async () => {
+      return await this.openai.chat.completions.create({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          {
+            role: 'system',
+            content: this.getSystemPrompt(input),
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.8,
+        max_tokens: 500,
+      });
+    }, `Enhance speaker notes [${slide.type}]`);
 
     // Track usage
     if (response.usage) {
-      this.costTracker.trackRequest(
-        response.usage.prompt_tokens,
-        response.usage.completion_tokens,
-      );
+      this.costTracker.trackRequest(response.usage.prompt_tokens, response.usage.completion_tokens);
     }
 
     return response.choices[0]?.message?.content || slide.speakerNotes || '';
@@ -277,10 +256,7 @@ Return only valid JSON. Do not add explanations or markdown formatting.`;
   /**
    * Build content enhancement prompt
    */
-  private buildContentEnhancementPrompt(
-    slide: SlideContent,
-    input: WizardInput,
-  ): string {
+  private buildContentEnhancementPrompt(slide: SlideContent, input: WizardInput): string {
     return `Enhance the content for this slide:
 
 Slide Type: ${slide.type}
@@ -302,10 +278,7 @@ Return the enhanced content as valid JSON with the same structure.`;
   /**
    * Build speaker notes prompt
    */
-  private buildSpeakerNotesPrompt(
-    slide: SlideContent,
-    input: WizardInput,
-  ): string {
+  private buildSpeakerNotesPrompt(slide: SlideContent, input: WizardInput): string {
     return `Create detailed speaker notes for this slide:
 
 Slide Type: ${slide.type}
@@ -342,14 +315,12 @@ Return only the speaker notes text, no formatting or labels.`;
 
     for (let i = 0; i < slides.length; i += batchSize) {
       const batch = slides.slice(i, i + batchSize);
-      
+
       this.logger.debug(
         `Enhancing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(slides.length / batchSize)}`,
       );
 
-      const batchResults = await Promise.all(
-        batch.map((slide) => this.enhanceSlide(slide, input)),
-      );
+      const batchResults = await Promise.all(batch.map((slide) => this.enhanceSlide(slide, input)));
 
       enhanced.push(...batchResults);
 
@@ -401,26 +372,23 @@ Write a concise, impactful summary that captures the essence of the business.`;
       await this.rateLimiter.waitForToken();
 
       // Execute with retry
-      const response = await this.retryStrategy.execute(
-        async () => {
-          return await this.openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-              {
-                role: 'system',
-                content: this.getSystemPrompt(input),
-              },
-              {
-                role: 'user',
-                content: prompt,
-              },
-            ],
-            temperature: 0.5,
-            max_tokens: 200,
-          });
-        },
-        'Generate executive summary',
-      );
+      const response = await this.retryStrategy.execute(async () => {
+        return await this.openai.chat.completions.create({
+          model: 'gpt-4-turbo-preview',
+          messages: [
+            {
+              role: 'system',
+              content: this.getSystemPrompt(input),
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.5,
+          max_tokens: 200,
+        });
+      }, 'Generate executive summary');
 
       // Track usage
       if (response.usage) {
@@ -470,26 +438,23 @@ Return as JSON array of strings.`;
       await this.rateLimiter.waitForToken();
 
       // Execute with retry
-      const response = await this.retryStrategy.execute(
-        async () => {
-          return await this.openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-              {
-                role: 'system',
-                content: 'You are an expert copywriter. Return only valid JSON.',
-              },
-              {
-                role: 'user',
-                content: prompt,
-              },
-            ],
-            temperature: 0.7,
-            max_tokens: 300,
-          });
-        },
-        'Improve bullet points',
-      );
+      const response = await this.retryStrategy.execute(async () => {
+        return await this.openai.chat.completions.create({
+          model: 'gpt-4-turbo-preview',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert copywriter. Return only valid JSON.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 300,
+        });
+      }, 'Improve bullet points');
 
       // Track usage
       if (response.usage) {
@@ -536,24 +501,27 @@ Return enhanced content as valid JSON with the same structure.`;
 
     try {
       await this.rateLimiter.waitForToken();
-      
-      const response = await this.retryStrategy.execute(
-        async () => {
-          return await this.openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-              { role: 'system', content: 'You are an expert content editor. Return only valid JSON.' },
-              { role: 'user', content: prompt },
-            ],
-            temperature: 0.7,
-            max_tokens: 800,
-          });
-        },
-        'Improve slide content',
-      );
+
+      const response = await this.retryStrategy.execute(async () => {
+        return await this.openai.chat.completions.create({
+          model: 'gpt-4-turbo-preview',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert content editor. Return only valid JSON.',
+            },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 800,
+        });
+      }, 'Improve slide content');
 
       if (response.usage) {
-        this.costTracker.trackRequest(response.usage.prompt_tokens, response.usage.completion_tokens);
+        this.costTracker.trackRequest(
+          response.usage.prompt_tokens,
+          response.usage.completion_tokens,
+        );
       }
 
       const result = response.choices[0]?.message?.content;
@@ -587,24 +555,27 @@ Return shortened content as valid JSON with the same structure.`;
 
     try {
       await this.rateLimiter.waitForToken();
-      
-      const response = await this.retryStrategy.execute(
-        async () => {
-          return await this.openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-              { role: 'system', content: 'You are an expert content editor. Return only valid JSON.' },
-              { role: 'user', content: prompt },
-            ],
-            temperature: 0.6,
-            max_tokens: 600,
-          });
-        },
-        'Shorten content',
-      );
+
+      const response = await this.retryStrategy.execute(async () => {
+        return await this.openai.chat.completions.create({
+          model: 'gpt-4-turbo-preview',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert content editor. Return only valid JSON.',
+            },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.6,
+          max_tokens: 600,
+        });
+      }, 'Shorten content');
 
       if (response.usage) {
-        this.costTracker.trackRequest(response.usage.prompt_tokens, response.usage.completion_tokens);
+        this.costTracker.trackRequest(
+          response.usage.prompt_tokens,
+          response.usage.completion_tokens,
+        );
       }
 
       const result = response.choices[0]?.message?.content;
@@ -641,24 +612,27 @@ Return expanded content as valid JSON with the same structure.`;
 
     try {
       await this.rateLimiter.waitForToken();
-      
-      const response = await this.retryStrategy.execute(
-        async () => {
-          return await this.openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-              { role: 'system', content: 'You are an expert content editor. Return only valid JSON.' },
-              { role: 'user', content: prompt },
-            ],
-            temperature: 0.5,
-            max_tokens: 1000,
-          });
-        },
-        'Expand content',
-      );
+
+      const response = await this.retryStrategy.execute(async () => {
+        return await this.openai.chat.completions.create({
+          model: 'gpt-4-turbo-preview',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert content editor. Return only valid JSON.',
+            },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.5,
+          max_tokens: 1000,
+        });
+      }, 'Expand content');
 
       if (response.usage) {
-        this.costTracker.trackRequest(response.usage.prompt_tokens, response.usage.completion_tokens);
+        this.costTracker.trackRequest(
+          response.usage.prompt_tokens,
+          response.usage.completion_tokens,
+        );
       }
 
       const result = response.choices[0]?.message?.content;
@@ -695,24 +669,27 @@ Return professional content as valid JSON with the same structure.`;
 
     try {
       await this.rateLimiter.waitForToken();
-      
-      const response = await this.retryStrategy.execute(
-        async () => {
-          return await this.openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-              { role: 'system', content: 'You are an expert business writer. Return only valid JSON.' },
-              { role: 'user', content: prompt },
-            ],
-            temperature: 0.7,
-            max_tokens: 800,
-          });
-        },
-        'Make professional',
-      );
+
+      const response = await this.retryStrategy.execute(async () => {
+        return await this.openai.chat.completions.create({
+          model: 'gpt-4-turbo-preview',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert business writer. Return only valid JSON.',
+            },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 800,
+        });
+      }, 'Make professional');
 
       if (response.usage) {
-        this.costTracker.trackRequest(response.usage.prompt_tokens, response.usage.completion_tokens);
+        this.costTracker.trackRequest(
+          response.usage.prompt_tokens,
+          response.usage.completion_tokens,
+        );
       }
 
       const result = response.choices[0]?.message?.content;
@@ -751,24 +728,27 @@ Return investor-optimized content as valid JSON with the same structure.`;
 
     try {
       await this.rateLimiter.waitForToken();
-      
-      const response = await this.retryStrategy.execute(
-        async () => {
-          return await this.openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-              { role: 'system', content: 'You are an expert investor pitch consultant. Return only valid JSON.' },
-              { role: 'user', content: prompt },
-            ],
-            temperature: 0.3,
-            max_tokens: 900,
-          });
-        },
-        'Make investor-ready',
-      );
+
+      const response = await this.retryStrategy.execute(async () => {
+        return await this.openai.chat.completions.create({
+          model: 'gpt-4-turbo-preview',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert investor pitch consultant. Return only valid JSON.',
+            },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.3,
+          max_tokens: 900,
+        });
+      }, 'Make investor-ready');
 
       if (response.usage) {
-        this.costTracker.trackRequest(response.usage.prompt_tokens, response.usage.completion_tokens);
+        this.costTracker.trackRequest(
+          response.usage.prompt_tokens,
+          response.usage.completion_tokens,
+        );
       }
 
       const result = response.choices[0]?.message?.content;

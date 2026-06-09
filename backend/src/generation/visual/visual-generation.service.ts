@@ -1,10 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SlideContent, WizardInput } from '../slide-types/types';
-import {
-  VisualSlideContent,
-  VisualGenerationOptions,
-  ImagePlaceholder,
-} from './types';
+import { VisualSlideContent, VisualGenerationOptions, ImagePlaceholder } from './types';
 import { ChartGenerationService } from './chart-generation.service';
 import { LayoutService } from './layout.service';
 import { ThemeService } from './theme.service';
@@ -51,12 +47,7 @@ export class VisualGenerationService {
 
     for (const slide of slides) {
       try {
-        const visualSlide = await this.generateVisualSlide(
-          slide,
-          input,
-          theme,
-          defaultOptions,
-        );
+        const visualSlide = await this.generateVisualSlide(slide, input, theme, defaultOptions);
         visualSlides.push(visualSlide);
       } catch (error) {
         this.logger.error(
@@ -67,9 +58,7 @@ export class VisualGenerationService {
       }
     }
 
-    this.logger.log(
-      `Successfully generated visual content for ${visualSlides.length} slides`,
-    );
+    this.logger.log(`Successfully generated visual content for ${visualSlides.length} slides`);
     return visualSlides;
   }
 
@@ -91,9 +80,7 @@ export class VisualGenerationService {
       : [];
 
     // Generate image placeholders if applicable
-    const images = options.generateImages
-      ? this.generateImagePlaceholders(slide)
-      : [];
+    const images = options.generateImages ? this.generateImagePlaceholders(slide) : [];
 
     // Build visual slide content
     const visualSlide: VisualSlideContent = {
@@ -188,10 +175,7 @@ export class VisualGenerationService {
   /**
    * Create fallback visual slide when generation fails
    */
-  private createFallbackVisualSlide(
-    slide: SlideContent,
-    theme: any,
-  ): VisualSlideContent {
+  private createFallbackVisualSlide(slide: SlideContent, theme: any): VisualSlideContent {
     const defaultLayout = this.layoutService.getLayout('title_content' as any);
 
     return {
@@ -290,9 +274,7 @@ export class VisualGenerationService {
       // Check charts have data
       slide.charts?.forEach((chart, chartIndex) => {
         if (!chart.data || chart.data.length === 0) {
-          errors.push(
-            `Slide ${index + 1}, Chart ${chartIndex + 1}: No data`,
-          );
+          errors.push(`Slide ${index + 1}, Chart ${chartIndex + 1}: No data`);
         }
       });
     });

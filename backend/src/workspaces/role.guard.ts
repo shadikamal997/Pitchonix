@@ -1,6 +1,11 @@
 import {
-  Injectable, CanActivate, ExecutionContext, ForbiddenException,
-  SetMetadata, applyDecorators, UseGuards,
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  SetMetadata,
+  applyDecorators,
+  UseGuards,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../prisma/prisma.service';
@@ -36,17 +41,17 @@ export interface RoleRequirement {
 
 /** Tells the guard how to find the workspaceId for this request. */
 export type WorkspaceResolver =
-  | { kind: 'param';             key: string }          // workspaceId is a route param
-  | { kind: 'body';              key: string }          // …or a body field
-  | { kind: 'query';             key: string }          // …or a query string param
-  | { kind: 'workspaceFromDeck'; param: string }        // deckId param → deck.project.workspaceId
-  | { kind: 'workspaceFromProject'; param: string }     // projectId param → project.workspaceId
-  | { kind: 'workspaceFromComment'; param: string }     // commentId param → comment.project.workspaceId
-  | { kind: 'workspaceFromReview';  param: string }     // reviewId param → review.deck.project.workspaceId
+  | { kind: 'param'; key: string } // workspaceId is a route param
+  | { kind: 'body'; key: string } // …or a body field
+  | { kind: 'query'; key: string } // …or a query string param
+  | { kind: 'workspaceFromDeck'; param: string } // deckId param → deck.project.workspaceId
+  | { kind: 'workspaceFromProject'; param: string } // projectId param → project.workspaceId
+  | { kind: 'workspaceFromComment'; param: string } // commentId param → comment.project.workspaceId
+  | { kind: 'workspaceFromReview'; param: string } // reviewId param → review.deck.project.workspaceId
   // Phase 39.1C — for slide/element/version routes that only know a slide id
-  | { kind: 'workspaceFromSlide';   param: string }     // slideId param → slide.deck.project.workspaceId
-  | { kind: 'workspaceFromElement'; param: string }     // elementId param → element.slide.deck.project.workspaceId
-  | { kind: 'workspaceFromVersion'; param: string };    // versionId param → version.deck.project.workspaceId
+  | { kind: 'workspaceFromSlide'; param: string } // slideId param → slide.deck.project.workspaceId
+  | { kind: 'workspaceFromElement'; param: string } // elementId param → element.slide.deck.project.workspaceId
+  | { kind: 'workspaceFromVersion'; param: string }; // versionId param → version.deck.project.workspaceId
 
 const ROLE_REQUIREMENT_KEY = 'workspace:role-requirement';
 
@@ -65,12 +70,12 @@ export function RequireRole(action: WorkspaceAction, resolver: WorkspaceResolver
 export class WorkspaceRoleGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private prisma:    PrismaService,
+    private prisma: PrismaService,
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const requirement = this.reflector.get<RoleRequirement>(ROLE_REQUIREMENT_KEY, ctx.getHandler());
-    if (!requirement) return true;   // route didn't opt-in
+    if (!requirement) return true; // route didn't opt-in
 
     const req = ctx.switchToHttp().getRequest();
     const userId = req?.user?.id;
@@ -82,7 +87,7 @@ export class WorkspaceRoleGuard implements CanActivate {
     }
 
     const member = await this.prisma.workspaceMember.findUnique({
-      where:  { workspaceId_userId: { workspaceId, userId } },
+      where: { workspaceId_userId: { workspaceId, userId } },
       select: { role: true },
     });
     if (!member) throw new ForbiddenException('You are not a member of this workspace');
@@ -99,9 +104,12 @@ export class WorkspaceRoleGuard implements CanActivate {
 
   private async resolveWorkspaceId(req: any, resolver: WorkspaceResolver): Promise<string | null> {
     switch (resolver.kind) {
-      case 'param':  return req.params?.[resolver.key] || null;
-      case 'body':   return req.body?.[resolver.key]   || null;
-      case 'query':  return req.query?.[resolver.key]  || null;
+      case 'param':
+        return req.params?.[resolver.key] || null;
+      case 'body':
+        return req.body?.[resolver.key] || null;
+      case 'query':
+        return req.query?.[resolver.key] || null;
 
       case 'workspaceFromDeck': {
         const deckId = req.params?.[resolver.param];
@@ -153,7 +161,9 @@ export class WorkspaceRoleGuard implements CanActivate {
         if (!elementId) return null;
         const el = await this.prisma.slideElement.findUnique({
           where: { id: elementId },
-          select: { slide: { select: { deck: { select: { project: { select: { workspaceId: true } } } } } } },
+          select: {
+            slide: { select: { deck: { select: { project: { select: { workspaceId: true } } } } } },
+          },
         });
         return el?.slide?.deck?.project?.workspaceId || null;
       }

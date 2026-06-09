@@ -1,12 +1,20 @@
 import {
-  Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { ELEMENT_TYPES, ElementType, SlideElementDTO } from './element-types';
 import { CollaborationBroadcaster } from '../collaboration/collaboration-broadcaster';
 
-interface ReorderEntry { id: string; order: number; zIndex?: number }
+interface ReorderEntry {
+  id: string;
+  order: number;
+  zIndex?: number;
+}
 
 @Injectable()
 export class SlideElementsService {
@@ -20,7 +28,8 @@ export class SlideElementsService {
   /** Phase 34G — resolve the deckId for a slide so we can broadcast into the right room. */
   private async deckIdOfSlide(slideId: string): Promise<string | null> {
     const slide = await this.prisma.slide.findUnique({
-      where: { id: slideId }, select: { deckId: true },
+      where: { id: slideId },
+      select: { deckId: true },
     });
     return slide?.deckId || null;
   }
@@ -72,30 +81,32 @@ export class SlideElementsService {
     validateType(input.type);
 
     const lastOrder = await this.prisma.slideElement.aggregate({
-      where: { slideId }, _max: { order: true, zIndex: true },
+      where: { slideId },
+      _max: { order: true, zIndex: true },
     });
-    const order  = (lastOrder._max.order  ?? -1) + 1;
-    const zIndex = (lastOrder._max.zIndex ?? 0)  + 1;
+    const order = (lastOrder._max.order ?? -1) + 1;
+    const zIndex = (lastOrder._max.zIndex ?? 0) + 1;
 
     const row = await this.prisma.slideElement.create({
       data: {
         slideId,
         type: input.type!,
         name: input.name ?? null,
-        order:    input.order    ?? order,
-        x:        clampPct(input.x ?? 10),
-        y:        clampPct(input.y ?? 10),
-        width:    clampPct(input.width  ?? 30),
-        height:   clampPct(input.height ?? 10),
+        order: input.order ?? order,
+        x: clampPct(input.x ?? 10),
+        y: clampPct(input.y ?? 10),
+        width: clampPct(input.width ?? 30),
+        height: clampPct(input.height ?? 10),
         rotation: input.rotation ?? 0,
-        zIndex:   input.zIndex   ?? zIndex,
-        locked:   input.locked   ?? false,
-        visible:  input.visible  ?? true,
-        content:       (input.content       as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
-        data:          (input.data          as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
-        style:         (input.style         as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
-        animations:    (input.animations    as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
-        accessibility: (input.accessibility as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+        zIndex: input.zIndex ?? zIndex,
+        locked: input.locked ?? false,
+        visible: input.visible ?? true,
+        content: (input.content as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+        data: (input.data as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+        style: (input.style as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+        animations: (input.animations as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+        accessibility:
+          (input.accessibility as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
       },
     });
     const dto = toDTO(row);
@@ -108,42 +119,53 @@ export class SlideElementsService {
   async update(elementId: string, patch: Partial<SlideElementDTO>): Promise<SlideElementDTO> {
     const data: Prisma.SlideElementUpdateInput = {};
 
-    if (patch.type !== undefined)       { validateType(patch.type); data.type = patch.type; }
-    if (patch.name !== undefined)       data.name = patch.name;
-    if (patch.order !== undefined)      data.order = patch.order;
-    if (patch.x !== undefined)          data.x = clampPct(patch.x);
-    if (patch.y !== undefined)          data.y = clampPct(patch.y);
-    if (patch.width !== undefined)      data.width = clampPct(patch.width);
-    if (patch.height !== undefined)     data.height = clampPct(patch.height);
-    if (patch.rotation !== undefined)   data.rotation = patch.rotation;
-    if (patch.zIndex !== undefined)     data.zIndex = patch.zIndex;
-    if (patch.locked !== undefined)     data.locked = patch.locked;
-    if (patch.visible !== undefined)    data.visible = patch.visible;
+    if (patch.type !== undefined) {
+      validateType(patch.type);
+      data.type = patch.type;
+    }
+    if (patch.name !== undefined) data.name = patch.name;
+    if (patch.order !== undefined) data.order = patch.order;
+    if (patch.x !== undefined) data.x = clampPct(patch.x);
+    if (patch.y !== undefined) data.y = clampPct(patch.y);
+    if (patch.width !== undefined) data.width = clampPct(patch.width);
+    if (patch.height !== undefined) data.height = clampPct(patch.height);
+    if (patch.rotation !== undefined) data.rotation = patch.rotation;
+    if (patch.zIndex !== undefined) data.zIndex = patch.zIndex;
+    if (patch.locked !== undefined) data.locked = patch.locked;
+    if (patch.visible !== undefined) data.visible = patch.visible;
 
-    if (patch.content !== undefined)        data.content       = patch.content       as Prisma.InputJsonValue ?? Prisma.JsonNull;
-    if (patch.data !== undefined)           data.data          = patch.data          as Prisma.InputJsonValue ?? Prisma.JsonNull;
-    if (patch.style !== undefined)          data.style         = patch.style         as Prisma.InputJsonValue ?? Prisma.JsonNull;
-    if (patch.animations !== undefined)     data.animations    = patch.animations    as Prisma.InputJsonValue ?? Prisma.JsonNull;
-    if (patch.accessibility !== undefined)  data.accessibility = patch.accessibility as Prisma.InputJsonValue ?? Prisma.JsonNull;
+    if (patch.content !== undefined)
+      data.content = (patch.content as Prisma.InputJsonValue) ?? Prisma.JsonNull;
+    if (patch.data !== undefined)
+      data.data = (patch.data as Prisma.InputJsonValue) ?? Prisma.JsonNull;
+    if (patch.style !== undefined)
+      data.style = (patch.style as Prisma.InputJsonValue) ?? Prisma.JsonNull;
+    if (patch.animations !== undefined)
+      data.animations = (patch.animations as Prisma.InputJsonValue) ?? Prisma.JsonNull;
+    if (patch.accessibility !== undefined)
+      data.accessibility = (patch.accessibility as Prisma.InputJsonValue) ?? Prisma.JsonNull;
 
     const row = await this.prisma.slideElement.update({ where: { id: elementId }, data });
     const dto = toDTO(row);
     // Phase 34G — broadcast element.updated. We send the full DTO so receivers
     // don't have to GET to learn the new state.
     const deckId = await this.deckIdOfSlide(dto.slideId!);
-    if (deckId) this.broadcaster.toDeck(deckId, 'element.updated', { slideId: dto.slideId, element: dto });
+    if (deckId)
+      this.broadcaster.toDeck(deckId, 'element.updated', { slideId: dto.slideId, element: dto });
     return dto;
   }
 
   async remove(elementId: string): Promise<{ id: string }> {
     // Capture deck + slide BEFORE delete so we can still broadcast afterwards.
     const slot = await this.prisma.slideElement.findUnique({
-      where: { id: elementId }, select: { slideId: true },
+      where: { id: elementId },
+      select: { slideId: true },
     });
     await this.prisma.slideElement.delete({ where: { id: elementId } });
     if (slot) {
       const deckId = await this.deckIdOfSlide(slot.slideId);
-      if (deckId) this.broadcaster.toDeck(deckId, 'element.deleted', { slideId: slot.slideId, elementId });
+      if (deckId)
+        this.broadcaster.toDeck(deckId, 'element.deleted', { slideId: slot.slideId, elementId });
     }
     return { id: elementId };
   }
@@ -153,26 +175,27 @@ export class SlideElementsService {
     if (!src) throw new NotFoundException('Element not found');
 
     const lastOrder = await this.prisma.slideElement.aggregate({
-      where: { slideId: src.slideId }, _max: { order: true, zIndex: true },
+      where: { slideId: src.slideId },
+      _max: { order: true, zIndex: true },
     });
     const row = await this.prisma.slideElement.create({
       data: {
         slideId: src.slideId,
-        type:    src.type,
-        name:    src.name ? `${src.name} (copy)` : null,
-        order:   (lastOrder._max.order  ?? -1) + 1,
-        x:       Math.min(100 - src.width,  src.x + 3),
-        y:       Math.min(100 - src.height, src.y + 3),
-        width:   src.width,
-        height:  src.height,
+        type: src.type,
+        name: src.name ? `${src.name} (copy)` : null,
+        order: (lastOrder._max.order ?? -1) + 1,
+        x: Math.min(100 - src.width, src.x + 3),
+        y: Math.min(100 - src.height, src.y + 3),
+        width: src.width,
+        height: src.height,
         rotation: src.rotation,
-        zIndex:  (lastOrder._max.zIndex ?? 0) + 1,
-        locked:  src.locked,
+        zIndex: (lastOrder._max.zIndex ?? 0) + 1,
+        locked: src.locked,
         visible: src.visible,
-        content:       src.content       ?? Prisma.JsonNull,
-        data:          src.data          ?? Prisma.JsonNull,
-        style:         src.style         ?? Prisma.JsonNull,
-        animations:    src.animations    ?? Prisma.JsonNull,
+        content: src.content ?? Prisma.JsonNull,
+        data: src.data ?? Prisma.JsonNull,
+        style: src.style ?? Prisma.JsonNull,
+        animations: src.animations ?? Prisma.JsonNull,
         accessibility: src.accessibility ?? Prisma.JsonNull,
       },
     });
@@ -218,21 +241,21 @@ export class SlideElementsService {
           // If the snapshot kept the original id, restore it so client refs survive
           ...(typeof e.id === 'string' && /^[0-9a-f-]{36}$/i.test(e.id) ? { id: e.id } : {}),
           slideId,
-          type:   e.type as string,
-          name:   e.name ?? null,
-          order:  e.order ?? i,
-          x:      clampPct(e.x ?? 0),
-          y:      clampPct(e.y ?? 0),
-          width:  clampPct(e.width  ?? 30),
+          type: e.type as string,
+          name: e.name ?? null,
+          order: e.order ?? i,
+          x: clampPct(e.x ?? 0),
+          y: clampPct(e.y ?? 0),
+          width: clampPct(e.width ?? 30),
           height: clampPct(e.height ?? 10),
           rotation: e.rotation ?? 0,
-          zIndex:   e.zIndex ?? i,
-          locked:   e.locked ?? false,
-          visible:  e.visible ?? true,
-          content:       (e.content       as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
-          data:          (e.data          as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
-          style:         (e.style         as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
-          animations:    (e.animations    as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+          zIndex: e.zIndex ?? i,
+          locked: e.locked ?? false,
+          visible: e.visible ?? true,
+          content: (e.content as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+          data: (e.data as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+          style: (e.style as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+          animations: (e.animations as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
           accessibility: (e.accessibility as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
         })),
       });

@@ -27,12 +27,12 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR
 const PUBLIC_PREFIX = '/uploads/images';
 
 export interface ExtractedImage {
-  url:    string;
-  width:  number;
+  url: string;
+  width: number;
   height: number;
-  bytes:  number;
+  bytes: number;
   /** Index of the image on the page (matches operator order). */
-  index:  number;
+  index: number;
 }
 
 /** Extract every paint-image-xobject bitmap from a single pdfjs page. */
@@ -77,11 +77,11 @@ export async function extractPageImages(pdfPage: any, pdfjs: any): Promise<Extra
       const full = path.join(UPLOAD_DIR, safe);
       fs.writeFileSync(full, png);
       out.push({
-        url:    `${PUBLIC_PREFIX}/${safe}`,
-        width:  img.width,
+        url: `${PUBLIC_PREFIX}/${safe}`,
+        width: img.width,
         height: img.height,
-        bytes:  png.length,
-        index:  idx++,
+        bytes: png.length,
+        index: idx++,
       });
     } catch {
       // Skip unconvertible images (rare PDF colour spaces); count is still
@@ -103,19 +103,31 @@ export async function extractPageImages(pdfPage: any, pdfjs: any): Promise<Extra
 //  based on `kind` (defaulting to 4 when unknown).
 // =============================================================================
 
-async function rawToPng(img: { data: Uint8Array | Buffer; width: number; height: number; kind?: number }): Promise<Buffer | null> {
+async function rawToPng(img: {
+  data: Uint8Array | Buffer;
+  width: number;
+  height: number;
+  kind?: number;
+}): Promise<Buffer | null> {
   const channels = pickChannels(img.kind, img.data.length, img.width, img.height);
   if (!channels) return null;
   try {
     return await (sharp as any)(Buffer.from(img.data), {
       raw: { width: img.width, height: img.height, channels },
-    }).png().toBuffer();
+    })
+      .png()
+      .toBuffer();
   } catch {
     return null;
   }
 }
 
-function pickChannels(kind: number | undefined, dataLength: number, width: number, height: number): 1 | 3 | 4 | null {
+function pickChannels(
+  kind: number | undefined,
+  dataLength: number,
+  width: number,
+  height: number,
+): 1 | 3 | 4 | null {
   // Trust the channel count we'd derive from data length first; fall back to kind.
   const pixels = width * height;
   if (pixels <= 0) return null;
@@ -132,6 +144,10 @@ function pickChannels(kind: number | undefined, dataLength: number, width: numbe
 
 function ensureDir(dir: string): void {
   if (!fs.existsSync(dir)) {
-    try { fs.mkdirSync(dir, { recursive: true }); } catch { /* logged on first write */ }
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {
+      /* logged on first write */
+    }
   }
 }

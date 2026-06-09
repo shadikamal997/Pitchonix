@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 /**
  * Advanced Document Composition Engine
- * 
+ *
  * Handles intelligent document composition with:
  * - Visual hierarchy
  * - Vertical rhythm
@@ -49,8 +49,8 @@ export class DocumentCompositionService {
     h1: 2.441, // 39px at 16px base
     h2: 1.953, // 31px
     h3: 1.563, // 25px
-    h4: 1.25,  // 20px
-    h5: 1.0,   // 16px
+    h4: 1.25, // 20px
+    h5: 1.0, // 16px
     body: 1.0, // 16px
     small: 0.8, // 13px
   };
@@ -116,7 +116,9 @@ export class DocumentCompositionService {
   /**
    * Parse raw content into semantic blocks
    */
-  private parseContentBlocks(content: string): Array<{ type: string; content: string; level?: number }> {
+  private parseContentBlocks(
+    content: string,
+  ): Array<{ type: string; content: string; level?: number }> {
     const blocks: Array<{ type: string; content: string; level?: number }> = [];
     const lines = content.split('\n');
 
@@ -321,7 +323,10 @@ export class DocumentCompositionService {
   /**
    * Style list items
    */
-  private styleList(section: ComposedSection, density: 'sparse' | 'balanced' | 'dense'): ComposedSection {
+  private styleList(
+    section: ComposedSection,
+    density: 'sparse' | 'balanced' | 'dense',
+  ): ComposedSection {
     section.fontSize = this.FONT_SCALE.body;
     section.lineHeight = this.LINE_HEIGHT.body;
     section.visualWeight = 40;
@@ -340,7 +345,10 @@ export class DocumentCompositionService {
   /**
    * Style quote blocks
    */
-  private styleQuote(section: ComposedSection, density: 'sparse' | 'balanced' | 'dense'): ComposedSection {
+  private styleQuote(
+    section: ComposedSection,
+    density: 'sparse' | 'balanced' | 'dense',
+  ): ComposedSection {
     section.fontSize = this.FONT_SCALE.h4;
     section.lineHeight = this.LINE_HEIGHT.body;
     section.visualWeight = 60;
@@ -354,7 +362,10 @@ export class DocumentCompositionService {
   /**
    * Style metric/data displays
    */
-  private styleMetric(section: ComposedSection, density: 'sparse' | 'balanced' | 'dense'): ComposedSection {
+  private styleMetric(
+    section: ComposedSection,
+    density: 'sparse' | 'balanced' | 'dense',
+  ): ComposedSection {
     section.fontSize = this.FONT_SCALE.h2;
     section.lineHeight = 1.0;
     section.visualWeight = 80;
@@ -389,13 +400,13 @@ export class DocumentCompositionService {
     // Density score (0-100)
     const densityTargets = { sparse: 0.4, balanced: 0.6, dense: 0.8 };
     const targetRatio = densityTargets[targetDensity];
-    const densityScore = Math.max(0, 100 - Math.abs((1 - whitespaceRatio) - targetRatio) * 200);
+    const densityScore = Math.max(0, 100 - Math.abs(1 - whitespaceRatio - targetRatio) * 200);
 
     // Readability score
-    const hasProperHeadings = sections.some(s => s.type === 'heading');
+    const hasProperHeadings = sections.some((s) => s.type === 'heading');
     const avgFontSize = sections.reduce((sum, s) => sum + s.fontSize, 0) / sections.length;
     const avgLineHeight = sections.reduce((sum, s) => sum + s.lineHeight, 0) / sections.length;
-    const readabilityScore = 
+    const readabilityScore =
       (hasProperHeadings ? 30 : 0) +
       (avgFontSize >= 1.0 ? 30 : 0) +
       (avgLineHeight >= 1.5 ? 40 : avgLineHeight >= 1.4 ? 20 : 0);
@@ -404,11 +415,14 @@ export class DocumentCompositionService {
     const whitespaceScore = whitespaceRatio * 200; // 0-100 scale (optimal around 0.5)
 
     // Visual balance score
-    const weightVariance = sections.reduce((sum, s) => sum + Math.pow(s.visualWeight - avgWeight, 2), 0) / sections.length;
+    const weightVariance =
+      sections.reduce((sum, s) => sum + Math.pow(s.visualWeight - avgWeight, 2), 0) /
+      sections.length;
     const visualBalanceScore = Math.max(0, 100 - weightVariance / 10);
 
     // Overall quality
-    const overallQuality = (densityScore + readabilityScore + Math.min(whitespaceScore, 100) + visualBalanceScore) / 4;
+    const overallQuality =
+      (densityScore + readabilityScore + Math.min(whitespaceScore, 100) + visualBalanceScore) / 4;
 
     return {
       densityScore,
@@ -429,7 +443,7 @@ export class DocumentCompositionService {
   ): 'single-column' | 'two-column' | 'hero' | 'cover' {
     if (pageType === 'cover') return 'cover';
 
-    const hasLargeHeading = sections.some(s => s.type === 'heading' && (s.level || 0) <= 2);
+    const hasLargeHeading = sections.some((s) => s.type === 'heading' && (s.level || 0) <= 2);
     const totalContent = sections.reduce((sum, s) => sum + s.content.length, 0);
 
     if (hasLargeHeading && sections.length <= 3) {
@@ -453,7 +467,7 @@ export class DocumentCompositionService {
     }
 
     // Adjust spacing to improve metrics
-    const sections = composition.sections.map(s => {
+    const sections = composition.sections.map((s) => {
       if (composition.metrics.densityScore < 60) {
         // Too sparse - reduce spacing
         return {

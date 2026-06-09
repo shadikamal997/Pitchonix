@@ -4,7 +4,7 @@ import { SlideLibraryService } from './slide-library.service';
 
 @Module({
   controllers: [SlideLibraryController],
-  providers:   [SlideLibraryService],
-  exports:     [SlideLibraryService],
+  providers: [SlideLibraryService],
+  exports: [SlideLibraryService],
 })
 export class SlideLibraryModule {}

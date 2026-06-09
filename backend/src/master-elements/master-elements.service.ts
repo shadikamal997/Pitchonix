@@ -1,8 +1,11 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  MasterElementDTO, MasterElementType, MasterElementContent,
-  DeckMasterSettings, DEFAULT_MASTER_SETTINGS,
+  MasterElementDTO,
+  MasterElementType,
+  MasterElementContent,
+  DeckMasterSettings,
+  DEFAULT_MASTER_SETTINGS,
 } from './master-element-types';
 import type { ElementStyle } from '../slides/element-types';
 
@@ -56,43 +59,48 @@ export class MasterElementsService {
     const row = await this.prisma.masterElement.create({
       data: {
         deckId,
-        type:        body.type,
-        name:        body.name ?? null,
-        x:           body.x ?? 0,
-        y:           body.y ?? 0,
-        width:       body.width ?? 20,
-        height:      body.height ?? 5,
-        rotation:    body.rotation ?? 0,
-        zIndex:      body.zIndex ?? 0,
+        type: body.type,
+        name: body.name ?? null,
+        x: body.x ?? 0,
+        y: body.y ?? 0,
+        width: body.width ?? 20,
+        height: body.height ?? 5,
+        rotation: body.rotation ?? 0,
+        zIndex: body.zIndex ?? 0,
         sendToFront: body.sendToFront ?? false,
-        visible:     body.visible ?? true,
+        visible: body.visible ?? true,
         excludedSlides: body.excludedSlides ?? [],
         elementData: (body.elementData ?? null) as any,
-        style:       (body.style ?? null) as any,
+        style: (body.style ?? null) as any,
       },
     });
     return toDTO(row);
   }
 
-  async update(deckId: string, masterId: string, patch: Partial<MasterElementDTO>): Promise<MasterElementDTO> {
+  async update(
+    deckId: string,
+    masterId: string,
+    patch: Partial<MasterElementDTO>,
+  ): Promise<MasterElementDTO> {
     const existing = await this.prisma.masterElement.findUnique({ where: { id: masterId } });
-    if (!existing || existing.deckId !== deckId) throw new NotFoundException('Master element not found');
+    if (!existing || existing.deckId !== deckId)
+      throw new NotFoundException('Master element not found');
     const row = await this.prisma.masterElement.update({
       where: { id: masterId },
       data: {
-        type:        patch.type ?? undefined,
-        name:        patch.name ?? undefined,
-        x:           patch.x ?? undefined,
-        y:           patch.y ?? undefined,
-        width:       patch.width ?? undefined,
-        height:      patch.height ?? undefined,
-        rotation:    patch.rotation ?? undefined,
-        zIndex:      patch.zIndex ?? undefined,
+        type: patch.type ?? undefined,
+        name: patch.name ?? undefined,
+        x: patch.x ?? undefined,
+        y: patch.y ?? undefined,
+        width: patch.width ?? undefined,
+        height: patch.height ?? undefined,
+        rotation: patch.rotation ?? undefined,
+        zIndex: patch.zIndex ?? undefined,
         sendToFront: patch.sendToFront ?? undefined,
-        visible:     patch.visible ?? undefined,
+        visible: patch.visible ?? undefined,
         excludedSlides: patch.excludedSlides ?? undefined,
         elementData: (patch.elementData as any) ?? undefined,
-        style:       (patch.style as any) ?? undefined,
+        style: (patch.style as any) ?? undefined,
       },
     });
     return toDTO(row);
@@ -100,14 +108,18 @@ export class MasterElementsService {
 
   async remove(deckId: string, masterId: string): Promise<void> {
     const existing = await this.prisma.masterElement.findUnique({ where: { id: masterId } });
-    if (!existing || existing.deckId !== deckId) throw new NotFoundException('Master element not found');
+    if (!existing || existing.deckId !== deckId)
+      throw new NotFoundException('Master element not found');
     await this.prisma.masterElement.delete({ where: { id: masterId } });
   }
 
   // ---------------------------------------------------------------------------
   //  Mutate — deck settings (Json column merge)
   // ---------------------------------------------------------------------------
-  async updateSettings(deckId: string, patch: DeckMasterSettings): Promise<Required<DeckMasterSettings>> {
+  async updateSettings(
+    deckId: string,
+    patch: DeckMasterSettings,
+  ): Promise<Required<DeckMasterSettings>> {
     const current = await this.getSettings(deckId);
     const next = { ...current, ...patch };
     await this.prisma.deck.update({
@@ -124,26 +136,28 @@ export class MasterElementsService {
 
 function toDTO(row: any): MasterElementDTO {
   return {
-    id:        row.id,
-    deckId:    row.deckId,
-    type:      row.type as MasterElementType,
-    name:      row.name,
-    x:         row.x,
-    y:         row.y,
-    width:     row.width,
-    height:    row.height,
-    rotation:  row.rotation,
-    zIndex:    row.zIndex,
+    id: row.id,
+    deckId: row.deckId,
+    type: row.type as MasterElementType,
+    name: row.name,
+    x: row.x,
+    y: row.y,
+    width: row.width,
+    height: row.height,
+    rotation: row.rotation,
+    zIndex: row.zIndex,
     sendToFront: row.sendToFront,
-    visible:   row.visible,
+    visible: row.visible,
     excludedSlides: row.excludedSlides || [],
     elementData: (row.elementData ?? null) as MasterElementContent | null,
-    style:     (row.style ?? null) as ElementStyle | null,
+    style: (row.style ?? null) as ElementStyle | null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
 }
 
-export function mergeSettings(stored: DeckMasterSettings | null | undefined): Required<DeckMasterSettings> {
+export function mergeSettings(
+  stored: DeckMasterSettings | null | undefined,
+): Required<DeckMasterSettings> {
   return { ...DEFAULT_MASTER_SETTINGS, ...(stored || {}) };
 }

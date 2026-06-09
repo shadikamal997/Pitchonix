@@ -42,7 +42,9 @@ export class SmartAutoFlowEngineService {
       return {
         ...meta,
         isContinuation: meta.isContinuation || isContinuation,
-        pageIndexInSection: isContinuation ? (previous?.pageIndexInSection || 0) + 1 : meta.pageIndexInSection,
+        pageIndexInSection: isContinuation
+          ? (previous?.pageIndexInSection || 0) + 1
+          : meta.pageIndexInSection,
       };
     });
 

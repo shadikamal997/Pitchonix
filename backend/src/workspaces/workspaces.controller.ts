@@ -1,5 +1,13 @@
 import {
-  Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -44,8 +52,8 @@ import { permissionsFor } from './workspace-permissions';
 export class WorkspacesController {
   constructor(
     private workspaces: WorkspacesService,
-    private activity:   WorkspaceActivityService,
-    private audit:      WorkspaceAuditService,
+    private activity: WorkspaceActivityService,
+    private audit: WorkspaceAuditService,
   ) {}
 
   // ---------- Workspace CRUD ----------
@@ -57,8 +65,13 @@ export class WorkspacesController {
   }
 
   @Post('workspaces')
-  @ApiOperation({ summary: 'Create a workspace (auto-creates a personal org if no organizationId)' })
-  create(@GetUser() user: any, @Body() body: { name: string; description?: string; organizationId?: string }) {
+  @ApiOperation({
+    summary: 'Create a workspace (auto-creates a personal org if no organizationId)',
+  })
+  create(
+    @GetUser() user: any,
+    @Body() body: { name: string; description?: string; organizationId?: string },
+  ) {
     return this.workspaces.create(user.id, body);
   }
 
@@ -72,7 +85,11 @@ export class WorkspacesController {
   @Patch('workspaces/:id')
   @ApiOperation({ summary: 'Rename / edit workspace metadata' })
   @RequireRole('workspace.edit', { kind: 'param', key: 'id' })
-  rename(@Param('id') id: string, @GetUser() user: any, @Body() body: { name?: string; description?: string }) {
+  rename(
+    @Param('id') id: string,
+    @GetUser() user: any,
+    @Body() body: { name?: string; description?: string },
+  ) {
     return this.workspaces.rename(id, user.id, body);
   }
 
@@ -101,7 +118,7 @@ export class WorkspacesController {
   }
 
   @Patch('workspaces/:id/members/:memberId')
-  @ApiOperation({ summary: 'Change a member\'s role' })
+  @ApiOperation({ summary: "Change a member's role" })
   @RequireRole('member.role_change', { kind: 'param', key: 'id' })
   changeRole(
     @Param('id') id: string,
@@ -122,7 +139,11 @@ export class WorkspacesController {
   @Post('workspaces/:id/transfer-ownership')
   @ApiOperation({ summary: 'Transfer workspace ownership to another member' })
   @RequireRole('ownership.transfer', { kind: 'param', key: 'id' })
-  transferOwnership(@Param('id') id: string, @GetUser() user: any, @Body() body: { toUserId: string }) {
+  transferOwnership(
+    @Param('id') id: string,
+    @GetUser() user: any,
+    @Body() body: { toUserId: string },
+  ) {
     return this.workspaces.transferOwnership(id, user.id, body.toUserId);
   }
 
@@ -138,7 +159,11 @@ export class WorkspacesController {
   @Post('workspaces/:id/invites')
   @ApiOperation({ summary: 'Create / re-use a pending invite for an email' })
   @RequireRole('member.invite', { kind: 'param', key: 'id' })
-  invite(@Param('id') id: string, @GetUser() user: any, @Body() body: { email: string; role: WorkspaceRole }) {
+  invite(
+    @Param('id') id: string,
+    @GetUser() user: any,
+    @Body() body: { email: string; role: WorkspaceRole },
+  ) {
     return this.workspaces.invite(id, user.id, body);
   }
 

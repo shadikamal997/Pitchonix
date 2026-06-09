@@ -1,9 +1,12 @@
 import { SlideType, WizardInput } from './types';
 import { BaseSlideGenerator } from './base-slide.generator';
 import {
-  gtmTitle, gtmSubtitle,
-  financialsTitle, financialsSubtitle,
-  companyOverviewTitle, companyOverviewSubtitle,
+  gtmTitle,
+  gtmSubtitle,
+  financialsTitle,
+  financialsSubtitle,
+  companyOverviewTitle,
+  companyOverviewSubtitle,
 } from './narrative-titles';
 
 // =============================================================================
@@ -21,7 +24,9 @@ import {
 export class GoToMarketSlideGenerator extends BaseSlideGenerator {
   type = SlideType.GO_TO_MARKET;
   defaultPriority = 11;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
   isApplicable(input: WizardInput): boolean {
     return (
@@ -29,8 +34,12 @@ export class GoToMarketSlideGenerator extends BaseSlideGenerator {
       (input.contentDepth === 'detailed' && !!input.targetCustomers)
     );
   }
-  getTitle(input: WizardInput): string    { return gtmTitle(input); }
-  getSubtitle(input: WizardInput): string { return gtmSubtitle(input); }
+  getTitle(input: WizardInput): string {
+    return gtmTitle(input);
+  }
+  getSubtitle(input: WizardInput): string {
+    return gtmSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return {
@@ -40,8 +49,10 @@ export class GoToMarketSlideGenerator extends BaseSlideGenerator {
   }
 
   getSpeakerNotes(_input: WizardInput): string {
-    return `Explain customer acquisition strategy. Show understanding of target market. ` +
-           `Detail specific channels and tactics. Demonstrate realistic CAC and LTV assumptions.`;
+    return (
+      `Explain customer acquisition strategy. Show understanding of target market. ` +
+      `Detail specific channels and tactics. Demonstrate realistic CAC and LTV assumptions.`
+    );
   }
 }
 
@@ -49,11 +60,19 @@ export class GoToMarketSlideGenerator extends BaseSlideGenerator {
 export class FinancialsSlideGenerator extends BaseSlideGenerator {
   type = SlideType.FINANCIALS;
   defaultPriority = 12;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
-  isApplicable(input: WizardInput): boolean { return input.includeFinancials === true; }
-  getTitle(input: WizardInput): string    { return financialsTitle(input); }
-  getSubtitle(input: WizardInput): string { return financialsSubtitle(input); }
+  isApplicable(input: WizardInput): boolean {
+    return input.includeFinancials === true;
+  }
+  getTitle(input: WizardInput): string {
+    return financialsTitle(input);
+  }
+  getSubtitle(input: WizardInput): string {
+    return financialsSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return {
@@ -62,8 +81,10 @@ export class FinancialsSlideGenerator extends BaseSlideGenerator {
   }
 
   getSpeakerNotes(_input: WizardInput): string {
-    return `Walk through financial model and key assumptions. Show path to profitability. ` +
-           `Be prepared to discuss revenue drivers and cost structure. Emphasize unit economics.`;
+    return (
+      `Walk through financial model and key assumptions. Show path to profitability. ` +
+      `Be prepared to discuss revenue drivers and cost structure. Emphasize unit economics.`
+    );
   }
 }
 
@@ -71,7 +92,9 @@ export class FinancialsSlideGenerator extends BaseSlideGenerator {
 export class CaseStudySlideGenerator extends BaseSlideGenerator {
   type = SlideType.CASE_STUDY;
   defaultPriority = 13;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
   isApplicable(input: WizardInput): boolean {
     return (
@@ -79,8 +102,12 @@ export class CaseStudySlideGenerator extends BaseSlideGenerator {
       (!!input.traction && input.traction.toLowerCase().includes('customer'))
     );
   }
-  getTitle(input: WizardInput): string    { return `${input.companyName || 'Customer'} Success Story`; }
-  getSubtitle(_input: WizardInput): string { return 'Real results, real impact'; }
+  getTitle(input: WizardInput): string {
+    return `${input.companyName || 'Customer'} Success Story`;
+  }
+  getSubtitle(_input: WizardInput): string {
+    return 'Real results, real impact';
+  }
 
   generateContent(input: WizardInput): any {
     return {
@@ -90,8 +117,10 @@ export class CaseStudySlideGenerator extends BaseSlideGenerator {
   }
 
   getSpeakerNotes(_input: WizardInput): string {
-    return `Tell a compelling customer story. Emphasize tangible results and ROI. ` +
-           `Make it relatable to the audience. Use specific numbers and outcomes.`;
+    return (
+      `Tell a compelling customer story. Emphasize tangible results and ROI. ` +
+      `Make it relatable to the audience. Use specific numbers and outcomes.`
+    );
   }
 }
 
@@ -99,25 +128,33 @@ export class CaseStudySlideGenerator extends BaseSlideGenerator {
 export class CompanyOverviewSlideGenerator extends BaseSlideGenerator {
   type = SlideType.COMPANY_OVERVIEW;
   defaultPriority = 2;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
   isApplicable(input: WizardInput): boolean {
     return input.documentType === 'company_profile' || input.contentDepth === 'detailed';
   }
-  getTitle(input: WizardInput): string    { return companyOverviewTitle(input); }
-  getSubtitle(input: WizardInput): string { return companyOverviewSubtitle(input); }
+  getTitle(input: WizardInput): string {
+    return companyOverviewTitle(input);
+  }
+  getSubtitle(input: WizardInput): string {
+    return companyOverviewSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return {
-      company:     input.companyName,
-      industry:    input.industry,
-      location:    input.country || 'United States',
+      company: input.companyName,
+      industry: input.industry,
+      location: input.country || 'United States',
       description: input.shortDescription || input.solution || '',
     };
   }
 
   getSpeakerNotes(_input: WizardInput): string {
-    return `Provide company context and credibility. Keep it concise but compelling. ` +
-           `Highlight key milestones and what makes the company unique.`;
+    return (
+      `Provide company context and credibility. Keep it concise but compelling. ` +
+      `Highlight key milestones and what makes the company unique.`
+    );
   }
 }

@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  UniversalConversionService, ConversionResult, OutputFormat,
+  UniversalConversionService,
+  ConversionResult,
+  OutputFormat,
 } from './universal-conversion.service';
 import { ConversionStorageProvider } from './storage/storage-provider';
 import { createConversionStorage } from './storage/storage-factory';
+import { UploadedAssetService } from '../files/uploaded-asset.service';
+import * as path from 'path';
 
 // =============================================================================
 //  Phase 41.1I-K + 41.2C/D — Cross-format conversion lineage.
@@ -24,19 +28,19 @@ import { createConversionStorage } from './storage/storage-factory';
 // =============================================================================
 
 export interface ConvertedFileEntry {
-  id:             string;
+  id: string;
   sourceFilename: string;
-  sourceFormat:   string;
-  targetFormat:   string;
-  outputUrl:      string;
-  qualityScore:   number;
-  parentId:       string | null;
-  createdAt:      string;
+  sourceFormat: string;
+  targetFormat: string;
+  outputUrl: string;
+  qualityScore: number;
+  parentId: string | null;
+  createdAt: string;
 }
 
 export interface LineageView {
-  chain:    ConvertedFileEntry[];   // root → ... → this file
-  children: ConvertedFileEntry[];   // direct descendants
+  chain: ConvertedFileEntry[]; // root → ... → this file
+  children: ConvertedFileEntry[]; // direct descendants
 }
 
 @Injectable()
@@ -47,27 +51,30 @@ export class ConversionLineageService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly conversion: UniversalConversionService,
+    private readonly uploadedAssets: UploadedAssetService,
   ) {
     this.storage = createConversionStorage();
     this.logger.log(`Conversion storage provider: ${this.storage.name}`);
   }
 
   /** Expose the active storage backend for diagnostics / admin endpoints. */
-  getStorage(): ConversionStorageProvider { return this.storage; }
+  getStorage(): ConversionStorageProvider {
+    return this.storage;
+  }
 
   // ---------------------------------------------------------------------------
   //  Persist
   // ---------------------------------------------------------------------------
 
   async record(opts: {
-    result:         ConversionResult;
+    result: ConversionResult;
     sourceFilename: string;
-    sourceBuffer:   Buffer;
-    userId?:        string | null;
-    workspaceId?:   string | null;
-    parentId?:      string | null;
-    brandKitId?:    string | null;
-    notes?:         string;
+    sourceBuffer: Buffer;
+    userId?: string | null;
+    workspaceId?: string | null;
+    parentId?: string | null;
+    brandKitId?: string | null;
+    notes?: string;
   }): Promise<ConvertedFileEntry> {
     const ext = opts.result.extension;
     // Phase 41.2C/D — delegate binary storage to the active provider.
@@ -78,24 +85,40 @@ export class ConversionLineageService {
     );
     const row = await this.prisma.convertedFile.create({
       data: {
-        userId:         opts.userId      ?? null,
-        workspaceId:    opts.workspaceId ?? null,
-        parentId:       opts.parentId    ?? null,
+        userId: opts.userId ?? null,
+        workspaceId: opts.workspaceId ?? null,
+        parentId: opts.parentId ?? null,
         sourceFilename: opts.sourceFilename,
-        sourceFormat:   opts.result.report.inputFormat,
-        sourceBytes:    opts.sourceBuffer.length,
-        targetFormat:   opts.result.format,
-        outputUrl:      saved.url,
-        storageHandle:  saved.handle,
+        sourceFormat: opts.result.report.inputFormat,
+        sourceBytes: opts.sourceBuffer.length,
+        targetFormat: opts.result.format,
+        outputUrl: saved.url,
+        storageHandle: saved.handle,
         storageBackend: this.storage.name,
-        outputBytes:    saved.bytes,
-        qualityScore:   opts.result.report.overall,
-        qualityReport:  opts.result.report as any,
-        durationMs:     opts.result.durationMs,
-        brandKitId:     opts.brandKitId ?? null,
-        notes:          opts.notes ?? null,
+        outputBytes: saved.bytes,
+        qualityScore: opts.result.report.overall,
+        qualityReport: opts.result.report as any,
+        durationMs: opts.result.durationMs,
+        brandKitId: opts.brandKitId ?? null,
+        notes: opts.notes ?? null,
       },
     });
+    // Phase Ω.1E — ownership row for the converted output file. Only local
+    // storage produces a /uploads path; remote (S3/etc.) URLs are skipped.
+    if (opts.userId && typeof saved.url === 'string' && saved.url.includes('/uploads/')) {
+      const publicPath = saved.url.slice(saved.url.indexOf('/uploads/'));
+      await this.uploadedAssets.record({
+        userId: opts.userId,
+        publicPath,
+        storagePath: path.join(process.cwd(), publicPath),
+        module: 'convert',
+        documentId: row.id,
+        workspaceId: opts.workspaceId ?? null,
+        originalName: opts.sourceFilename,
+        mimeType: opts.result.mimetype,
+        sizeBytes: saved.bytes,
+      });
+    }
     return toEntry(row);
   }
 
@@ -111,11 +134,15 @@ export class ConversionLineageService {
 
   list(opts: { userId?: string | null; workspaceId?: string | null }) {
     const where: any = {};
-    if (opts.userId)      where.userId      = opts.userId;
+    if (opts.userId) where.userId = opts.userId;
     if (opts.workspaceId) where.workspaceId = opts.workspaceId;
-    return this.prisma.convertedFile.findMany({
-      where, orderBy: { createdAt: 'desc' }, take: 100,
-    }).then((rows) => rows.map(toEntry));
+    return this.prisma.convertedFile
+      .findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      })
+      .then((rows) => rows.map(toEntry));
   }
 
   async chain(id: string): Promise<LineageView> {
@@ -128,7 +155,8 @@ export class ConversionLineageService {
       cur = await this.prisma.convertedFile.findUnique({ where: { id: cur.parentId } });
     }
     const children = await this.prisma.convertedFile.findMany({
-      where: { parentId: id }, orderBy: { createdAt: 'asc' },
+      where: { parentId: id },
+      orderBy: { createdAt: 'asc' },
     });
     return { chain, children: children.map(toEntry) };
   }
@@ -137,7 +165,11 @@ export class ConversionLineageService {
   //  Restore (41.1K) — re-run the conversion starting from the chain root.
   // ---------------------------------------------------------------------------
 
-  async restore(id: string, target: OutputFormat): Promise<ConvertedFileEntry> {
+  async restore(
+    id: string,
+    target: OutputFormat,
+    userId?: string | null,
+  ): Promise<ConvertedFileEntry> {
     const view = await this.chain(id);
     const root = view.chain[0];
     if (!root) throw new NotFoundException('Chain root not found');
@@ -148,20 +180,26 @@ export class ConversionLineageService {
     if (!rootRow) throw new NotFoundException('Root row missing');
     const handle = rootRow.storageHandle || basenameFromUrl(rootRow.outputUrl);
     let buf: Buffer;
-    try { buf = await this.storage.read(handle); }
-    catch (e: any) { throw new NotFoundException(`Root binary missing in ${this.storage.name} storage: ${e?.message}`); }
+    try {
+      buf = await this.storage.read(handle);
+    } catch (e: any) {
+      throw new NotFoundException(
+        `Root binary missing in ${this.storage.name} storage: ${e?.message}`,
+      );
+    }
 
     const result = await this.conversion.convert({
-      buffer:       buf,
-      filename:     `${root.sourceFilename}`,
+      buffer: buf,
+      filename: `${root.sourceFilename}`,
       targetFormat: target,
     });
     return this.record({
       result,
       sourceFilename: root.sourceFilename,
-      sourceBuffer:   buf,
-      parentId:       id,
-      notes:          `Restored from ${root.targetFormat} → ${target}`,
+      sourceBuffer: buf,
+      userId: userId ?? rootRow.userId ?? null,
+      parentId: id,
+      notes: `Restored from ${root.targetFormat} → ${target}`,
     });
   }
 
@@ -169,8 +207,11 @@ export class ConversionLineageService {
     const row = await this.prisma.convertedFile.findUnique({ where: { id } });
     if (!row) throw new NotFoundException('ConvertedFile not found');
     const handle = row.storageHandle || basenameFromUrl(row.outputUrl);
-    try { await this.storage.delete(handle); }
-    catch { /* idempotent */ }
+    try {
+      await this.storage.delete(handle);
+    } catch {
+      /* idempotent */
+    }
     await this.prisma.convertedFile.delete({ where: { id } });
   }
 }
@@ -184,13 +225,13 @@ function basenameFromUrl(url: string): string {
 
 function toEntry(row: any): ConvertedFileEntry {
   return {
-    id:             row.id,
+    id: row.id,
     sourceFilename: row.sourceFilename,
-    sourceFormat:   row.sourceFormat,
-    targetFormat:   row.targetFormat,
-    outputUrl:      row.outputUrl,
-    qualityScore:   row.qualityScore,
-    parentId:       row.parentId,
-    createdAt:      row.createdAt.toISOString(),
+    sourceFormat: row.sourceFormat,
+    targetFormat: row.targetFormat,
+    outputUrl: row.outputUrl,
+    qualityScore: row.qualityScore,
+    parentId: row.parentId,
+    createdAt: row.createdAt.toISOString(),
   };
 }

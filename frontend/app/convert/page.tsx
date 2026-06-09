@@ -583,10 +583,11 @@ const HistoryPanel: React.FC = () => {
   };
 
   const [restoredId, setRestoredId] = useState<string | null>(null);
-  const restore = async (id: string) => {
+  const restore = async (id: string, targetFormat?: string) => {
     if (!(await confirm({ title: 'Restore conversion?', message: 'Restoring will re-create the downloaded artefact and overwrite any subsequent edits in the lineage.', confirmLabel: 'Restore' }))) return;
     try {
-      await api.post(`/convert/restore/${id}`);
+      // Backend requires targetFormat as a query param — send the row's format.
+      await api.post(`/convert/restore/${id}?targetFormat=${encodeURIComponent(targetFormat || '')}`);
       setRestoredId(id);
       setTimeout(() => setRestoredId(null), 3000);
       refresh();
@@ -619,7 +620,7 @@ const HistoryPanel: React.FC = () => {
             <span className="text-[10px] text-[#C9C6BD]">{it.createdAt ? new Date(it.createdAt).toLocaleString() : ''}</span>
             <button onClick={() => showLineage(it.id)}
               className="text-[10px] text-[#4F7563] hover:underline">Lineage</button>
-            <button onClick={() => restore(it.id)}
+            <button onClick={() => restore(it.id, it.targetFormat || it.format)}
               className="text-[10px] text-[#111111] hover:underline">Restore</button>
           </li>
         ))}

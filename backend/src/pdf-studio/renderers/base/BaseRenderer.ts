@@ -60,27 +60,27 @@ export abstract class BaseRenderer {
       'heading-4': this.renderHeading4.bind(this),
       'heading-5': this.renderHeading5.bind(this),
       'heading-6': this.renderHeading6.bind(this),
-      'paragraph': this.renderParagraph.bind(this),
-      'blockquote': this.renderBlockquote.bind(this),
+      paragraph: this.renderParagraph.bind(this),
+      blockquote: this.renderBlockquote.bind(this),
       'code-block': this.renderCodeBlock.bind(this),
       'bullet-list': this.renderBulletList.bind(this),
       'numbered-list': this.renderNumberedList.bind(this),
-      'checklist': this.renderChecklist.bind(this),
-      'image': this.renderImage.bind(this),
-      'video': this.renderVideo.bind(this),
-      'divider': this.renderDivider.bind(this),
+      checklist: this.renderChecklist.bind(this),
+      image: this.renderImage.bind(this),
+      video: this.renderVideo.bind(this),
+      divider: this.renderDivider.bind(this),
       'kpi-cards': this.renderKpiCards.bind(this),
-      'timeline': this.renderTimeline.bind(this),
-      'swot': this.renderSwot.bind(this),
+      timeline: this.renderTimeline.bind(this),
+      swot: this.renderSwot.bind(this),
       'team-members': this.renderTeamMembers.bind(this),
-      'testimonial': this.renderTestimonial.bind(this),
+      testimonial: this.renderTestimonial.bind(this),
       'feature-grid': this.renderFeatureGrid.bind(this),
       'comparison-table': this.renderComparisonTable.bind(this),
       'chart-bar': this.renderChart.bind(this),
       'chart-line': this.renderChart.bind(this),
       'chart-pie': this.renderChart.bind(this),
-      'table': this.renderTable.bind(this),
-      'callout': this.renderCallout.bind(this),
+      table: this.renderTable.bind(this),
+      callout: this.renderCallout.bind(this),
     };
 
     return renderers[blockType] || null;
@@ -191,7 +191,10 @@ export abstract class BaseRenderer {
   protected async renderChecklist(block: Block): Promise<string> {
     const items = block.content.items || [];
     const listItems = items
-      .map((item: any) => `<li><input type="checkbox" ${item.checked ? 'checked' : ''} /> ${item.text}</li>`)
+      .map(
+        (item: any) =>
+          `<li><input type="checkbox" ${item.checked ? 'checked' : ''} /> ${item.text}</li>`,
+      )
       .join('');
     return `<ul style="list-style: none;">${listItems}</ul>`;
   }
@@ -238,7 +241,7 @@ export abstract class BaseRenderer {
         <div style="font-size: 32px; font-weight: 700; margin-bottom: 4px;">${card.value}</div>
         ${card.change ? `<div style="font-size: 14px; color: ${card.trend === 'up' ? '#10b981' : card.trend === 'down' ? '#ef4444' : '#6b7280'};">${card.change}</div>` : ''}
       </div>
-    `
+    `,
       )
       .join('');
     return `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">${cardHtml}</div>`;
@@ -254,7 +257,7 @@ export abstract class BaseRenderer {
         <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">${event.title}</div>
         <div style="color: #6b7280;">${event.description}</div>
       </div>
-    `
+    `,
       )
       .join('');
     return eventHtml;
@@ -295,7 +298,7 @@ export abstract class BaseRenderer {
         <div style="color: #8b5cf6; margin-bottom: 8px;">${member.role}</div>
         ${member.bio ? `<div style="font-size: 14px; color: #6b7280;">${member.bio}</div>` : ''}
       </div>
-    `
+    `,
       )
       .join('');
     return `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">${memberHtml}</div>`;
@@ -323,7 +326,7 @@ export abstract class BaseRenderer {
         <div style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">${feature.title}</div>
         <div style="color: #6b7280;">${feature.description}</div>
       </div>
-    `
+    `,
       )
       .join('');
     return `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">${featureHtml}</div>`;
@@ -334,12 +337,18 @@ export abstract class BaseRenderer {
     const headerHtml = `<tr>${headers.map((h: string) => `<th style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb;">${h}</th>`).join('')}</tr>`;
     const rowHtml = rows
       .map((row: any) => {
-        const cells = [`<td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">${row.label}</td>`];
+        const cells = [
+          `<td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">${row.label}</td>`,
+        ];
         row.values.forEach((value: any) => {
           if (typeof value === 'boolean') {
-            cells.push(`<td style="padding: 12px; border: 1px solid #e5e7eb; text-align: center;">${value ? '✓' : '✗'}</td>`);
+            cells.push(
+              `<td style="padding: 12px; border: 1px solid #e5e7eb; text-align: center;">${value ? '✓' : '✗'}</td>`,
+            );
           } else {
-            cells.push(`<td style="padding: 12px; border: 1px solid #e5e7eb; text-align: center;">${value}</td>`);
+            cells.push(
+              `<td style="padding: 12px; border: 1px solid #e5e7eb; text-align: center;">${value}</td>`,
+            );
           }
         });
         return `<tr>${cells.join('')}</tr>`;
@@ -357,7 +366,10 @@ export abstract class BaseRenderer {
     const { headers, rows } = block.content;
     const headerHtml = `<tr>${headers.map((h: string) => `<th style="padding: 12px; border: 1px solid #e5e7eb; background: #f9fafb;">${h}</th>`).join('')}</tr>`;
     const rowHtml = rows
-      .map((row: any) => `<tr>${row.cells.map((cell: string) => `<td style="padding: 12px; border: 1px solid #e5e7eb;">${cell}</td>`).join('')}</tr>`)
+      .map(
+        (row: any) =>
+          `<tr>${row.cells.map((cell: string) => `<td style="padding: 12px; border: 1px solid #e5e7eb;">${cell}</td>`).join('')}</tr>`,
+      )
       .join('');
     return `<table style="width: 100%; border-collapse: collapse;">${headerHtml}${rowHtml}</table>`;
   }

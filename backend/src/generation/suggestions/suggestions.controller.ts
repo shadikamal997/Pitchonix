@@ -12,9 +12,7 @@ export class SuggestionsController {
 
   @Post()
   @ApiOperation({ summary: 'Get intelligent suggestions for a field' })
-  async getSuggestions(
-    @Body() context: SuggestionContext,
-  ): Promise<Suggestion[]> {
+  async getSuggestions(@Body() context: SuggestionContext): Promise<Suggestion[]> {
     return this.suggestionsService.getSuggestions(context);
   }
 }

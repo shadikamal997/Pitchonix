@@ -11,16 +11,22 @@
 // =============================================================================
 
 import {
-  SmartComponentDTO, SmartComponentType, SmartFamilyId,
-  SMART_COMPONENT_TYPES, SMART_FAMILIES,
-  SMART_TYPE_LABEL, SMART_FAMILY_LABEL, SMART_TYPE_CATEGORY, SMART_TYPE_USE_CASE,
+  SmartComponentDTO,
+  SmartComponentType,
+  SmartFamilyId,
+  SMART_COMPONENT_TYPES,
+  SMART_FAMILIES,
+  SMART_TYPE_LABEL,
+  SMART_FAMILY_LABEL,
+  SMART_TYPE_CATEGORY,
+  SMART_TYPE_USE_CASE,
 } from './smart-types';
 import { getFamilyTokens, FamilyTokens } from './family-tokens';
 import { buildSmartComponentTree } from './smart-builder';
 
 function describe(family: SmartFamilyId, type: SmartComponentType): string {
   const familyLabel = SMART_FAMILY_LABEL[family];
-  const typeLabel   = SMART_TYPE_LABEL[type];
+  const typeLabel = SMART_TYPE_LABEL[type];
   return `${typeLabel} themed for the ${familyLabel} family.`;
 }
 
@@ -28,15 +34,15 @@ function buildOne(family: SmartFamilyId, type: SmartComponentType): SmartCompone
   const tokens: FamilyTokens = getFamilyTokens(family);
   const tree = buildSmartComponentTree({ tokens }, type);
   return {
-    id:          `smart:${family}:${type}`,
+    id: `smart:${family}:${type}`,
     family,
     type,
-    name:        `${SMART_TYPE_LABEL[type]} · ${SMART_FAMILY_LABEL[family]}`,
+    name: `${SMART_TYPE_LABEL[type]} · ${SMART_FAMILY_LABEL[family]}`,
     description: describe(family, type),
-    category:    SMART_TYPE_CATEGORY[type],
-    useCase:     SMART_TYPE_USE_CASE[type],
-    tags:        ['smart', tokens.mood, family, type],
-    thumbnail:   null, // generated client-side or via a future thumbnail service
+    category: SMART_TYPE_CATEGORY[type],
+    useCase: SMART_TYPE_USE_CASE[type],
+    tags: ['smart', tokens.mood, family, type],
+    thumbnail: null, // generated client-side or via a future thumbnail service
     elementTree: tree,
   };
 }
@@ -78,7 +84,10 @@ export class SmartComponentRegistry {
 
   /** Bust the cache (e.g. after a family-tokens edit at runtime). */
   invalidate(family?: SmartFamilyId) {
-    if (!family) { this.cache.clear(); return; }
+    if (!family) {
+      this.cache.clear();
+      return;
+    }
     for (const key of Array.from(this.cache.keys())) {
       if (key.startsWith(`${family}:`)) this.cache.delete(key);
     }

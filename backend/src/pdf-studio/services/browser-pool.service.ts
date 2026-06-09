@@ -17,7 +17,7 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     this.logger.log('Initializing browser pool...');
-    
+
     // Pre-warm the pool with one browser instance
     try {
       await this.createBrowserInstance();
@@ -27,14 +27,17 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
     }
 
     // Start cleanup interval (every 2 minutes)
-    this.cleanupInterval = setInterval(() => {
-      this.cleanupIdleBrowsers();
-    }, 2 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanupIdleBrowsers();
+      },
+      2 * 60 * 1000,
+    );
   }
 
   async onModuleDestroy() {
     this.logger.log('Destroying browser pool...');
-    
+
     // Clear cleanup interval
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
@@ -86,7 +89,7 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
    */
   releaseBrowser(browser: puppeteer.Browser): void {
     const instance = this.pool.find((inst) => inst.browser === browser);
-    
+
     if (instance) {
       instance.inUse = false;
       instance.lastUsed = new Date();
@@ -116,14 +119,19 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
         return result;
       } catch (error) {
         lastError = error as Error;
-        this.logger.warn(`Browser execution failed (attempt ${attempt}/${maxRetries}): ${error.message}`);
+        this.logger.warn(
+          `Browser execution failed (attempt ${attempt}/${maxRetries}): ${error.message}`,
+        );
 
         // If the browser crashed, evict it so a fresh instance is created next time
-        const isCrash = error.message?.includes('disconnected') || error.message?.includes('Protocol error');
+        const isCrash =
+          error.message?.includes('disconnected') || error.message?.includes('Protocol error');
         if (isCrash) {
-          const index = this.pool.findIndex(inst => inst.browser === browser);
+          const index = this.pool.findIndex((inst) => inst.browser === browser);
           if (index > -1) {
-            try { await browser.close(); } catch (_) {}
+            try {
+              await browser.close();
+            } catch (_) {}
             this.pool.splice(index, 1);
             this.logger.warn('Evicted crashed browser from pool');
           }
@@ -134,7 +142,7 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
         }
 
         if (attempt < maxRetries) {
-          await new Promise(res => setTimeout(res, 500 * Math.pow(2, attempt - 1)));
+          await new Promise((res) => setTimeout(res, 500 * Math.pow(2, attempt - 1)));
         }
       }
     }
@@ -177,7 +185,7 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
     };
 
     this.pool.push(instance);
-    
+
     // Handle browser disconnection
     browser.on('disconnected', () => {
       this.logger.warn('Browser disconnected, removing from pool');
@@ -226,7 +234,7 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
     for (const instance of this.pool) {
       if (!instance.inUse) {
         const idleTime = now.getTime() - instance.lastUsed.getTime();
-        
+
         // Keep at least 1 browser in the pool
         if (idleTime > this.maxIdleTime && this.pool.length > 1) {
           instancesToRemove.push(instance);
@@ -236,7 +244,7 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
 
     if (instancesToRemove.length > 0) {
       this.logger.log(`Cleaning up ${instancesToRemove.length} idle browser(s)`);
-      
+
       for (const instance of instancesToRemove) {
         try {
           await instance.browser.close();

@@ -18,13 +18,20 @@
 // =============================================================================
 
 export type FixtureKind =
-  | 'investor' | 'sales' | 'corporate' | 'training'
-  | 'financial' | 'healthcare' | 'enterprise'
+  | 'investor'
+  | 'sales'
+  | 'corporate'
+  | 'training'
+  | 'financial'
+  | 'healthcare'
+  | 'enterprise'
   // Phase 38.3J additions
-  | 'consulting' | 'government' | 'productLaunch';
+  | 'consulting'
+  | 'government'
+  | 'productLaunch';
 
 export interface GoldenFixture {
-  name:   FixtureKind;
+  name: FixtureKind;
   slides: number;
   buffer: Buffer;
 }
@@ -32,39 +39,53 @@ export interface GoldenFixture {
 const PptxGenJS = require('pptxgenjs');
 
 export async function buildGoldenFixtures(): Promise<GoldenFixture[]> {
-  return Promise.all(([
-    ['investor',     buildInvestor],
-    ['sales',        buildSales],
-    ['corporate',    buildCorporate],
-    ['training',     buildTraining],
-    ['financial',    buildFinancial],
-    ['healthcare',   buildHealthcare],
-    ['enterprise',   buildEnterprise],
-    // Phase 38.3J additions
-    ['consulting',   buildConsulting],
-    ['government',   buildGovernment],
-    ['productLaunch', buildProductLaunch],
-  ] as const).map(async ([name, fn]) => {
-    const { slides, buffer } = await fn();
-    return { name, slides, buffer };
-  }));
+  return Promise.all(
+    (
+      [
+        ['investor', buildInvestor],
+        ['sales', buildSales],
+        ['corporate', buildCorporate],
+        ['training', buildTraining],
+        ['financial', buildFinancial],
+        ['healthcare', buildHealthcare],
+        ['enterprise', buildEnterprise],
+        // Phase 38.3J additions
+        ['consulting', buildConsulting],
+        ['government', buildGovernment],
+        ['productLaunch', buildProductLaunch],
+      ] as const
+    ).map(async ([name, fn]) => {
+      const { slides, buffer } = await fn();
+      return { name, slides, buffer };
+    }),
+  );
 }
 
 // -----------------------------------------------------------------------------
 
 async function buildInvestor() {
-  const p = new PptxGenJS(); p.layout = 'LAYOUT_WIDE'; p.title = 'Investor';
+  const p = new PptxGenJS();
+  p.layout = 'LAYOUT_WIDE';
+  p.title = 'Investor';
   let s = p.addSlide();
-  s.addText('Pitchonix — Series A',  { x: 0.5, y: 0.4, w: 12, h: 1.0, fontSize: 32, bold: true });
-  s.addText('Investor deck · 2026',  { x: 0.5, y: 1.6, w: 12, h: 0.7, fontSize: 18 });
+  s.addText('Pitchonix — Series A', { x: 0.5, y: 0.4, w: 12, h: 1.0, fontSize: 32, bold: true });
+  s.addText('Investor deck · 2026', { x: 0.5, y: 1.6, w: 12, h: 0.7, fontSize: 18 });
   s = p.addSlide();
-  s.addText('Problem',               { x: 0.5, y: 0.4, w: 12, h: 1.0, fontSize: 28, bold: true });
-  s.addText('Teams waste 8h/week stitching slides.', { x: 0.5, y: 1.8, w: 12, h: 0.8, fontSize: 18 });
+  s.addText('Problem', { x: 0.5, y: 0.4, w: 12, h: 1.0, fontSize: 28, bold: true });
+  s.addText('Teams waste 8h/week stitching slides.', {
+    x: 0.5,
+    y: 1.8,
+    w: 12,
+    h: 0.8,
+    fontSize: 18,
+  });
   s = p.addSlide();
   s.addText('Traction', { x: 0.5, y: 0.4, w: 12, h: 1.0, fontSize: 28, bold: true });
-  s.addChart('bar', [
-    { name: 'MRR', labels: ['Q1', 'Q2', 'Q3', 'Q4'], values: [12, 28, 42, 68] },
-  ] as any, { x: 0.5, y: 1.8, w: 11, h: 5 });
+  s.addChart(
+    'bar',
+    [{ name: 'MRR', labels: ['Q1', 'Q2', 'Q3', 'Q4'], values: [12, 28, 42, 68] }] as any,
+    { x: 0.5, y: 1.8, w: 11, h: 5 },
+  );
   s = p.addSlide();
   s.addText('Thank you', { x: 0.5, y: 0.4, w: 12, h: 1.0, fontSize: 28, bold: true });
   const buf = (await p.write({ outputType: 'nodebuffer' })) as Buffer;
@@ -72,7 +93,9 @@ async function buildInvestor() {
 }
 
 async function buildSales() {
-  const p = new PptxGenJS(); p.layout = 'LAYOUT_WIDE'; p.title = 'Sales';
+  const p = new PptxGenJS();
+  p.layout = 'LAYOUT_WIDE';
+  p.title = 'Sales';
   let s = p.addSlide();
   s.addText('Acme — Solution overview', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 32, bold: true });
   s = p.addSlide();
@@ -81,8 +104,8 @@ async function buildSales() {
     [
       [{ text: 'Plan' }, { text: 'Seats' }, { text: 'Price' }],
       [{ text: 'Starter' }, { text: '1–5' }, { text: '$29' }],
-      [{ text: 'Team' },    { text: '6–25' }, { text: '$99' }],
-      [{ text: 'Scale' },   { text: '25+' }, { text: '$299' }],
+      [{ text: 'Team' }, { text: '6–25' }, { text: '$99' }],
+      [{ text: 'Scale' }, { text: '25+' }, { text: '$299' }],
     ],
     { x: 0.5, y: 1.8, w: 12 },
   );
@@ -91,7 +114,9 @@ async function buildSales() {
 }
 
 async function buildCorporate() {
-  const p = new PptxGenJS(); p.layout = 'LAYOUT_WIDE'; p.title = 'Corporate';
+  const p = new PptxGenJS();
+  p.layout = 'LAYOUT_WIDE';
+  p.title = 'Corporate';
   for (const t of ['Corporate', 'Mission', 'Values', 'Products', 'Roadmap', 'Thank you']) {
     const s = p.addSlide();
     s.addText(t, { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
@@ -102,11 +127,19 @@ async function buildCorporate() {
 }
 
 async function buildTraining() {
-  const p = new PptxGenJS(); p.layout = 'LAYOUT_WIDE'; p.title = 'Training';
+  const p = new PptxGenJS();
+  p.layout = 'LAYOUT_WIDE';
+  p.title = 'Training';
   for (let i = 0; i < 5; i++) {
     const s = p.addSlide();
     s.addText(`Step ${i + 1}`, { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
-    s.addText(`Detailed instructions for step ${i + 1}.`, { x: 0.5, y: 1.6, w: 12, h: 5, fontSize: 18 });
+    s.addText(`Detailed instructions for step ${i + 1}.`, {
+      x: 0.5,
+      y: 1.6,
+      w: 12,
+      h: 5,
+      fontSize: 18,
+    });
     s.addNotes(`Talking points for step ${i + 1}.`);
   }
   const buf = (await p.write({ outputType: 'nodebuffer' })) as Buffer;
@@ -114,20 +147,32 @@ async function buildTraining() {
 }
 
 async function buildFinancial() {
-  const p = new PptxGenJS(); p.layout = 'LAYOUT_WIDE'; p.title = 'Financial';
+  const p = new PptxGenJS();
+  p.layout = 'LAYOUT_WIDE';
+  p.title = 'Financial';
   let s = p.addSlide();
-  s.addText('Q4 Results',  { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
-  s.addChart('line', [{ name: 'Revenue', labels: ['Q1', 'Q2', 'Q3', 'Q4'], values: [120, 145, 168, 192] }] as any, { x: 0.5, y: 1.8, w: 11, h: 5 });
+  s.addText('Q4 Results', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
+  s.addChart(
+    'line',
+    [{ name: 'Revenue', labels: ['Q1', 'Q2', 'Q3', 'Q4'], values: [120, 145, 168, 192] }] as any,
+    { x: 0.5, y: 1.8, w: 11, h: 5 },
+  );
   s = p.addSlide();
   s.addText('Segment mix', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
-  s.addChart('pie', [{ name: 'Mix', labels: ['Enterprise', 'Mid-market', 'SMB'], values: [55, 30, 15] }] as any, { x: 0.5, y: 1.8, w: 11, h: 5 });
+  s.addChart(
+    'pie',
+    [{ name: 'Mix', labels: ['Enterprise', 'Mid-market', 'SMB'], values: [55, 30, 15] }] as any,
+    { x: 0.5, y: 1.8, w: 11, h: 5 },
+  );
   const buf = (await p.write({ outputType: 'nodebuffer' })) as Buffer;
   return { slides: 2, buffer: buf };
 }
 
 async function buildHealthcare() {
-  const p = new PptxGenJS(); p.layout = 'LAYOUT_WIDE'; p.title = 'Healthcare';
-  let s = p.addSlide();
+  const p = new PptxGenJS();
+  p.layout = 'LAYOUT_WIDE';
+  p.title = 'Healthcare';
+  const s = p.addSlide();
   s.addText('Clinical study summary', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
   s.addText('Endpoint reached at week 12.', { x: 0.5, y: 1.8, w: 7, h: 5, fontSize: 16 });
   s.addText('References', { x: 8.5, y: 1.8, w: 4, h: 1, fontSize: 12, bold: true });
@@ -137,45 +182,75 @@ async function buildHealthcare() {
 }
 
 async function buildConsulting() {
-  const p = new PptxGenJS(); p.layout = 'LAYOUT_WIDE'; p.title = 'Consulting';
+  const p = new PptxGenJS();
+  p.layout = 'LAYOUT_WIDE';
+  p.title = 'Consulting';
   let s = p.addSlide();
   s.addText('Engagement summary', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 32, bold: true });
   s = p.addSlide();
   s.addText('Findings', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
-  s.addText('· 3 root causes identified\n· 7 quick wins\n· 2 long-term initiatives', { x: 0.5, y: 1.8, w: 12, h: 5, fontSize: 18 });
+  s.addText('· 3 root causes identified\n· 7 quick wins\n· 2 long-term initiatives', {
+    x: 0.5,
+    y: 1.8,
+    w: 12,
+    h: 5,
+    fontSize: 18,
+  });
   s = p.addSlide();
   s.addText('Recommendations', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
-  s.addChart('bar', [{ name: 'Impact', labels: ['QW1', 'QW2', 'QW3', 'LT1'], values: [80, 65, 50, 90] }] as any, { x: 0.5, y: 1.8, w: 11, h: 5 });
+  s.addChart(
+    'bar',
+    [{ name: 'Impact', labels: ['QW1', 'QW2', 'QW3', 'LT1'], values: [80, 65, 50, 90] }] as any,
+    { x: 0.5, y: 1.8, w: 11, h: 5 },
+  );
   const buf = (await p.write({ outputType: 'nodebuffer' })) as Buffer;
   return { slides: 3, buffer: buf };
 }
 
 async function buildGovernment() {
-  const p = new PptxGenJS(); p.layout = 'LAYOUT_WIDE'; p.title = 'Government';
+  const p = new PptxGenJS();
+  p.layout = 'LAYOUT_WIDE';
+  p.title = 'Government';
   for (const t of ['Department of X', 'Mandate', 'Priorities', 'Budget', 'Outcomes']) {
     const s = p.addSlide();
     s.addText(t, { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
-    s.addText('FOR OFFICIAL USE ONLY', { x: 0.5, y: 6.8, w: 12, h: 0.4, fontSize: 9, color: '888888', italic: true });
+    s.addText('FOR OFFICIAL USE ONLY', {
+      x: 0.5,
+      y: 6.8,
+      w: 12,
+      h: 0.4,
+      fontSize: 9,
+      color: '888888',
+      italic: true,
+    });
   }
   const buf = (await p.write({ outputType: 'nodebuffer' })) as Buffer;
   return { slides: 5, buffer: buf };
 }
 
 async function buildProductLaunch() {
-  const p = new PptxGenJS(); p.layout = 'LAYOUT_WIDE'; p.title = 'Product Launch';
+  const p = new PptxGenJS();
+  p.layout = 'LAYOUT_WIDE';
+  p.title = 'Product Launch';
   let s = p.addSlide();
   s.addText('Introducing Atlas', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 36, bold: true });
   s.addText('The most loved release ever', { x: 0.5, y: 1.8, w: 12, h: 0.8, fontSize: 18 });
   s = p.addSlide();
   s.addText('What ships', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
-  s.addText('· Faster sync\n· Brand kits 2.0\n· Enterprise PPTX import', { x: 0.5, y: 1.8, w: 12, h: 5, fontSize: 18 });
+  s.addText('· Faster sync\n· Brand kits 2.0\n· Enterprise PPTX import', {
+    x: 0.5,
+    y: 1.8,
+    w: 12,
+    h: 5,
+    fontSize: 18,
+  });
   s = p.addSlide();
   s.addText('Pricing', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
   s.addTable(
     [
       [{ text: 'Plan' }, { text: 'Price' }, { text: 'Seat' }],
       [{ text: 'Free' }, { text: '$0' }, { text: '1' }],
-      [{ text: 'Pro' },  { text: '$19' }, { text: 'unlimited' }],
+      [{ text: 'Pro' }, { text: '$19' }, { text: 'unlimited' }],
     ],
     { x: 0.5, y: 1.8, w: 12 },
   );
@@ -184,12 +259,20 @@ async function buildProductLaunch() {
 }
 
 async function buildEnterprise() {
-  const p = new PptxGenJS(); p.layout = 'LAYOUT_WIDE'; p.title = 'Enterprise';
+  const p = new PptxGenJS();
+  p.layout = 'LAYOUT_WIDE';
+  p.title = 'Enterprise';
   let s = p.addSlide();
   s.addText('Enterprise overview', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 32, bold: true });
   s = p.addSlide();
   s.addText('Adoption funnel', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
-  s.addChart('bar', [{ name: 'Funnel', labels: ['Trial', 'POC', 'Pilot', 'Prod'], values: [400, 150, 60, 22] }] as any, { x: 0.5, y: 1.8, w: 11, h: 5 });
+  s.addChart(
+    'bar',
+    [
+      { name: 'Funnel', labels: ['Trial', 'POC', 'Pilot', 'Prod'], values: [400, 150, 60, 22] },
+    ] as any,
+    { x: 0.5, y: 1.8, w: 11, h: 5 },
+  );
   s = p.addSlide();
   s.addText('SLAs', { x: 0.5, y: 0.4, w: 12, h: 1, fontSize: 28, bold: true });
   s.addTable(

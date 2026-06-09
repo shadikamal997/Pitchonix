@@ -20,7 +20,10 @@ import { UniversalDocument, DocumentNode, emptyDocument, newPage } from '../docu
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const mammoth = require('mammoth');
 
-export async function importDocx(buffer: Buffer, filename = 'document.docx'): Promise<UniversalDocument> {
+export async function importDocx(
+  buffer: Buffer,
+  filename = 'document.docx',
+): Promise<UniversalDocument> {
   const doc = emptyDocument('docx', filename.replace(/\.[a-z]+$/i, '') || 'Imported document');
   const { value: html } = await mammoth.convertToHtml({ buffer });
   const $ = cheerio.load(html || '<p></p>');
@@ -29,22 +32,24 @@ export async function importDocx(buffer: Buffer, filename = 'document.docx'): Pr
   let page = newPage();
   doc.pages.push(page);
 
-  $('body').children().each((_i: number, el: any) => {
-    const tag = (el.tagName || '').toLowerCase();
-    if (tag === 'h1') {
-      // Start a new page if the current one already has nodes.
-      if (page.nodes.length > 0) {
-        page = newPage($(el).text().trim().slice(0, 120));
-        doc.pages.push(page);
-      } else if (!page.title) {
-        page.title = $(el).text().trim().slice(0, 120);
+  $('body')
+    .children()
+    .each((_i: number, el: any) => {
+      const tag = (el.tagName || '').toLowerCase();
+      if (tag === 'h1') {
+        // Start a new page if the current one already has nodes.
+        if (page.nodes.length > 0) {
+          page = newPage($(el).text().trim().slice(0, 120));
+          doc.pages.push(page);
+        } else if (!page.title) {
+          page.title = $(el).text().trim().slice(0, 120);
+        }
+        page.nodes.push({ type: 'heading', level: 1, text: $(el).text().trim() });
+      } else {
+        const node = mapNode($, el);
+        if (node) page.nodes.push(node);
       }
-      page.nodes.push({ type: 'heading', level: 1, text: $(el).text().trim() });
-    } else {
-      const node = mapNode($, el);
-      if (node) page.nodes.push(node);
-    }
-  });
+    });
 
   // Trim trailing empty pages.
   while (doc.pages.length > 1 && doc.pages[doc.pages.length - 1].nodes.length === 0) {
@@ -59,11 +64,16 @@ function mapNode($: cheerio.CheerioAPI, el: any): DocumentNode | null {
   const txt = $el.text().trim();
 
   switch (tag) {
-    case 'h2': return { type: 'heading', level: 2, text: txt };
-    case 'h3': return { type: 'heading', level: 3, text: txt };
-    case 'h4': return { type: 'heading', level: 4, text: txt };
-    case 'h5': return { type: 'heading', level: 5, text: txt };
-    case 'h6': return { type: 'heading', level: 6, text: txt };
+    case 'h2':
+      return { type: 'heading', level: 2, text: txt };
+    case 'h3':
+      return { type: 'heading', level: 3, text: txt };
+    case 'h4':
+      return { type: 'heading', level: 4, text: txt };
+    case 'h5':
+      return { type: 'heading', level: 5, text: txt };
+    case 'h6':
+      return { type: 'heading', level: 6, text: txt };
 
     case 'p': {
       if (!txt) return null;
@@ -80,7 +90,10 @@ function mapNode($: cheerio.CheerioAPI, el: any): DocumentNode | null {
 
     case 'ul':
     case 'ol': {
-      const items = $el.children('li').map((_i, li) => $(li).text().trim()).get();
+      const items = $el
+        .children('li')
+        .map((_i, li) => $(li).text().trim())
+        .get();
       return { type: 'list', ordered: tag === 'ol', items };
     }
 
@@ -88,10 +101,13 @@ function mapNode($: cheerio.CheerioAPI, el: any): DocumentNode | null {
       const rows: any[] = [];
       let headerRow = false;
       $el.find('tr').each((rIdx, tr) => {
-        const cells = $(tr).find('th,td').map((_ci, c) => ({
-          text: $(c).text().trim(),
-          bold: c.tagName === 'th',
-        })).get();
+        const cells = $(tr)
+          .find('th,td')
+          .map((_ci, c) => ({
+            text: $(c).text().trim(),
+            bold: c.tagName === 'th',
+          }))
+          .get();
         if (rIdx === 0 && $(tr).find('th').length > 0) headerRow = true;
         rows.push(cells);
       });
@@ -120,8 +136,8 @@ function collectRuns($: cheerio.CheerioAPI, el: any): DocumentNode['runs'] {
       const tag = String(n.tagName).toLowerCase();
       runs.push({
         text: t,
-        bold:      tag === 'strong' || tag === 'b' || undefined,
-        italic:    tag === 'em' || tag === 'i' || undefined,
+        bold: tag === 'strong' || tag === 'b' || undefined,
+        italic: tag === 'em' || tag === 'i' || undefined,
         underline: tag === 'u' || undefined,
       });
     }

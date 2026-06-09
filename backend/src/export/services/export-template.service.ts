@@ -62,21 +62,13 @@ export class ExportTemplateService {
   async findAll(userId?: string): Promise<ExportTemplate[]> {
     const where = userId
       ? {
-          OR: [
-            { type: 'system' },
-            { userId, type: 'custom' },
-            { isPublic: true, type: 'custom' },
-          ],
+          OR: [{ type: 'system' }, { userId, type: 'custom' }, { isPublic: true, type: 'custom' }],
         }
       : { type: 'system' };
 
     return this.prisma.exportTemplate.findMany({
       where,
-      orderBy: [
-        { isDefault: 'desc' },
-        { type: 'asc' },
-        { name: 'asc' },
-      ],
+      orderBy: [{ isDefault: 'desc' }, { type: 'asc' }, { name: 'asc' }],
     });
   }
 
@@ -375,9 +367,7 @@ export class ExportTemplateService {
 
     // Create all system templates
     await Promise.all(
-      systemTemplates.map((template) =>
-        this.prisma.exportTemplate.create({ data: template })
-      )
+      systemTemplates.map((template) => this.prisma.exportTemplate.create({ data: template })),
     );
 
     this.logger.log('✅ System templates seeded successfully');

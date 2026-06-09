@@ -20,46 +20,46 @@
  */
 export interface QualitySignals {
   // Counts (used by scorecards + executive-quality)
-  metricsCount:        number;
-  kpiCount:            number;
-  chartCount:          number;
-  pricingTierCount:    number;
-  teamMemberCount:     number;
-  roadmapPhaseCount:   number;
-  timelineItemCount:   number;
-  featureCount:        number;
-  ctaCount:            number;
+  metricsCount: number;
+  kpiCount: number;
+  chartCount: number;
+  pricingTierCount: number;
+  teamMemberCount: number;
+  roadmapPhaseCount: number;
+  timelineItemCount: number;
+  featureCount: number;
+  ctaCount: number;
 
   // Discovery flags (presence > zero)
-  hasMetrics:          boolean;
-  hasPricing:          boolean;
-  hasTeam:             boolean;
-  hasRoadmap:          boolean;
-  hasSwot:             boolean;
-  hasComparison:       boolean;
-  hasFinancialChart:   boolean;
-  hasCta:              boolean;
+  hasMetrics: boolean;
+  hasPricing: boolean;
+  hasTeam: boolean;
+  hasRoadmap: boolean;
+  hasSwot: boolean;
+  hasComparison: boolean;
+  hasFinancialChart: boolean;
+  hasCta: boolean;
 
   // Investor / market signals
-  hasTam:              boolean;
-  hasSam:              boolean;
-  hasSom:              boolean;
-  hasMarketSizing:     boolean;
-  hasFundingAsk:       boolean;
+  hasTam: boolean;
+  hasSam: boolean;
+  hasSom: boolean;
+  hasMarketSizing: boolean;
+  hasFundingAsk: boolean;
 
   // Narrative signals (any prose text on the slide)
-  hasTagline:          boolean;
-  hasDescription:      boolean;
-  hasDifferentiators:  boolean;
-  hasGrowth:           boolean;
-  hasMilestones:       boolean;
+  hasTagline: boolean;
+  hasDescription: boolean;
+  hasDifferentiators: boolean;
+  hasGrowth: boolean;
+  hasMilestones: boolean;
 
   // Raw evidence — useful for richer downstream checks (e.g. "is the largest
   // metric > 10%?"). Empty arrays if the signal is absent.
-  metricValues:        Array<{ value: string; label?: string }>;
-  pricingTiers:        Array<{ name: string; price: string }>;
-  teamMembers:         Array<{ name: string; role?: string }>;
-  roadmapPhases:       Array<{ phase: string; period?: string }>;
+  metricValues: Array<{ value: string; label?: string }>;
+  pricingTiers: Array<{ name: string; price: string }>;
+  teamMembers: Array<{ name: string; role?: string }>;
+  roadmapPhases: Array<{ phase: string; period?: string }>;
 
   /**
    * Provenance of these signals.
@@ -70,19 +70,41 @@ export interface QualitySignals {
    * The previous `'legacy'` variant was removed in Tier 10 with the
    * `collectFromLegacy()` collector.
    */
-  source:              'smart' | 'empty';
+  source: 'smart' | 'empty';
 }
 
 const EMPTY_SIGNALS: QualitySignals = {
-  metricsCount: 0, kpiCount: 0, chartCount: 0,
-  pricingTierCount: 0, teamMemberCount: 0,
-  roadmapPhaseCount: 0, timelineItemCount: 0, featureCount: 0, ctaCount: 0,
-  hasMetrics: false, hasPricing: false, hasTeam: false, hasRoadmap: false,
-  hasSwot: false, hasComparison: false, hasFinancialChart: false, hasCta: false,
-  hasTam: false, hasSam: false, hasSom: false, hasMarketSizing: false, hasFundingAsk: false,
-  hasTagline: false, hasDescription: false, hasDifferentiators: false,
-  hasGrowth: false, hasMilestones: false,
-  metricValues: [], pricingTiers: [], teamMembers: [], roadmapPhases: [],
+  metricsCount: 0,
+  kpiCount: 0,
+  chartCount: 0,
+  pricingTierCount: 0,
+  teamMemberCount: 0,
+  roadmapPhaseCount: 0,
+  timelineItemCount: 0,
+  featureCount: 0,
+  ctaCount: 0,
+  hasMetrics: false,
+  hasPricing: false,
+  hasTeam: false,
+  hasRoadmap: false,
+  hasSwot: false,
+  hasComparison: false,
+  hasFinancialChart: false,
+  hasCta: false,
+  hasTam: false,
+  hasSam: false,
+  hasSom: false,
+  hasMarketSizing: false,
+  hasFundingAsk: false,
+  hasTagline: false,
+  hasDescription: false,
+  hasDifferentiators: false,
+  hasGrowth: false,
+  hasMilestones: false,
+  metricValues: [],
+  pricingTiers: [],
+  teamMembers: [],
+  roadmapPhases: [],
   source: 'empty',
 };
 
@@ -141,7 +163,8 @@ function collectFromTree(tree: any[], acc: QualitySignals): QualitySignals {
         const value = String(c.value ?? '').trim();
         if (value) acc.metricValues.push({ value, label: c.label });
         // Growth detection — value like "+58% YoY" or label containing "growth"
-        if (/(?:[+-]?\d+)\s*%/.test(value) || /growth/i.test(String(c.label || ''))) acc.hasGrowth = true;
+        if (/(?:[+-]?\d+)\s*%/.test(value) || /growth/i.test(String(c.label || '')))
+          acc.hasGrowth = true;
         break;
       }
       case 'kpi': {
@@ -155,7 +178,10 @@ function collectFromTree(tree: any[], acc: QualitySignals): QualitySignals {
         acc.chartCount++;
         // financial charts: dualAxis, financialDashboard's chart, growth charts
         const kind = String(c.type || '').toLowerCase();
-        if (kind === 'dualaxis' || /revenue|ebitda|projection|forecast|financ/i.test(String(c.title || ''))) {
+        if (
+          kind === 'dualaxis' ||
+          /revenue|ebitda|projection|forecast|financ/i.test(String(c.title || ''))
+        ) {
           acc.hasFinancialChart = true;
         }
         // Market-sizing signals come through chart categories
@@ -212,13 +238,22 @@ function collectFromTree(tree: any[], acc: QualitySignals): QualitySignals {
         if (items.length > 0) acc.hasDifferentiators = true;
         break;
       }
-      case 'swot':       acc.hasSwot = true; break;
-      case 'comparison': acc.hasComparison = true; acc.hasDifferentiators = true; break;
-      case 'cta':        acc.ctaCount++; acc.hasCta = true; break;
+      case 'swot':
+        acc.hasSwot = true;
+        break;
+      case 'comparison':
+        acc.hasComparison = true;
+        acc.hasDifferentiators = true;
+        break;
+      case 'cta':
+        acc.ctaCount++;
+        acc.hasCta = true;
+        break;
       case 'heading':
       case 'subheading': {
         const text = String(c.text || '');
-        if (text.trim()) acc.hasTagline = acc.hasTagline || (el.type === 'heading' && text.length < 80);
+        if (text.trim())
+          acc.hasTagline = acc.hasTagline || (el.type === 'heading' && text.length < 80);
         if (/funding|series|raising|invest/i.test(text)) acc.hasFundingAsk = true;
         break;
       }
@@ -234,7 +269,8 @@ function collectFromTree(tree: any[], acc: QualitySignals): QualitySignals {
         if (/milestone|launched|shipped|achieved/i.test(text)) acc.hasMilestones = true;
         break;
       }
-      default: break;
+      default:
+        break;
     }
   }
   return acc;

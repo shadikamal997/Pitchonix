@@ -23,10 +23,10 @@ import { OoxmlPackage, asArray } from './ooxml-parser';
 // =============================================================================
 
 export interface ParagraphStyle {
-  level:   number;                  // 1..9
-  indent?: number;                  // % of slide width
-  marginLeft?: number;              // % of slide width
-  lineSpacing?: number;             // multiplier (1.0 = 100%)
+  level: number; // 1..9
+  indent?: number; // % of slide width
+  marginLeft?: number; // % of slide width
+  lineSpacing?: number; // multiplier (1.0 = 100%)
   bullet?: {
     enabled: boolean;
     char?: string;
@@ -34,10 +34,10 @@ export interface ParagraphStyle {
     color?: string;
   };
   defaultRun?: {
-    size?:  number;                 // points
+    size?: number; // points
     family?: string;
-    color?:  string;
-    bold?:   boolean;
+    color?: string;
+    bold?: boolean;
     italic?: boolean;
   };
 }
@@ -50,7 +50,7 @@ export interface TextStyleInheritance {
 }
 
 const EMU_PER_POINT = 12700;
-const SLIDE_W_EMU = 12192000;   // LAYOUT_WIDE
+const SLIDE_W_EMU = 12192000; // LAYOUT_WIDE
 
 export function resolveTextStyleInheritance(
   pkg: OoxmlPackage,
@@ -64,16 +64,12 @@ export function resolveTextStyleInheritance(
 
   // Three style blocks → three "placeholder type" buckets.
   takeBlock(out, 'title', txStyles['p:titleStyle']);
-  takeBlock(out, 'body',  txStyles['p:bodyStyle']);
+  takeBlock(out, 'body', txStyles['p:bodyStyle']);
   takeBlock(out, 'other', txStyles['p:otherStyle']);
   return out;
 }
 
-function takeBlock(
-  acc: TextStyleInheritance,
-  type: 'title' | 'body' | 'other',
-  block: any,
-) {
+function takeBlock(acc: TextStyleInheritance, type: 'title' | 'body' | 'other', block: any) {
   if (!block) return;
   for (let lvl = 1; lvl <= 9; lvl++) {
     const key = `a:lvl${lvl}pPr`;
@@ -91,37 +87,42 @@ function takeBlock(
 }
 
 function parseLevel(node: any, lvl: number): ParagraphStyle {
-  const indentEmu = node['@indent']  ? Number(node['@indent'])  : undefined;
-  const marLEmu   = node['@marL']    ? Number(node['@marL'])    : undefined;
-  const ln        = node['a:lnSpc']?.['a:spcPct']?.['@val'];
+  const indentEmu = node['@indent'] ? Number(node['@indent']) : undefined;
+  const marLEmu = node['@marL'] ? Number(node['@marL']) : undefined;
+  const ln = node['a:lnSpc']?.['a:spcPct']?.['@val'];
   const lineSpacing = ln ? Number(ln) / 100000 : undefined;
 
-  const buChar  = node['a:buChar']?.['@char'];
-  const buFont  = node['a:buFont']?.['@typeface'];
+  const buChar = node['a:buChar']?.['@char'];
+  const buFont = node['a:buFont']?.['@typeface'];
   const buColor = node['a:buClr']?.['a:srgbClr']?.['@val'];
-  const buNone  = node['a:buNone'] !== undefined;
+  const buNone = node['a:buNone'] !== undefined;
 
-  const defRPr  = node['a:defRPr'] || {};
-  const size    = defRPr['@sz'] ? Number(defRPr['@sz']) / 100 : undefined;  // hundredths of a point
-  const family  = defRPr['a:latin']?.['@typeface'];
+  const defRPr = node['a:defRPr'] || {};
+  const size = defRPr['@sz'] ? Number(defRPr['@sz']) / 100 : undefined; // hundredths of a point
+  const family = defRPr['a:latin']?.['@typeface'];
   const colorHex = defRPr['a:solidFill']?.['a:srgbClr']?.['@val'];
-  const bold    = defRPr['@b'] === '1' || defRPr['@b'] === 'true' || undefined;
-  const italic  = defRPr['@i'] === '1' || defRPr['@i'] === 'true' || undefined;
+  const bold = defRPr['@b'] === '1' || defRPr['@b'] === 'true' || undefined;
+  const italic = defRPr['@i'] === '1' || defRPr['@i'] === 'true' || undefined;
 
   return {
     level: lvl,
-    indent:     indentEmu != null ? clampPct((indentEmu / SLIDE_W_EMU) * 100) : undefined,
-    marginLeft: marLEmu   != null ? clampPct((marLEmu   / SLIDE_W_EMU) * 100) : undefined,
+    indent: indentEmu != null ? clampPct((indentEmu / SLIDE_W_EMU) * 100) : undefined,
+    marginLeft: marLEmu != null ? clampPct((marLEmu / SLIDE_W_EMU) * 100) : undefined,
     lineSpacing,
     bullet: buNone
       ? { enabled: false }
-      : (buChar || buFont || buColor)
-        ? { enabled: true, char: buChar || undefined, font: buFont || undefined, color: buColor ? `#${String(buColor).toUpperCase()}` : undefined }
+      : buChar || buFont || buColor
+        ? {
+            enabled: true,
+            char: buChar || undefined,
+            font: buFont || undefined,
+            color: buColor ? `#${String(buColor).toUpperCase()}` : undefined,
+          }
         : undefined,
     defaultRun: {
       size,
       family: family || undefined,
-      color:  colorHex ? `#${String(colorHex).toUpperCase()}` : undefined,
+      color: colorHex ? `#${String(colorHex).toUpperCase()}` : undefined,
       bold,
       italic,
     },

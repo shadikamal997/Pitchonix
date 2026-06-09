@@ -72,7 +72,7 @@ export class TimelinePageGenerator extends BasePageGenerator {
 
     // Parse traction string for milestones (traction is a string in WizardInput)
     if (input.traction) {
-      const tractionLines = input.traction.split('\n').filter(line => line.trim());
+      const tractionLines = input.traction.split('\n').filter((line) => line.trim());
       milestones.push(...tractionLines.slice(0, 5));
     }
 
@@ -82,7 +82,7 @@ export class TimelinePageGenerator extends BasePageGenerator {
         'First Customer Acquisition',
         'Revenue Milestone Achievement',
         'Team Expansion',
-        'Market Leadership Position'
+        'Market Leadership Position',
       );
     }
 
@@ -91,10 +91,10 @@ export class TimelinePageGenerator extends BasePageGenerator {
 
   private parseRoadmap(roadmap: string): TimelineEntry[] {
     const entries: TimelineEntry[] = [];
-    
+
     // Try to parse structured roadmap
-    const lines = roadmap.split('\n').filter(line => line.trim());
-    
+    const lines = roadmap.split('\n').filter((line) => line.trim());
+
     let currentQuarter = 1;
     const currentYear = new Date().getFullYear();
 

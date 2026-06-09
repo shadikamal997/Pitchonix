@@ -25,13 +25,11 @@ describe('Smart PDF Builder (E2E)', () => {
     prisma = app.get<PrismaService>(PrismaService);
 
     // Create test user and get auth token
-    const authResponse = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
-        email: 'test@example.com',
-        password: 'Test123!@#',
-        name: 'Test User',
-      });
+    const authResponse = await request(app.getHttpServer()).post('/auth/register').send({
+      email: 'test@example.com',
+      password: 'Test123!@#',
+      name: 'Test User',
+    });
 
     authToken = authResponse.body.token;
     userId = authResponse.body.user.id;
@@ -183,9 +181,7 @@ describe('Smart PDF Builder (E2E)', () => {
         })
         .expect(201);
 
-      expect(response.headers['content-type']).toContain(
-        'application/vnd.openxmlformats',
-      );
+      expect(response.headers['content-type']).toContain('application/vnd.openxmlformats');
     });
 
     it('should export document as PPTX', async () => {
@@ -198,9 +194,7 @@ describe('Smart PDF Builder (E2E)', () => {
         })
         .expect(201);
 
-      expect(response.headers['content-type']).toContain(
-        'application/vnd.openxmlformats',
-      );
+      expect(response.headers['content-type']).toContain('application/vnd.openxmlformats');
     });
   });
 

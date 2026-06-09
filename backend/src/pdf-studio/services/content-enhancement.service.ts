@@ -32,8 +32,14 @@ export type Tone =
   | 'friendly';
 
 export const VALID_TONES: readonly Tone[] = [
-  'neutral', 'business', 'executive', 'formal',
-  'academic', 'persuasive', 'technical', 'friendly',
+  'neutral',
+  'business',
+  'executive',
+  'formal',
+  'academic',
+  'persuasive',
+  'technical',
+  'friendly',
 ] as const;
 
 export interface EnhancementOptions {
@@ -105,8 +111,8 @@ interface ProcessingContext {
 //  user text so the placeholder regex cannot collide with prose.
 // -----------------------------------------------------------------------------
 
-const PROTECT_OPEN  = 'P';   // SOH + P
-const PROTECT_CLOSE = '';    // STX
+const PROTECT_OPEN = 'P'; // SOH + P
+const PROTECT_CLOSE = ''; // STX
 
 const PROTECTED_PATTERNS: RegExp[] = [
   // URLs (http/https/ftp/www)
@@ -169,147 +175,581 @@ class TokenProtector {
 // -----------------------------------------------------------------------------
 
 const SPELLING_RULES: Rule[] = [
-  { pattern: /\brecieve\b/gi,      replacement: 'receive',     description: 'Fixed spelling: recieve → receive',         type: 'spelling' },
-  { pattern: /\brecieved\b/gi,     replacement: 'received',    description: 'Fixed spelling: recieved → received',       type: 'spelling' },
-  { pattern: /\brecieving\b/gi,    replacement: 'receiving',   description: 'Fixed spelling: recieving → receiving',     type: 'spelling' },
-  { pattern: /\bbeleive\b/gi,      replacement: 'believe',     description: 'Fixed spelling: beleive → believe',         type: 'spelling' },
-  { pattern: /\bbeleived\b/gi,     replacement: 'believed',    description: 'Fixed spelling: beleived → believed',       type: 'spelling' },
-  { pattern: /\bocurred\b/gi,      replacement: 'occurred',    description: 'Fixed spelling: ocurred → occurred',        type: 'spelling' },
-  { pattern: /\boccured\b/gi,      replacement: 'occurred',    description: 'Fixed spelling: occured → occurred',        type: 'spelling' },
-  { pattern: /\boccurence\b/gi,    replacement: 'occurrence',  description: 'Fixed spelling: occurence → occurrence',    type: 'spelling' },
-  { pattern: /\bseperate\b/gi,     replacement: 'separate',    description: 'Fixed spelling: seperate → separate',       type: 'spelling' },
-  { pattern: /\bseperately\b/gi,   replacement: 'separately',  description: 'Fixed spelling: seperately → separately',   type: 'spelling' },
-  { pattern: /\bdefinately\b/gi,   replacement: 'definitely',  description: 'Fixed spelling: definately → definitely',   type: 'spelling' },
-  { pattern: /\bneccessary\b/gi,   replacement: 'necessary',   description: 'Fixed spelling: neccessary → necessary',    type: 'spelling' },
-  { pattern: /\baccomodate\b/gi,   replacement: 'accommodate', description: 'Fixed spelling: accomodate → accommodate',  type: 'spelling' },
-  { pattern: /\bembarass\b/gi,     replacement: 'embarrass',   description: 'Fixed spelling: embarass → embarrass',      type: 'spelling' },
-  { pattern: /\bharrass\b/gi,      replacement: 'harass',      description: 'Fixed spelling: harrass → harass',          type: 'spelling' },
-  { pattern: /\bmillenium\b/gi,    replacement: 'millennium',  description: 'Fixed spelling: millenium → millennium',    type: 'spelling' },
-  { pattern: /\bpriviledge\b/gi,   replacement: 'privilege',   description: 'Fixed spelling: priviledge → privilege',    type: 'spelling' },
-  { pattern: /\bpriviliged\b/gi,   replacement: 'privileged',  description: 'Fixed spelling: priviliged → privileged',   type: 'spelling' },
-  { pattern: /\bconsious\b/gi,     replacement: 'conscious',   description: 'Fixed spelling: consious → conscious',      type: 'spelling' },
-  { pattern: /\bcommitee\b/gi,     replacement: 'committee',   description: 'Fixed spelling: commitee → committee',      type: 'spelling' },
-  { pattern: /\balot\b/gi,         replacement: 'a lot',       description: 'Fixed: alot → a lot',                       type: 'spelling' },
-  { pattern: /\birregardless\b/gi, replacement: 'regardless',  description: 'Fixed: irregardless → regardless',          type: 'spelling' },
-  { pattern: /\btheirselves\b/gi,  replacement: 'themselves',  description: 'Fixed: theirselves → themselves',           type: 'spelling' },
-  { pattern: /\bgonna\b/gi,        replacement: 'going to',    description: 'Expanded: gonna → going to',                type: 'spelling' },
-  { pattern: /\bwanna\b/gi,        replacement: 'want to',     description: 'Expanded: wanna → want to',                 type: 'spelling' },
-  { pattern: /\bgotta\b/gi,        replacement: 'have to',     description: 'Expanded: gotta → have to',                 type: 'spelling' },
-  { pattern: /\bkinda\b/gi,        replacement: 'kind of',     description: 'Expanded: kinda → kind of',                 type: 'spelling' },
-  { pattern: /\bsorta\b/gi,        replacement: 'sort of',     description: 'Expanded: sorta → sort of',                 type: 'spelling' },
-  { pattern: /\bdunno\b/gi,        replacement: 'do not know', description: 'Expanded: dunno → do not know',             type: 'spelling' },
+  {
+    pattern: /\brecieve\b/gi,
+    replacement: 'receive',
+    description: 'Fixed spelling: recieve → receive',
+    type: 'spelling',
+  },
+  {
+    pattern: /\brecieved\b/gi,
+    replacement: 'received',
+    description: 'Fixed spelling: recieved → received',
+    type: 'spelling',
+  },
+  {
+    pattern: /\brecieving\b/gi,
+    replacement: 'receiving',
+    description: 'Fixed spelling: recieving → receiving',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bbeleive\b/gi,
+    replacement: 'believe',
+    description: 'Fixed spelling: beleive → believe',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bbeleived\b/gi,
+    replacement: 'believed',
+    description: 'Fixed spelling: beleived → believed',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bocurred\b/gi,
+    replacement: 'occurred',
+    description: 'Fixed spelling: ocurred → occurred',
+    type: 'spelling',
+  },
+  {
+    pattern: /\boccured\b/gi,
+    replacement: 'occurred',
+    description: 'Fixed spelling: occured → occurred',
+    type: 'spelling',
+  },
+  {
+    pattern: /\boccurence\b/gi,
+    replacement: 'occurrence',
+    description: 'Fixed spelling: occurence → occurrence',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bseperate\b/gi,
+    replacement: 'separate',
+    description: 'Fixed spelling: seperate → separate',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bseperately\b/gi,
+    replacement: 'separately',
+    description: 'Fixed spelling: seperately → separately',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bdefinately\b/gi,
+    replacement: 'definitely',
+    description: 'Fixed spelling: definately → definitely',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bneccessary\b/gi,
+    replacement: 'necessary',
+    description: 'Fixed spelling: neccessary → necessary',
+    type: 'spelling',
+  },
+  {
+    pattern: /\baccomodate\b/gi,
+    replacement: 'accommodate',
+    description: 'Fixed spelling: accomodate → accommodate',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bembarass\b/gi,
+    replacement: 'embarrass',
+    description: 'Fixed spelling: embarass → embarrass',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bharrass\b/gi,
+    replacement: 'harass',
+    description: 'Fixed spelling: harrass → harass',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bmillenium\b/gi,
+    replacement: 'millennium',
+    description: 'Fixed spelling: millenium → millennium',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bpriviledge\b/gi,
+    replacement: 'privilege',
+    description: 'Fixed spelling: priviledge → privilege',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bpriviliged\b/gi,
+    replacement: 'privileged',
+    description: 'Fixed spelling: priviliged → privileged',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bconsious\b/gi,
+    replacement: 'conscious',
+    description: 'Fixed spelling: consious → conscious',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bcommitee\b/gi,
+    replacement: 'committee',
+    description: 'Fixed spelling: commitee → committee',
+    type: 'spelling',
+  },
+  {
+    pattern: /\balot\b/gi,
+    replacement: 'a lot',
+    description: 'Fixed: alot → a lot',
+    type: 'spelling',
+  },
+  {
+    pattern: /\birregardless\b/gi,
+    replacement: 'regardless',
+    description: 'Fixed: irregardless → regardless',
+    type: 'spelling',
+  },
+  {
+    pattern: /\btheirselves\b/gi,
+    replacement: 'themselves',
+    description: 'Fixed: theirselves → themselves',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bgonna\b/gi,
+    replacement: 'going to',
+    description: 'Expanded: gonna → going to',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bwanna\b/gi,
+    replacement: 'want to',
+    description: 'Expanded: wanna → want to',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bgotta\b/gi,
+    replacement: 'have to',
+    description: 'Expanded: gotta → have to',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bkinda\b/gi,
+    replacement: 'kind of',
+    description: 'Expanded: kinda → kind of',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bsorta\b/gi,
+    replacement: 'sort of',
+    description: 'Expanded: sorta → sort of',
+    type: 'spelling',
+  },
+  {
+    pattern: /\bdunno\b/gi,
+    replacement: 'do not know',
+    description: 'Expanded: dunno → do not know',
+    type: 'spelling',
+  },
 ];
 
 const GRAMMAR_RULES: Rule[] = [
   // Could/should/would of → have
-  { pattern: /\b(could|should|would|might|must)\s+of\b/gi, replacement: '$1 have', description: 'Fixed "X of" → "X have"', type: 'grammar' },
+  {
+    pattern: /\b(could|should|would|might|must)\s+of\b/gi,
+    replacement: '$1 have',
+    description: 'Fixed "X of" → "X have"',
+    type: 'grammar',
+  },
   // there/their/they're confusion — only the clear-cut cases
-  { pattern: /\btheir\s+is\b/gi,  replacement: 'there is',  description: 'Fixed: their is → there is',  type: 'grammar' },
-  { pattern: /\btheir\s+are\b/gi, replacement: 'there are', description: 'Fixed: their are → there are', type: 'grammar' },
-  { pattern: /\btheir\s+was\b/gi, replacement: 'there was', description: 'Fixed: their was → there was', type: 'grammar' },
-  { pattern: /\btheir\s+were\b/gi, replacement: 'there were', description: 'Fixed: their were → there were', type: 'grammar' },
+  {
+    pattern: /\btheir\s+is\b/gi,
+    replacement: 'there is',
+    description: 'Fixed: their is → there is',
+    type: 'grammar',
+  },
+  {
+    pattern: /\btheir\s+are\b/gi,
+    replacement: 'there are',
+    description: 'Fixed: their are → there are',
+    type: 'grammar',
+  },
+  {
+    pattern: /\btheir\s+was\b/gi,
+    replacement: 'there was',
+    description: 'Fixed: their was → there was',
+    type: 'grammar',
+  },
+  {
+    pattern: /\btheir\s+were\b/gi,
+    replacement: 'there were',
+    description: 'Fixed: their were → there were',
+    type: 'grammar',
+  },
   // your → you're (only safe verb-form contexts)
-  { pattern: /\byour\s+(going|doing|coming|being|making|using|trying|talking|writing|reading|saying|getting|having)\b/gi,
-    replacement: "you're $1", description: "Fixed: your → you're", type: 'grammar' },
+  {
+    pattern:
+      /\byour\s+(going|doing|coming|being|making|using|trying|talking|writing|reading|saying|getting|having)\b/gi,
+    replacement: "you're $1",
+    description: "Fixed: your → you're",
+    type: 'grammar',
+  },
   // me/I — pronoun case in clear cases
-  { pattern: /\bbetween\s+you\s+and\s+I\b/gi, replacement: 'between you and me', description: 'Fixed pronoun case', type: 'grammar' },
+  {
+    pattern: /\bbetween\s+you\s+and\s+I\b/gi,
+    replacement: 'between you and me',
+    description: 'Fixed pronoun case',
+    type: 'grammar',
+  },
   // less → fewer for countable nouns
-  { pattern: /\bless\s+(people|items|users|companies|customers|employees|members|students|workers|hours|days|years)\b/gi,
-    replacement: 'fewer $1', description: 'Fixed: less → fewer with countable noun', type: 'grammar' },
+  {
+    pattern:
+      /\bless\s+(people|items|users|companies|customers|employees|members|students|workers|hours|days|years)\b/gi,
+    replacement: 'fewer $1',
+    description: 'Fixed: less → fewer with countable noun',
+    type: 'grammar',
+  },
   // a/an
-  { pattern: /\ba\s+(hour|honest|honor|honour|heir|MBA|FBI|MRI|RSVP|SOS)\b/g,
-    replacement: 'an $1', description: 'Fixed a/an before vowel sound', type: 'grammar' },
-  { pattern: /\bA\s+(hour|honest|honor|honour|heir)\b/g,
-    replacement: 'An $1', description: 'Fixed A/An before vowel sound', type: 'grammar' },
-  { pattern: /\ban\s+(user|unique|university|union|European|one|once|uniform|useful|usual|UN)\b/g,
-    replacement: 'a $1', description: 'Fixed a/an before consonant sound', type: 'grammar' },
-  { pattern: /\bAn\s+(user|unique|university|union|European|one|once|uniform|useful|usual)\b/g,
-    replacement: 'A $1', description: 'Fixed A/An before consonant sound', type: 'grammar' },
+  {
+    pattern: /\ba\s+(hour|honest|honor|honour|heir|MBA|FBI|MRI|RSVP|SOS)\b/g,
+    replacement: 'an $1',
+    description: 'Fixed a/an before vowel sound',
+    type: 'grammar',
+  },
+  {
+    pattern: /\bA\s+(hour|honest|honor|honour|heir)\b/g,
+    replacement: 'An $1',
+    description: 'Fixed A/An before vowel sound',
+    type: 'grammar',
+  },
+  {
+    pattern: /\ban\s+(user|unique|university|union|European|one|once|uniform|useful|usual|UN)\b/g,
+    replacement: 'a $1',
+    description: 'Fixed a/an before consonant sound',
+    type: 'grammar',
+  },
+  {
+    pattern: /\bAn\s+(user|unique|university|union|European|one|once|uniform|useful|usual)\b/g,
+    replacement: 'A $1',
+    description: 'Fixed A/An before consonant sound',
+    type: 'grammar',
+  },
   // Verb tense slips
-  { pattern: /\bshould\s+have\s+went\b/gi, replacement: 'should have gone', description: 'Fixed verb tense', type: 'grammar' },
-  { pattern: /\bhas\s+went\b/gi, replacement: 'has gone', description: 'Fixed verb tense', type: 'grammar' },
-  { pattern: /\bhave\s+went\b/gi, replacement: 'have gone', description: 'Fixed verb tense', type: 'grammar' },
+  {
+    pattern: /\bshould\s+have\s+went\b/gi,
+    replacement: 'should have gone',
+    description: 'Fixed verb tense',
+    type: 'grammar',
+  },
+  {
+    pattern: /\bhas\s+went\b/gi,
+    replacement: 'has gone',
+    description: 'Fixed verb tense',
+    type: 'grammar',
+  },
+  {
+    pattern: /\bhave\s+went\b/gi,
+    replacement: 'have gone',
+    description: 'Fixed verb tense',
+    type: 'grammar',
+  },
   // then/than swapped in comparisons
-  { pattern: /\b(more|less|greater|fewer|better|worse|larger|smaller|higher|lower)\s+then\b/gi,
-    replacement: '$1 than', description: 'Fixed: then → than in comparison', type: 'grammar' },
+  {
+    pattern: /\b(more|less|greater|fewer|better|worse|larger|smaller|higher|lower)\s+then\b/gi,
+    replacement: '$1 than',
+    description: 'Fixed: then → than in comparison',
+    type: 'grammar',
+  },
 ];
 
 const PUNCTUATION_RULES: Rule[] = [
   // Limit repeated exclamation/question marks to two
-  { pattern: /([!?])\1{2,}/g, replacement: '$1$1', description: 'Limited repeated punctuation', type: 'punctuation' },
+  {
+    pattern: /([!?])\1{2,}/g,
+    replacement: '$1$1',
+    description: 'Limited repeated punctuation',
+    type: 'punctuation',
+  },
   // 4+ dots → ellipsis
-  { pattern: /\.{4,}/g, replacement: '…', description: 'Normalized excessive dots to ellipsis', type: 'punctuation' },
+  {
+    pattern: /\.{4,}/g,
+    replacement: '…',
+    description: 'Normalized excessive dots to ellipsis',
+    type: 'punctuation',
+  },
   // Remove space before clausal/terminal punctuation
-  { pattern: / +([,;:!?])/g, replacement: '$1', description: 'Removed space before punctuation', type: 'punctuation' },
+  {
+    pattern: / +([,;:!?])/g,
+    replacement: '$1',
+    description: 'Removed space before punctuation',
+    type: 'punctuation',
+  },
 ];
 
 const WHITESPACE_RULES: Rule[] = [
-  { pattern: /[ \t]{2,}/g, replacement: ' ',  description: 'Collapsed multiple spaces',     type: 'whitespace' },
-  { pattern: /[ \t]+$/gm,  replacement: '',   description: 'Removed trailing whitespace',   type: 'whitespace' },
+  {
+    pattern: /[ \t]{2,}/g,
+    replacement: ' ',
+    description: 'Collapsed multiple spaces',
+    type: 'whitespace',
+  },
+  {
+    pattern: /[ \t]+$/gm,
+    replacement: '',
+    description: 'Removed trailing whitespace',
+    type: 'whitespace',
+  },
 ];
 
 const CAPITALIZATION_RULES: Rule[] = [
   // Standalone 'i' as pronoun → 'I'.
   // Match 'i' only when surrounded by non-letter/non-apostrophe characters.
-  { pattern: /(^|[^A-Za-z'’])i(?=[^A-Za-z'’]|$)/g, replacement: '$1I',
-    description: 'Capitalized standalone "I"', type: 'capitalization' },
+  {
+    pattern: /(^|[^A-Za-z'’])i(?=[^A-Za-z'’]|$)/g,
+    replacement: '$1I',
+    description: 'Capitalized standalone "I"',
+    type: 'capitalization',
+  },
 ];
 
 const CLARITY_RULES: Rule[] = [
   // Wordy phrases → concise equivalents
-  { pattern: /\bin\s+order\s+to\b/gi,         replacement: 'to',       description: 'Simplified "in order to" → "to"',       type: 'clarity' },
-  { pattern: /\bdue\s+to\s+the\s+fact\s+that\b/gi, replacement: 'because', description: 'Simplified "due to the fact that" → "because"', type: 'clarity' },
-  { pattern: /\bat\s+this\s+point\s+in\s+time\b/gi, replacement: 'now', description: 'Simplified to "now"', type: 'clarity' },
-  { pattern: /\bat\s+the\s+present\s+time\b/gi, replacement: 'now',    description: 'Simplified to "now"', type: 'clarity' },
-  { pattern: /\bin\s+close\s+proximity\s+to\b/gi, replacement: 'near', description: 'Simplified to "near"', type: 'clarity' },
-  { pattern: /\bin\s+the\s+event\s+that\b/gi, replacement: 'if',       description: 'Simplified to "if"',   type: 'clarity' },
-  { pattern: /\bin\s+the\s+near\s+future\b/gi, replacement: 'soon',    description: 'Simplified to "soon"', type: 'clarity' },
-  { pattern: /\bprior\s+to\b/gi,              replacement: 'before',   description: 'Simplified "prior to" → "before"', type: 'clarity' },
-  { pattern: /\bsubsequent\s+to\b/gi,         replacement: 'after',    description: 'Simplified "subsequent to" → "after"', type: 'clarity' },
-  { pattern: /\bfor\s+the\s+purpose\s+of\b/gi, replacement: 'to',      description: 'Simplified "for the purpose of"', type: 'clarity' },
-  { pattern: /\bwith\s+regard\s+to\b/gi,      replacement: 'about',    description: 'Simplified "with regard to" → "about"', type: 'clarity' },
-  { pattern: /\bwith\s+reference\s+to\b/gi,   replacement: 'about',    description: 'Simplified "with reference to" → "about"', type: 'clarity' },
-  { pattern: /\bthe\s+reason\s+why\s+is\s+because\b/gi, replacement: 'because', description: 'Removed redundancy', type: 'clarity' },
-  { pattern: /\bgive\s+consideration\s+to\b/gi, replacement: 'consider', description: 'Simplified phrase', type: 'clarity' },
-  { pattern: /\bmake\s+a\s+decision\b/gi,     replacement: 'decide',   description: 'Simplified phrase', type: 'clarity' },
-  { pattern: /\bcome\s+to\s+the\s+conclusion\b/gi, replacement: 'conclude', description: 'Simplified phrase', type: 'clarity' },
-  { pattern: /\bin\s+light\s+of\s+the\s+fact\s+that\b/gi, replacement: 'because', description: 'Simplified phrase', type: 'clarity' },
+  {
+    pattern: /\bin\s+order\s+to\b/gi,
+    replacement: 'to',
+    description: 'Simplified "in order to" → "to"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bdue\s+to\s+the\s+fact\s+that\b/gi,
+    replacement: 'because',
+    description: 'Simplified "due to the fact that" → "because"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bat\s+this\s+point\s+in\s+time\b/gi,
+    replacement: 'now',
+    description: 'Simplified to "now"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bat\s+the\s+present\s+time\b/gi,
+    replacement: 'now',
+    description: 'Simplified to "now"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bin\s+close\s+proximity\s+to\b/gi,
+    replacement: 'near',
+    description: 'Simplified to "near"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bin\s+the\s+event\s+that\b/gi,
+    replacement: 'if',
+    description: 'Simplified to "if"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bin\s+the\s+near\s+future\b/gi,
+    replacement: 'soon',
+    description: 'Simplified to "soon"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bprior\s+to\b/gi,
+    replacement: 'before',
+    description: 'Simplified "prior to" → "before"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bsubsequent\s+to\b/gi,
+    replacement: 'after',
+    description: 'Simplified "subsequent to" → "after"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bfor\s+the\s+purpose\s+of\b/gi,
+    replacement: 'to',
+    description: 'Simplified "for the purpose of"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bwith\s+regard\s+to\b/gi,
+    replacement: 'about',
+    description: 'Simplified "with regard to" → "about"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bwith\s+reference\s+to\b/gi,
+    replacement: 'about',
+    description: 'Simplified "with reference to" → "about"',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bthe\s+reason\s+why\s+is\s+because\b/gi,
+    replacement: 'because',
+    description: 'Removed redundancy',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bgive\s+consideration\s+to\b/gi,
+    replacement: 'consider',
+    description: 'Simplified phrase',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bmake\s+a\s+decision\b/gi,
+    replacement: 'decide',
+    description: 'Simplified phrase',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bcome\s+to\s+the\s+conclusion\b/gi,
+    replacement: 'conclude',
+    description: 'Simplified phrase',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bin\s+light\s+of\s+the\s+fact\s+that\b/gi,
+    replacement: 'because',
+    description: 'Simplified phrase',
+    type: 'clarity',
+  },
   // Idiom corrections
-  { pattern: /\bfor\s+all\s+intensive\s+purposes\b/gi, replacement: 'for all intents and purposes', description: 'Fixed common idiom', type: 'clarity' },
-  { pattern: /\bnip\s+it\s+in\s+the\s+butt\b/gi,       replacement: 'nip it in the bud',            description: 'Fixed idiom', type: 'clarity' },
-  { pattern: /\bone\s+in\s+the\s+same\b/gi,            replacement: 'one and the same',             description: 'Fixed phrase', type: 'clarity' },
+  {
+    pattern: /\bfor\s+all\s+intensive\s+purposes\b/gi,
+    replacement: 'for all intents and purposes',
+    description: 'Fixed common idiom',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bnip\s+it\s+in\s+the\s+butt\b/gi,
+    replacement: 'nip it in the bud',
+    description: 'Fixed idiom',
+    type: 'clarity',
+  },
+  {
+    pattern: /\bone\s+in\s+the\s+same\b/gi,
+    replacement: 'one and the same',
+    description: 'Fixed phrase',
+    type: 'clarity',
+  },
 ];
 
 const REDUNDANCY_RULES: Rule[] = [
-  { pattern: /\bunexpected\s+surprise\b/gi, replacement: 'surprise', description: 'Removed redundant modifier', type: 'redundancy' },
-  { pattern: /\bfree\s+gift\b/gi,           replacement: 'gift',     description: 'Removed redundant modifier', type: 'redundancy' },
-  { pattern: /\bend\s+result\b/gi,          replacement: 'result',   description: 'Removed redundant modifier', type: 'redundancy' },
-  { pattern: /\bpast\s+history\b/gi,        replacement: 'history',  description: 'Removed redundant modifier', type: 'redundancy' },
-  { pattern: /\bfuture\s+plans\b/gi,        replacement: 'plans',    description: 'Removed redundant modifier', type: 'redundancy' },
-  { pattern: /\badvance\s+planning\b/gi,    replacement: 'planning', description: 'Removed redundant modifier', type: 'redundancy' },
-  { pattern: /\brepeat\s+again\b/gi,        replacement: 'repeat',   description: 'Removed redundancy',         type: 'redundancy' },
-  { pattern: /\brevert\s+back\b/gi,         replacement: 'revert',   description: 'Removed redundancy',         type: 'redundancy' },
-  { pattern: /\bcombine\s+together\b/gi,    replacement: 'combine',  description: 'Removed redundancy',         type: 'redundancy' },
-  { pattern: /\bmerge\s+together\b/gi,      replacement: 'merge',    description: 'Removed redundancy',         type: 'redundancy' },
-  { pattern: /\bmore\s+better\b/gi,         replacement: 'better',   description: 'Removed redundancy',         type: 'redundancy' },
-  { pattern: /\bmost\s+best\b/gi,           replacement: 'best',     description: 'Removed redundancy',         type: 'redundancy' },
-  { pattern: /\bvery\s+unique\b/gi,         replacement: 'unique',   description: '"Unique" is absolute',       type: 'redundancy' },
-  { pattern: /\bquite\s+unique\b/gi,        replacement: 'unique',   description: '"Unique" is absolute',       type: 'redundancy' },
-  { pattern: /\bcompletely\s+unique\b/gi,   replacement: 'unique',   description: '"Unique" is absolute',       type: 'redundancy' },
-  { pattern: /\b12\s+noon\b/gi,             replacement: 'noon',     description: 'Simplified time',            type: 'redundancy' },
-  { pattern: /\b12\s+midnight\b/gi,         replacement: 'midnight', description: 'Simplified time',            type: 'redundancy' },
+  {
+    pattern: /\bunexpected\s+surprise\b/gi,
+    replacement: 'surprise',
+    description: 'Removed redundant modifier',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bfree\s+gift\b/gi,
+    replacement: 'gift',
+    description: 'Removed redundant modifier',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bend\s+result\b/gi,
+    replacement: 'result',
+    description: 'Removed redundant modifier',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bpast\s+history\b/gi,
+    replacement: 'history',
+    description: 'Removed redundant modifier',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bfuture\s+plans\b/gi,
+    replacement: 'plans',
+    description: 'Removed redundant modifier',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\badvance\s+planning\b/gi,
+    replacement: 'planning',
+    description: 'Removed redundant modifier',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\brepeat\s+again\b/gi,
+    replacement: 'repeat',
+    description: 'Removed redundancy',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\brevert\s+back\b/gi,
+    replacement: 'revert',
+    description: 'Removed redundancy',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bcombine\s+together\b/gi,
+    replacement: 'combine',
+    description: 'Removed redundancy',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bmerge\s+together\b/gi,
+    replacement: 'merge',
+    description: 'Removed redundancy',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bmore\s+better\b/gi,
+    replacement: 'better',
+    description: 'Removed redundancy',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bmost\s+best\b/gi,
+    replacement: 'best',
+    description: 'Removed redundancy',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bvery\s+unique\b/gi,
+    replacement: 'unique',
+    description: '"Unique" is absolute',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bquite\s+unique\b/gi,
+    replacement: 'unique',
+    description: '"Unique" is absolute',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\bcompletely\s+unique\b/gi,
+    replacement: 'unique',
+    description: '"Unique" is absolute',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\b12\s+noon\b/gi,
+    replacement: 'noon',
+    description: 'Simplified time',
+    type: 'redundancy',
+  },
+  {
+    pattern: /\b12\s+midnight\b/gi,
+    replacement: 'midnight',
+    description: 'Simplified time',
+    type: 'redundancy',
+  },
 ];
 
 // Tone rules — explicit per-mode, no silent fallback.
 const TONE_RULES: Record<Tone, Rule[]> = {
-  neutral:    [],
-  business:   [],
-  executive:  [],
+  neutral: [],
+  business: [],
+  executive: [],
   persuasive: [],
-  technical:  [],
-  friendly:   [],
-  formal:     buildFormalContractionRules(),
-  academic:   buildFormalContractionRules(),  // academic inherits formal contractions
+  technical: [],
+  friendly: [],
+  formal: buildFormalContractionRules(),
+  academic: buildFormalContractionRules(), // academic inherits formal contractions
 };
 
 function buildFormalContractionRules(): Rule[] {
@@ -336,10 +776,10 @@ function buildFormalContractionRules(): Rule[] {
     expand(/\bcouldn't\b/gi, 'could not'),
     expand(/\bdoesn't\b/gi, 'does not'),
     expand(/\bmustn't\b/gi, 'must not'),
-    expand(/\bI'm\b/g,   'I am'),
-    expand(/\bI've\b/g,  'I have'),
-    expand(/\bI'll\b/g,  'I will'),
-    expand(/\bI'd\b/g,   'I would'),
+    expand(/\bI'm\b/g, 'I am'),
+    expand(/\bI've\b/g, 'I have'),
+    expand(/\bI'll\b/g, 'I will'),
+    expand(/\bI'd\b/g, 'I would'),
     expand(/\bit's\b/gi, 'it is'),
     expand(/\bthat's\b/gi, 'that is'),
     expand(/\bwe're\b/gi, 'we are'),
@@ -374,30 +814,33 @@ export class ContentEnhancementService {
    * Main entry point. Returns the original content unchanged if no enabled
    * option produced any safe change.
    */
-  async enhanceContent(
-    content: string,
-    options: EnhancementOptions,
-  ): Promise<EnhancementResult> {
+  async enhanceContent(content: string, options: EnhancementOptions): Promise<EnhancementResult> {
     const inputFormat: 'html' | 'text' = /<[a-z][\s\S]*?>/i.test(content) ? 'html' : 'text';
 
     // Map legacy aliases — never enable destructive flags.
-    const fixGrammar     = options.fixGrammar === true;
+    const fixGrammar = options.fixGrammar === true;
     const improveClarity = options.improveClarity === true || options.improveWriting === true;
-    const tone: Tone     = VALID_TONES.includes(options.tone as Tone)
+    const tone: Tone = VALID_TONES.includes(options.tone as Tone)
       ? (options.tone as Tone)
       : 'neutral';
 
     // Warn if a deprecated destructive flag is passed.
-    if (options.restructure || options.expand || options.shorten || options.professionalize || options.makeEngaging) {
+    if (
+      options.restructure ||
+      options.expand ||
+      options.shorten ||
+      options.professionalize ||
+      options.makeEngaging
+    ) {
       this.logger.warn(
         'Ignoring deprecated destructive enhancement flag(s). ' +
-        'These were removed because they damaged content.',
+          'These were removed because they damaged content.',
       );
     }
 
     this.logger.log(
       `Enhancing ${inputFormat} content (${content.length} chars) ` +
-      `[fixGrammar=${fixGrammar} improveClarity=${improveClarity} tone=${tone}]`,
+        `[fixGrammar=${fixGrammar} improveClarity=${improveClarity} tone=${tone}]`,
     );
 
     const aggregated = new Map<string, ChangeEntry>();
@@ -419,9 +862,10 @@ export class ContentEnhancementService {
 
     let enhanced: string;
     try {
-      enhanced = (inputFormat === 'html')
-        ? this.processHtml(content, enabledRules, ctx)
-        : this.processText(content, enabledRules, ctx);
+      enhanced =
+        inputFormat === 'html'
+          ? this.processHtml(content, enabledRules, ctx)
+          : this.processText(content, enabledRules, ctx);
     } catch (err) {
       this.logger.error('Enhancement failed; returning original content', err as Error);
       return this.buildUnchangedResult(content, qualityBefore, inputFormat);
@@ -439,15 +883,14 @@ export class ContentEnhancementService {
     }
 
     const qualityAfter = this.calculateQuality(enhanced);
-    const improvement = qualityBefore > 0
-      ? ((qualityAfter - qualityBefore) / qualityBefore) * 100
-      : 0;
+    const improvement =
+      qualityBefore > 0 ? ((qualityAfter - qualityBefore) / qualityBefore) * 100 : 0;
 
     const changes = Array.from(aggregated.values()).sort((a, b) => b.count - a.count);
 
     this.logger.log(
       `Enhancement complete: ${changes.length} unique change types, ` +
-      `quality ${qualityBefore} → ${qualityAfter} (${improvement.toFixed(1)}%)`,
+        `quality ${qualityBefore} → ${qualityAfter} (${improvement.toFixed(1)}%)`,
     );
 
     return {
@@ -466,11 +909,7 @@ export class ContentEnhancementService {
   //  Rule selection
   // ---------------------------------------------------------------------------
 
-  private selectRules(
-    fixGrammar: boolean,
-    improveClarity: boolean,
-    tone: Tone,
-  ): Rule[] {
+  private selectRules(fixGrammar: boolean, improveClarity: boolean, tone: Tone): Rule[] {
     const rules: Rule[] = [];
     if (fixGrammar) {
       // Spelling first — fewer surprises in downstream regex.
@@ -501,13 +940,21 @@ export class ContentEnhancementService {
     const parts = html.split(/(<[^>]+>)/);
 
     const skipTags = new Set([
-      'script', 'style', 'code', 'pre', 'kbd', 'samp', 'var', 'noscript', 'textarea',
+      'script',
+      'style',
+      'code',
+      'pre',
+      'kbd',
+      'samp',
+      'var',
+      'noscript',
+      'textarea',
     ]);
     let skipDepth = 0;
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-      const isTag = (i % 2) === 1;
+      const isTag = i % 2 === 1;
 
       if (isTag) {
         const tagMatch = part.match(/^<\s*(\/?)\s*([a-zA-Z][a-zA-Z0-9]*)/);
@@ -516,7 +963,7 @@ export class ContentEnhancementService {
           const tagName = tagMatch[2].toLowerCase();
           const isSelfClosing = /\/\s*>$/.test(part);
           if (skipTags.has(tagName)) {
-            if (isClosing)         skipDepth = Math.max(0, skipDepth - 1);
+            if (isClosing) skipDepth = Math.max(0, skipDepth - 1);
             else if (!isSelfClosing) skipDepth++;
           }
         }
@@ -548,9 +995,10 @@ export class ContentEnhancementService {
     for (const rule of rules) {
       // 1. Count matches (independent of replacement to keep accurate count
       //    even when replacement is a function).
-      const countRe = new RegExp(rule.pattern.source, rule.pattern.flags.includes('g')
-        ? rule.pattern.flags
-        : rule.pattern.flags + 'g');
+      const countRe = new RegExp(
+        rule.pattern.source,
+        rule.pattern.flags.includes('g') ? rule.pattern.flags : rule.pattern.flags + 'g',
+      );
       const matches = working.match(countRe);
       const count = matches ? matches.length : 0;
       if (count === 0) continue;
@@ -561,9 +1009,10 @@ export class ContentEnhancementService {
 
       // 3. Apply replacement.
       const replaced = working.replace(rule.pattern, (...args) => {
-        const result = (typeof rule.replacement === 'function')
-          ? (rule.replacement as Function).apply(null, args)
-          : (args[0] as string).replace(rule.pattern, rule.replacement as string);
+        const result =
+          typeof rule.replacement === 'function'
+            ? (rule.replacement as Function)(...args)
+            : (args[0] as string).replace(rule.pattern, rule.replacement as string);
         if (!sampleAfter) sampleAfter = result;
         return result;
       });
@@ -595,11 +1044,27 @@ export class ContentEnhancementService {
   ): string | undefined {
     if (inputFormat === 'html') {
       // Compare structural element counts — they MUST be identical.
-      const tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'table', 'tr', 'td', 'th', 'blockquote'];
+      const tags = [
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'p',
+        'ul',
+        'ol',
+        'li',
+        'table',
+        'tr',
+        'td',
+        'th',
+        'blockquote',
+      ];
       for (const tag of tags) {
         const re = new RegExp(`<${tag}\\b`, 'gi');
         const beforeCount = (before.match(re) || []).length;
-        const afterCount  = (after.match(re)  || []).length;
+        const afterCount = (after.match(re) || []).length;
         if (beforeCount !== afterCount) {
           return `<${tag}> count changed (${beforeCount} → ${afterCount})`;
         }
@@ -608,7 +1073,7 @@ export class ContentEnhancementService {
 
     // Word-count delta — allow ±25% (clarity rules shrink, formal expands).
     const wordsBefore = countWords(stripTags(before));
-    const wordsAfter  = countWords(stripTags(after));
+    const wordsAfter = countWords(stripTags(after));
     if (wordsBefore > 20) {
       const delta = Math.abs(wordsAfter - wordsBefore) / wordsBefore;
       if (delta > 0.25) {
@@ -618,8 +1083,8 @@ export class ContentEnhancementService {
 
     // Paragraph count delta — in plain text only (HTML already covered above).
     if (inputFormat === 'text') {
-      const paraBefore = before.split(/\n\s*\n/).filter(p => p.trim()).length;
-      const paraAfter  = after.split(/\n\s*\n/).filter(p => p.trim()).length;
+      const paraBefore = before.split(/\n\s*\n/).filter((p) => p.trim()).length;
+      const paraAfter = after.split(/\n\s*\n/).filter((p) => p.trim()).length;
       if (paraBefore !== paraAfter) {
         return `paragraph count changed (${paraBefore} → ${paraAfter})`;
       }
@@ -655,7 +1120,7 @@ export class ContentEnhancementService {
 
     // 3. Sentence length variance — good writing varies (10–20% CV)
     if (sentences.length >= 3) {
-      const lens = sentences.map(s => s.split(/\s+/).filter(Boolean).length);
+      const lens = sentences.map((s) => s.split(/\s+/).filter(Boolean).length);
       const cv = coefficientOfVariation(lens);
       if (cv >= 0.25 && cv <= 0.7) score += 6;
     }
@@ -700,11 +1165,72 @@ export class ContentEnhancementService {
   private estimateRepetition(words: string[]): number {
     // Stopwords don't count toward repetition
     const stop = new Set([
-      'the','a','an','and','or','but','if','of','in','on','at','to','for','from','by',
-      'with','as','is','are','was','were','be','been','being','have','has','had','do',
-      'does','did','this','that','these','those','it','its','i','you','he','she','we',
-      'they','them','their','his','her','our','my','your','what','which','who','whom',
-      'will','would','can','could','should','may','might','must','also','so','too','than','then',
+      'the',
+      'a',
+      'an',
+      'and',
+      'or',
+      'but',
+      'if',
+      'of',
+      'in',
+      'on',
+      'at',
+      'to',
+      'for',
+      'from',
+      'by',
+      'with',
+      'as',
+      'is',
+      'are',
+      'was',
+      'were',
+      'be',
+      'been',
+      'being',
+      'have',
+      'has',
+      'had',
+      'do',
+      'does',
+      'did',
+      'this',
+      'that',
+      'these',
+      'those',
+      'it',
+      'its',
+      'i',
+      'you',
+      'he',
+      'she',
+      'we',
+      'they',
+      'them',
+      'their',
+      'his',
+      'her',
+      'our',
+      'my',
+      'your',
+      'what',
+      'which',
+      'who',
+      'whom',
+      'will',
+      'would',
+      'can',
+      'could',
+      'should',
+      'may',
+      'might',
+      'must',
+      'also',
+      'so',
+      'too',
+      'than',
+      'then',
     ]);
     const freq = new Map<string, number>();
     let contentWords = 0;
@@ -778,7 +1304,10 @@ export class ContentEnhancementService {
 // -----------------------------------------------------------------------------
 
 function stripTags(s: string): string {
-  return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return s
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function countWords(s: string): number {
@@ -791,9 +1320,9 @@ function splitSentences(text: string): string[] {
   const masked = protector.protect(text);
   const parts = masked
     .split(/(?<=[.!?])\s+(?=[A-Z"“‘'(])/)
-    .map(s => s.trim())
+    .map((s) => s.trim())
     .filter(Boolean);
-  return parts.map(p => protector.restore(p));
+  return parts.map((p) => protector.restore(p));
 }
 
 function coefficientOfVariation(nums: number[]): number {

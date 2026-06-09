@@ -20,12 +20,12 @@ import { ConversionStorageProvider, SavedFile, StorageHealth } from './storage-p
 export class AzureBlobProvider implements ConversionStorageProvider {
   readonly name = 'azure' as const;
   private container?: any;
-  private sdk?:       any;
+  private sdk?: any;
 
   constructor(
-    private readonly containerName  = process.env.CONVERSION_AZURE_CONTAINER || '',
-    private readonly prefix         = process.env.CONVERSION_AZURE_PREFIX || 'pitchonix/converted/',
-    private readonly publicBaseUrl  = process.env.CONVERSION_AZURE_PUBLIC_BASE_URL || '',
+    private readonly containerName = process.env.CONVERSION_AZURE_CONTAINER || '',
+    private readonly prefix = process.env.CONVERSION_AZURE_PREFIX || 'pitchonix/converted/',
+    private readonly publicBaseUrl = process.env.CONVERSION_AZURE_PUBLIC_BASE_URL || '',
   ) {}
 
   private ensure(): { container: any; sdk: any } {
@@ -34,7 +34,9 @@ export class AzureBlobProvider implements ConversionStorageProvider {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       this.sdk = require('@azure/storage-blob');
     } catch (e: any) {
-      throw new Error(`[azure-storage] @azure/storage-blob not installed (pnpm add @azure/storage-blob): ${e?.message}`);
+      throw new Error(
+        `[azure-storage] @azure/storage-blob not installed (pnpm add @azure/storage-blob): ${e?.message}`,
+      );
     }
     if (!this.containerName) throw new Error('[azure-storage] CONVERSION_AZURE_CONTAINER not set');
 
@@ -44,20 +46,27 @@ export class AzureBlobProvider implements ConversionStorageProvider {
       serviceClient = this.sdk.BlobServiceClient.fromConnectionString(conn);
     } else {
       const account = process.env.CONVERSION_AZURE_ACCOUNT;
-      const key     = process.env.CONVERSION_AZURE_ACCOUNT_KEY;
+      const key = process.env.CONVERSION_AZURE_ACCOUNT_KEY;
       if (!account || !key) {
         throw new Error('[azure-storage] missing connection string OR account+key env vars');
       }
       const cred = new this.sdk.StorageSharedKeyCredential(account, key);
-      serviceClient = new this.sdk.BlobServiceClient(`https://${account}.blob.core.windows.net`, cred);
+      serviceClient = new this.sdk.BlobServiceClient(
+        `https://${account}.blob.core.windows.net`,
+        cred,
+      );
     }
     this.container = serviceClient.getContainerClient(this.containerName);
     return { container: this.container, sdk: this.sdk };
   }
 
-  async save(buffer: Buffer, originalFilename: string, mimetype = 'application/octet-stream'): Promise<SavedFile> {
+  async save(
+    buffer: Buffer,
+    originalFilename: string,
+    mimetype = 'application/octet-stream',
+  ): Promise<SavedFile> {
     const { container } = this.ensure();
-    const key  = this.prefix + crypto.randomUUID() + pickExt(originalFilename);
+    const key = this.prefix + crypto.randomUUID() + pickExt(originalFilename);
     const blob = container.getBlockBlobClient(key);
     await blob.uploadData(buffer, {
       blobHTTPHeaders: { blobContentType: mimetype },
@@ -72,8 +81,11 @@ export class AzureBlobProvider implements ConversionStorageProvider {
   }
 
   async delete(handle: string): Promise<void> {
-    try { await this.ensure().container.getBlockBlobClient(handle).deleteIfExists(); }
-    catch { /* idempotent */ }
+    try {
+      await this.ensure().container.getBlockBlobClient(handle).deleteIfExists();
+    } catch {
+      /* idempotent */
+    }
   }
 
   async list(prefix?: string) {
@@ -83,8 +95,8 @@ export class AzureBlobProvider implements ConversionStorageProvider {
     for await (const blob of it) {
       rows.push({
         handle: blob.name,
-        url:    await this.urlFor(blob.name),
-        bytes:  Number(blob.properties?.contentLength) || undefined,
+        url: await this.urlFor(blob.name),
+        bytes: Number(blob.properties?.contentLength) || undefined,
       });
     }
     return rows;
@@ -95,10 +107,26 @@ export class AzureBlobProvider implements ConversionStorageProvider {
     try {
       const { container } = this.ensure();
       const exists = await container.exists();
-      if (!exists) return { ok: false, provider: 'azure', bucket: this.containerName, error: 'container does not exist' };
-      return { ok: true, provider: 'azure', bucket: this.containerName, latencyMs: Date.now() - t0 };
+      if (!exists)
+        return {
+          ok: false,
+          provider: 'azure',
+          bucket: this.containerName,
+          error: 'container does not exist',
+        };
+      return {
+        ok: true,
+        provider: 'azure',
+        bucket: this.containerName,
+        latencyMs: Date.now() - t0,
+      };
     } catch (e: any) {
-      return { ok: false, provider: 'azure', bucket: this.containerName, error: e?.message || String(e) };
+      return {
+        ok: false,
+        provider: 'azure',
+        bucket: this.containerName,
+        error: e?.message || String(e),
+      };
     }
   }
 

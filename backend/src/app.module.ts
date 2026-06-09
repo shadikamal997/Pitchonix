@@ -8,6 +8,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { FilesModule } from './files/files.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
@@ -39,28 +40,34 @@ import { SlideExportModule } from './slide-export/slide-export.module';
 import { MasterElementsModule } from './master-elements/master-elements.module';
 import { ComponentsModule } from './components/components.module';
 import { VersionHistoryModule } from './version-history/version-history.module';
-import { AdminModule }          from './admin/admin.module';
+import { AdminModule } from './admin/admin.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { SharingModule } from './sharing/sharing.module';
 import { CollaborationModule } from './collaboration/collaboration.module';
 
 // Phase 38 — Advanced PPTX Editing
-import { MasterSlidesModule }       from './master-slides/master-slides.module';
-import { LayoutTemplatesModule }    from './layout-templates/layout-templates.module';
-import { ThemesModule }             from './themes/themes.module';
-import { DeckSectionsModule }       from './deck-sections/deck-sections.module';
-import { SlideAnimationsModule }    from './slide-animations/slide-animations.module';
-import { SlideTransitionsModule }   from './slide-transitions/slide-transitions.module';
-import { SlideLibraryModule }       from './slide-library/slide-library.module';
-import { DeckTemplatesModule }      from './deck-templates/deck-templates.module';
-import { PptxImportModule }         from './pptx-import/pptx-import.module';
-import { SmartArtModule }           from './smartart/smartart.module';
-import { OleWorkspaceModule }       from './ole-workspace/ole-workspace.module';
+import { MasterSlidesModule } from './master-slides/master-slides.module';
+import { LayoutTemplatesModule } from './layout-templates/layout-templates.module';
+import { ThemesModule } from './themes/themes.module';
+import { DeckSectionsModule } from './deck-sections/deck-sections.module';
+import { SlideAnimationsModule } from './slide-animations/slide-animations.module';
+import { SlideTransitionsModule } from './slide-transitions/slide-transitions.module';
+import { SlideLibraryModule } from './slide-library/slide-library.module';
+import { DeckTemplatesModule } from './deck-templates/deck-templates.module';
+import { PptxImportModule } from './pptx-import/pptx-import.module';
+import { SmartArtModule } from './smartart/smartart.module';
+import { OleWorkspaceModule } from './ole-workspace/ole-workspace.module';
 // Phase 41 — Universal Document Conversion
 import { UniversalConversionModule } from './universal-conversion/universal-conversion.module';
 // Phase 42 — Career documents (CV / Resume / Cover Letter / Portfolio)
 import { CareerModule } from './career/career.module';
+// Phase 43 — Excel Studio
+import { ExcelStudioModule } from './excel-studio/excel-studio.module';
+// Phase Ω.FEASIBILITY.1 — Feasibility Studio
+import { FeasibilityStudioModule } from './feasibility-studio/feasibility-studio.module';
+// Phase Ω.CONTENT.2 — Universal Content Ledger
+import { ContentLedgerModule } from './content-ledger/content-ledger.module';
 
 @Module({
   imports: [
@@ -110,6 +117,7 @@ import { CareerModule } from './career/career.module';
     }),
     EmailModule,
     PrismaModule,
+    FilesModule,
     AuthModule,
     UsersModule,
     ProjectsModule,
@@ -162,6 +170,12 @@ import { CareerModule } from './career/career.module';
     UniversalConversionModule,
     // Phase 42 — Career documents
     CareerModule,
+    // Phase 43 — Excel Studio
+    ExcelStudioModule,
+    // Phase Ω.FEASIBILITY.1 — Feasibility Studio
+    FeasibilityStudioModule,
+    // Phase Ω.CONTENT.2 — Universal Content Ledger
+    ContentLedgerModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,11 +1,7 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { StorytellingService } from './storytelling.service';
-import {
-  TransformToStoryDto,
-  GenerateMetaphorDto,
-  CreateTensionDto,
-} from './dto/storytelling.dto';
+import { TransformToStoryDto, GenerateMetaphorDto, CreateTensionDto } from './dto/storytelling.dto';
 
 @Controller('api/storytelling')
 @UseGuards(JwtAuthGuard)

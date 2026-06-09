@@ -19,24 +19,31 @@ const { createCanvas, loadImage }: any = require('canvas');
 import * as fs from 'fs';
 import * as path from 'path';
 import type { RenderDeckInput } from './render-types';
-import { renderDeckHtml, SLIDE_VIEWPORT_WIDTH, SLIDE_VIEWPORT_HEIGHT } from './element-html-renderer';
+import {
+  renderDeckHtml,
+  SLIDE_VIEWPORT_WIDTH,
+  SLIDE_VIEWPORT_HEIGHT,
+} from './element-html-renderer';
 
 // Phase 36.1J — optional comments appendix appended to the PDF.
 export interface PdfAppendixComment {
-  slideIndex: number;  // 1-based for display
+  slideIndex: number; // 1-based for display
   slideTitle: string;
-  author:     string;
-  createdAt:  string;  // ISO
-  body:       string;
-  resolved:   boolean;
-  status?:    string;  // "Open" | "Resolved" | "Assigned to X" — already formatted
+  author: string;
+  createdAt: string; // ISO
+  body: string;
+  resolved: boolean;
+  status?: string; // "Open" | "Resolved" | "Assigned to X" — already formatted
 }
 
 export interface PdfExportOptions {
   appendix?: { comments: PdfAppendixComment[] };
 }
 
-export async function exportDeckToPdf(deck: RenderDeckInput, opts: PdfExportOptions = {}): Promise<Buffer> {
+export async function exportDeckToPdf(
+  deck: RenderDeckInput,
+  opts: PdfExportOptions = {},
+): Promise<Buffer> {
   const pngs = await exportDeckToPngs(deck);
   return composePdfFromPngs(pngs, opts.appendix?.comments);
 }
@@ -60,7 +67,7 @@ export async function exportDeckToPngs(deck: RenderDeckInput): Promise<Buffer[]>
         clip: {
           x: 0,
           y: i * SLIDE_VIEWPORT_HEIGHT,
-          width:  SLIDE_VIEWPORT_WIDTH,
+          width: SLIDE_VIEWPORT_WIDTH,
           height: SLIDE_VIEWPORT_HEIGHT,
         },
       });
@@ -143,7 +150,11 @@ function drawAppendixPages(ctx: any, comments: PdfAppendixComment[]) {
     if (c.status) {
       ctx.font = 'bold 10px sans-serif';
       ctx.fillStyle = c.resolved ? '#16a34a' : '#d97706';
-      ctx.fillText(c.status.toUpperCase(), W - MARGIN_X - measure(ctx, c.status, '10px sans-serif'), y);
+      ctx.fillText(
+        c.status.toUpperCase(),
+        W - MARGIN_X - measure(ctx, c.status, '10px sans-serif'),
+        y,
+      );
     }
     y += LINE;
 

@@ -13,7 +13,13 @@ export class ActivityService {
     });
   }
 
-  async log(userId: string, type: string, title: string, description?: string, metadata?: Record<string, any>) {
+  async log(
+    userId: string,
+    type: string,
+    title: string,
+    description?: string,
+    metadata?: Record<string, any>,
+  ) {
     return this.prisma.activity.create({
       data: { userId, type, title, description, metadata },
     });

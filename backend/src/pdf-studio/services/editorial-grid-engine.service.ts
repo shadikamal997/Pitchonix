@@ -5,11 +5,15 @@ import { EditorialGridPlan } from './publishing-intelligence.types';
 @Injectable()
 export class EditorialGridEngineService {
   planGrid(page: PageComposition, occupancy: number): EditorialGridPlan {
-    const hasImage = page.sections.some(section => section.type === 'image');
-    const hasChart = page.sections.some(section => section.type === 'chart' || section.type === 'metric');
-    const hasQuote = page.sections.some(section => section.type === 'quote');
+    const hasImage = page.sections.some((section) => section.type === 'image');
+    const hasChart = page.sections.some(
+      (section) => section.type === 'chart' || section.type === 'metric',
+    );
+    const hasQuote = page.sections.some((section) => section.type === 'quote');
     const hasManyBlocks = page.sections.length >= 7;
-    const hasLongText = page.sections.some(section => section.type === 'paragraph' && section.content.length > 650);
+    const hasLongText = page.sections.some(
+      (section) => section.type === 'paragraph' && section.content.length > 650,
+    );
 
     let gridType: EditorialGridPlan['gridType'] = 'single-column';
     let columns = 1;
@@ -41,9 +45,10 @@ export class EditorialGridEngineService {
       gridType,
       columns,
       baseline,
-      margins: gridType === 'feature'
-        ? { top: 56, right: 56, bottom: 52, left: 56 }
-        : { top: 64, right: 58, bottom: 58, left: 58 },
+      margins:
+        gridType === 'feature'
+          ? { top: 56, right: 56, bottom: 52, left: 56 }
+          : { top: 64, right: 58, bottom: 58, left: 58 },
       zones: this.buildZones(gridType, columns),
       rhythmScore,
     };
@@ -53,13 +58,14 @@ export class EditorialGridEngineService {
     const density = grid.columns >= 2 ? 'balanced' : page.density;
     return {
       ...page,
-      layout: page.layout === 'cover'
-        ? 'cover'
-        : grid.gridType === 'single-column'
-        ? 'single-column'
-        : grid.gridType === 'feature'
-          ? 'hero'
-          : 'two-column',
+      layout:
+        page.layout === 'cover'
+          ? 'cover'
+          : grid.gridType === 'single-column'
+            ? 'single-column'
+            : grid.gridType === 'feature'
+              ? 'hero'
+              : 'two-column',
       density,
       sections: page.sections.map((section, index) => ({
         ...section,
@@ -70,7 +76,10 @@ export class EditorialGridEngineService {
     };
   }
 
-  private buildZones(gridType: EditorialGridPlan['gridType'], columns: number): EditorialGridPlan['zones'] {
+  private buildZones(
+    gridType: EditorialGridPlan['gridType'],
+    columns: number,
+  ): EditorialGridPlan['zones'] {
     if (gridType === 'sidebar') {
       return [
         { id: 'main', role: 'primary-content', columnSpan: 1, priority: 1 },

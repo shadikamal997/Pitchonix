@@ -1,12 +1,20 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import mammoth from 'mammoth';
+// `esModuleInterop` is off in this project, so a default import resolves to
+// `mammoth.default` (undefined). Use a namespace import to reach the CommonJS
+// named exports (convertToHtml / extractRawText) at runtime.
+import * as mammoth from 'mammoth';
 import { DocumentType } from './dto/document-upload.dto';
 
-// pdf-parse doesn't have proper TypeScript exports, use require
-const pdfParse = require('pdf-parse');
+// pdf-parse v2 exports a PDFParse class (the v1 callable default was removed).
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { PDFParse } = require('pdf-parse');
 
 export interface ParsedDocument {
   text: string;
+  /** Phase Ω.2 — structure-preserving HTML (headings/bold/lists/tables for DOCX;
+   *  paragraph/heading structure for PDF). Used by the PDF Studio import flow so
+   *  document structure survives the round-trip instead of collapsing to raw text. */
+  html: string;
   metadata: {
     pages?: number;
     words: number;
@@ -72,9 +80,7 @@ export class DocumentParserService {
 
     const documentType = this.detectDocumentType(file);
     if (!documentType) {
-      throw new BadRequestException(
-        'Invalid file type. Supported types: PDF, DOCX, PPTX',
-      );
+      throw new BadRequestException('Invalid file type. Supported types: PDF, DOCX, PPTX');
     }
   }
 
@@ -102,17 +108,25 @@ export class DocumentParserService {
    */
   private async parsePDF(file: Express.Multer.File): Promise<ParsedDocument> {
     try {
-      const data = await pdfParse(file.buffer);
+      const parser = new PDFParse({ data: file.buffer });
+      let data: any;
+      try {
+        data = await parser.getText();
+      } finally {
+        await parser.destroy?.();
+      }
 
-      const text = data.text.trim();
-      const words = text.split(/\s+/).length;
+      const text = (data.text || '').trim();
+      const pages = data.total ?? data.numpages ?? data.pages?.length;
+      const words = text ? text.split(/\s+/).length : 0;
 
-      this.logger.log(`PDF parsed: ${data.numpages} pages, ${words} words`);
+      this.logger.log(`PDF parsed: ${pages} pages, ${words} words`);
 
       return {
         text,
+        html: this.textToStructuredHtml(text),
         metadata: {
-          pages: data.numpages,
+          pages,
           words,
           characters: text.length,
         },
@@ -127,19 +141,28 @@ export class DocumentParserService {
    */
   private async parseDOCX(file: Express.Multer.File): Promise<ParsedDocument> {
     try {
-      const result = await mammoth.extractRawText({ buffer: file.buffer });
+      // Phase Ω.2 — convertToHtml preserves headings, bold/italic, lists, and
+      // tables; extractRawText (the old path) dropped all of that. We keep the
+      // raw text too for analysis/word-count.
+      const [htmlResult, textResult] = await Promise.all([
+        mammoth.convertToHtml({ buffer: file.buffer }),
+        mammoth.extractRawText({ buffer: file.buffer }),
+      ]);
 
-      const text = result.value.trim();
-      const words = text.split(/\s+/).length;
+      const html = (htmlResult.value || '').trim();
+      const text = (textResult.value || '').trim();
+      const words = text ? text.split(/\s+/).length : 0;
 
-      this.logger.log(`DOCX parsed: ${words} words`);
+      this.logger.log(`DOCX parsed: ${words} words (structure-preserving HTML)`);
 
-      if (result.messages.length > 0) {
-        this.logger.warn('DOCX parsing warnings:', result.messages);
+      const messages = [...(htmlResult.messages || []), ...(textResult.messages || [])];
+      if (messages.length > 0) {
+        this.logger.warn(`DOCX parsing warnings: ${messages.length}`);
       }
 
       return {
         text,
+        html: html || this.textToStructuredHtml(text),
         metadata: {
           words,
           characters: text.length,
@@ -161,6 +184,59 @@ export class DocumentParserService {
     throw new BadRequestException(
       'PowerPoint file parsing is not yet supported. Please use PDF or DOCX format.',
     );
+  }
+
+  /**
+   * Phase Ω.2 — turn flat extracted text (PDF) into structure-preserving HTML.
+   * Every non-empty block becomes an element (no content is dropped): bullet
+   * groups → <ul>, short ALL-CAPS lines → <h2>, everything else → <p>.
+   */
+  private textToStructuredHtml(text: string): string {
+    if (!text || !text.trim()) return '';
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const isBullet = (l: string) => /^[-•*▪‣·]\s+/.test(l) || /^\d+[.)]\s+/.test(l);
+    const blocks = text
+      .split(/\n\s*\n/)
+      .map((b) => b.trim())
+      .filter(Boolean);
+    const out: string[] = [];
+    for (const block of blocks) {
+      const lines = block
+        .split(/\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+      // Group consecutive lines: bullet runs → <ul>, prose runs → <p>, with a
+      // short ALL-CAPS standalone line treated as an <h2>. Nothing is dropped.
+      let i = 0;
+      const proseBuf: string[] = [];
+      const flushProse = () => {
+        if (!proseBuf.length) return;
+        out.push(`<p>${proseBuf.map(esc).join('<br/>')}</p>`);
+        proseBuf.length = 0;
+      };
+      while (i < lines.length) {
+        const l = lines[i];
+        if (isBullet(l)) {
+          flushProse();
+          const items: string[] = [];
+          while (i < lines.length && isBullet(lines[i])) {
+            items.push(`<li>${esc(lines[i].replace(/^[-•*▪‣·]\s+|^\d+[.)]\s+/, ''))}</li>`);
+            i++;
+          }
+          out.push(`<ul>${items.join('')}</ul>`);
+          continue;
+        }
+        if (lines.length === 1 && l.length <= 70 && /[A-Z]/.test(l) && l === l.toUpperCase()) {
+          out.push(`<h2>${esc(l)}</h2>`);
+          i++;
+          continue;
+        }
+        proseBuf.push(l);
+        i++;
+      }
+      flushProse();
+    }
+    return out.join('\n');
   }
 
   /**
@@ -207,9 +283,7 @@ export class DocumentParserService {
       const trimmedLine = line.trim().toLowerCase();
 
       // Check if line is a section header
-      const matchedHeader = sectionHeaders.find((header) =>
-        trimmedLine.includes(header),
-      );
+      const matchedHeader = sectionHeaders.find((header) => trimmedLine.includes(header));
 
       if (matchedHeader && trimmedLine.length < 50) {
         // Save previous section

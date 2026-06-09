@@ -15,11 +15,11 @@ import { PrismaService } from '../../src/prisma/prisma.service';
 const RUN_ID = Date.now().toString(36);
 
 export interface TestSession {
-  app:    INestApplication;
+  app: INestApplication;
   prisma: PrismaService;
-  token:  string;
+  token: string;
   userId: string;
-  req:    ReturnType<typeof request>;
+  req: ReturnType<typeof request>;
 }
 
 export async function createSession(suffix = ''): Promise<TestSession> {
@@ -39,7 +39,7 @@ export async function createSession(suffix = ''): Promise<TestSession> {
     .post('/auth/register')
     .send({ email, password: 'Test123!@#', name: `E2E User ${suffix}` });
 
-  const token  = regRes.body?.token ?? regRes.body?.access_token;
+  const token = regRes.body?.token ?? regRes.body?.access_token;
   const userId = regRes.body?.user?.id ?? regRes.body?.id;
 
   if (!token) throw new Error(`Auth failed in E2E setup: ${JSON.stringify(regRes.body)}`);
@@ -56,7 +56,9 @@ export async function closeSession(session: TestSession) {
     await session.prisma.cvDocument.deleteMany({ where: { userId: session.userId } });
     await session.prisma.cvProfile.deleteMany({ where: { userId: session.userId } });
     await session.prisma.user.delete({ where: { id: session.userId } });
-  } catch { /* best-effort */ }
+  } catch {
+    /* best-effort */
+  }
   await session.app.close();
 }
 
@@ -71,10 +73,10 @@ export function minimalPdfBuffer(): Buffer {
   // Inline 3-line PDF — parseable by pdf-parse, not OCR-worthy.
   return Buffer.from(
     '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n' +
-    '2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n' +
-    '3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>/Contents 4 0 R>>endobj\n' +
-    '4 0 obj<</Length 44>>stream\nBT /F1 12 Tf 72 720 Td (John Doe - Engineer) Tj ET\nendstream\nendobj\n' +
-    'xref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n' +
-    '0000000115 00000 n\n0000000266 00000 n\n\ntrailer<</Size 5/Root 1 0 R>>\nstartxref\n358\n%%EOF'
+      '2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n' +
+      '3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>/Contents 4 0 R>>endobj\n' +
+      '4 0 obj<</Length 44>>stream\nBT /F1 12 Tf 72 720 Td (John Doe - Engineer) Tj ET\nendstream\nendobj\n' +
+      'xref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n' +
+      '0000000115 00000 n\n0000000266 00000 n\n\ntrailer<</Size 5/Root 1 0 R>>\nstartxref\n358\n%%EOF',
   );
 }

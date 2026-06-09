@@ -59,9 +59,13 @@ export class ThemeService {
    *
    *   { colors, typography, voice, identity } ← BrandKit
    */
-  async getThemeForPresentationAsync(input: WizardInput): Promise<ThemeConfig & {
-    voice?: BrandVoice; identity?: BrandIdentity; logo?: string;
-  }> {
+  async getThemeForPresentationAsync(input: WizardInput): Promise<
+    ThemeConfig & {
+      voice?: BrandVoice;
+      identity?: BrandIdentity;
+      logo?: string;
+    }
+  > {
     let theme: ThemeConfig & { voice?: BrandVoice; identity?: BrandIdentity; logo?: string } =
       this.getThemeForPresentation(input);
 
@@ -88,28 +92,36 @@ export class ThemeService {
    */
   private applyBrandKitTokens(
     theme: ThemeConfig,
-    kit: { tokens: any; voice: any; identity: any; logo: string | null; primaryColor: string | null; secondaryColor: string | null; fontFamily: string | null },
+    kit: {
+      tokens: any;
+      voice: any;
+      identity: any;
+      logo: string | null;
+      primaryColor: string | null;
+      secondaryColor: string | null;
+      fontFamily: string | null;
+    },
   ): ThemeConfig & { voice?: BrandVoice; identity?: BrandIdentity; logo?: string } {
     const tokens = (kit.tokens as BrandTokens | null) || {};
     const colors = tokens.colors || {};
-    const typo   = tokens.typography || {};
+    const typo = tokens.typography || {};
 
     const next: ThemeConfig & { voice?: BrandVoice; identity?: BrandIdentity; logo?: string } = {
       ...theme,
       colors: {
         ...theme.colors,
-        primary:   colors.primary   ?? kit.primaryColor   ?? theme.colors.primary,
+        primary: colors.primary ?? kit.primaryColor ?? theme.colors.primary,
         secondary: colors.secondary ?? kit.secondaryColor ?? theme.colors.secondary,
-        accent:    colors.accent    ?? theme.colors.accent,
+        accent: colors.accent ?? theme.colors.accent,
       },
       fonts: {
         ...theme.fonts,
         heading: typo.heading?.family ?? kit.fontFamily ?? theme.fonts.heading,
-        body:    typo.body?.family    ?? kit.fontFamily ?? theme.fonts.body,
+        body: typo.body?.family ?? kit.fontFamily ?? theme.fonts.body,
       },
-      voice:    (kit.voice    as BrandVoice    | null) || undefined,
+      voice: (kit.voice as BrandVoice | null) || undefined,
       identity: (kit.identity as BrandIdentity | null) || undefined,
-      logo:     kit.logo || undefined,
+      logo: kit.logo || undefined,
     };
     return next;
   }

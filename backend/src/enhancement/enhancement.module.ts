@@ -7,12 +7,7 @@ import { SlidesModule } from '../slides/slides.module';
 import { QualityModule } from '../generation/quality/quality.module';
 
 @Module({
-  imports: [
-    PrismaModule,
-    GenerationModule,
-    SlidesModule,
-    QualityModule,
-  ],
+  imports: [PrismaModule, GenerationModule, SlidesModule, QualityModule],
   providers: [EnhancementService],
   controllers: [EnhancementController],
   exports: [EnhancementService],

@@ -156,13 +156,13 @@ export interface VisualSlideContent {
   subtitle?: string;
   content: any;
   speakerNotes?: string;
-  
+
   // Visual elements
   layout: LayoutConfig;
   theme: ThemeConfig;
   charts?: ChartConfig[];
   images?: ImagePlaceholder[];
-  
+
   // Metadata
   qualityScore?: number;
   renderStatus?: 'pending' | 'rendering' | 'complete' | 'error';

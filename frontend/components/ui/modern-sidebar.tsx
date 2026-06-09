@@ -21,6 +21,7 @@ import {
   Briefcase,
   Shuffle,
   Upload,
+  Table2,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -42,6 +43,8 @@ const navigationItems: NavigationItem[] = [
   { id: "projects",    name: "Projects",      icon: FolderOpen,  href: "/projects" },
   { id: "pdf-studio",  name: "PDF Studio",    icon: FileType,    href: "/pdf-studio" },
   { id: "career",      name: "Career Docs",   icon: Briefcase,   href: "/career" },
+  { id: "excel-studio",name: "Excel Studio",  icon: Table2,      href: "/excel-studio" },
+  { id: "feasibility-studio", name: "Feasibility Studio", icon: Briefcase, href: "/feasibility-studio" },
   { id: "brand-kits",  name: "Brand Kits",    icon: Palette,     href: "/brand-kits" },
   { id: "convert",     name: "Convert",       icon: Shuffle,     href: "/convert" },
   { id: "pptx-import", name: "Import .pptx",  icon: Upload,      href: "/pptx-import" },

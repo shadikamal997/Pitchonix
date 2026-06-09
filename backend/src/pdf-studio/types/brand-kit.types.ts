@@ -2,7 +2,7 @@ export interface BrandKit {
   id?: string;
   name: string;
   userId?: string;
-  
+
   // Colors
   colors: {
     primary: string;
@@ -12,7 +12,7 @@ export interface BrandKit {
     background: string;
     surface: string;
   };
-  
+
   // Typography
   typography: {
     fontFamily: string;
@@ -26,7 +26,7 @@ export interface BrandKit {
       small: string;
     };
   };
-  
+
   // Logo
   logo: {
     url: string;
@@ -36,7 +36,7 @@ export interface BrandKit {
     showOnHeaders: boolean;
     showOnFooters: boolean;
   };
-  
+
   // Spacing & Layout
   spacing: {
     page: {
@@ -50,7 +50,7 @@ export interface BrandKit {
       padding: string;
     };
   };
-  
+
   // Style Preferences
   style: {
     borderRadius: string;
@@ -58,7 +58,7 @@ export interface BrandKit {
     headerStyle: 'solid' | 'gradient' | 'minimal';
     buttonStyle: 'rounded' | 'square' | 'pill';
   };
-  
+
   // Contact Information
   contact?: {
     companyName?: string;
@@ -80,7 +80,8 @@ export const DEFAULT_BRAND_KIT: BrandKit = {
     surface: '#F9FAFB',
   },
   typography: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     headingFont: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     bodyFont: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     fontSize: {

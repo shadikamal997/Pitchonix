@@ -7,7 +7,7 @@ import { SlideElementsMigrationService } from './slide-elements-migration.servic
 
 @Module({
   controllers: [SlidesController, SlideElementsController],
-  providers:   [SlidesService, SlideElementsService, SlideElementsMigrationService],
-  exports:     [SlidesService, SlideElementsService, SlideElementsMigrationService],
+  providers: [SlidesService, SlideElementsService, SlideElementsMigrationService],
+  exports: [SlidesService, SlideElementsService, SlideElementsMigrationService],
 })
 export class SlidesModule {}

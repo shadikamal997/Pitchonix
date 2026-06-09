@@ -21,6 +21,20 @@ const STATUS_TINT: Record<string, string> = {
   failed:    'bg-[#F7E3E3] text-[#9a3737]',
 };
 
+// PDF Studio projects (documentFormat==='pdf') have pdfDocuments, not decks.
+// Route them to the PDF editor; the /projects/[id] page is deck-only.
+function projectViewHref(project: any): string {
+  const feasibilityId = project?.businessInfo?.feasibility?.feasibilityProjectId;
+  if (project?.documentType === 'feasibility_study' && feasibilityId) {
+    return `/feasibility-studio/editor/${feasibilityId}`;
+  }
+  if (project?.documentFormat === 'pdf') {
+    const pdfId = project?.pdfDocuments?.[0]?.id;
+    return pdfId ? `/pdf-studio/editor/${pdfId}` : '/pdf-studio';
+  }
+  return `/projects/${project.id}`;
+}
+
 export default function ProjectsPage() {
   const router = useRouter();
   const { user, _hasHydrated } = useAuthStore();
@@ -35,7 +49,10 @@ export default function ProjectsPage() {
       const { data } = await api.get('/projects', {
         params: { search: searchVal || undefined, status: filterVal !== 'all' ? filterVal : undefined },
       });
-      setProjects(Array.isArray(data) ? data : (data?.projects || []));
+      // Backend findAll() returns an envelope { data: Project[], meta }. The
+      // axios interceptor passes the response through untouched, so `data` here
+      // is that envelope — read `data.data` (legacy shapes kept as fallbacks).
+      setProjects(Array.isArray(data) ? data : (data?.data ?? data?.projects ?? []));
     } catch (error) {
       console.error('Failed to fetch projects:', error);
       setProjects([]);
@@ -173,7 +190,7 @@ export default function ProjectsPage() {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => router.push(`/projects/${project.id}`)} className="flex-1">
+                    <Button size="sm" onClick={() => router.push(projectViewHref(project))} className="flex-1">
                       <Eye className="h-3.5 w-3.5 mr-1.5" /> View
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => router.push(`/create?project=${project.id}`)}>

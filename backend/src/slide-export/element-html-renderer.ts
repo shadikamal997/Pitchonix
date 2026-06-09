@@ -11,16 +11,21 @@
 //  inside a 1280×720 (16:9) viewport so % maps directly onto px values.
 // =============================================================================
 
-import type { SlideElementDTO, ElementStyle, SlideBackground, SlideThemeTokens } from '../slides/element-types';
+import type {
+  SlideElementDTO,
+  ElementStyle,
+  SlideBackground,
+  SlideThemeTokens,
+} from '../slides/element-types';
 import type { RenderDeckInput, RenderSlideInput } from './render-types';
 import { getPlannedTextFit } from './render-planner';
 import { buildChartSvg } from '../generation/export/svg-chart-builder';
 import type { ChartContent } from '../generation/export/chart-types';
 
-export const SLIDE_VIEWPORT_WIDTH  = 1280;
+export const SLIDE_VIEWPORT_WIDTH = 1280;
 export const SLIDE_VIEWPORT_HEIGHT = 720;
-export const SLIDE_PAGE_WIDTH_IN   = 13.333;
-export const SLIDE_PAGE_HEIGHT_IN  = 7.5;
+export const SLIDE_PAGE_WIDTH_IN = 13.333;
+export const SLIDE_PAGE_HEIGHT_IN = 7.5;
 
 // =============================================================================
 //  Public — render full HTML document for the deck (every slide as its own
@@ -151,7 +156,7 @@ function accentLight(hex: string): string {
 }
 
 function renderSlidePage(slide: RenderSlideInput): string {
-  const bg  = renderBackground(slide.background, slide.themeTokens);
+  const bg = renderBackground(slide.background, slide.themeTokens);
   const tok = slide.themeTokens;
   // Inject CSS custom properties from theme tokens so CSS classes get the correct family accent
   const cssVars = tok
@@ -169,7 +174,8 @@ function renderBackground(bg?: SlideBackground | null, theme?: SlideThemeTokens 
   // Theme background acts as a fallback if no explicit slide background.
   if (bg) {
     if (bg.type === 'solid' && bg.color) return `background:${bg.color};`;
-    if (bg.type === 'gradient' && bg.gradient) return `background:${gradientCss(bg.gradient as any)};`;
+    if (bg.type === 'gradient' && bg.gradient)
+      return `background:${gradientCss(bg.gradient as any)};`;
     if (bg.type === 'image' && bg.image?.src) {
       return `background:url('${escapeAttr(bg.image.src)}') center/${bg.image.fit || 'cover'} no-repeat;`;
     }
@@ -180,7 +186,9 @@ function renderBackground(bg?: SlideBackground | null, theme?: SlideThemeTokens 
 
 function gradientCss(g: any): string {
   if (!g?.stops || g.stops.length === 0) return '#ffffff';
-  const stops = g.stops.map((s: any) => `${s.color} ${Math.round((s.offset || 0) * 100)}%`).join(', ');
+  const stops = g.stops
+    .map((s: any) => `${s.color} ${Math.round((s.offset || 0) * 100)}%`)
+    .join(', ');
   if (g.kind === 'radial') return `radial-gradient(circle, ${stops})`;
   return `linear-gradient(${g.angle ?? 180}deg, ${stops})`;
 }
@@ -190,9 +198,9 @@ function gradientCss(g: any): string {
 // =============================================================================
 
 function renderElement(el: SlideElementDTO, pageNumber: number, total: number): string {
-  const left   = `${el.x.toFixed(4)}%`;
-  const top    = `${el.y.toFixed(4)}%`;
-  const width  = `${el.width.toFixed(4)}%`;
+  const left = `${el.x.toFixed(4)}%`;
+  const top = `${el.y.toFixed(4)}%`;
+  const width = `${el.width.toFixed(4)}%`;
   const height = `${el.height.toFixed(4)}%`;
   const transform = el.rotation ? `transform:rotate(${el.rotation}deg);` : '';
 
@@ -203,48 +211,90 @@ function renderElement(el: SlideElementDTO, pageNumber: number, total: number): 
 
 function renderElementInner(el: SlideElementDTO, pageNumber: number, total: number): string {
   switch (el.type) {
-    case 'heading':       return renderText(el, { defaultSize: 32, defaultWeight: 700 });
-    case 'subheading':    return renderText(el, { defaultSize: 18, defaultWeight: 500 });
-    case 'paragraph':     return renderText(el, { defaultSize: 14, defaultWeight: 400 });
-    case 'caption':       return renderText(el, { defaultSize: 11, defaultWeight: 400 });
-    case 'label':         return renderText(el, { defaultSize: 11, defaultWeight: 600 });
-    case 'cta':           return renderCta(el);
-    case 'quote':         return renderQuote(el);
-    case 'testimonial':   return renderTestimonial(el);
-    case 'bulletList':    return renderBulletList(el);
-    case 'numberedList':  return renderNumberedList(el);
-    case 'metric':        return renderMetric(el);
-    case 'kpi':           return renderKpi(el);
-    case 'chart':         return renderChart(el);
-    case 'table':         return renderTable(el);
-    case 'image':         return renderImage(el);
-    case 'logo':          return renderLogo(el);
-    case 'icon':          return renderIconPlaceholder(el);
-    case 'shape':         return renderShape(el);
-    case 'line':          return renderLine(el);
-    case 'divider':       return renderDivider(el);
-    case 'footer':        return renderFooter(el);
-    case 'pageNumber':    return renderPageNumber(el, pageNumber, total);
-    case 'pricingCard':   return renderPricingCard(el);
-    case 'featureGrid':   return renderFeatureGrid(el);
-    case 'timeline':      return renderTimeline(el);
-    case 'roadmap':       return renderRoadmap(el);
-    case 'teamCard':      return renderTeamCard(el);
-    case 'swot':          return renderSwot(el);
-    case 'comparison':    return renderComparison(el);
-    case 'processSteps':  return renderProcessSteps(el);
-    case 'fundsAllocation': return renderFundsAllocation(el);
-    case 'videoPlaceholder':         return renderVideoPlaceholder(el);
-    case 'embeddedMediaPlaceholder': return renderEmbedPlaceholder(el);
-    default:              return renderText(el, { defaultSize: 14, defaultWeight: 400 });
+    case 'heading':
+      return renderText(el, { defaultSize: 32, defaultWeight: 700 });
+    case 'subheading':
+      return renderText(el, { defaultSize: 18, defaultWeight: 500 });
+    case 'paragraph':
+      return renderText(el, { defaultSize: 14, defaultWeight: 400 });
+    case 'caption':
+      return renderText(el, { defaultSize: 11, defaultWeight: 400 });
+    case 'label':
+      return renderText(el, { defaultSize: 11, defaultWeight: 600 });
+    case 'cta':
+      return renderCta(el);
+    case 'quote':
+      return renderQuote(el);
+    case 'testimonial':
+      return renderTestimonial(el);
+    case 'bulletList':
+      return renderBulletList(el);
+    case 'numberedList':
+      return renderNumberedList(el);
+    case 'metric':
+      return renderMetric(el);
+    case 'kpi':
+      return renderKpi(el);
+    case 'chart':
+      return renderChart(el);
+    case 'table':
+      return renderTable(el);
+    case 'image':
+      return renderImage(el);
+    case 'logo':
+      return renderLogo(el);
+    case 'icon':
+      return renderIconPlaceholder(el);
+    case 'shape':
+      return renderShape(el);
+    case 'line':
+      return renderLine(el);
+    case 'divider':
+      return renderDivider(el);
+    case 'footer':
+      return renderFooter(el);
+    case 'pageNumber':
+      return renderPageNumber(el, pageNumber, total);
+    case 'pricingCard':
+      return renderPricingCard(el);
+    case 'featureGrid':
+      return renderFeatureGrid(el);
+    case 'timeline':
+      return renderTimeline(el);
+    case 'roadmap':
+      return renderRoadmap(el);
+    case 'teamCard':
+      return renderTeamCard(el);
+    case 'swot':
+      return renderSwot(el);
+    case 'comparison':
+      return renderComparison(el);
+    case 'processSteps':
+      return renderProcessSteps(el);
+    case 'fundsAllocation':
+      return renderFundsAllocation(el);
+    case 'videoPlaceholder':
+      return renderVideoPlaceholder(el);
+    case 'embeddedMediaPlaceholder':
+      return renderEmbedPlaceholder(el);
+    default:
+      return renderText(el, { defaultSize: 14, defaultWeight: 400 });
   }
 }
 
-function renderText(el: SlideElementDTO, opts: { defaultSize: number; defaultWeight?: number }): string {
+function renderText(
+  el: SlideElementDTO,
+  opts: { defaultSize: number; defaultWeight?: number },
+): string {
   const c = (el.content as any) || {};
   const html: string | undefined = c.html;
   const text: string = c.text || '';
-  const fit = getPlannedTextFit(el) || getPlannedTextFit({ ...el, style: { ...(el.style || {}), fontSize: opts.defaultSize, fontWeight: opts.defaultWeight } } as SlideElementDTO);
+  const fit =
+    getPlannedTextFit(el) ||
+    getPlannedTextFit({
+      ...el,
+      style: { ...(el.style || {}), fontSize: opts.defaultSize, fontWeight: opts.defaultWeight },
+    } as SlideElementDTO);
   const size = fit?.fontSize || opts.defaultSize;
   const weight = (el.style as any)?.fontWeight ?? fit?.fontWeight ?? opts.defaultWeight;
   const lineHeight = fit?.lineHeight || (el.style as any)?.lineHeight || 1.35;
@@ -260,7 +310,8 @@ function renderText(el: SlideElementDTO, opts: { defaultSize: number; defaultWei
 function renderCta(el: SlideElementDTO): string {
   const c = (el.content as any) || {};
   const variant = c.variant || 'primary';
-  const accentCol = (el.style as any)?.color || (el.style as any)?.stroke || 'var(--accent, #16a34a)';
+  const accentCol =
+    (el.style as any)?.color || (el.style as any)?.stroke || 'var(--accent, #16a34a)';
   const bg = variant === 'primary' ? accentCol : variant === 'outline' ? 'transparent' : '#f3f4f6';
   const color = variant === 'primary' ? '#fff' : '#111827';
   const border = variant === 'outline' ? `2px solid ${accentCol}` : 'none';
@@ -289,30 +340,34 @@ function renderTestimonial(el: SlideElementDTO): string {
 }
 
 function renderBulletList(el: SlideElementDTO): string {
-  const items: any[] = ((el.content as any)?.items || []);
-  const li = items.map((it) => {
-    const body = it.html && it.html.trim() ? it.html : escapeHtml(it.text || '');
-    return `<li><span class="marker marker-dot"></span><span>${body}</span></li>`;
-  }).join('');
+  const items: any[] = (el.content as any)?.items || [];
+  const li = items
+    .map((it) => {
+      const body = it.html && it.html.trim() ? it.html : escapeHtml(it.text || '');
+      return `<li><span class="marker marker-dot"></span><span>${body}</span></li>`;
+    })
+    .join('');
   return `<ul class="el-list" style="width:100%;height:100%;font-size:14px;color:#1f2937;${textStyleAttr(el.style)}">${li || '<li style="color:#9ca3af;">(empty list)</li>'}</ul>`;
 }
 
 function renderNumberedList(el: SlideElementDTO): string {
-  const items: any[] = ((el.content as any)?.items || []);
-  const li = items.map((it) => {
-    const body = it.html && it.html.trim() ? it.html : escapeHtml(it.text || '');
-    return `<li><span class="marker"></span><span>${body}</span></li>`;
-  }).join('');
+  const items: any[] = (el.content as any)?.items || [];
+  const li = items
+    .map((it) => {
+      const body = it.html && it.html.trim() ? it.html : escapeHtml(it.text || '');
+      return `<li><span class="marker"></span><span>${body}</span></li>`;
+    })
+    .join('');
   return `<ol class="el-list el-numbered" style="width:100%;height:100%;font-size:14px;color:#1f2937;${textStyleAttr(el.style)}">${li || '<li style="color:#9ca3af;">(empty list)</li>'}</ol>`;
 }
 
 function renderMetric(el: SlideElementDTO): string {
-  const c       = (el.content as any) || {};
-  const fit     = getPlannedTextFit(el, 'metric');
-  const accent  = (el.style as any)?.color || '#16a34a';
-  const dir     = c.deltaDirection as string | undefined;
-  const arrow   = dir === 'up' ? '▲ ' : dir === 'down' ? '▼ ' : '';
-  const dColor  = dir === 'up' ? '#22c55e' : dir === 'down' ? '#ef4444' : '#6b7280';
+  const c = (el.content as any) || {};
+  const fit = getPlannedTextFit(el, 'metric');
+  const accent = (el.style as any)?.color || '#16a34a';
+  const dir = c.deltaDirection as string | undefined;
+  const arrow = dir === 'up' ? '▲ ' : dir === 'down' ? '▼ ' : '';
+  const dColor = dir === 'up' ? '#22c55e' : dir === 'down' ? '#ef4444' : '#6b7280';
   return `<div class="metric" style="width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;${textStyleAttr(el.style)}">
     <div class="v fit-text" style="font-size:${fit?.fontSize || 36}px;line-height:${fit?.lineHeight || 1};-webkit-line-clamp:1;color:${accent};letter-spacing:-0.02em;">${escapeHtml(c.value || '—')}${c.unit ? `<span style="font-size:0.5em;color:#6b7280;margin-left:4px;">${escapeHtml(c.unit)}</span>` : ''}</div>
     <div class="l" style="margin-top:4px;">${escapeHtml(c.label || '')}</div>
@@ -321,9 +376,9 @@ function renderMetric(el: SlideElementDTO): string {
 }
 
 function renderKpi(el: SlideElementDTO): string {
-  const c       = (el.content as any) || {};
-  const fit     = getPlannedTextFit(el, 'metric');
-  const accent  = (el.style as any)?.color || '#16a34a';
+  const c = (el.content as any) || {};
+  const fit = getPlannedTextFit(el, 'metric');
+  const accent = (el.style as any)?.color || '#16a34a';
   const textCol = (el.style as any)?.textColor || '#111827';
   const mutedCol = (el.style as any)?.mutedColor || '#6b7280';
   return `<div class="kpi-card" style="width:100%;height:100%;${textStyleAttr(el.style)}">
@@ -336,16 +391,16 @@ function renderKpi(el: SlideElementDTO): string {
 function renderChart(el: SlideElementDTO): string {
   const raw = (el.content as any) || {};
   const content: ChartContent = {
-    type:         raw.type || 'bar',
-    title:        typeof raw.title === 'string' ? raw.title : undefined,
-    categories:   Array.isArray(raw.categories) ? raw.categories.map(String) : [],
-    series:       Array.isArray(raw.series) ? raw.series : [],
-    axes:         raw.axes,
-    legend:       raw.legend ?? { visible: true, position: 'bottom' },
-    showValues:   raw.showValues,
-    showGrid:     raw.showGrid,
-    insight:      raw.insight,
-    familyId:     raw.familyId,
+    type: raw.type || 'bar',
+    title: typeof raw.title === 'string' ? raw.title : undefined,
+    categories: Array.isArray(raw.categories) ? raw.categories.map(String) : [],
+    series: Array.isArray(raw.series) ? raw.series : [],
+    axes: raw.axes,
+    legend: raw.legend ?? { visible: true, position: 'bottom' },
+    showValues: raw.showValues,
+    showGrid: raw.showGrid,
+    insight: raw.insight,
+    familyId: raw.familyId,
     numberFormat: raw.numberFormat,
   };
   // Shared SVG builder — same code path the editor uses, so all 21 chart
@@ -367,8 +422,8 @@ function renderTable(el: SlideElementDTO): string {
 function renderImage(el: SlideElementDTO): string {
   const c = (el.content as any) || {};
   if (!c.src) {
-    const placeholderBg  = (el.style as any)?.fill   || '#e2e8f0';
-    const placeholderCol = (el.style as any)?.stroke  || '#94a3b8';
+    const placeholderBg = (el.style as any)?.fill || '#e2e8f0';
+    const placeholderCol = (el.style as any)?.stroke || '#94a3b8';
     const radius = el.style?.borderRadius ? `border-radius:${el.style.borderRadius}px;` : '';
     return `<div style="width:100%;height:100%;background:${placeholderBg};${radius}display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
       <svg viewBox="0 0 24 24" fill="none" stroke="${placeholderCol}" stroke-width="1.5" style="width:28px;height:28px;opacity:0.5;"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
@@ -381,10 +436,15 @@ function renderImage(el: SlideElementDTO): string {
     filters.brightness !== undefined ? `brightness(${filters.brightness})` : '',
     filters.saturate !== undefined ? `saturate(${filters.saturate})` : '',
     filters.grayscale ? `grayscale(${filters.grayscale})` : '',
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
   const fit = c.fit || 'cover';
   const focal = `object-position:${(c.focalX ?? 0.5) * 100}% ${(c.focalY ?? 0.5) * 100}%`;
-  const radius = (c.borderRadius || el.style?.borderRadius) ? `border-radius:${c.borderRadius ?? el.style?.borderRadius}px;` : '';
+  const radius =
+    c.borderRadius || el.style?.borderRadius
+      ? `border-radius:${c.borderRadius ?? el.style?.borderRadius}px;`
+      : '';
   return `<div class="img-wrap" style="${radius}">
     <img src="${escapeAttr(c.src)}" alt="${escapeAttr(c.alt || '')}" style="object-fit:${fit};${focal};${filterStr ? `filter:${filterStr};` : ''}" />
   </div>`;
@@ -472,77 +532,95 @@ function renderPageNumber(el: SlideElementDTO, page: number, total: number): str
 }
 
 function renderPricingCard(el: SlideElementDTO): string {
-  const c        = (el.content as any) || {};
+  const c = (el.content as any) || {};
   const tiers: any[] = c.tiers || [];
-  const accent   = c.accent    || '#dc2626';
-  const accent2  = c.accent2   || '#06b6d4';
-  const textCol  = c.textColor || '#111111';
+  const accent = c.accent || '#dc2626';
+  const accent2 = c.accent2 || '#06b6d4';
+  const textCol = c.textColor || '#111111';
   const mutedCol = c.mutedColor || '#5f646d';
-  const panelBg  = c.panelColor || '#ffffff';
-  const lineCol  = c.lineColor  || '#e5e7eb';
-  const count    = tiers.length || 1;
-  const gap      = count <= 3 ? 12 : 8;
-  const padV     = count <= 3 ? 18 : 12;
-  const padH     = count <= 3 ? 16 : 12;
+  const panelBg = c.panelColor || '#ffffff';
+  const lineCol = c.lineColor || '#e5e7eb';
+  const count = tiers.length || 1;
+  const gap = count <= 3 ? 12 : 8;
+  const padV = count <= 3 ? 18 : 12;
+  const padH = count <= 3 ? 16 : 12;
   const priceSize = count <= 3 ? 22 : 17;
-  const nameSize  = count <= 3 ? 12 : 10;
-  const featSize  = count <= 3 ? 10 : 9;
+  const nameSize = count <= 3 ? 12 : 10;
+  const featSize = count <= 3 ? 10 : 9;
 
-  return `<div style="display:flex;gap:${gap}px;width:100%;height:100%;align-items:stretch;">${tiers.map((t: any) => {
-    const isHL = !!t.highlight;
-    const bg   = isHL ? accent  : panelBg;
-    const bdr  = isHL ? accent  : lineCol;
-    const nameC = isHL ? '#ffffff' : mutedCol;
-    const priceC = isHL ? '#ffffff' : textCol;
-    const featC  = isHL ? 'rgba(255,255,255,0.85)' : mutedCol;
-    const checkC = isHL ? 'rgba(255,255,255,0.9)' : accent;
-    const badgeHtml = isHL
-      ? `<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:${accent2};color:#fff;font-size:9px;font-weight:700;padding:2px 10px;border-radius:20px;white-space:nowrap;letter-spacing:0.05em;">BEST VALUE</div>`
-      : '';
-    return `<div style="position:relative;flex:1;padding:${padV}px ${padH}px;background:${bg};border:1.5px solid ${bdr};border-radius:10px;display:flex;flex-direction:column;gap:${count <= 3 ? 8 : 5}px;box-shadow:${isHL ? `0 4px 18px rgba(0,0,0,0.13)` : `0 1px 4px rgba(0,0,0,0.06)`};">
+  return `<div style="display:flex;gap:${gap}px;width:100%;height:100%;align-items:stretch;">${tiers
+    .map((t: any) => {
+      const isHL = !!t.highlight;
+      const bg = isHL ? accent : panelBg;
+      const bdr = isHL ? accent : lineCol;
+      const nameC = isHL ? '#ffffff' : mutedCol;
+      const priceC = isHL ? '#ffffff' : textCol;
+      const featC = isHL ? 'rgba(255,255,255,0.85)' : mutedCol;
+      const checkC = isHL ? 'rgba(255,255,255,0.9)' : accent;
+      const badgeHtml = isHL
+        ? `<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:${accent2};color:#fff;font-size:9px;font-weight:700;padding:2px 10px;border-radius:20px;white-space:nowrap;letter-spacing:0.05em;">BEST VALUE</div>`
+        : '';
+      return `<div style="position:relative;flex:1;padding:${padV}px ${padH}px;background:${bg};border:1.5px solid ${bdr};border-radius:10px;display:flex;flex-direction:column;gap:${count <= 3 ? 8 : 5}px;box-shadow:${isHL ? `0 4px 18px rgba(0,0,0,0.13)` : `0 1px 4px rgba(0,0,0,0.06)`};">
       ${badgeHtml}
       <div style="font-size:${nameSize}px;font-weight:600;color:${nameC};letter-spacing:0.03em;text-transform:uppercase;">${escapeHtml(t.name || '')}</div>
       <div style="font-size:${priceSize}px;font-weight:800;color:${priceC};line-height:1;">${escapeHtml(t.price || '')}${t.period ? `<span style="font-size:${Math.round(priceSize * 0.55)}px;font-weight:500;opacity:0.7;"> /${escapeHtml(t.period)}</span>` : ''}</div>
       <div style="width:100%;height:1px;background:${isHL ? 'rgba(255,255,255,0.25)' : lineCol};margin:2px 0;"></div>
-      <div style="display:flex;flex-direction:column;gap:${count <= 3 ? 5 : 3}px;">${(t.features || []).map((f: string) => `
+      <div style="display:flex;flex-direction:column;gap:${count <= 3 ? 5 : 3}px;">${(
+        t.features || []
+      )
+        .map(
+          (f: string) => `
         <div style="display:flex;align-items:flex-start;gap:5px;">
           <span style="color:${checkC};font-size:${featSize + 1}px;font-weight:700;flex-shrink:0;margin-top:1px;">✓</span>
           <span style="font-size:${featSize}px;color:${featC};line-height:1.35;">${escapeHtml(f)}</span>
-        </div>`).join('')}
+        </div>`,
+        )
+        .join('')}
       </div>
     </div>`;
-  }).join('')}</div>`;
+    })
+    .join('')}</div>`;
 }
 
 function renderFeatureGrid(el: SlideElementDTO): string {
   const c = (el.content as any) || {};
   const items: any[] = c.items || [];
   const cols = c.columns || 3;
-  return `<div class="feature-grid" style="grid-template-columns:repeat(${cols},1fr);">${items.map((it) => `
+  return `<div class="feature-grid" style="grid-template-columns:repeat(${cols},1fr);">${items
+    .map(
+      (it) => `
     <div class="feature-card">
       <div class="t">${escapeHtml(it.title || '')}</div>
       ${it.description ? `<div class="d">${escapeHtml(it.description)}</div>` : ''}
     </div>
-  `).join('')}</div>`;
+  `,
+    )
+    .join('')}</div>`;
 }
 
 function renderTimeline(el: SlideElementDTO): string {
-  const items: any[] = ((el.content as any)?.items || []);
-  return `<div class="timeline">${items.map((it) => `
+  const items: any[] = (el.content as any)?.items || [];
+  return `<div class="timeline">${items
+    .map(
+      (it) => `
     <div class="timeline-item">
       ${it.date ? `<div class="d">${escapeHtml(it.date)}</div>` : ''}
       <div class="t">${escapeHtml(it.title || '')}</div>
       ${it.description ? `<div class="x">${escapeHtml(it.description)}</div>` : ''}
-    </div>`).join('')}</div>`;
+    </div>`,
+    )
+    .join('')}</div>`;
 }
 
 function renderRoadmap(el: SlideElementDTO): string {
-  const phases: any[] = ((el.content as any)?.phases || []);
+  const phases: any[] = (el.content as any)?.phases || [];
   if (phases.length === 0) return '<div style="width:100%;height:100%;"></div>';
   // Axis line sits at 22px from top of each column; dot is 14px (r=7), margin-top=15 → center at 22px
   return `<div style="display:flex;width:100%;height:100%;position:relative;gap:0;align-items:stretch;">
     <div style="position:absolute;top:22px;left:3%;right:3%;height:2px;background:var(--border,#e2e8f0);z-index:0;"></div>
-    ${phases.map((p) => `
+    ${phases
+      .map(
+        (p) => `
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 6px;position:relative;z-index:1;">
       <div style="width:14px;height:14px;border-radius:50%;background:var(--accent,#16a34a);margin-top:15px;flex-shrink:0;box-shadow:0 0 0 3px var(--accent-light,rgba(22,163,74,0.18));"></div>
       <div style="flex:1;width:100%;padding:10px 12px;background:var(--surface,#f8fafc);border:1px solid var(--border,#e2e8f0);border-top:2px solid var(--accent,#16a34a);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;gap:4px;">
@@ -550,66 +628,72 @@ function renderRoadmap(el: SlideElementDTO): string {
         <div style="font-size:13px;font-weight:700;color:var(--text,#111827);line-height:1.25;">${escapeHtml(p.phase || '')}</div>
         <ul style="font-size:11px;color:var(--muted,#6b7280);list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:3px;">${(p.bullets || []).map((b: string) => `<li style="display:flex;gap:4px;align-items:flex-start;"><span style="color:var(--accent,#16a34a);flex-shrink:0;">·</span><span>${escapeHtml(b)}</span></li>`).join('')}</ul>
       </div>
-    </div>`).join('')}
+    </div>`,
+      )
+      .join('')}
   </div>`;
 }
 
 function renderTeamCard(el: SlideElementDTO): string {
-  const c        = (el.content as any) || {};
+  const c = (el.content as any) || {};
   const members: any[] = c.members || [];
-  const accent   = c.accent    || 'var(--accent, #059669)';
-  const textCol  = c.textColor || 'var(--text, #111827)';
+  const accent = c.accent || 'var(--accent, #059669)';
+  const textCol = c.textColor || 'var(--text, #111827)';
   const mutedCol = c.mutedColor || 'var(--muted, #6b7280)';
-  const surfBg   = el.style?.fill   || 'var(--surface, #f8fafc)';
-  const surfBdr  = `var(--border, #e2e8f0)`;
-  const count    = members.length;
+  const surfBg = el.style?.fill || 'var(--surface, #f8fafc)';
+  const surfBdr = `var(--border, #e2e8f0)`;
+  const count = members.length;
 
   // Avatar scales: 2→120px, 3→90px, 4→72px, 5-6→56px
-  const avSize   = count <= 2 ? 120 : count <= 3 ? 90 : count <= 4 ? 72 : 56;
+  const avSize = count <= 2 ? 120 : count <= 3 ? 90 : count <= 4 ? 72 : 56;
   // 3 members → 3 cols so all fit in one row (2-col creates overflow with 3rd card)
-  const cols     = count <= 2 ? count : count === 3 ? 3 : count <= 4 ? 2 : 3;
-  const pad      = count <= 2 ? 20 : count <= 4 ? 16 : 12;
-  const nSize    = count <= 2 ? 16 : count <= 4 ? 14 : 13;
-  const rSize    = count <= 2 ? 13 : 12;
-  const bSize    = 13;
+  const cols = count <= 2 ? count : count === 3 ? 3 : count <= 4 ? 2 : 3;
+  const pad = count <= 2 ? 20 : count <= 4 ? 16 : 12;
+  const nSize = count <= 2 ? 16 : count <= 4 ? 14 : 13;
+  const rSize = count <= 2 ? 13 : 12;
+  const bSize = 13;
   // Limit bio to 100 chars for 2-col, 80 for 3-col
-  const bioMax   = count <= 4 ? 100 : 0;
+  const bioMax = count <= 4 ? 100 : 0;
 
   const cardCss = `flex:1 1 calc(${100 / cols}% - 12px);padding:${pad}px 14px;background:${surfBg};border:1px solid ${surfBdr};border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:${count <= 2 ? 10 : 6}px;overflow:hidden;`;
 
-  return `<div style="display:flex;gap:12px;width:100%;height:100%;flex-wrap:wrap;align-content:flex-start;">${
-    members.map((m: any) => `
+  return `<div style="display:flex;gap:12px;width:100%;height:100%;flex-wrap:wrap;align-content:flex-start;">${members
+    .map(
+      (m: any) => `
     <div style="${cardCss}">
-      ${m.photoUrl
-        ? `<img src="${escapeAttr(m.photoUrl)}" alt="${escapeAttr(m.name || '')}" style="width:${avSize}px;height:${avSize}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:3px solid ${surfBdr};" />`
-        : `<div style="width:${avSize}px;height:${avSize}px;border-radius:50%;background:${accent};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:${Math.round(avSize * 0.38)}px;flex-shrink:0;letter-spacing:-1px;">${escapeHtml((m.name || '?').slice(0, 2).toUpperCase())}</div>`
+      ${
+        m.photoUrl
+          ? `<img src="${escapeAttr(m.photoUrl)}" alt="${escapeAttr(m.name || '')}" style="width:${avSize}px;height:${avSize}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:3px solid ${surfBdr};" />`
+          : `<div style="width:${avSize}px;height:${avSize}px;border-radius:50%;background:${accent};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:${Math.round(avSize * 0.38)}px;flex-shrink:0;letter-spacing:-1px;">${escapeHtml((m.name || '?').slice(0, 2).toUpperCase())}</div>`
       }
       <div style="font-size:${nSize}px;font-weight:700;color:${textCol};text-align:center;line-height:1.2;">${escapeHtml(m.name || '')}</div>
       ${m.role ? `<div style="font-size:${rSize}px;font-weight:600;color:${accent};text-align:center;letter-spacing:0.02em;">${escapeHtml(m.role)}</div>` : ''}
       ${m.bio && bioMax > 0 ? `<div style="font-size:${bSize}px;color:${mutedCol};text-align:center;line-height:1.4;overflow:hidden;">${escapeHtml((m.bio || '').slice(0, bioMax))}</div>` : ''}
-    </div>`).join('')
-  }</div>`;
+    </div>`,
+    )
+    .join('')}</div>`;
 }
 
 function renderSwot(el: SlideElementDTO): string {
   const c = (el.content as any) || {};
-  const cell = (h: string, cls: string, items: string[]) => `<div class="swot-cell ${cls}"><div class="h">${h}</div><ul>${(items || []).map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul></div>`;
-  return `<div class="swot">${cell('Strengths','s',c.strengths)}${cell('Weaknesses','w',c.weaknesses)}${cell('Opportunities','o',c.opportunities)}${cell('Threats','t',c.threats)}</div>`;
+  const cell = (h: string, cls: string, items: string[]) =>
+    `<div class="swot-cell ${cls}"><div class="h">${h}</div><ul>${(items || []).map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul></div>`;
+  return `<div class="swot">${cell('Strengths', 's', c.strengths)}${cell('Weaknesses', 'w', c.weaknesses)}${cell('Opportunities', 'o', c.opportunities)}${cell('Threats', 't', c.threats)}</div>`;
 }
 
 function renderFundsAllocation(el: SlideElementDTO): string {
-  const c        = (el.content as any) || {};
+  const c = (el.content as any) || {};
   const items: any[] = c.items || [];
-  const textCol  = c.textColor  || '#111111';
+  const textCol = c.textColor || '#111111';
   const mutedCol = c.mutedColor || '#5f646d';
-  const lineCol  = c.lineColor  || '#e5e7eb';
-  const maxPct   = Math.max(...items.map((i: any) => Number(i.percentage) || 0), 1);
+  const lineCol = c.lineColor || '#e5e7eb';
+  const maxPct = Math.max(...items.map((i: any) => Number(i.percentage) || 0), 1);
 
-  return `<div style="display:flex;flex-direction:column;justify-content:center;gap:10px;width:100%;height:100%;padding:4px 0;">${
-    items.map((item: any) => {
-      const pct    = Number(item.percentage) || 0;
-      const barW   = Math.round((pct / maxPct) * 100);
-      const color  = item.color || '#dc2626';
+  return `<div style="display:flex;flex-direction:column;justify-content:center;gap:10px;width:100%;height:100%;padding:4px 0;">${items
+    .map((item: any) => {
+      const pct = Number(item.percentage) || 0;
+      const barW = Math.round((pct / maxPct) * 100);
+      const color = item.color || '#dc2626';
       return `<div style="display:flex;flex-direction:column;gap:4px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div style="display:flex;align-items:center;gap:7px;">
@@ -622,40 +706,51 @@ function renderFundsAllocation(el: SlideElementDTO): string {
           <div style="width:${barW}%;height:100%;background:${color};border-radius:4px;transition:width 0.3s;"></div>
         </div>
       </div>`;
-    }).join('')
-  }</div>`;
+    })
+    .join('')}</div>`;
 }
 
 function renderComparison(el: SlideElementDTO): string {
   const c = (el.content as any) || {};
   const cols: string[] = c.columns || [];
-  const rows: any[]    = c.rows || [];
+  const rows: any[] = c.rows || [];
   const accent = c.accentColor || 'var(--accent, #16a34a)';
   const accentBg = c.accentLightBg || 'var(--accent-light, rgba(22,163,74,0.09))';
   return `<table class="comparison" style="font-size:13px;">
     <thead>
       <tr>
         <th style="width:30%;"></th>
-        ${cols.map((col, i) => i === c.highlightColumn
-          ? `<th style="background:${accent};color:#ffffff;text-align:center;border-bottom:none;">${escapeHtml(col)}</th>`
-          : `<th style="text-align:center;color:var(--muted,#6b7280);">${escapeHtml(col)}</th>`
-        ).join('')}
+        ${cols
+          .map((col, i) =>
+            i === c.highlightColumn
+              ? `<th style="background:${accent};color:#ffffff;text-align:center;border-bottom:none;">${escapeHtml(col)}</th>`
+              : `<th style="text-align:center;color:var(--muted,#6b7280);">${escapeHtml(col)}</th>`,
+          )
+          .join('')}
       </tr>
     </thead>
     <tbody>
-      ${rows.map((r) => `
+      ${rows
+        .map(
+          (r) => `
         <tr>
           <td style="font-weight:600;color:var(--text,#111827);">${escapeHtml(r.feature || '')}</td>
-          ${(r.values || []).map((v: string, i: number) => `
+          ${(r.values || [])
+            .map(
+              (v: string, i: number) => `
             <td style="text-align:center;${i === c.highlightColumn ? `background:${accentBg};font-weight:700;color:${accent};` : `color:var(--muted,#6b7280);`}">${escapeHtml(v)}</td>
-          `).join('')}
-        </tr>`).join('')}
+          `,
+            )
+            .join('')}
+        </tr>`,
+        )
+        .join('')}
     </tbody>
   </table>`;
 }
 
 function renderProcessSteps(el: SlideElementDTO): string {
-  const steps: any[] = ((el.content as any)?.steps || []);
+  const steps: any[] = (el.content as any)?.steps || [];
   const parts: string[] = [];
   for (let i = 0; i < steps.length; i++) {
     const s = steps[i];
@@ -698,10 +793,10 @@ function styleAttr(s?: ElementStyle | null): string {
   if (s.stroke) parts.push(`border:${s.strokeWidth ?? 1}px solid ${s.stroke};`);
   if (s.borderRadius !== undefined) parts.push(`border-radius:${s.borderRadius}px;`);
   if (s.shadow) parts.push(`box-shadow:${s.shadow};`);
-  if (s.paddingTop !== undefined)    parts.push(`padding-top:${s.paddingTop}px;`);
-  if (s.paddingRight !== undefined)  parts.push(`padding-right:${s.paddingRight}px;`);
+  if (s.paddingTop !== undefined) parts.push(`padding-top:${s.paddingTop}px;`);
+  if (s.paddingRight !== undefined) parts.push(`padding-right:${s.paddingRight}px;`);
   if (s.paddingBottom !== undefined) parts.push(`padding-bottom:${s.paddingBottom}px;`);
-  if (s.paddingLeft !== undefined)   parts.push(`padding-left:${s.paddingLeft}px;`);
+  if (s.paddingLeft !== undefined) parts.push(`padding-left:${s.paddingLeft}px;`);
   return parts.join('');
 }
 
@@ -709,17 +804,17 @@ function styleAttr(s?: ElementStyle | null): string {
 function textStyleAttr(s?: ElementStyle | null): string {
   if (!s) return '';
   const parts: string[] = [];
-  if (s.fontFamily)              parts.push(`font-family:${s.fontFamily.replace(/"/g, "'")};`);
-  if (s.fontSize !== undefined)  parts.push(`font-size:${s.fontSize}px;`);
-  if (s.fontWeight !== undefined)parts.push(`font-weight:${s.fontWeight};`);
-  if (s.fontStyle)               parts.push(`font-style:${s.fontStyle};`);
-  if (s.textDecoration)          parts.push(`text-decoration:${s.textDecoration};`);
-  if (s.textTransform)           parts.push(`text-transform:${s.textTransform};`);
-  if (s.color)                   parts.push(`color:${s.color};`);
+  if (s.fontFamily) parts.push(`font-family:${s.fontFamily.replace(/"/g, "'")};`);
+  if (s.fontSize !== undefined) parts.push(`font-size:${s.fontSize}px;`);
+  if (s.fontWeight !== undefined) parts.push(`font-weight:${s.fontWeight};`);
+  if (s.fontStyle) parts.push(`font-style:${s.fontStyle};`);
+  if (s.textDecoration) parts.push(`text-decoration:${s.textDecoration};`);
+  if (s.textTransform) parts.push(`text-transform:${s.textTransform};`);
+  if (s.color) parts.push(`color:${s.color};`);
   if (s.lineHeight !== undefined) parts.push(`line-height:${s.lineHeight};`);
   if (s.letterSpacing !== undefined) parts.push(`letter-spacing:${s.letterSpacing}px;`);
-  if (s.textAlign)               parts.push(`text-align:${s.textAlign};`);
-  if (s.textShadow)              parts.push(`text-shadow:${s.textShadow};`);
+  if (s.textAlign) parts.push(`text-align:${s.textAlign};`);
+  if (s.textShadow) parts.push(`text-shadow:${s.textShadow};`);
   return parts.join('');
 }
 

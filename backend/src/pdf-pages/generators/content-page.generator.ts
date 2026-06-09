@@ -49,11 +49,7 @@ export class ContentPageGenerator extends BasePageGenerator {
       title: 'Problem Statement',
       subtitle: 'The Challenge We Address',
       text: input.problem || 'Problem statement not provided.',
-      bullets: [
-        'Market inefficiencies',
-        'Customer pain points',
-        'Opportunity for innovation'
-      ],
+      bullets: ['Market inefficiencies', 'Customer pain points', 'Opportunity for innovation'],
     });
   }
 
@@ -65,11 +61,7 @@ export class ContentPageGenerator extends BasePageGenerator {
       title: 'Our Solution',
       subtitle: 'How We Solve the Problem',
       text: input.solution || 'Solution description not provided.',
-      bullets: [
-        'Innovative approach',
-        'Scalable solution',
-        'Market-ready product'
-      ],
+      bullets: ['Innovative approach', 'Scalable solution', 'Market-ready product'],
     });
   }
 
@@ -129,16 +121,15 @@ export class ContentPageGenerator extends BasePageGenerator {
       sections.push({
         heading: 'Market Size',
         content: `Market Opportunity: ${input.marketOpportunity}`,
-        bullets: [
-          'Growing market opportunity',
-          'Strong demand signals',
-          'Expanding customer base',
-        ],
+        bullets: ['Growing market opportunity', 'Strong demand signals', 'Expanding customer base'],
       });
     }
 
     if (input.competitors) {
-      const competitorsList = input.competitors.split(/[,\n]/).map(c => c.trim()).filter(c => c);
+      const competitorsList = input.competitors
+        .split(/[,\n]/)
+        .map((c) => c.trim())
+        .filter((c) => c);
       sections.push({
         heading: 'Competitive Landscape',
         content: 'Analysis of key competitors in the market.',

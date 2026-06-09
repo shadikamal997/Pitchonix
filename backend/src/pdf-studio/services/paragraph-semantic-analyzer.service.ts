@@ -29,9 +29,9 @@ export interface ParagraphSimilarity {
 
 /**
  * ParagraphSemanticAnalyzer
- * 
+ *
  * Deterministic semantic analysis of paragraphs without AI.
- * 
+ *
  * Uses:
  * - Keyword extraction (TF-IDF-like)
  * - Term frequency analysis
@@ -45,26 +45,103 @@ export class ParagraphSemanticAnalyzer {
 
   // Common English stop words
   private readonly STOP_WORDS = new Set([
-    'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from',
-    'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the',
-    'to', 'was', 'will', 'with', 'this', 'but', 'they', 'have', 'had',
-    'what', 'when', 'where', 'who', 'which', 'why', 'how', 'all', 'each',
-    'or', 'can', 'may', 'also', 'into', 'than', 'over', 'some', 'such',
+    'a',
+    'an',
+    'and',
+    'are',
+    'as',
+    'at',
+    'be',
+    'by',
+    'for',
+    'from',
+    'has',
+    'he',
+    'in',
+    'is',
+    'it',
+    'its',
+    'of',
+    'on',
+    'that',
+    'the',
+    'to',
+    'was',
+    'will',
+    'with',
+    'this',
+    'but',
+    'they',
+    'have',
+    'had',
+    'what',
+    'when',
+    'where',
+    'who',
+    'which',
+    'why',
+    'how',
+    'all',
+    'each',
+    'or',
+    'can',
+    'may',
+    'also',
+    'into',
+    'than',
+    'over',
+    'some',
+    'such',
   ]);
 
   // Technical vocabulary indicators
   private readonly TECHNICAL_TERMS = new Set([
-    'system', 'process', 'method', 'analysis', 'implementation', 'framework',
-    'algorithm', 'data', 'model', 'architecture', 'infrastructure', 'protocol',
-    'optimize', 'integrate', 'configure', 'deploy', 'validate', 'evaluate',
-    'parameter', 'metric', 'threshold', 'coefficient', 'variable', 'function',
+    'system',
+    'process',
+    'method',
+    'analysis',
+    'implementation',
+    'framework',
+    'algorithm',
+    'data',
+    'model',
+    'architecture',
+    'infrastructure',
+    'protocol',
+    'optimize',
+    'integrate',
+    'configure',
+    'deploy',
+    'validate',
+    'evaluate',
+    'parameter',
+    'metric',
+    'threshold',
+    'coefficient',
+    'variable',
+    'function',
   ]);
 
   // Academic vocabulary indicators
   private readonly ACADEMIC_TERMS = new Set([
-    'research', 'study', 'investigate', 'hypothesis', 'methodology', 'findings',
-    'conclude', 'demonstrate', 'indicate', 'suggest', 'evidence', 'significant',
-    'correlation', 'impact', 'factor', 'analysis', 'interpretation', 'implications',
+    'research',
+    'study',
+    'investigate',
+    'hypothesis',
+    'methodology',
+    'findings',
+    'conclude',
+    'demonstrate',
+    'indicate',
+    'suggest',
+    'evidence',
+    'significant',
+    'correlation',
+    'impact',
+    'factor',
+    'analysis',
+    'interpretation',
+    'implications',
   ]);
 
   /**
@@ -81,8 +158,8 @@ export class ParagraphSemanticAnalyzer {
     const documentTerms = this.buildDocumentTermFrequency(paragraphs);
 
     // Analyze each paragraph
-    const semantics = paragraphs.map((text, index) => 
-      this.analyzeParagraph(text, index, documentTerms)
+    const semantics = paragraphs.map((text, index) =>
+      this.analyzeParagraph(text, index, documentTerms),
     );
 
     this.logger.log(`✓ Semantic analysis complete`);
@@ -98,7 +175,7 @@ export class ParagraphSemanticAnalyzer {
     documentTerms: Map<string, number>,
   ): ParagraphSemantics {
     const words = this.tokenize(text);
-    const terms = words.filter(w => !this.STOP_WORDS.has(w) && w.length > 2);
+    const terms = words.filter((w) => !this.STOP_WORDS.has(w) && w.length > 2);
 
     // Extract keywords using TF-IDF-like scoring
     const keywords = this.extractKeywords(terms, documentTerms);
@@ -163,7 +240,7 @@ export class ParagraphSemanticAnalyzer {
     // Jaccard similarity on keywords
     const keywords1 = new Set(p1.keywords);
     const keywords2 = new Set(p2.keywords);
-    const intersection = new Set([...keywords1].filter(k => keywords2.has(k)));
+    const intersection = new Set([...keywords1].filter((k) => keywords2.has(k)));
     const union = new Set([...keywords1, ...keywords2]);
 
     const jaccardScore = union.size > 0 ? intersection.size / union.size : 0;
@@ -200,7 +277,7 @@ export class ParagraphSemanticAnalyzer {
       .toLowerCase()
       .replace(/[^\w\s]/g, ' ')
       .split(/\s+/)
-      .filter(w => w.length > 0);
+      .filter((w) => w.length > 0);
   }
 
   /**
@@ -211,7 +288,7 @@ export class ParagraphSemanticAnalyzer {
 
     for (const para of paragraphs) {
       const words = this.tokenize(para);
-      const uniqueTerms = new Set(words.filter(w => !this.STOP_WORDS.has(w) && w.length > 2));
+      const uniqueTerms = new Set(words.filter((w) => !this.STOP_WORDS.has(w) && w.length > 2));
 
       for (const term of uniqueTerms) {
         termFreq.set(term, (termFreq.get(term) || 0) + 1);
@@ -246,7 +323,7 @@ export class ParagraphSemanticAnalyzer {
     return scores
       .sort((a, b) => b.score - a.score)
       .slice(0, 8)
-      .map(s => s.term);
+      .map((s) => s.term);
   }
 
   /**
@@ -261,7 +338,7 @@ export class ParagraphSemanticAnalyzer {
     return Array.from(freq.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
-      .map(e => e[0]);
+      .map((e) => e[0]);
   }
 
   /**
@@ -295,7 +372,7 @@ export class ParagraphSemanticAnalyzer {
    * Calculate technical density
    */
   private calculateTechnicalDensity(terms: string[]): number {
-    const technicalCount = terms.filter(t => this.TECHNICAL_TERMS.has(t)).length;
+    const technicalCount = terms.filter((t) => this.TECHNICAL_TERMS.has(t)).length;
     return terms.length > 0 ? technicalCount / terms.length : 0;
   }
 
@@ -327,9 +404,11 @@ export class ParagraphSemanticAnalyzer {
   /**
    * Determine vocabulary level
    */
-  private determineVocabularyLevel(terms: string[]): 'simple' | 'moderate' | 'technical' | 'academic' {
-    const technicalCount = terms.filter(t => this.TECHNICAL_TERMS.has(t)).length;
-    const academicCount = terms.filter(t => this.ACADEMIC_TERMS.has(t)).length;
+  private determineVocabularyLevel(
+    terms: string[],
+  ): 'simple' | 'moderate' | 'technical' | 'academic' {
+    const technicalCount = terms.filter((t) => this.TECHNICAL_TERMS.has(t)).length;
+    const academicCount = terms.filter((t) => this.ACADEMIC_TERMS.has(t)).length;
     const avgWordLength = terms.reduce((sum, t) => sum + t.length, 0) / terms.length;
 
     if (academicCount > 2 || avgWordLength > 7) {
@@ -351,45 +430,106 @@ export class ParagraphSemanticAnalyzer {
     dominantTerms: string[],
     entityTerms: string[],
   ): string {
-    const allTerms = [...keywords, ...dominantTerms, ...entityTerms].map(t => t.toLowerCase());
+    const allTerms = [...keywords, ...dominantTerms, ...entityTerms].map((t) => t.toLowerCase());
 
     // Healthcare
-    if (this.hasTerms(allTerms, ['health', 'medical', 'hospital', 'doctor', 'patient', 'disease', 'treatment'])) {
+    if (
+      this.hasTerms(allTerms, [
+        'health',
+        'medical',
+        'hospital',
+        'doctor',
+        'patient',
+        'disease',
+        'treatment',
+      ])
+    ) {
       return 'Healthcare & Medicine';
     }
 
     // Technology
-    if (this.hasTerms(allTerms, ['technology', 'software', 'computer', 'digital', 'ai', 'data', 'system'])) {
+    if (
+      this.hasTerms(allTerms, [
+        'technology',
+        'software',
+        'computer',
+        'digital',
+        'ai',
+        'data',
+        'system',
+      ])
+    ) {
       return 'Technology & Computing';
     }
 
     // Business
-    if (this.hasTerms(allTerms, ['business', 'market', 'company', 'revenue', 'profit', 'customer', 'sales'])) {
+    if (
+      this.hasTerms(allTerms, [
+        'business',
+        'market',
+        'company',
+        'revenue',
+        'profit',
+        'customer',
+        'sales',
+      ])
+    ) {
       return 'Business & Finance';
     }
 
     // Education
-    if (this.hasTerms(allTerms, ['education', 'student', 'school', 'learning', 'teaching', 'university'])) {
+    if (
+      this.hasTerms(allTerms, [
+        'education',
+        'student',
+        'school',
+        'learning',
+        'teaching',
+        'university',
+      ])
+    ) {
       return 'Education & Learning';
     }
 
     // Economy
-    if (this.hasTerms(allTerms, ['economy', 'economic', 'job', 'employment', 'workforce', 'industry'])) {
+    if (
+      this.hasTerms(allTerms, ['economy', 'economic', 'job', 'employment', 'workforce', 'industry'])
+    ) {
       return 'Economy & Employment';
     }
 
     // Environment
-    if (this.hasTerms(allTerms, ['environment', 'climate', 'energy', 'sustainable', 'carbon', 'renewable'])) {
+    if (
+      this.hasTerms(allTerms, [
+        'environment',
+        'climate',
+        'energy',
+        'sustainable',
+        'carbon',
+        'renewable',
+      ])
+    ) {
       return 'Environment & Sustainability';
     }
 
     // Politics
-    if (this.hasTerms(allTerms, ['government', 'policy', 'political', 'law', 'regulation', 'public'])) {
+    if (
+      this.hasTerms(allTerms, ['government', 'policy', 'political', 'law', 'regulation', 'public'])
+    ) {
       return 'Politics & Policy';
     }
 
     // Research
-    if (this.hasTerms(allTerms, ['research', 'study', 'analysis', 'findings', 'methodology', 'results'])) {
+    if (
+      this.hasTerms(allTerms, [
+        'research',
+        'study',
+        'analysis',
+        'findings',
+        'methodology',
+        'results',
+      ])
+    ) {
       return 'Research & Analysis';
     }
 
@@ -400,6 +540,6 @@ export class ParagraphSemanticAnalyzer {
    * Check if array contains any of the target terms
    */
   private hasTerms(terms: string[], targets: string[]): boolean {
-    return targets.some(target => terms.some(term => term.includes(target)));
+    return targets.some((target) => terms.some((term) => term.includes(target)));
   }
 }

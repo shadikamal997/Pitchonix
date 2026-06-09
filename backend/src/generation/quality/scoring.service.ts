@@ -36,15 +36,16 @@ export class ScoringService {
     this.logger.log(`Calculating quality score for ${slides.length} slides`);
 
     // Get weights for document type
-    const weights = options?.weights || 
-      DEFAULT_QUALITY_WEIGHTS[input.documentType] || 
+    const weights =
+      options?.weights ||
+      DEFAULT_QUALITY_WEIGHTS[input.documentType] ||
       DEFAULT_QUALITY_WEIGHTS.default;
 
     // Calculate dimension scores
     const contentScore = this.scoreContent(slides, input);
     const visualScore = this.scoreVisual(slides);
     const exportScore = this.scoreExportReadiness(slides);
-    
+
     // AI enhancement score (only if AI was used)
     const aiScore = options?.aiUsed ? this.scoreAIEnhancement(slides) : undefined;
 
@@ -131,7 +132,10 @@ export class ScoringService {
   /**
    * Score content quality
    */
-  private scoreContent(slides: VisualSlideContent[], input: WizardInput): ContentQualityScores & { overall: number } {
+  private scoreContent(
+    slides: VisualSlideContent[],
+    input: WizardInput,
+  ): ContentQualityScores & { overall: number } {
     // Completeness: Are required fields filled?
     const completeness = this.scoreCompleteness(slides, input);
 
@@ -173,23 +177,39 @@ export class ScoringService {
     const grammarCorrections = 95;
     const toneConsistency = 88;
 
-    const overall = (enhancementSuccessRate + contentImprovement + grammarCorrections + toneConsistency) / 4;
+    const overall =
+      (enhancementSuccessRate + contentImprovement + grammarCorrections + toneConsistency) / 4;
 
-    return { enhancementSuccessRate, contentImprovement, grammarCorrections, toneConsistency, overall };
+    return {
+      enhancementSuccessRate,
+      contentImprovement,
+      grammarCorrections,
+      toneConsistency,
+      overall,
+    };
   }
 
   /**
    * Score export readiness
    */
-  private scoreExportReadiness(slides: VisualSlideContent[]): ExportReadinessScores & { overall: number } {
+  private scoreExportReadiness(
+    slides: VisualSlideContent[],
+  ): ExportReadinessScores & { overall: number } {
     const requiredSlidesPresent = this.scoreRequiredSlides(slides);
     const noValidationErrors = 100; // Will be updated by validation service
     const chartsRenderable = this.scoreChartsRenderable(slides);
     const properFormatting = this.scoreFormatting(slides);
 
-    const overall = (requiredSlidesPresent + noValidationErrors + chartsRenderable + properFormatting) / 4;
+    const overall =
+      (requiredSlidesPresent + noValidationErrors + chartsRenderable + properFormatting) / 4;
 
-    return { requiredSlidesPresent, noValidationErrors, chartsRenderable, properFormatting, overall };
+    return {
+      requiredSlidesPresent,
+      noValidationErrors,
+      chartsRenderable,
+      properFormatting,
+      overall,
+    };
   }
 
   /**
@@ -200,7 +220,7 @@ export class ScoringService {
     let checks = 0;
     let passed = 0;
 
-    slides.forEach(slide => {
+    slides.forEach((slide) => {
       // Title should be present
       checks++;
       if (slide.title && slide.title.length >= 5) passed++;
@@ -227,7 +247,7 @@ export class ScoringService {
     let score = 100;
     let penalties = 0;
 
-    slides.forEach(slide => {
+    slides.forEach((slide) => {
       // Title too long
       if (slide.title && slide.title.length > 80) penalties += 5;
 
@@ -238,7 +258,7 @@ export class ScoringService {
 
       // Bullet points too long
       if (Array.isArray(slide.content)) {
-        slide.content.forEach(bullet => {
+        slide.content.forEach((bullet) => {
           if (typeof bullet === 'string' && bullet.length > 200) {
             penalties += 5;
           }
@@ -255,7 +275,7 @@ export class ScoringService {
    */
   private scoreRelevance(slides: VisualSlideContent[], input: WizardInput): number {
     // Check if slide types match document type expectations
-    const slideTypes = slides.map(s => s.type);
+    const slideTypes = slides.map((s) => s.type);
     let score = 85; // Base score
 
     // Pitch deck should have problem, solution, market
@@ -275,7 +295,7 @@ export class ScoringService {
     let totalWords = 0;
     let slidesWithContent = 0;
 
-    slides.forEach(slide => {
+    slides.forEach((slide) => {
       if (Array.isArray(slide.content)) {
         const words = slide.content.join(' ').split(/\s+/).length;
         if (words > 0) {
@@ -292,12 +312,12 @@ export class ScoringService {
     });
 
     const avgWords = slidesWithContent > 0 ? totalWords / slidesWithContent : 0;
-    
+
     // Ideal: 30-80 words per slide
     if (avgWords >= 30 && avgWords <= 80) return 100;
     if (avgWords < 30) return Math.max(60, (avgWords / 30) * 100);
-    if (avgWords > 80) return Math.max(60, 100 - ((avgWords - 80) / 2));
-    
+    if (avgWords > 80) return Math.max(60, 100 - (avgWords - 80) / 2);
+
     return 80;
   }
 
@@ -305,7 +325,7 @@ export class ScoringService {
    * Score layout consistency
    */
   private scoreLayoutConsistency(slides: VisualSlideContent[]): number {
-    const layouts = slides.map(s => s.layout.type);
+    const layouts = slides.map((s) => s.layout.type);
     const uniqueLayouts = new Set(layouts).size;
     const layoutUsage = uniqueLayouts / slides.length;
 
@@ -322,25 +342,25 @@ export class ScoringService {
    */
   private scoreChartQuality(slides: VisualSlideContent[]): number {
     const chartsCount = slides.reduce((sum, s) => sum + (s.charts?.length || 0), 0);
-    
+
     if (chartsCount === 0) return 85; // Not all decks need charts
 
     let score = 100;
     let chartIssues = 0;
 
-    slides.forEach(slide => {
-      slide.charts?.forEach(chart => {
+    slides.forEach((slide) => {
+      slide.charts?.forEach((chart) => {
         // Check if chart has data
         if (!chart.data || chart.data.length === 0) chartIssues++;
-        
+
         // Check each series
-        chart.data?.forEach(series => {
+        chart.data?.forEach((series) => {
           if (!series.values || series.values.length === 0) chartIssues++;
         });
       });
     });
 
-    score = Math.max(50, 100 - (chartIssues * 10));
+    score = Math.max(50, 100 - chartIssues * 10);
     return score;
   }
 
@@ -353,9 +373,10 @@ export class ScoringService {
     // Check if all slides use the same theme
     const firstTheme = slides[0].theme;
     if (!firstTheme?.colors?.primary) return 85;
-    const allSameTheme = slides.every(s =>
-      s.theme?.name === firstTheme?.name &&
-      (s.theme?.colors?.primary || null) === firstTheme.colors.primary
+    const allSameTheme = slides.every(
+      (s) =>
+        s.theme?.name === firstTheme?.name &&
+        (s.theme?.colors?.primary || null) === firstTheme.colors.primary,
     );
 
     return allSameTheme ? 100 : 70;
@@ -366,23 +387,23 @@ export class ScoringService {
    */
   private scoreImageQuality(slides: VisualSlideContent[]): number {
     const imagesCount = slides.reduce((sum, s) => sum + (s.images?.length || 0), 0);
-    
+
     if (imagesCount === 0) return 100; // No images is fine
 
     let score = 100;
     let imageIssues = 0;
 
-    slides.forEach(slide => {
-      slide.images?.forEach(image => {
+    slides.forEach((slide) => {
+      slide.images?.forEach((image) => {
         // Check if image size is reasonable
         if (image.width > 2000 || image.height > 2000) imageIssues++;
-        
+
         // Check if alt text is provided
         if (!image.altText) imageIssues++;
       });
     });
 
-    score = Math.max(70, 100 - (imageIssues * 5));
+    score = Math.max(70, 100 - imageIssues * 5);
     return score;
   }
 
@@ -390,10 +411,10 @@ export class ScoringService {
    * Score required slides
    */
   private scoreRequiredSlides(slides: VisualSlideContent[]): number {
-    const slideTypes = slides.map(s => s.type);
-    let required = ['title', 'problem', 'solution'];
-    let present = required.filter(type => slideTypes.includes(type));
-    
+    const slideTypes = slides.map((s) => s.type);
+    const required = ['title', 'problem', 'solution'];
+    const present = required.filter((type) => slideTypes.includes(type));
+
     return (present.length / required.length) * 100;
   }
 
@@ -402,14 +423,14 @@ export class ScoringService {
    */
   private scoreChartsRenderable(slides: VisualSlideContent[]): number {
     const chartsCount = slides.reduce((sum, s) => sum + (s.charts?.length || 0), 0);
-    
+
     if (chartsCount === 0) return 100;
 
     let renderable = 0;
     let total = 0;
 
-    slides.forEach(slide => {
-      slide.charts?.forEach(chart => {
+    slides.forEach((slide) => {
+      slide.charts?.forEach((chart) => {
         total++;
         // Chart is renderable if it has type, data, and labels
         if (chart.type && chart.data && chart.data.length > 0) {
@@ -427,14 +448,14 @@ export class ScoringService {
   private scoreFormatting(slides: VisualSlideContent[]): number {
     // Check if slides have proper structure
     let score = 100;
-    
-    slides.forEach(slide => {
+
+    slides.forEach((slide) => {
       // Should have title
       if (!slide.title || slide.title.length === 0) score -= 5;
-      
+
       // Should have layout
       if (!slide.layout) score -= 5;
-      
+
       // Should have theme
       if (!slide.theme) score -= 5;
     });
@@ -449,7 +470,7 @@ export class ScoringService {
     let totalWeight = 0;
     let weightedSum = 0;
 
-    breakdown.forEach(item => {
+    breakdown.forEach((item) => {
       weightedSum += item.score * item.weight;
       totalWeight += item.weight;
     });
@@ -477,20 +498,29 @@ export class ScoringService {
   /**
    * Generate improvement suggestions
    */
-  private generateSuggestions(breakdown: QualityBreakdown[], slides: VisualSlideContent[]): string[] {
+  private generateSuggestions(
+    breakdown: QualityBreakdown[],
+    slides: VisualSlideContent[],
+  ): string[] {
     const suggestions: string[] = [];
 
-    breakdown.forEach(item => {
+    breakdown.forEach((item) => {
       if (item.score < 70) {
         switch (item.dimension) {
           case QualityDimension.CONTENT:
-            suggestions.push('Content quality is below expectations. Add more details to your slides.');
+            suggestions.push(
+              'Content quality is below expectations. Add more details to your slides.',
+            );
             break;
           case QualityDimension.VISUAL:
-            suggestions.push('Visual presentation needs improvement. Ensure consistent layouts and themes.');
+            suggestions.push(
+              'Visual presentation needs improvement. Ensure consistent layouts and themes.',
+            );
             break;
           case QualityDimension.AI_ENHANCEMENT:
-            suggestions.push('AI enhancement had limited impact. Consider revising your source content.');
+            suggestions.push(
+              'AI enhancement had limited impact. Consider revising your source content.',
+            );
             break;
           case QualityDimension.EXPORT_READINESS:
             suggestions.push('Presentation is not ready for export. Fix validation errors first.');
@@ -499,7 +529,9 @@ export class ScoringService {
       } else if (item.score < 85) {
         // Add specific suggestions for dimensions scoring between 70-85
         if (item.dimension === QualityDimension.CONTENT) {
-          suggestions.push('Consider adding more detail to key slides (problem, solution, market).');
+          suggestions.push(
+            'Consider adding more detail to key slides (problem, solution, market).',
+          );
         }
       }
     });
@@ -529,9 +561,9 @@ export class ScoringService {
     if (scores.clarity < 80) issues.push('unclear messaging');
     if (scores.relevance < 80) issues.push('content relevance');
     if (scores.depth < 80) issues.push('insufficient detail');
-    
-    return issues.length > 0 
-      ? `Issues: ${issues.join(', ')}` 
+
+    return issues.length > 0
+      ? `Issues: ${issues.join(', ')}`
       : 'Content is complete, clear, and relevant';
   }
 
@@ -544,9 +576,9 @@ export class ScoringService {
     if (scores.chartQuality < 80) issues.push('chart quality');
     if (scores.themeApplication < 80) issues.push('theme application');
     if (scores.imageQuality < 80) issues.push('image quality');
-    
-    return issues.length > 0 
-      ? `Issues: ${issues.join(', ')}` 
+
+    return issues.length > 0
+      ? `Issues: ${issues.join(', ')}`
       : 'Visual presentation is consistent and professional';
   }
 
@@ -566,9 +598,7 @@ export class ScoringService {
     if (scores.noValidationErrors < 100) issues.push('validation errors');
     if (scores.chartsRenderable < 100) issues.push('unrenderable charts');
     if (scores.properFormatting < 100) issues.push('formatting issues');
-    
-    return issues.length > 0 
-      ? `Issues: ${issues.join(', ')}` 
-      : 'Presentation is ready for export';
+
+    return issues.length > 0 ? `Issues: ${issues.join(', ')}` : 'Presentation is ready for export';
   }
 }

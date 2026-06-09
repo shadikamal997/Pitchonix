@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ContentAnalysisService } from './services/content-analysis.service';
 import { ContentEnhancementService } from './services/content-enhancement.service';
+import { PdfLlmEnhancementService } from './services/pdf-llm-enhancement.service';
 import { ContentStructureService } from './services/content-structure.service';
 import { QualityCheckService } from './services/quality-check.service';
 import { ContentNormalizerService } from './services/content-normalizer.service';
@@ -45,13 +46,22 @@ import { SmartBuilderController } from './controllers/smart-builder.controller';
 import { PdfExportController } from './controllers/pdf-export.controller';
 import { AdminController } from './controllers/admin.controller';
 import { ImageUploadController } from './controllers/image-upload.controller';
+import { FeasibilityStudioModule } from '../feasibility-studio/feasibility-studio.module';
+import { ContentLedgerModule } from '../content-ledger/content-ledger.module';
+import { PdfStudioLedgerModule } from '../content-ledger/pdf-studio-ledger.module';
 
 @Module({
-  imports: [PrismaModule],
-  controllers: [SmartBuilderController, PdfExportController, AdminController, ImageUploadController],
+  imports: [PrismaModule, FeasibilityStudioModule, ContentLedgerModule, PdfStudioLedgerModule],
+  controllers: [
+    SmartBuilderController,
+    PdfExportController,
+    AdminController,
+    ImageUploadController,
+  ],
   providers: [
     ContentAnalysisService,
     ContentEnhancementService,
+    PdfLlmEnhancementService,
     ContentStructureService,
     QualityCheckService,
     ContentNormalizerService,

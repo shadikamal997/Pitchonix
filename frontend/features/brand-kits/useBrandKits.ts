@@ -15,6 +15,15 @@ import type {
 //  List
 // ---------------------------------------------------------------------------
 
+function unwrapArray<T>(payload: any, fallbackKeys: string[] = []): T[] {
+  if (Array.isArray(payload)) return payload as T[];
+  if (Array.isArray(payload?.data)) return payload.data as T[];
+  for (const key of fallbackKeys) {
+    if (Array.isArray(payload?.[key])) return payload[key] as T[];
+  }
+  return [];
+}
+
 export function useMyBrandKits() {
   const [items,   setItems]   = useState<BrandKitDTO[]>([]);
   const [loading, setLoading] = useState(false);
@@ -23,8 +32,8 @@ export function useMyBrandKits() {
   const refresh = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const { data } = await api.get<BrandKitDTO[]>('/brand-kits');
-      setItems(data || []);
+      const { data } = await api.get('/brand-kits');
+      setItems(unwrapArray<BrandKitDTO>(data, ['brandKits', 'items']));
     } catch (e: any) {
       setError(e?.response?.data?.message || e?.message || 'Failed to load brand kits');
     } finally { setLoading(false); }
@@ -50,8 +59,8 @@ export function useWorkspaceBrandKits(workspaceId: string | null | undefined) {
     if (!workspaceId) { setItems([]); return; }
     setLoading(true);
     try {
-      const { data } = await api.get<BrandKitDTO[]>(`/workspaces/${workspaceId}/brand-kits`);
-      setItems(data || []);
+      const { data } = await api.get(`/workspaces/${workspaceId}/brand-kits`);
+      setItems(unwrapArray<BrandKitDTO>(data, ['brandKits', 'items']));
     } finally { setLoading(false); }
   }, [workspaceId]);
 
@@ -166,7 +175,9 @@ export function useBrandKit(id: string | null | undefined): UseBrandKitResult {
   const uploadAsset = useCallback(async (file: File, kind: string, alt?: string) => {
     if (!id) return null;
     const form = new FormData();
-    form.append('image', file);
+    // Backend POST /upload/image uses FileInterceptor('file') — the field MUST
+    // be named 'file' or Multer rejects the request with "Unexpected field".
+    form.append('file', file);
     const upload = await api.post<{ url: string; width?: number; height?: number; mimetype?: string }>(
       '/upload/image', form, { headers: { 'Content-Type': 'multipart/form-data' } },
     );

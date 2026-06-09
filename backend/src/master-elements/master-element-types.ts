@@ -24,9 +24,20 @@ export type MasterElementType =
   | 'custom';
 
 export const MASTER_ELEMENT_TYPES: MasterElementType[] = [
-  'logo', 'companyName', 'header', 'footer', 'pageNumber',
-  'date', 'copyright', 'watermark', 'backgroundShape', 'backgroundImage',
-  'brandBanner', 'contact', 'confidential', 'custom',
+  'logo',
+  'companyName',
+  'header',
+  'footer',
+  'pageNumber',
+  'date',
+  'copyright',
+  'watermark',
+  'backgroundShape',
+  'backgroundImage',
+  'brandBanner',
+  'contact',
+  'confidential',
+  'custom',
 ];
 
 /**
@@ -49,21 +60,21 @@ export const MASTER_ELEMENT_TYPES: MasterElementType[] = [
 export type MasterElementContent = Record<string, any>;
 
 export interface MasterElementDTO {
-  id:        string;
-  deckId:    string;
-  type:      MasterElementType;
-  name?:     string | null;
-  x:         number;
-  y:         number;
-  width:     number;
-  height:    number;
-  rotation:  number;
-  zIndex:    number;
+  id: string;
+  deckId: string;
+  type: MasterElementType;
+  name?: string | null;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  zIndex: number;
   sendToFront: boolean;
-  visible:   boolean;
+  visible: boolean;
   excludedSlides: string[];
   elementData: MasterElementContent | null;
-  style:     ElementStyle | null;
+  style: ElementStyle | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,31 +87,32 @@ export interface MasterElementDTO {
  */
 export interface DeckMasterSettings {
   showPageNumbers?: boolean;
-  showLogo?:        boolean;
-  showFooter?:      boolean;
-  showHeader?:      boolean;
-  showDate?:        boolean;
-  showWatermark?:   boolean;
+  showLogo?: boolean;
+  showFooter?: boolean;
+  showHeader?: boolean;
+  showDate?: boolean;
+  showWatermark?: boolean;
 }
 
 export const DEFAULT_MASTER_SETTINGS: Required<DeckMasterSettings> = {
   showPageNumbers: true,
-  showLogo:        true,
-  showFooter:      true,
-  showHeader:      true,
-  showDate:        true,
-  showWatermark:   true,
+  showLogo: true,
+  showFooter: true,
+  showHeader: true,
+  showDate: true,
+  showWatermark: true,
 };
 
 /**
  * Map MasterElementType → DeckMasterSettings flag that gates it. Types not in
  * this map are always rendered (subject to per-row `visible`).
  */
-export const MASTER_SETTING_FOR_TYPE: Partial<Record<MasterElementType, keyof DeckMasterSettings>> = {
-  logo:        'showLogo',
-  footer:      'showFooter',
-  header:      'showHeader',
-  pageNumber:  'showPageNumbers',
-  date:        'showDate',
-  watermark:   'showWatermark',
-};
+export const MASTER_SETTING_FOR_TYPE: Partial<Record<MasterElementType, keyof DeckMasterSettings>> =
+  {
+    logo: 'showLogo',
+    footer: 'showFooter',
+    header: 'showHeader',
+    pageNumber: 'showPageNumbers',
+    date: 'showDate',
+    watermark: 'showWatermark',
+  };

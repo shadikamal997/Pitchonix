@@ -21,17 +21,17 @@ import { isLibreOfficeAvailable, buildReferenceRenderer } from './libreoffice-re
 // =============================================================================
 
 export interface CertificationScores {
-  import:    number;     // 0..100
-  export:    number;
+  import: number; // 0..100
+  export: number;
   roundTrip: number;
-  visual:    number;
+  visual: number;
 }
 
 export interface CertificationResult {
-  scores:     CertificationScores;
-  overall:    number;
-  band:       'platinum' | 'gold' | 'silver' | 'bronze' | 'basic';
-  notes:      string[];
+  scores: CertificationScores;
+  overall: number;
+  band: 'platinum' | 'gold' | 'silver' | 'bronze' | 'basic';
+  notes: string[];
   rendererAvailable: boolean;
 }
 
@@ -49,8 +49,14 @@ export async function certifyDeck(
   // + 5 transitions + tables + charts + notes + sections; downgrades happen
   // only for OLE (-5), SmartArt flatten (-5), waterfall/funnel (-3 each).
   let exportScore = 100;
-  if (parsed.report.oleObjects > 0) { exportScore -= 5; notes.push('OLE objects exported as image placeholders.'); }
-  if (parsed.report.smartArt   > 0) { exportScore -= 5; notes.push('SmartArt rebuilt from preserved XML if available, else flattened.'); }
+  if (parsed.report.oleObjects > 0) {
+    exportScore -= 5;
+    notes.push('OLE objects exported as image placeholders.');
+  }
+  if (parsed.report.smartArt > 0) {
+    exportScore -= 5;
+    notes.push('SmartArt rebuilt from preserved XML if available, else flattened.');
+  }
 
   // Round-trip score: live parse → export → re-parse via the round-trip harness.
   let rtScore = 0;
@@ -67,10 +73,15 @@ export async function certifyDeck(
   try {
     let referenceRenderer;
     if (rendererAvailable) {
-      try { referenceRenderer = await buildReferenceRenderer(parsed); }
-      catch { referenceRenderer = undefined; }
+      try {
+        referenceRenderer = await buildReferenceRenderer(parsed);
+      } catch {
+        referenceRenderer = undefined;
+      }
     } else {
-      notes.push('Visual score is internal-mode only (set LIBREOFFICE_BIN for ground-truth PowerPoint comparison).');
+      notes.push(
+        'Visual score is internal-mode only (set LIBREOFFICE_BIN for ground-truth PowerPoint comparison).',
+      );
     }
     const dd = await diffDecks(parsed, parsed, { referenceRenderer });
     visualScore = Math.round(dd.fidelityScore * 100);
@@ -78,19 +89,25 @@ export async function certifyDeck(
     notes.push(`Visual diff failed: ${e?.message}`);
   }
 
-  const scores: CertificationScores = { import: importScore, export: exportScore, roundTrip: rtScore, visual: visualScore };
+  const scores: CertificationScores = {
+    import: importScore,
+    export: exportScore,
+    roundTrip: rtScore,
+    visual: visualScore,
+  };
   const overall = Math.round(
-    scores.import    * 0.30 +
-    scores.export    * 0.20 +
-    scores.roundTrip * 0.30 +
-    scores.visual    * 0.20,
+    scores.import * 0.3 + scores.export * 0.2 + scores.roundTrip * 0.3 + scores.visual * 0.2,
   );
   const band: CertificationResult['band'] =
-    overall >= 95 ? 'platinum' :
-    overall >= 85 ? 'gold'     :
-    overall >= 75 ? 'silver'   :
-    overall >= 60 ? 'bronze'   :
-                    'basic';
+    overall >= 95
+      ? 'platinum'
+      : overall >= 85
+        ? 'gold'
+        : overall >= 75
+          ? 'silver'
+          : overall >= 60
+            ? 'bronze'
+            : 'basic';
 
   return { scores, overall, band, notes, rendererAvailable };
 }

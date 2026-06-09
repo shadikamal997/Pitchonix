@@ -19,7 +19,7 @@ export class SlideBlueprintGenerator {
   constructor(
     private analyzer: ContentStructureAnalyzer,
     private detector: VisualBlockDetector,
-    private mapper:   ContentBlockMapper,
+    private mapper: ContentBlockMapper,
   ) {}
 
   /**
@@ -30,15 +30,15 @@ export class SlideBlueprintGenerator {
     const tracker = new DiversityTracker();
 
     return slides.map((slide) => {
-      const profile  = this.analyzer.analyze(slide, input);
+      const profile = this.analyzer.analyze(slide, input);
       const detected = this.detector.detect(profile, { documentType: input.documentType, tracker });
-      const blocks   = this.mapper.resolve(profile, detected);
+      const blocks = this.mapper.resolve(profile, detected);
 
       // Record block usage for diversity cap on subsequent slides
       for (const b of blocks) tracker.record(b.kind);
 
       return {
-        slideType:  slide.type,
+        slideType: slide.type,
         layoutType: blocks[0]?.meta?.role,
         blocks,
         profile,
@@ -58,11 +58,11 @@ export class SlideBlueprintGenerator {
 
     // Attach a metadata trail so downstream code / debug can introspect
     (merged as any).__structure = {
-      blocks:        blocksApplied,
-      layoutType:    blueprint.layoutType,
-      visualCount:   blocksApplied.filter((k) => k !== 'paragraph' && k !== 'bulletList').length,
-      dataDensity:   blueprint.profile.dataDensity,
-      structureScore:blueprint.profile.structureScore,
+      blocks: blocksApplied,
+      layoutType: blueprint.layoutType,
+      visualCount: blocksApplied.filter((k) => k !== 'paragraph' && k !== 'bulletList').length,
+      dataDensity: blueprint.profile.dataDensity,
+      structureScore: blueprint.profile.structureScore,
     };
 
     return {

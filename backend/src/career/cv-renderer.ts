@@ -1,10 +1,19 @@
 import {
-  UniversalDocument, DocumentNode, emptyDocument, newPage,
-  heading, paragraph,
+  UniversalDocument,
+  DocumentNode,
+  emptyDocument,
+  newPage,
+  heading,
+  paragraph,
 } from '../universal-conversion/document-model';
 import {
-  CvProfileDto, CvDocumentDto, CvDoctype, CvSectionKey,
-  CvDocumentContent_CV, CvDocumentContent_CoverLetter, CvDocumentContent_Portfolio,
+  CvProfileDto,
+  CvDocumentDto,
+  CvDoctype,
+  CvSectionKey,
+  CvDocumentContent_CV,
+  CvDocumentContent_CoverLetter,
+  CvDocumentContent_Portfolio,
   DEFAULT_CV_SECTION_ORDER,
 } from './cv-types';
 
@@ -30,15 +39,22 @@ import {
 
 export interface RenderOpts {
   brandTokens?: { colors?: any; fonts?: any };
-  templateLayout?: any;     // CvTemplate.layout JSON
+  templateLayout?: any; // CvTemplate.layout JSON
 }
 
-export function renderCv(profile: CvProfileDto, doc: CvDocumentDto, opts: RenderOpts = {}): UniversalDocument {
+export function renderCv(
+  profile: CvProfileDto,
+  doc: CvDocumentDto,
+  opts: RenderOpts = {},
+): UniversalDocument {
   switch (doc.doctype) {
     case 'cv':
-    case 'resume':       return renderCvOrResume(profile, doc, opts);
-    case 'coverLetter':  return renderCoverLetter(profile, doc, opts);
-    case 'portfolio':    return renderPortfolio(profile, doc, opts);
+    case 'resume':
+      return renderCvOrResume(profile, doc, opts);
+    case 'coverLetter':
+      return renderCoverLetter(profile, doc, opts);
+    case 'portfolio':
+      return renderPortfolio(profile, doc, opts);
     default:
       throw new Error(`Unknown doctype "${doc.doctype}"`);
   }
@@ -48,11 +64,15 @@ export function renderCv(profile: CvProfileDto, doc: CvDocumentDto, opts: Render
 //  CV / Resume
 // =============================================================================
 
-function renderCvOrResume(profile: CvProfileDto, doc: CvDocumentDto, opts: RenderOpts): UniversalDocument {
-  const content   = (doc.content as CvDocumentContent_CV);
-  const order     = content?.sectionOrder ?? DEFAULT_CV_SECTION_ORDER;
+function renderCvOrResume(
+  profile: CvProfileDto,
+  doc: CvDocumentDto,
+  opts: RenderOpts,
+): UniversalDocument {
+  const content = doc.content as CvDocumentContent_CV;
+  const order = content?.sectionOrder ?? DEFAULT_CV_SECTION_ORDER;
   const overrides = content?.sectionOverrides ?? {};
-  const out       = emptyDocument('docx', doc.title);
+  const out = emptyDocument('docx', doc.title);
   applyTheme(out, opts);
 
   const page = newPage(profile.personal?.fullName || doc.title);
@@ -78,7 +98,8 @@ function renderSection(
       if (p.fullName) out.push(heading(1, p.fullName));
       if (p.headline) out.push(paragraph(p.headline));
       const contact = [p.email, p.phone, p.location, p.website, p.linkedin, p.github]
-        .filter(Boolean).join('  •  ');
+        .filter(Boolean)
+        .join('  •  ');
       if (contact) out.push(paragraph(contact, [{ text: contact, italic: true }]));
       return out;
     }
@@ -98,7 +119,9 @@ function renderSection(
       if (list.length === 0) return [];
       const out: DocumentNode[] = [heading(2, 'Experience')];
       for (const e of list) {
-        out.push(paragraph(`${e.role} — ${e.company}`, [{ text: `${e.role} — ${e.company}`, bold: true }]));
+        out.push(
+          paragraph(`${e.role} — ${e.company}`, [{ text: `${e.role} — ${e.company}`, bold: true }]),
+        );
         const meta = [e.location, formatRange(e.start, e.end)].filter(Boolean).join('  •  ');
         if (meta) out.push(paragraph(meta, [{ text: meta, italic: true, color: '#64748B' }]));
         for (const description of splitDetailLines(e.description)) {
@@ -116,10 +139,20 @@ function renderSection(
       const out: DocumentNode[] = [heading(2, 'Education')];
       for (const ed of list) {
         const line = [ed.degree, ed.field].filter(Boolean).join(', ');
-        out.push(paragraph(`${line || ed.institution}${line && ed.institution ? ` — ${ed.institution}` : ''}`, [{
-          text: `${line || ed.institution}${line && ed.institution ? ` — ${ed.institution}` : ''}`, bold: true,
-        }]));
-        const meta = [formatRange(ed.start, ed.end), ed.gpa ? `GPA ${ed.gpa}` : ''].filter(Boolean).join('  •  ');
+        out.push(
+          paragraph(
+            `${line || ed.institution}${line && ed.institution ? ` — ${ed.institution}` : ''}`,
+            [
+              {
+                text: `${line || ed.institution}${line && ed.institution ? ` — ${ed.institution}` : ''}`,
+                bold: true,
+              },
+            ],
+          ),
+        );
+        const meta = [formatRange(ed.start, ed.end), ed.gpa ? `GPA ${ed.gpa}` : '']
+          .filter(Boolean)
+          .join('  •  ');
         if (meta) out.push(paragraph(meta, [{ text: meta, italic: true, color: '#64748B' }]));
         if (ed.honors?.length) out.push({ type: 'list', ordered: false, items: ed.honors });
       }
@@ -142,10 +175,12 @@ function renderSection(
       }
       const out: DocumentNode[] = [heading(2, 'Skills')];
       for (const [cat, names] of groups) {
-        out.push(paragraph(`${capitalise(cat)}: ${names.join(', ')}`, [
-          { text: `${capitalise(cat)}: `, bold: true },
-          { text: names.join(', ') },
-        ]));
+        out.push(
+          paragraph(`${capitalise(cat)}: ${names.join(', ')}`, [
+            { text: `${capitalise(cat)}: `, bold: true },
+            { text: names.join(', ') },
+          ]),
+        );
       }
       return out;
     }
@@ -171,10 +206,12 @@ function renderSection(
         out.push(paragraph(p.name, [{ text: p.name, bold: true }]));
         if (p.description) out.push(paragraph(p.description));
         if (p.technologies?.length) {
-          out.push(paragraph(`Technologies: ${p.technologies.join(', ')}`, [
-            { text: 'Technologies: ', bold: true },
-            { text: p.technologies.join(', ') },
-          ]));
+          out.push(
+            paragraph(`Technologies: ${p.technologies.join(', ')}`, [
+              { text: 'Technologies: ', bold: true },
+              { text: p.technologies.join(', ') },
+            ]),
+          );
         }
         if (p.results?.length) out.push({ type: 'list', ordered: false, items: p.results });
         if (p.links?.length) {
@@ -189,7 +226,11 @@ function renderSection(
       if (list.length === 0) return [];
       return [
         heading(2, 'Certifications'),
-        { type: 'list', ordered: false, items: list.map((c) => `${c.name} — ${c.issuer}${c.date ? ` (${c.date})` : ''}`) },
+        {
+          type: 'list',
+          ordered: false,
+          items: list.map((c) => `${c.name} — ${c.issuer}${c.date ? ` (${c.date})` : ''}`),
+        },
       ];
     }
 
@@ -198,7 +239,13 @@ function renderSection(
       if (list.length === 0) return [];
       return [
         heading(2, 'Awards'),
-        { type: 'list', ordered: false, items: list.map((a) => `${a.title}${a.issuer ? ` — ${a.issuer}` : ''}${a.date ? ` (${a.date})` : ''}`) },
+        {
+          type: 'list',
+          ordered: false,
+          items: list.map(
+            (a) => `${a.title}${a.issuer ? ` — ${a.issuer}` : ''}${a.date ? ` (${a.date})` : ''}`,
+          ),
+        },
       ];
     }
 
@@ -207,7 +254,13 @@ function renderSection(
       if (list.length === 0) return [];
       return [
         heading(2, 'Publications'),
-        { type: 'list', ordered: false, items: list.map((p) => `${p.title}${p.venue ? ` — ${p.venue}` : ''}${p.date ? ` (${p.date})` : ''}`) },
+        {
+          type: 'list',
+          ordered: false,
+          items: list.map(
+            (p) => `${p.title}${p.venue ? ` — ${p.venue}` : ''}${p.date ? ` (${p.date})` : ''}`,
+          ),
+        },
       ];
     }
 
@@ -216,7 +269,11 @@ function renderSection(
       if (list.length === 0) return [];
       const out: DocumentNode[] = [heading(2, 'References')];
       for (const r of list) {
-        out.push(paragraph(`${r.name}${r.title ? `, ${r.title}` : ''}${r.company ? ` — ${r.company}` : ''}`));
+        out.push(
+          paragraph(
+            `${r.name}${r.title ? `, ${r.title}` : ''}${r.company ? ` — ${r.company}` : ''}`,
+          ),
+        );
         const c = [r.email, r.phone].filter(Boolean).join(' • ');
         if (c) out.push(paragraph(c));
       }
@@ -235,8 +292,12 @@ function renderSection(
 //  Cover Letter
 // =============================================================================
 
-function renderCoverLetter(profile: CvProfileDto, doc: CvDocumentDto, opts: RenderOpts): UniversalDocument {
-  const c   = (doc.content as CvDocumentContent_CoverLetter);
+function renderCoverLetter(
+  profile: CvProfileDto,
+  doc: CvDocumentDto,
+  opts: RenderOpts,
+): UniversalDocument {
+  const c = doc.content as CvDocumentContent_CoverLetter;
   const out = emptyDocument('docx', doc.title);
   applyTheme(out, opts);
   const page = newPage(profile.personal?.fullName || doc.title);
@@ -246,16 +307,22 @@ function renderCoverLetter(profile: CvProfileDto, doc: CvDocumentDto, opts: Rend
   const p = profile.personal || {};
   if (p.fullName) page.nodes.push(heading(1, p.fullName));
   const contact = [p.email, p.phone, p.location].filter(Boolean).join('  •  ');
-  if (contact) page.nodes.push(paragraph(contact, [{ text: contact, italic: true, color: '#64748B' }]));
+  if (contact)
+    page.nodes.push(paragraph(contact, [{ text: contact, italic: true, color: '#64748B' }]));
 
   // Date + addressee.
-  page.nodes.push(paragraph(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })));
-  if (c.company || c.role) page.nodes.push(paragraph([c.role, c.company].filter(Boolean).join(' — ')));
+  page.nodes.push(
+    paragraph(
+      new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    ),
+  );
+  if (c.company || c.role)
+    page.nodes.push(paragraph([c.role, c.company].filter(Boolean).join(' — ')));
   if (c.hiringManager) page.nodes.push(paragraph(c.hiringManager));
 
   // Body.
   page.nodes.push(paragraph(c.greeting || 'Dear Hiring Manager,'));
-  if (c.intro)      page.nodes.push(paragraph(c.intro));
+  if (c.intro) page.nodes.push(paragraph(c.intro));
   for (const para of c.body || []) if (para) page.nodes.push(paragraph(para));
   if (c.whyCompany) page.nodes.push(paragraph(c.whyCompany));
   page.nodes.push(paragraph(c.closing || 'Sincerely,'));
@@ -267,8 +334,12 @@ function renderCoverLetter(profile: CvProfileDto, doc: CvDocumentDto, opts: Rend
 //  Portfolio
 // =============================================================================
 
-function renderPortfolio(profile: CvProfileDto, doc: CvDocumentDto, opts: RenderOpts): UniversalDocument {
-  const c   = (doc.content as CvDocumentContent_Portfolio);
+function renderPortfolio(
+  profile: CvProfileDto,
+  doc: CvDocumentDto,
+  opts: RenderOpts,
+): UniversalDocument {
+  const c = doc.content as CvDocumentContent_Portfolio;
   const out = emptyDocument('docx', doc.title);
   applyTheme(out, opts);
 
@@ -278,7 +349,7 @@ function renderPortfolio(profile: CvProfileDto, doc: CvDocumentDto, opts: Render
     nodes: [
       heading(1, profile.personal?.fullName || doc.title),
       ...(profile.personal?.headline ? [paragraph(profile.personal.headline)] : []),
-      ...(profile.personal?.summary  ? [paragraph(profile.personal.summary)]  : []),
+      ...(profile.personal?.summary ? [paragraph(profile.personal.summary)] : []),
     ],
   });
 
@@ -292,10 +363,12 @@ function renderPortfolio(profile: CvProfileDto, doc: CvDocumentDto, opts: Render
       const projects = (profile.projects || []).filter((p) => !ids || ids.has(p.id));
       for (const p of projects) {
         page.nodes.push(heading(2, p.name));
-        if (p.description)       page.nodes.push(paragraph(p.description));
-        if (p.technologies?.length) page.nodes.push(paragraph(`Stack: ${p.technologies.join(', ')}`));
-        if (p.results?.length)   page.nodes.push({ type: 'list', ordered: false, items: p.results });
-        if (p.links?.length)     page.nodes.push(paragraph(p.links.map((l) => `${l.label}: ${l.url}`).join('  •  ')));
+        if (p.description) page.nodes.push(paragraph(p.description));
+        if (p.technologies?.length)
+          page.nodes.push(paragraph(`Stack: ${p.technologies.join(', ')}`));
+        if (p.results?.length) page.nodes.push({ type: 'list', ordered: false, items: p.results });
+        if (p.links?.length)
+          page.nodes.push(paragraph(p.links.map((l) => `${l.label}: ${l.url}`).join('  •  ')));
       }
     }
     out.pages.push(page);
@@ -306,7 +379,11 @@ function renderPortfolio(profile: CvProfileDto, doc: CvDocumentDto, opts: Render
     const page = newPage('Testimonials');
     page.nodes.push(heading(1, 'Testimonials'));
     for (const t of c.testimonials) {
-      page.nodes.push({ type: 'quote', text: t.quote, attribution: `${t.name}, ${t.role}${t.company ? ` — ${t.company}` : ''}` });
+      page.nodes.push({
+        type: 'quote',
+        text: t.quote,
+        attribution: `${t.name}, ${t.role}${t.company ? ` — ${t.company}` : ''}`,
+      });
     }
     out.pages.push(page);
   }
@@ -317,9 +394,24 @@ function renderPortfolio(profile: CvProfileDto, doc: CvDocumentDto, opts: Render
     page.nodes.push(heading(1, 'Case studies'));
     for (const cs of c.caseStudies) {
       page.nodes.push(heading(2, cs.title));
-      page.nodes.push(paragraph(`Problem: ${cs.problem}`, [{ text: 'Problem: ', bold: true }, { text: cs.problem }]));
-      page.nodes.push(paragraph(`Solution: ${cs.solution}`, [{ text: 'Solution: ', bold: true }, { text: cs.solution }]));
-      page.nodes.push(paragraph(`Outcome: ${cs.outcome}`, [{ text: 'Outcome: ', bold: true }, { text: cs.outcome }]));
+      page.nodes.push(
+        paragraph(`Problem: ${cs.problem}`, [
+          { text: 'Problem: ', bold: true },
+          { text: cs.problem },
+        ]),
+      );
+      page.nodes.push(
+        paragraph(`Solution: ${cs.solution}`, [
+          { text: 'Solution: ', bold: true },
+          { text: cs.solution },
+        ]),
+      );
+      page.nodes.push(
+        paragraph(`Outcome: ${cs.outcome}`, [
+          { text: 'Outcome: ', bold: true },
+          { text: cs.outcome },
+        ]),
+      );
     }
     out.pages.push(page);
   }
@@ -334,15 +426,15 @@ function applyTheme(doc: UniversalDocument, opts: RenderOpts) {
   const layout = opts.templateLayout || {};
   doc.theme = {
     colors: {
-      primary:    opts.brandTokens?.colors?.primary    ?? layout.accent ?? '#1F2937',
-      secondary:  opts.brandTokens?.colors?.secondary  ?? '#64748B',
-      accent:     opts.brandTokens?.colors?.accent     ?? layout.accent ?? '#0EA5E9',
-      text:       '#0F172A',
+      primary: opts.brandTokens?.colors?.primary ?? layout.accent ?? '#1F2937',
+      secondary: opts.brandTokens?.colors?.secondary ?? '#64748B',
+      accent: opts.brandTokens?.colors?.accent ?? layout.accent ?? '#0EA5E9',
+      text: '#0F172A',
       background: '#FFFFFF',
     },
     fonts: {
       heading: opts.brandTokens?.fonts?.heading ?? layout.typography?.heading ?? 'Inter',
-      body:    opts.brandTokens?.fonts?.body    ?? layout.typography?.body    ?? 'Inter',
+      body: opts.brandTokens?.fonts?.body ?? layout.typography?.body ?? 'Inter',
     },
   };
 }
@@ -376,9 +468,7 @@ function richExperienceItems(exp: any): string[] {
     .filter((item) => !bulletKeys.has(item.toLowerCase()))
     .map((item) => `Project: ${item}`);
   const technologies = splitDetailLines(exp?.technologies);
-  const rawFallback = !bullets.length && !exp?.description
-    ? rawExperienceFallbackLines(exp)
-    : [];
+  const rawFallback = !bullets.length && !exp?.description ? rawExperienceFallbackLines(exp) : [];
 
   return uniqueStrings([
     ...bullets,
@@ -393,14 +483,18 @@ function richExperienceItems(exp: any): string[] {
 function rawExperienceFallbackLines(exp: any): string[] {
   const rawLines = splitDetailLines(exp?.rawText);
   if (!rawLines.length) return [];
-  const headerKeys = new Set([
-    exp?.role,
-    exp?.company,
-    exp?.location,
-    exp?.start,
-    exp?.end,
-    formatRange(exp?.start, exp?.end),
-  ].filter(Boolean).map((value) => String(value).trim().toLowerCase()));
+  const headerKeys = new Set(
+    [
+      exp?.role,
+      exp?.company,
+      exp?.location,
+      exp?.start,
+      exp?.end,
+      formatRange(exp?.start, exp?.end),
+    ]
+      .filter(Boolean)
+      .map((value) => String(value).trim().toLowerCase()),
+  );
 
   return rawLines
     .filter((line) => !headerKeys.has(line.toLowerCase()))

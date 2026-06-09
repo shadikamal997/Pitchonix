@@ -13,9 +13,7 @@ import { AdminGuard } from '../guards/admin.guard';
 export class AdminController {
   private readonly logger = new Logger(AdminController.name);
 
-  constructor(
-    private readonly templatePreviewGenerator: TemplatePreviewGeneratorService,
-  ) {}
+  constructor(private readonly templatePreviewGenerator: TemplatePreviewGeneratorService) {}
 
   @Post('generate-template-previews')
   async generateTemplatePreviews() {
@@ -44,9 +42,7 @@ export class AdminController {
     this.logger.log(`Regenerating preview for template: ${templateName}`);
 
     try {
-      const result = await this.templatePreviewGenerator.generatePreview(
-        templateName,
-      );
+      const result = await this.templatePreviewGenerator.generatePreview(templateName);
 
       return {
         success: true,
@@ -55,10 +51,7 @@ export class AdminController {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      this.logger.error(
-        `Failed to regenerate preview for ${templateName}`,
-        error,
-      );
+      this.logger.error(`Failed to regenerate preview for ${templateName}`, error);
       throw error;
     }
   }

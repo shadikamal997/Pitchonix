@@ -26,9 +26,9 @@ export interface SemanticTOC {
 
 /**
  * SemanticTOCBuilder
- * 
+ *
  * Builds intelligent Table of Contents from semantic sections.
- * 
+ *
  * Features:
  * - Avoids "continued" spam
  * - Merges multi-page sections intelligently
@@ -49,7 +49,7 @@ export class SemanticTOCBuilder {
     this.logger.log(`Building semantic TOC from ${sections.length} sections...`);
 
     const entries: SemanticTOCEntry[] = [];
-    let currentLevel = 1;
+    const currentLevel = 1;
 
     for (const section of sections) {
       // Determine hierarchy level
@@ -75,8 +75,8 @@ export class SemanticTOCBuilder {
       });
     }
 
-    const maxDepth = Math.max(...entries.map(e => e.level));
-    const hasContinuations = entries.some(e => e.estimatedPages > 1);
+    const maxDepth = Math.max(...entries.map((e) => e.level));
+    const hasContinuations = entries.some((e) => e.estimatedPages > 1);
 
     this.logger.log(`✓ TOC built with ${entries.length} entries (max depth: ${maxDepth})`);
 
@@ -120,7 +120,7 @@ export class SemanticTOCBuilder {
       const indent = '  '.repeat(entry.level - 1);
       const pageRef = entry.pageNumber ? ` ..... ${entry.pageNumber}` : '';
       const bullet = entry.level === 1 ? '-' : '•';
-      
+
       lines.push(`${indent}${bullet} ${entry.title}${pageRef}`);
     }
 
@@ -136,7 +136,7 @@ export class SemanticTOCBuilder {
     for (const entry of toc.entries) {
       const indent = '  '.repeat(entry.level - 1);
       const pageRef = entry.pageNumber ? ` ........ ${entry.pageNumber}` : '';
-      
+
       lines.push(`${indent}${entry.title}${pageRef}`);
     }
 
@@ -150,7 +150,7 @@ export class SemanticTOCBuilder {
     return [
       '# Table of Contents',
       '',
-      ...toc.entries.map(entry => {
+      ...toc.entries.map((entry) => {
         const indent = '  '.repeat(entry.level - 1);
         const dots = '.'.repeat(Math.max(3, 40 - entry.title.length - indent.length));
         const pageRef = entry.pageNumber || '—';
@@ -176,7 +176,7 @@ export class SemanticTOCBuilder {
    * Build compact TOC (fewer entries)
    */
   buildCompactTOC(sections: SemanticSection[]): SemanticTOC {
-    const majorSections = sections.filter(s => this.shouldIncludeInTOC(s, 3));
+    const majorSections = sections.filter((s) => this.shouldIncludeInTOC(s, 3));
     return this.buildTOC(majorSections);
   }
 

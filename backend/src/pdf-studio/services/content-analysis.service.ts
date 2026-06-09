@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PerformanceService } from '../../common/performance.service';
-import { SemanticStructureEngine, SemanticAnalysisResult, DocumentIntelligence } from './semantic-structure-engine.service';
+import {
+  SemanticStructureEngine,
+  SemanticAnalysisResult,
+  DocumentIntelligence,
+} from './semantic-structure-engine.service';
 const nlp = require('compromise');
 
 export interface ContentIssue {
@@ -66,12 +70,9 @@ export class ContentAnalysisService {
     return this.performanceService.cached(
       cacheKey,
       async () => {
-        return this.performanceService.measure(
-          'content-analysis',
-          async () => {
-            return this.performAnalysis(rawContent);
-          },
-        );
+        return this.performanceService.measure('content-analysis', async () => {
+          return this.performAnalysis(rawContent);
+        });
       },
       300, // Cache for 5 minutes
     );
@@ -92,7 +93,6 @@ export class ContentAnalysisService {
    * Perform the actual analysis
    */
   private async performAnalysis(rawContent: string): Promise<ContentAnalysisResult> {
-
     const startTime = Date.now();
 
     // Step 1: Basic statistics
@@ -163,21 +163,14 @@ export class ContentAnalysisService {
     const spellingIssues = issues.filter((i) => i.type === 'spelling').length;
 
     // Step 7: Generate recommendations
-    const recommendedEnhancements = this.generateRecommendations(
-      issues,
-      detectedType,
-    );
+    const recommendedEnhancements = this.generateRecommendations(issues, detectedType);
 
     // Step 8: Extract structured data
     const extractedData = this.extractStructuredData(rawContent);
 
     // Step 9: Generate suggestions
     const suggestedTitle = this.generateTitle(rawContent, detectedType);
-    const suggestedSections = this.generateSectionStructure(
-      rawContent,
-      detectedType,
-      wordCount,
-    );
+    const suggestedSections = this.generateSectionStructure(rawContent, detectedType, wordCount);
 
     // Step 10: Semantic intelligence analysis (NEW)
     let semanticAnalysis: SemanticAnalysisResult | undefined;
@@ -194,8 +187,8 @@ export class ContentAnalysisService {
 
       this.logger.log(
         `Semantic analysis: ${semanticAnalysis.topicSegments.length} topics, ` +
-        `${semanticAnalysis.semanticSections.length} sections, ` +
-        `intelligence score: ${documentIntelligence.overallScore}/100`
+          `${semanticAnalysis.semanticSections.length} sections, ` +
+          `intelligence score: ${documentIntelligence.overallScore}/100`,
       );
     } catch (error) {
       this.logger.warn(`Semantic analysis failed: ${error.message}`);
@@ -371,8 +364,7 @@ export class ContentAnalysisService {
       academic: academicScore * 3,
       report: reportScore * 3,
       technical: technicalScore * 2,
-      notes:
-        features.hasBullets && !features.hasHeadings && wordCount < 500 ? 3 : 0,
+      notes: features.hasBullets && !features.hasHeadings && wordCount < 500 ? 3 : 0,
     };
 
     // Special case: detect mixed business/startup content
@@ -412,7 +404,7 @@ export class ContentAnalysisService {
         // Gap between winner and second place
         const gap = maxScore - secondMaxScore;
         // Combined confidence metric
-        confidence = Math.min(dominance * 0.6 + gap / maxScore * 0.4, 0.95);
+        confidence = Math.min(dominance * 0.6 + (gap / maxScore) * 0.4, 0.95);
       }
       // Boost confidence if score is high
       if (maxScore > 10) {
@@ -461,8 +453,7 @@ export class ContentAnalysisService {
         severity: 'medium',
         type: 'structure',
         title: 'Missing title',
-        description:
-          'Your content does not have a clear title at the beginning.',
+        description: 'Your content does not have a clear title at the beginning.',
         suggestedFix: 'Add a descriptive title to make your document professional.',
       });
     }
@@ -475,18 +466,15 @@ export class ContentAnalysisService {
         title: 'No clear sections found',
         description:
           'Your content has no clear sections or headings. This makes it hard to follow.',
-        suggestedFix:
-          'Break your content into logical sections with clear headings.',
+        suggestedFix: 'Break your content into logical sections with clear headings.',
       });
     } else if (features.sectionCount < 2 && features.wordCount > 200) {
       issues.push({
         severity: 'high',
         type: 'structure',
         title: 'Weak structure',
-        description:
-          'Your content lacks clear sections or headings. This makes it hard to follow.',
-        suggestedFix:
-          'Break your content into logical sections with clear headings.',
+        description: 'Your content lacks clear sections or headings. This makes it hard to follow.',
+        suggestedFix: 'Break your content into logical sections with clear headings.',
       });
     }
 
@@ -507,9 +495,7 @@ export class ContentAnalysisService {
     // Check for informal tone (business context)
     if (features.detectedType === 'business' || features.detectedType === 'startup') {
       const informalWords = ['gonna', 'wanna', 'kinda', 'sorta', 'yeah', 'nope', 'yep'];
-      const foundInformal = informalWords.filter((w) =>
-        lowerContent.includes(w),
-      );
+      const foundInformal = informalWords.filter((w) => lowerContent.includes(w));
       if (foundInformal.length > 0) {
         issues.push({
           severity: 'medium',
@@ -518,8 +504,7 @@ export class ContentAnalysisService {
           description:
             'Your content contains informal language that may not be suitable for business documents.',
           affectedText: foundInformal.join(', '),
-          suggestedFix:
-            'Use professional language appropriate for business communication.',
+          suggestedFix: 'Use professional language appropriate for business communication.',
         });
       }
     }
@@ -561,8 +546,7 @@ export class ContentAnalysisService {
         type: 'structure',
         title: 'Missing conclusion',
         description: 'Your document does not have a clear conclusion or summary.',
-        suggestedFix:
-          'Add a conclusion to summarize key points and provide closure.',
+        suggestedFix: 'Add a conclusion to summarize key points and provide closure.',
       });
     }
 
@@ -572,10 +556,8 @@ export class ContentAnalysisService {
         severity: 'low',
         type: 'readability',
         title: 'No bullet points',
-        description:
-          'Long text without bullet points can be hard to scan quickly.',
-        suggestedFix:
-          'Use bullet points to break down lists and key information.',
+        description: 'Long text without bullet points can be hard to scan quickly.',
+        suggestedFix: 'Use bullet points to break down lists and key information.',
       });
     }
 
@@ -589,15 +571,24 @@ export class ContentAnalysisService {
     const lowerContent = content.toLowerCase();
 
     // Check for business/startup terms
-    const businessTerms = ['business', 'startup', 'product', 'company', 'platform', 'service', 'market', 'customer'];
-    const hasBusinessTerms = businessTerms.some(term => lowerContent.includes(term));
+    const businessTerms = [
+      'business',
+      'startup',
+      'product',
+      'company',
+      'platform',
+      'service',
+      'market',
+      'customer',
+    ];
+    const hasBusinessTerms = businessTerms.some((term) => lowerContent.includes(term));
     if (hasBusinessTerms) {
       return 'Business Overview';
     }
 
     // Check for report terms
     const reportTerms = ['findings', 'results', 'analysis', 'data', 'metrics', 'summary'];
-    const hasReportTerms = reportTerms.some(term => lowerContent.includes(term));
+    const hasReportTerms = reportTerms.some((term) => lowerContent.includes(term));
     if (hasReportTerms) {
       return 'Report';
     }
@@ -615,9 +606,14 @@ export class ContentAnalysisService {
   /**
    * Add issues based on quality metrics
    */
-  private addMetricBasedIssues(issues: ContentIssue[], readability: number, clarity: number, sectionCount: number): ContentIssue[] {
+  private addMetricBasedIssues(
+    issues: ContentIssue[],
+    readability: number,
+    clarity: number,
+    sectionCount: number,
+  ): ContentIssue[] {
     // Issue if sections = 0 (already handled in detectIssues)
-    
+
     // Issue if readability < 50
     if (readability < 50) {
       issues.push({
@@ -671,10 +667,7 @@ export class ContentAnalysisService {
   /**
    * Generate recommendations based on detected issues
    */
-  private generateRecommendations(
-    issues: ContentIssue[],
-    detectedType: string,
-  ): string[] {
+  private generateRecommendations(issues: ContentIssue[], detectedType: string): string[] {
     const recommendations: string[] = [];
 
     const hasGrammar = issues.some((i) => i.type === 'grammar');
@@ -758,7 +751,12 @@ export class ContentAnalysisService {
     if (/^#\s+.+/.test(firstLine)) return true;
 
     // ALL-CAPS title
-    if (firstLine.length >= 4 && firstLine.length < 100 && /^[A-Z][A-Z\s:,&()\-/]+$/.test(firstLine)) return true;
+    if (
+      firstLine.length >= 4 &&
+      firstLine.length < 100 &&
+      /^[A-Z][A-Z\s:,&()\-/]+$/.test(firstLine)
+    )
+      return true;
 
     // Title-case: starts with capital, short, no trailing period, not a bullet
     return (
@@ -812,11 +810,11 @@ export class ContentAnalysisService {
 
     // Use compromise for NLP-based keyword extraction
     const doc = nlp(content);
-    
+
     // Extract nouns and topics
     const nouns = doc.nouns().out('array') as string[];
     const topics = doc.topics().out('array') as string[];
-    
+
     // Combine with frequency-based approach for better results
     const words = content
       .toLowerCase()
@@ -831,8 +829,8 @@ export class ContentAnalysisService {
 
     // Combine NLP and frequency approaches
     const nlpKeywords = [...new Set([...nouns, ...topics])]
-      .map(k => k.toLowerCase())
-      .filter(k => k.length > 3);
+      .map((k) => k.toLowerCase())
+      .filter((k) => k.length > 3);
 
     // Merge with frequency-based keywords
     const freqKeywords = Object.entries(wordFreq)
@@ -856,7 +854,7 @@ export class ContentAnalysisService {
     const doc = nlp(content);
     const organizations = doc.organizations().out('array') as string[];
     const places = doc.places().out('array') as string[];
-    
+
     // Simple topic extraction based on common themes
     const topicKeywords = {
       business: ['business', 'company', 'market', 'revenue', 'profit'],
@@ -878,7 +876,7 @@ export class ContentAnalysisService {
     }
 
     // Add entities as topics
-    [...organizations, ...places].forEach(entity => {
+    [...organizations, ...places].forEach((entity) => {
       if (entity && entity.length > 0 && topics.length < 10) {
         topics.push(entity);
       }
@@ -919,7 +917,7 @@ export class ContentAnalysisService {
 
     const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 0);
     const words = content.split(/\s+/).filter((w) => w.length > 0);
-    
+
     if (sentences.length === 0 || words.length === 0) {
       return 40; // Safe fallback
     }
@@ -997,7 +995,7 @@ export class ContentAnalysisService {
 
     // NLP-based: detect very long run-on sentences (> 50 words)
     try {
-      const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 0);
       for (const s of sentences) {
         const wc = s.trim().split(/\s+/).length;
         if (wc > 50) issues++;
@@ -1025,14 +1023,47 @@ export class ContentAnalysisService {
     if (!content || content.trim().length < 10) return 0;
 
     const misspellings = [
-      'recieve', 'beleive', 'occured', 'seperate', 'definately',
-      'accomodate', 'independant', 'neccessary', 'existance', 'occurance',
-      'persistance', 'relevence', 'concious', 'goverment', 'enviroment',
-      'begining', 'successfull', 'commited', 'responsibilty', 'knowlege',
-      'arguement', 'embarass', 'priviledge', 'untill', 'tommorrow',
-      'occassion', 'thier', 'truely', 'wierd', 'reccommend', 'adress',
-      'profesional', 'buisness', 'managment', 'developement', 'stratagey',
-      'benifits', 'experiance', 'intergration', 'implmentation', 'opportunites',
+      'recieve',
+      'beleive',
+      'occured',
+      'seperate',
+      'definately',
+      'accomodate',
+      'independant',
+      'neccessary',
+      'existance',
+      'occurance',
+      'persistance',
+      'relevence',
+      'concious',
+      'goverment',
+      'enviroment',
+      'begining',
+      'successfull',
+      'commited',
+      'responsibilty',
+      'knowlege',
+      'arguement',
+      'embarass',
+      'priviledge',
+      'untill',
+      'tommorrow',
+      'occassion',
+      'thier',
+      'truely',
+      'wierd',
+      'reccommend',
+      'adress',
+      'profesional',
+      'buisness',
+      'managment',
+      'developement',
+      'stratagey',
+      'benifits',
+      'experiance',
+      'intergration',
+      'implmentation',
+      'opportunites',
     ];
 
     let issues = 0;
@@ -1118,12 +1149,14 @@ export class ContentAnalysisService {
   }
 
   private extractUrls(content: string): string[] {
-    const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g;
+    const urlRegex =
+      /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g;
     return content.match(urlRegex) || [];
   }
 
   private extractDates(content: string): string[] {
-    const dateRegex = /\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4}\b/gi;
+    const dateRegex =
+      /\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4}\b/gi;
     return content.match(dateRegex) || [];
   }
 
@@ -1145,7 +1178,10 @@ export class ContentAnalysisService {
 
     // If first line looks like a title, use it (strip markdown markers)
     if (this.detectTitle(content)) {
-      return lines[0].trim().replace(/^#+\s+/, '').trim();
+      return lines[0]
+        .trim()
+        .replace(/^#+\s+/, '')
+        .trim();
     }
 
     // Otherwise, generate based on content type

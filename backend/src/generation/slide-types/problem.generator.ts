@@ -10,24 +10,32 @@ import { problemTitle, problemSubtitle } from './narrative-titles';
 export class ProblemSlideGenerator extends BaseSlideGenerator {
   type = SlideType.PROBLEM;
   defaultPriority = 2;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
   isApplicable(input: WizardInput): boolean {
     return !!input.problem && input.problem.trim().length > 0;
   }
-  getTitle(input: WizardInput): string    { return problemTitle(input); }
-  getSubtitle(input: WizardInput): string { return problemSubtitle(input); }
+  getTitle(input: WizardInput): string {
+    return problemTitle(input);
+  }
+  getSubtitle(input: WizardInput): string {
+    return problemSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return {
-      description:    input.problem || '',
+      description: input.problem || '',
       targetAudience: input.targetCustomers || `${input.industry} businesses`,
     };
   }
 
   getSpeakerNotes(input: WizardInput): string {
-    return `Describe the problem clearly and paint a vivid picture of the pain point. ` +
-           `Emphasize the market gap and why this matters to ${input.audience}. ` +
-           `Reference: ${input.problem?.substring(0, 100)}...`;
+    return (
+      `Describe the problem clearly and paint a vivid picture of the pain point. ` +
+      `Emphasize the market gap and why this matters to ${input.audience}. ` +
+      `Reference: ${input.problem?.substring(0, 100)}...`
+    );
   }
 }

@@ -3,7 +3,7 @@ import { ContentBlock } from './content-block-extractor.service';
 import { PlannedPage } from './rule-based-page-planner.service';
 
 export interface AdaptiveLayoutConfig {
-  pageWidth: number;  // mm (A4 = 210mm)
+  pageWidth: number; // mm (A4 = 210mm)
   pageHeight: number; // mm (A4 = 297mm)
   margins: { top: number; right: number; bottom: number; left: number };
   colorScheme: string;
@@ -63,7 +63,7 @@ export interface AdaptivePageComposition {
 
 /**
  * AdaptiveLayoutEngineService
- * 
+ *
  * Intelligently composes page layouts based on content density.
  * Dynamically adjusts typography, spacing, and layout to:
  * - Utilize full vertical canvas
@@ -78,22 +78,38 @@ export class AdaptiveLayoutEngineService {
   // Typography presets by density level
   private readonly TYPOGRAPHY_PRESETS: Record<string, TypographyScale> = {
     low: {
-      h1: 32, h2: 24, h3: 18, body: 14, caption: 11,
+      h1: 32,
+      h2: 24,
+      h3: 18,
+      body: 14,
+      caption: 11,
       lineHeight: 1.7,
       paragraphSpacing: 8,
     },
     medium: {
-      h1: 28, h2: 20, h3: 16, body: 12, caption: 10,
+      h1: 28,
+      h2: 20,
+      h3: 16,
+      body: 12,
+      caption: 10,
       lineHeight: 1.6,
       paragraphSpacing: 6,
     },
     high: {
-      h1: 24, h2: 18, h3: 14, body: 11, caption: 9,
+      h1: 24,
+      h2: 18,
+      h3: 14,
+      body: 11,
+      caption: 9,
       lineHeight: 1.5,
       paragraphSpacing: 5,
     },
     very_high: {
-      h1: 22, h2: 16, h3: 13, body: 10, caption: 8,
+      h1: 22,
+      h2: 16,
+      h3: 13,
+      body: 10,
+      caption: 8,
       lineHeight: 1.4,
       paragraphSpacing: 4,
     },
@@ -102,11 +118,10 @@ export class AdaptiveLayoutEngineService {
   /**
    * Compose a page with adaptive layout based on content density
    */
-  composeAdaptivePage(
-    page: PlannedPage,
-    config: AdaptiveLayoutConfig,
-  ): AdaptivePageComposition {
-    this.logger.debug(`Composing adaptive layout for page ${page.globalOrder} (${page.sectionType})`);
+  composeAdaptivePage(page: PlannedPage, config: AdaptiveLayoutConfig): AdaptivePageComposition {
+    this.logger.debug(
+      `Composing adaptive layout for page ${page.globalOrder} (${page.sectionType})`,
+    );
 
     // 1. Analyze content density
     const density = this.analyzeDensity(page, config);
@@ -147,8 +162,10 @@ export class AdaptiveLayoutEngineService {
   private analyzeDensity(page: PlannedPage, config: AdaptiveLayoutConfig): LayoutDensity {
     const wordCount = page.wordCount;
     const blockCount = page.blocks.length;
-    const hasHeadings = page.blocks.some(b => ['heading', 'subheading', 'title'].includes(b.type));
-    const hasLists = page.blocks.some(b => ['bullet_list', 'numbered_list'].includes(b.type));
+    const hasHeadings = page.blocks.some((b) =>
+      ['heading', 'subheading', 'title'].includes(b.type),
+    );
+    const hasLists = page.blocks.some((b) => ['bullet_list', 'numbered_list'].includes(b.type));
 
     // Determine content level based on word count
     let contentLevel: 'low' | 'medium' | 'high' | 'very_high';
@@ -163,7 +180,7 @@ export class AdaptiveLayoutEngineService {
     }
 
     // Recommended columns: Use 2 columns for high-density content
-    const recommendedColumns = (contentLevel === 'high' || contentLevel === 'very_high') ? 2 : 1;
+    const recommendedColumns = contentLevel === 'high' || contentLevel === 'very_high' ? 2 : 1;
 
     // Typography scale based on density
     const recommendedTypographyScale = this.TYPOGRAPHY_PRESETS[contentLevel];
@@ -377,7 +394,7 @@ export class AdaptiveLayoutEngineService {
     config: AdaptiveLayoutConfig,
   ): number {
     const availableHeight = config.pageHeight - config.margins.top - config.margins.bottom;
-    
+
     let estimatedHeight = 0;
     for (const section of sections) {
       // Estimate text height based on font size and line height
@@ -423,8 +440,8 @@ export class AdaptiveLayoutEngineService {
     }
 
     // Check for weak typography hierarchy
-    const hasHeadings = sections.some(s => s.type === 'heading');
-    const hasBody = sections.some(s => s.type === 'text');
+    const hasHeadings = sections.some((s) => s.type === 'heading');
+    const hasBody = sections.some((s) => s.type === 'text');
     if (hasBody && !hasHeadings) {
       issues.push('Weak visual hierarchy - missing section headings');
       qualityScore -= 5;
@@ -445,7 +462,9 @@ export class AdaptiveLayoutEngineService {
   /**
    * Get spacing values based on whitespace strategy
    */
-  private getSpacingForStrategy(strategy: 'generous' | 'moderate' | 'compact'): Record<string, number> {
+  private getSpacingForStrategy(
+    strategy: 'generous' | 'moderate' | 'compact',
+  ): Record<string, number> {
     switch (strategy) {
       case 'generous':
         return {
@@ -513,26 +532,30 @@ export class AdaptiveLayoutEngineService {
     // Fix under-utilization
     if (corrected.estimatedFillPercentage < 40 && corrected.density.contentLevel === 'low') {
       // Increase typography scale
-      corrected.sections = corrected.sections.map(section => ({
+      corrected.sections = corrected.sections.map((section) => ({
         ...section,
         fontSize: section.fontSize * 1.2,
         marginTop: section.marginTop * 1.3,
         marginBottom: section.marginBottom * 1.3,
       }));
       corrected.layout.verticalAlignment = 'center';
-      this.logger.log(`Auto-corrected page ${corrected.pageNumber}: Enlarged typography for low content`);
+      this.logger.log(
+        `Auto-corrected page ${corrected.pageNumber}: Enlarged typography for low content`,
+      );
     }
 
     // Fix over-crowding
     if (corrected.estimatedFillPercentage > 90) {
       // Reduce typography scale
-      corrected.sections = corrected.sections.map(section => ({
+      corrected.sections = corrected.sections.map((section) => ({
         ...section,
         fontSize: section.fontSize * 0.9,
         marginTop: section.marginTop * 0.8,
         marginBottom: section.marginBottom * 0.8,
       }));
-      this.logger.log(`Auto-corrected page ${corrected.pageNumber}: Reduced typography for overcrowding`);
+      this.logger.log(
+        `Auto-corrected page ${corrected.pageNumber}: Reduced typography for overcrowding`,
+      );
     }
 
     // Recalculate fill percentage after corrections

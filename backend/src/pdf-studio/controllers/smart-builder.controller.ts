@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Post,
   Get,
@@ -18,20 +19,37 @@ import { Public } from '../../auth/public.decorator';
 import { GetUser } from '../../auth/get-user.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ContentAnalysisService } from '../services/content-analysis.service';
-import { ContentEnhancementService, EnhancementOptions } from '../services/content-enhancement.service';
+import {
+  ContentEnhancementService,
+  EnhancementOptions,
+} from '../services/content-enhancement.service';
+import {
+  PdfLlmEnhancementService,
+  LlmEnhancementOp,
+} from '../services/pdf-llm-enhancement.service';
 import { ContentStructureService } from '../services/content-structure.service';
 import { QualityCheckService } from '../services/quality-check.service';
 import { ContentNormalizerService } from '../services/content-normalizer.service';
 import { ContentBlockExtractorService } from '../services/content-block-extractor.service';
 import { OutlineBuilderService } from '../services/outline-builder.service';
-import { RuleBasedPagePlannerService, PlannedPage } from '../services/rule-based-page-planner.service';
-import { DocumentCompositionService, PageComposition } from '../services/document-composition.service';
+import {
+  RuleBasedPagePlannerService,
+  PlannedPage,
+} from '../services/rule-based-page-planner.service';
+import {
+  DocumentCompositionService,
+  PageComposition,
+} from '../services/document-composition.service';
 import { PageDensityBalancerService } from '../services/page-density-balancer.service';
 import { SemanticContinuationService } from '../services/semantic-continuation.service';
 import { DynamicCoverComposerService } from '../services/dynamic-cover-composer.service';
 import { AdaptiveLayoutEngineService } from '../services/adaptive-layout-engine.service';
 import { PublishingIntelligenceService } from '../services/publishing-intelligence.service';
-import { AnalyzeContentDto, EnhanceContentDto, GenerateDocumentDto } from '../dto/smart-builder.dto';
+import {
+  AnalyzeContentDto,
+  EnhanceContentDto,
+  GenerateDocumentDto,
+} from '../dto/smart-builder.dto';
 
 @Controller('pdf-studio/smart-builder')
 @UseGuards(JwtAuthGuard)
@@ -42,6 +60,7 @@ export class SmartBuilderController {
     private prisma: PrismaService,
     private contentAnalysisService: ContentAnalysisService,
     private contentEnhancementService: ContentEnhancementService,
+    private pdfLlmEnhancementService: PdfLlmEnhancementService,
     private contentStructureService: ContentStructureService,
     private qualityCheckService: QualityCheckService,
     private contentNormalizerService: ContentNormalizerService,
@@ -83,17 +102,16 @@ export class SmartBuilderController {
   @Throttle({ short: { limit: 5, ttl: 60000 } })
   @Post('analyze')
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-  async analyzeContent(
-    @Body() dto: AnalyzeContentDto,
-  ) {
+  async analyzeContent(@Body() dto: AnalyzeContentDto) {
     const { rawContent } = dto;
     try {
       this.logger.log(`Analyzing content (${rawContent.length} chars)`);
 
       const plainContent = this.htmlToPlainText(rawContent);
-      const analysisResult = await this.contentAnalysisService.analyzeContent(
-        plainContent,
-      );
+      if (!plainContent || plainContent.trim().length < 10) {
+        throw new BadRequestException('Content is too short — please enter at least a few words.');
+      }
+      const analysisResult = await this.contentAnalysisService.analyzeContent(plainContent);
 
       return {
         success: true,
@@ -127,10 +145,7 @@ export class SmartBuilderController {
       };
     } catch (error) {
       this.logger.error('Content analysis failed', error);
-      throw new HttpException(
-        'Content analysis failed',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Content analysis failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -141,9 +156,7 @@ export class SmartBuilderController {
   @Public()
   @Post('enhance-content')
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-  async enhanceContentOnly(
-    @Body() dto: EnhanceContentDto,
-  ) {
+  async enhanceContentOnly(@Body() dto: EnhanceContentDto) {
     const { rawContent, fixAll, options } = dto;
     try {
       this.logger.log(`Enhancing content (${rawContent.length} chars)`);
@@ -151,17 +164,26 @@ export class SmartBuilderController {
       // Analysis still needs plain text — but enhancement gets the ORIGINAL HTML
       // so it can preserve paragraphs, headings, lists, tables, etc.
       const plainContent = this.htmlToPlainText(rawContent);
-      const analysisResult = await this.contentAnalysisService.analyzeContent(
-        plainContent,
-      );
+      const analysisResult = await this.contentAnalysisService.analyzeContent(plainContent);
 
       // Map UI tone string to a valid enhancement tone. Anything unknown
       // falls back to 'business' (no destructive transformations).
-      const validTones = ['neutral', 'business', 'executive', 'formal', 'academic', 'persuasive', 'technical', 'friendly'];
+      const validTones = [
+        'neutral',
+        'business',
+        'executive',
+        'formal',
+        'academic',
+        'persuasive',
+        'technical',
+        'friendly',
+      ];
       const requestedTone = (options?.tone || '').toLowerCase();
       const tone = validTones.includes(requestedTone)
         ? requestedTone
-        : (requestedTone === 'professional' ? 'business' : 'business');
+        : requestedTone === 'professional'
+          ? 'business'
+          : 'business';
 
       // Build enhancement options. Destructive flags (restructure / expand /
       // shorten / professionalize / makeEngaging) are NEVER enabled here.
@@ -181,42 +203,42 @@ export class SmartBuilderController {
       }
 
       // Enhance — pass HTML so structure is preserved.
-      const enhancementResult =
-        await this.contentEnhancementService.enhanceContent(
-          rawContent,
-          enhancementOptions,
-        );
+      const enhancementResult = await this.contentEnhancementService.enhanceContent(
+        rawContent,
+        enhancementOptions,
+      );
 
       // Structure the enhanced content
-      const structuredDoc =
-        await this.contentStructureService.structureContent(
-          enhancementResult.enhancedContent,
-          analysisResult,
-          {
-            generateIntro: false,
-            generateSummary: false,
-            generateConclusion: options?.addConclusion || false,
-          },
-        );
+      const structuredDoc = await this.contentStructureService.structureContent(
+        enhancementResult.enhancedContent,
+        analysisResult,
+        {
+          generateIntro: false,
+          generateSummary: false,
+          generateConclusion: options?.addConclusion || false,
+        },
+      );
 
       return {
         success: true,
         data: {
           enhancedTitle: analysisResult.suggestedTitle,
           enhancedContent: enhancementResult.enhancedContent,
-          sections: structuredDoc.sections.map(s => ({
+          sections: structuredDoc.sections.map((s) => ({
             title: s.title,
             content: s.content,
             type: s.type,
           })),
-          fixedIssues: enhancementResult.changes.map(c => c.type),
+          fixedIssues: enhancementResult.changes.map((c) => c.type),
           remainingIssues: await (async () => {
             try {
               const reAnalysis = await this.contentAnalysisService.analyzeContent(
                 enhancementResult.enhancedContent,
               );
               // Only surface issues that weren't addressed by the enhancement
-              const fixedTypes = new Set<string>(enhancementResult.changes.map(c => c.type as string));
+              const fixedTypes = new Set<string>(
+                enhancementResult.changes.map((c) => c.type as string),
+              );
               return reAnalysis.issues.filter((i: any) => !fixedTypes.has(i.type));
             } catch (_) {
               return [];
@@ -227,10 +249,7 @@ export class SmartBuilderController {
       };
     } catch (error) {
       this.logger.error('Content enhancement failed', error);
-      throw new HttpException(
-        'Content enhancement failed',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException('Content enhancement failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -248,7 +267,8 @@ export class SmartBuilderController {
     @GetUser() user: any,
     @Body('rawContent') rawContent: string,
     @Body('documentType') documentType: string,
-    @Body('config') config: {
+    @Body('config')
+    config: {
       documentGoal?: string;
       targetAudience?: string;
       tone?: string;
@@ -301,10 +321,19 @@ export class SmartBuilderController {
 
       // ── Optional: safe grammar-only enhancement (no content deletion) ─────
       let finalContent = normalizedContent;
-      let finalBlocks  = blocks;
+      let finalBlocks = blocks;
       if (config.improveWriting || config.fixGrammar) {
         // Safe enhancement only — destructive flags are not even sent.
-        const validTones = ['neutral', 'business', 'executive', 'formal', 'academic', 'persuasive', 'technical', 'friendly'];
+        const validTones = [
+          'neutral',
+          'business',
+          'executive',
+          'formal',
+          'academic',
+          'persuasive',
+          'technical',
+          'friendly',
+        ];
         const requestedTone = (config.tone || '').toLowerCase();
         const safeTone = validTones.includes(requestedTone) ? requestedTone : 'business';
         const enhancementOptions: EnhancementOptions = {
@@ -312,31 +341,40 @@ export class SmartBuilderController {
           improveClarity: config.improveWriting,
           tone: safeTone as any,
         };
-        const enhResult = await this.contentEnhancementService.enhanceContent(normalizedContent, enhancementOptions);
+        const enhResult = await this.contentEnhancementService.enhanceContent(
+          normalizedContent,
+          enhancementOptions,
+        );
         finalContent = enhResult.enhancedContent;
-        finalBlocks  = this.contentBlockExtractorService.extract(finalContent);
-        this.logger.log(`Enhancement: ${enhResult.changes.length} change types, quality ${enhResult.qualityBefore} → ${enhResult.qualityAfter}${enhResult.rolledBack ? ' (rolled back)' : ''}`);
+        finalBlocks = this.contentBlockExtractorService.extract(finalContent);
+        this.logger.log(
+          `Enhancement: ${enhResult.changes.length} change types, quality ${enhResult.qualityBefore} → ${enhResult.qualityAfter}${enhResult.rolledBack ? ' (rolled back)' : ''}`,
+        );
       }
 
       // ── Step 4: Build outline ──────────────────────────────────────────────
       this.logger.log('Step 4/5: Building document outline...');
       const outline = this.outlineBuilderService.buildOutline(finalBlocks, analysisResult);
-      this.logger.log(`Outline: ${outline.sections.length} sections, ~${outline.estimatedTotalPages} pages`);
+      this.logger.log(
+        `Outline: ${outline.sections.length} sections, ~${outline.estimatedTotalPages} pages`,
+      );
 
       // ── Step 5: Plan pages (semantic, rule-based) ─────────────────────────
       this.logger.log('Step 5/5: Planning pages...');
-      
+
       // Use semantic sections if available, otherwise fall back to outline sections
-      const semanticSections = analysisResult.semanticAnalysis?.semanticSections || outline.sections.map(s => ({
-        title: s.title,
-        sectionType: s.sectionType,
-      }));
-      
+      const semanticSections =
+        analysisResult.semanticAnalysis?.semanticSections ||
+        outline.sections.map((s) => ({
+          title: s.title,
+          sectionType: s.sectionType,
+        }));
+
       const plannedPages = this.ruleBasedPagePlannerService.planPages(outline, {
-        includeCoverPage:       config.includeCoverPage !== false,
+        includeCoverPage: config.includeCoverPage !== false,
         includeTableOfContents: config.includeTableOfContents === true,
-        title:                  config.title || outline.title,
-        semanticSections,       // NEW: Pass semantic sections for TOC generation
+        title: config.title || outline.title,
+        semanticSections, // NEW: Pass semantic sections for TOC generation
       });
       this.logger.log(`Page plan: ${plannedPages.length} pages`);
 
@@ -370,9 +408,13 @@ export class SmartBuilderController {
           // Regular content page composition
           composition = this.documentCompositionService.composePage(
             planned.contentText,
-            planned.sectionType === 'toc' ? 'toc' : 
-            planned.sectionType === 'summary' ? 'summary' :
-            planned.sectionType === 'conclusion' ? 'conclusion' : 'content',
+            planned.sectionType === 'toc'
+              ? 'toc'
+              : planned.sectionType === 'summary'
+                ? 'summary'
+                : planned.sectionType === 'conclusion'
+                  ? 'conclusion'
+                  : 'content',
             {
               targetDensity: 'balanced',
               maxLineLength: 65,
@@ -385,21 +427,17 @@ export class SmartBuilderController {
         composition.pageNumber = index + 1;
 
         // NEW: Apply adaptive layout engine for intelligent density management
-        const adaptiveComposition = this.adaptiveLayoutEngineService.composeAdaptivePage(
-          planned,
-          {
-            pageWidth: 210,
-            pageHeight: 297,
-            margins: { top: 20, right: 20, bottom: 20, left: 20 },
-            colorScheme: config.templateType || 'blue',
-            templateType: config.templateType || 'report',
-          },
-        );
+        const adaptiveComposition = this.adaptiveLayoutEngineService.composeAdaptivePage(planned, {
+          pageWidth: 210,
+          pageHeight: 297,
+          margins: { top: 20, right: 20, bottom: 20, left: 20 },
+          colorScheme: config.templateType || 'blue',
+          templateType: config.templateType || 'report',
+        });
 
         // Auto-correct composition issues (under-utilization, overcrowding, etc.)
-        const correctedComposition = this.adaptiveLayoutEngineService.autoCorrectComposition(
-          adaptiveComposition,
-        );
+        const correctedComposition =
+          this.adaptiveLayoutEngineService.autoCorrectComposition(adaptiveComposition);
 
         // Log quality metrics
         if (correctedComposition.qualityScore < 80) {
@@ -434,11 +472,12 @@ export class SmartBuilderController {
 
       this.logger.log(
         `✓ Publishing intelligence: ${publishingResult.report.pagesBefore} → ${publishingResult.report.pagesAfter} pages, ` +
-        `occupancy=${publishingResult.report.averageOccupancy}%, readiness=${publishingResult.report.exportReadinessScore}/100`,
+          `occupancy=${publishingResult.report.averageOccupancy}%, readiness=${publishingResult.report.exportReadinessScore}/100`,
       );
 
       // Step 6C: Add semantic continuations
-      const sections = this.semanticContinuationService.identifySemanticSections(balancedCompositions);
+      const sections =
+        this.semanticContinuationService.identifySemanticSections(balancedCompositions);
       const toc = this.semanticContinuationService.buildTableOfContents(sections);
 
       const finalCompositions = balancedCompositions.map((composition, index) => {
@@ -459,17 +498,19 @@ export class SmartBuilderController {
         );
 
         return continuationMeta
-          ? this.semanticContinuationService.addVisualContinuity(compositionWithUniqueSections, continuationMeta)
+          ? this.semanticContinuationService.addVisualContinuity(
+              compositionWithUniqueSections,
+              continuationMeta,
+            )
           : compositionWithUniqueSections;
       });
 
       this.logger.log(`✓ Added semantic continuations: ${sections.length} sections`);
 
       // Step 6D: Calculate overall quality metrics
-      const avgQuality = finalCompositions.reduce(
-        (sum, c) => sum + c.metrics.overallQuality,
-        0,
-      ) / finalCompositions.length;
+      const avgQuality =
+        finalCompositions.reduce((sum, c) => sum + c.metrics.overallQuality, 0) /
+        finalCompositions.length;
 
       this.logger.log(`📊 Composition quality: ${avgQuality.toFixed(1)}/100`);
 
@@ -477,17 +518,18 @@ export class SmartBuilderController {
 
       // ── Create project ─────────────────────────────────────────────────────
       const _sbWsMember = await this.prisma.workspaceMember.findFirst({
-        where: { userId }, select: { workspaceId: true },
+        where: { userId },
+        select: { workspaceId: true },
       });
       const project = await this.prisma.project.create({
         data: {
           userId,
-          name:           config.title || outline.title || 'Smart PDF Document',
-          documentType:   'smart_pdf',
+          name: config.title || outline.title || 'Smart PDF Document',
+          documentType: 'smart_pdf',
           documentFormat: 'pdf',
-          status:         'draft',
-          audience:       config.targetAudience,
-          tone:           config.tone,
+          status: 'draft',
+          audience: config.targetAudience,
+          tone: config.tone,
           ...(_sbWsMember?.workspaceId ? { workspaceId: _sbWsMember.workspaceId } : {}),
         },
       });
@@ -496,39 +538,40 @@ export class SmartBuilderController {
       const docTitle = config.title || outline.title || analysisResult.suggestedTitle;
       const pdfDocument = await this.prisma.pdfDocument.create({
         data: {
-          projectId:    project.id,
-          title:        docTitle,
-          documentType: documentType || this.mapDetectedTypeToDocumentType(analysisResult.detectedType),
-          brandKitId:   config.brandKitId,
+          projectId: project.id,
+          title: docTitle,
+          documentType:
+            documentType || this.mapDetectedTypeToDocumentType(analysisResult.detectedType),
+          brandKitId: config.brandKitId,
           proTemplateId: config.proTemplateId || null,
-          templateType:  config.templateType || 'clean_business_report',
-          layoutType:    config.layoutType || null,
-          status:       'draft',
+          templateType: config.templateType || 'clean_business_report',
+          layoutType: config.layoutType || null,
+          status: 'draft',
           outline: {
-            detectedType:         analysisResult.detectedType,
-            confidence:           analysisResult.confidence,
-            keywords:             analysisResult.keywords,
-            topics:               analysisResult.topics,
-            sections:             outline.sections.map(s => ({ title: s.title, type: s.sectionType })),
+            detectedType: analysisResult.detectedType,
+            confidence: analysisResult.confidence,
+            keywords: analysisResult.keywords,
+            topics: analysisResult.topics,
+            sections: outline.sections.map((s) => ({ title: s.title, type: s.sectionType })),
             hasExplicitStructure: outline.hasExplicitStructure,
           },
           metadata: {
-            documentGoal:     config.documentGoal,
-            targetAudience:   config.targetAudience,
-            tone:             config.tone,
-            designStyle:      config.designStyle,
+            documentGoal: config.documentGoal,
+            targetAudience: config.targetAudience,
+            tone: config.tone,
+            designStyle: config.designStyle,
             generatedSections: finalCompositions.length,
-            estimatedPages:   outline.estimatedTotalPages,
-            templateType:     config.templateType || 'clean_business_report',
-            proTemplateId:    (config as any).proTemplateId || null,
-            visualStyle:      config.visualStyle,
-            layoutType:       config.layoutType,
-            hasImages:        config.hasImages || false,
-            hasCharts:        config.hasCharts || false,
-            totalWordCount:   outline.totalWordCount,
+            estimatedPages: outline.estimatedTotalPages,
+            templateType: config.templateType || 'clean_business_report',
+            proTemplateId: (config as any).proTemplateId || null,
+            visualStyle: config.visualStyle,
+            layoutType: config.layoutType,
+            hasImages: config.hasImages || false,
+            hasCharts: config.hasCharts || false,
+            totalWordCount: outline.totalWordCount,
             // NEW: Composition quality metrics
             compositionQuality: avgQuality,
-            sections: sections.map(s => ({
+            sections: sections.map((s) => ({
               id: s.id,
               title: s.title,
               pageRange: `${s.pageRange.start}-${s.pageRange.end}`,
@@ -548,26 +591,33 @@ export class SmartBuilderController {
           // Use the PlannedPage's contentText as the primary source — it is the
           // complete, planner-verified text for this page.
           // Fall back to composition sections only when meta is unavailable.
-          const pageType = composition.layout === 'cover'
-            ? 'cover'
-            : (meta?.sectionType || 'content');
+          const pageType =
+            composition.layout === 'cover' ? 'cover' : meta?.sectionType || 'content';
 
-          const pageText = pageType === 'cover'
-            ? JSON.stringify({
-                title: docTitle,
-                subtitle: config.documentGoal || analysisResult.detectedType || '',
-                description: this.buildCoverSummary(outline, 110),
-                date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-                overview: outline.sections
-                  .filter((s: any) => !['cover', 'toc'].includes(String(s.type || '').toLowerCase()))
-                  .slice(0, 6)
-                  .map(s => s.title),
-              })
-            : (meta?.contentText || composition.sections.map(s => s.content || '').join('\n\n'));
+          const pageText =
+            pageType === 'cover'
+              ? JSON.stringify({
+                  title: docTitle,
+                  subtitle: config.documentGoal || analysisResult.detectedType || '',
+                  description: this.buildCoverSummary(outline, 110),
+                  date: new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  }),
+                  overview: outline.sections
+                    .filter(
+                      (s: any) => !['cover', 'toc'].includes(String(s.type || '').toLowerCase()),
+                    )
+                    .slice(0, 6)
+                    .map((s) => s.title),
+                })
+              : meta?.contentText || composition.sections.map((s) => s.content || '').join('\n\n');
 
-          const pageTitle = meta?.pageTitle
-            || composition.sections.find(s => s.type === 'heading')?.content
-            || `Page ${index + 1}`;
+          const pageTitle =
+            meta?.pageTitle ||
+            composition.sections.find((s) => s.type === 'heading')?.content ||
+            `Page ${index + 1}`;
 
           this.logger.log(
             `Persisting page ${index + 1}: type=${pageType}, sections=${composition.sections.length}, textLen=${pageText.length}`,
@@ -576,34 +626,34 @@ export class SmartBuilderController {
           return this.prisma.pdfPage.create({
             data: {
               documentId: pdfDocument.id,
-              order:      index + 1,
+              order: index + 1,
               pageNumber: index + 1,
               pageType,
-              title:      pageTitle,
+              title: pageTitle,
               semanticSectionId: meta?.sectionId || null,
               densityScore: composition.metrics?.densityScore || null,
               layoutType: composition.layout || null,
               blocks: composition.sections as any,
               styles: { visualStyle: config.visualStyle } as any,
               content: {
-                text:           pageText,
-                template:       meta?.pageTemplate || 'clean_business_report',
+                text: pageText,
+                template: meta?.pageTemplate || 'clean_business_report',
                 isContinuation: meta?.isContinuation || false,
-                sectionId:      meta?.sectionId,
-                layoutType:     composition.layout,
-                visualStyle:    config.visualStyle,
+                sectionId: meta?.sectionId,
+                layoutType: composition.layout,
+                visualStyle: config.visualStyle,
                 // Store these in content for now until schema migration is applied
-                pageNumber:     index + 1,
+                pageNumber: index + 1,
                 semanticSectionId: meta?.sectionId,
-                densityScore:   composition.metrics?.densityScore,
-                blocks:         composition.sections,
-                styles:         { visualStyle: config.visualStyle },
-                images:         [],
-                charts:         [],
+                densityScore: composition.metrics?.densityScore,
+                blocks: composition.sections,
+                styles: { visualStyle: config.visualStyle },
+                images: [],
+                charts: [],
                 composition: {
-                  density:  composition.density,
+                  density: composition.density,
                   sections: composition.sections as any,
-                  metrics:  composition.metrics,
+                  metrics: composition.metrics,
                   intelligence: (composition as any).contentIntelligence,
                 },
               } as any,
@@ -617,24 +667,24 @@ export class SmartBuilderController {
 
       await this.prisma.smartBuilderConfig.create({
         data: {
-          documentId:             pdfDocument.id,
-          documentGoal:           config.documentGoal,
-          targetAudience:         config.targetAudience,
-          tone:                   config.tone             || 'formal',
-          designStyle:            config.designStyle      || 'modern',
-          improveWriting:         config.improveWriting   || false,
-          fixGrammar:             config.fixGrammar       || false,
-          addStructure:           config.addStructure     || false,
-          generateIntro:          config.generateIntro    || false,
-          generateSummary:        config.generateSummary  || false,
-          generateConclusion:     config.generateConclusion || false,
-          expandContent:          config.expandContent    || false,
-          shortenContent:         config.shortenContent   || false,
+          documentId: pdfDocument.id,
+          documentGoal: config.documentGoal,
+          targetAudience: config.targetAudience,
+          tone: config.tone || 'formal',
+          designStyle: config.designStyle || 'modern',
+          improveWriting: config.improveWriting || false,
+          fixGrammar: config.fixGrammar || false,
+          addStructure: config.addStructure || false,
+          generateIntro: config.generateIntro || false,
+          generateSummary: config.generateSummary || false,
+          generateConclusion: config.generateConclusion || false,
+          expandContent: config.expandContent || false,
+          shortenContent: config.shortenContent || false,
           includeTableOfContents: config.includeTableOfContents === true,
-          includeCoverPage:       config.includeCoverPage !== false,
-          includePageNumbers:     true,
-          includeHeaders:         true,
-          includeFooters:         true,
+          includeCoverPage: config.includeCoverPage !== false,
+          includePageNumbers: true,
+          includeHeaders: true,
+          includeFooters: true,
         },
       });
 
@@ -643,16 +693,20 @@ export class SmartBuilderController {
       try {
         const qResult = await this.qualityCheckService.checkQuality({
           title: pdfDocument.title,
-          pages: pages.map(p => ({ title: p.title, content: p.content as any, pageType: p.pageType })),
+          pages: pages.map((p) => ({
+            title: p.title,
+            content: p.content as any,
+            pageType: p.pageType,
+          })),
         });
         qualityScore = qResult.overallScore;
         await this.prisma.pdfDocument.update({
           where: { id: pdfDocument.id },
           data: {
-            qualityScore:    qResult.overallScore,
-            validationResult:qResult as any,
-            lastQualityCheck:new Date(),
-            exportReady:     qResult.validationPassed,
+            qualityScore: qResult.overallScore,
+            validationResult: qResult as any,
+            lastQualityCheck: new Date(),
+            exportReady: qResult.validationPassed,
           },
         });
         this.logger.log(`Quality score: ${qResult.overallScore}/100 (${qResult.grade})`);
@@ -669,10 +723,14 @@ export class SmartBuilderController {
           pages,
           analysis: analysisResult,
           outline: {
-            title:    outline.title,
-            sections: outline.sections.map(s => ({ title: s.title, type: s.sectionType, estimatedPages: s.estimatedPages })),
+            title: outline.title,
+            sections: outline.sections.map((s) => ({
+              title: s.title,
+              type: s.sectionType,
+              estimatedPages: s.estimatedPages,
+            })),
           },
-          sections:       outline.sections.length,
+          sections: outline.sections.length,
           estimatedPages: finalCompositions.length, // Use actual page count after balancing
         },
       };
@@ -693,11 +751,16 @@ export class SmartBuilderController {
   async enhanceDocument(
     @Body('documentId') documentId: string,
     @Body('enhancementType') enhancementType: string,
+    @GetUser() user: any,
     @Body('targetId') targetId?: string,
   ) {
     const VALID_ENHANCEMENT_TYPES = [
-      'improve_writing', 'fix_grammar', 'restructure',
-      'expand', 'shorten', 'professionalize',
+      'improve_writing',
+      'fix_grammar',
+      'restructure',
+      'expand',
+      'shorten',
+      'professionalize',
     ];
     if (!enhancementType || !VALID_ENHANCEMENT_TYPES.includes(enhancementType)) {
       throw new HttpException(
@@ -707,6 +770,9 @@ export class SmartBuilderController {
     }
 
     try {
+      // Ownership enforcement — this mutates document/page content.
+      await this.assertDocumentAccess(documentId, user);
+
       const document = await this.prisma.pdfDocument.findUnique({
         where: { id: documentId },
         include: { pages: true },
@@ -726,9 +792,58 @@ export class SmartBuilderController {
           throw new HttpException('Page not found', HttpStatus.NOT_FOUND);
         }
 
-        const enhancementOptions = this.getEnhancementOptions(enhancementType);
         const content = (page.content as any).text || '';
 
+        // Phase Ω.2 — expand/shorten/restructure/professionalize are REAL LLM
+        // transformations (no longer aliases of the grammar engine). When AI is
+        // unconfigured we report honestly instead of faking a success.
+        const LLM_OPS = ['expand', 'shorten', 'restructure', 'professionalize'];
+        if (LLM_OPS.includes(enhancementType)) {
+          const llm = await this.pdfLlmEnhancementService.transform(
+            content,
+            enhancementType as LlmEnhancementOp,
+          );
+          if (!llm.aiUsed) {
+            // Do NOT persist and do NOT claim success — tell the user the truth.
+            return {
+              success: false,
+              data: {
+                enhancedContent: content,
+                changes: [],
+                aiUsed: false,
+                changed: false,
+                note: llm.note,
+              },
+            };
+          }
+          if (!llm.changed) {
+            return {
+              success: true,
+              data: {
+                enhancedContent: content,
+                changes: [],
+                aiUsed: true,
+                changed: false,
+                note: 'No changes were needed.',
+              },
+            };
+          }
+          await this.prisma.pdfPage.update({
+            where: { id: targetId },
+            data: { content: { ...(page.content as any), text: llm.enhancedContent } },
+          });
+          return {
+            success: true,
+            data: {
+              enhancedContent: llm.enhancedContent,
+              changes: [{ type: enhancementType }],
+              aiUsed: true,
+              changed: true,
+            },
+          };
+        }
+
+        const enhancementOptions = this.getEnhancementOptions(enhancementType);
         const result = await this.contentEnhancementService.enhanceContent(
           content,
           enhancementOptions,
@@ -746,11 +861,7 @@ export class SmartBuilderController {
         });
 
         // Save enhancement record
-        await this.contentEnhancementService.saveEnhancement(
-          documentId,
-          enhancementType,
-          result,
-        );
+        await this.contentEnhancementService.saveEnhancement(documentId, enhancementType, result);
 
         return {
           success: true,
@@ -758,6 +869,8 @@ export class SmartBuilderController {
             enhancedContent: result.enhancedContent,
             changes: result.changes,
             improvement: result.improvement,
+            aiUsed: true,
+            changed: result.enhancedContent !== content,
           },
         };
       } else {
@@ -777,11 +890,7 @@ export class SmartBuilderController {
         // Note: In a full implementation, you'd redistribute enhanced content back to pages
         // For now, return the enhancement result
 
-        await this.contentEnhancementService.saveEnhancement(
-          documentId,
-          enhancementType,
-          result,
-        );
+        await this.contentEnhancementService.saveEnhancement(documentId, enhancementType, result);
 
         return {
           success: true,
@@ -809,13 +918,17 @@ export class SmartBuilderController {
   async regenerateSection(
     @Body('documentId') documentId: string,
     @Body('sectionId') sectionId: string,
+    @GetUser() user: any,
   ) {
     try {
+      // Ownership enforcement — this mutates page content.
+      await this.assertDocumentAccess(documentId, user);
+
       const page = await this.prisma.pdfPage.findUnique({
         where: { id: sectionId },
       });
 
-      if (!page) {
+      if (!page || page.documentId !== documentId) {
         throw new HttpException('Section not found', HttpStatus.NOT_FOUND);
       }
 
@@ -825,10 +938,7 @@ export class SmartBuilderController {
       });
 
       if (!analysis) {
-        throw new HttpException(
-          'Content analysis not found',
-          HttpStatus.NOT_FOUND,
-        );
+        throw new HttpException('Content analysis not found', HttpStatus.NOT_FOUND);
       }
 
       // Extract relevant portion of raw content for this section
@@ -938,42 +1048,44 @@ export class SmartBuilderController {
       return html; // Already plain text or empty
     }
 
-    return html
-      // Headings → markdown syntax (so detectHeadings / splitByHeadings works)
-      .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '\n# $1\n')
-      .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '\n## $1\n')
-      .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '\n### $1\n')
-      .replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, '\n#### $1\n')
-      .replace(/<h5[^>]*>([\s\S]*?)<\/h5>/gi, '\n##### $1\n')
-      .replace(/<h6[^>]*>([\s\S]*?)<\/h6>/gi, '\n###### $1\n')
-      // Paragraphs → double newline (so countParagraphs works)
-      .replace(/<\/p>/gi, '\n\n')
-      .replace(/<p[^>]*>/gi, '')
-      // List items → bullet syntax (so detectBullets / splitByHeadings works)
-      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n')
-      .replace(/<\/[uo]l>/gi, '\n')
-      .replace(/<[uo]l[^>]*>/gi, '')
-      // Block separators
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/div>/gi, '\n')
-      .replace(/<\/blockquote>/gi, '\n')
-      // Table cells
-      .replace(/<\/td>/gi, ' ')
-      .replace(/<\/tr>/gi, '\n')
-      // Strip all remaining HTML tags
-      .replace(/<[^>]+>/g, '')
-      // Decode common HTML entities
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
-      // Normalize whitespace
-      .replace(/[ \t]+/g, ' ')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+    return (
+      html
+        // Headings → markdown syntax (so detectHeadings / splitByHeadings works)
+        .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '\n# $1\n')
+        .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '\n## $1\n')
+        .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '\n### $1\n')
+        .replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, '\n#### $1\n')
+        .replace(/<h5[^>]*>([\s\S]*?)<\/h5>/gi, '\n##### $1\n')
+        .replace(/<h6[^>]*>([\s\S]*?)<\/h6>/gi, '\n###### $1\n')
+        // Paragraphs → double newline (so countParagraphs works)
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<p[^>]*>/gi, '')
+        // List items → bullet syntax (so detectBullets / splitByHeadings works)
+        .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n')
+        .replace(/<\/[uo]l>/gi, '\n')
+        .replace(/<[uo]l[^>]*>/gi, '')
+        // Block separators
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<\/blockquote>/gi, '\n')
+        // Table cells
+        .replace(/<\/td>/gi, ' ')
+        .replace(/<\/tr>/gi, '\n')
+        // Strip all remaining HTML tags
+        .replace(/<[^>]+>/g, '')
+        // Decode common HTML entities
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+        // Normalize whitespace
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+    );
   }
 
   /**
@@ -995,7 +1107,9 @@ export class SmartBuilderController {
 
   private buildCoverSummary(outline: any, maxWords = 100): string {
     const body = (outline?.sections || [])
-      .filter((section: any) => !['cover', 'toc'].includes(String(section?.type || '').toLowerCase()))
+      .filter(
+        (section: any) => !['cover', 'toc'].includes(String(section?.type || '').toLowerCase()),
+      )
       .flatMap((section: any) => section?.blocks || [])
       .map((block: any) => block?.cleanText || block?.text || block?.content || '')
       .filter((text: string) => text && text.trim())
@@ -1022,17 +1136,19 @@ export class SmartBuilderController {
     // Destructive operations (paragraph→bullets, expansion, jargon swaps)
     // were intentionally removed.
     const optionsMap: Record<string, EnhancementOptions> = {
-      improve_writing:  { improveClarity: true,  fixGrammar: false, tone: 'business' },
-      fix_grammar:      { improveClarity: false, fixGrammar: true,  tone: 'neutral' },
+      improve_writing: { improveClarity: true, fixGrammar: false, tone: 'business' },
+      fix_grammar: { improveClarity: false, fixGrammar: true, tone: 'neutral' },
       // Legacy types now map to the safe combination — never destructive.
-      restructure:      { improveClarity: true,  fixGrammar: true,  tone: 'business' },
-      expand:           { improveClarity: true,  fixGrammar: true,  tone: 'business' },
-      shorten:          { improveClarity: true,  fixGrammar: false, tone: 'business' },
-      professionalize:  { improveClarity: true,  fixGrammar: true,  tone: 'formal' },
-      engage:           { improveClarity: true,  fixGrammar: true,  tone: 'business' },
+      restructure: { improveClarity: true, fixGrammar: true, tone: 'business' },
+      expand: { improveClarity: true, fixGrammar: true, tone: 'business' },
+      shorten: { improveClarity: true, fixGrammar: false, tone: 'business' },
+      professionalize: { improveClarity: true, fixGrammar: true, tone: 'formal' },
+      engage: { improveClarity: true, fixGrammar: true, tone: 'business' },
     };
 
-    return optionsMap[enhancementType] || { improveClarity: true, fixGrammar: true, tone: 'business' };
+    return (
+      optionsMap[enhancementType] || { improveClarity: true, fixGrammar: true, tone: 'business' }
+    );
   }
 
   // ── Page management ──────────────────────────────────────────────────────────
@@ -1068,7 +1184,10 @@ export class SmartBuilderController {
       return { success: true, data: { page } };
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(error.message || 'Failed to add page', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        error.message || 'Failed to add page',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -1093,13 +1212,17 @@ export class SmartBuilderController {
       }
 
       const count = await this.prisma.pdfPage.count({ where: { documentId } });
-      if (count <= 1) throw new HttpException('Cannot delete the only page', HttpStatus.BAD_REQUEST);
+      if (count <= 1)
+        throw new HttpException('Cannot delete the only page', HttpStatus.BAD_REQUEST);
 
       await this.prisma.pdfPage.delete({ where: { id: pageId } });
       return { success: true, message: 'Page deleted' };
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(error.message || 'Failed to delete page', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        error.message || 'Failed to delete page',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -1113,7 +1236,8 @@ export class SmartBuilderController {
     try {
       await this.assertDocumentAccess(documentId, user);
       const source = await this.prisma.pdfPage.findUnique({ where: { id: pageId } });
-      if (!source || source.documentId !== documentId) throw new HttpException('Page not found', HttpStatus.NOT_FOUND);
+      if (!source || source.documentId !== documentId)
+        throw new HttpException('Page not found', HttpStatus.NOT_FOUND);
       const lastPage = await this.prisma.pdfPage.findFirst({
         where: { documentId },
         orderBy: { order: 'desc' },
@@ -1129,7 +1253,10 @@ export class SmartBuilderController {
       });
       return { success: true, data: { page: newPage } };
     } catch (error) {
-      throw new HttpException(error.message || 'Failed to duplicate page', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        error.message || 'Failed to duplicate page',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

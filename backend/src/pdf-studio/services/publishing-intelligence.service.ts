@@ -5,10 +5,7 @@ import { SmartAutoFlowEngineService } from './smart-auto-flow-engine.service';
 import { EditorialGridEngineService } from './editorial-grid-engine.service';
 import { MagazineLayoutEngineService } from './magazine-layout-engine.service';
 import { PaginationIntelligenceService } from './pagination-intelligence.service';
-import {
-  PublishingIssue,
-  PublishingOptimizationResult,
-} from './publishing-intelligence.types';
+import { PublishingIssue, PublishingOptimizationResult } from './publishing-intelligence.types';
 
 @Injectable()
 export class PublishingIntelligenceService {
@@ -27,8 +24,8 @@ export class PublishingIntelligenceService {
   ): PublishingOptimizationResult {
     this.logger.log(`Publishing intelligence optimizing ${composedPages.length} pages`);
 
-    const initialPages = composedPages.map(item => item.composition);
-    const initialMeta = composedPages.map(item => item.plannedPage);
+    const initialPages = composedPages.map((item) => item.composition);
+    const initialMeta = composedPages.map((item) => item.plannedPage);
 
     const autoFlow = this.autoFlow.flow(initialPages, initialMeta);
     const issues: PublishingIssue[] = [...autoFlow.issues];
@@ -68,8 +65,8 @@ export class PublishingIntelligenceService {
     });
 
     const secondPass = this.autoFlow.flow(
-      artDirected.map(page => page.composition),
-      artDirected.map(page => page.plannedPage),
+      artDirected.map((page) => page.composition),
+      artDirected.map((page) => page.plannedPage),
     );
     issues.push(...secondPass.issues);
 
@@ -82,14 +79,17 @@ export class PublishingIntelligenceService {
       })),
     }));
 
-    const estimates = finalPages.map(page => this.pagination.estimatePage(page));
+    const estimates = finalPages.map((page) => this.pagination.estimatePage(page));
     const averageOccupancy = estimates.length
       ? estimates.reduce((sum, estimate) => sum + estimate.occupancy, 0) / estimates.length
       : 0;
     const visualRhythmScore = artDirected.length
       ? artDirected.reduce((sum, page) => sum + page.grid.rhythmScore, 0) / artDirected.length
       : 100;
-    const semanticContinuityScore = this.pagination.scoreContinuity(finalPages, secondPass.metadata);
+    const semanticContinuityScore = this.pagination.scoreContinuity(
+      finalPages,
+      secondPass.metadata,
+    );
     const exportReadinessScore = this.scoreExportReadiness(estimates, issues);
 
     this.logger.log(
@@ -111,14 +111,17 @@ export class PublishingIntelligenceService {
     };
   }
 
-  private scoreExportReadiness(estimates: ReturnType<PaginationIntelligenceService['estimatePage']>[], issues: PublishingIssue[]): number {
+  private scoreExportReadiness(
+    estimates: ReturnType<PaginationIntelligenceService['estimatePage']>[],
+    issues: PublishingIssue[],
+  ): number {
     let score = 100;
-    score -= estimates.filter(estimate => estimate.hasOverflow).length * 18;
-    score -= estimates.filter(estimate => estimate.isUnderfilled).length * 10;
-    score -= estimates.filter(estimate => estimate.hasOrphanHeading).length * 14;
-    score -= issues.filter(issue => issue.severity === 'warning').length * 3;
-    score -= issues.filter(issue => issue.severity === 'error').length * 10;
-    score -= issues.filter(issue => issue.severity === 'blocking').length * 25;
+    score -= estimates.filter((estimate) => estimate.hasOverflow).length * 18;
+    score -= estimates.filter((estimate) => estimate.isUnderfilled).length * 10;
+    score -= estimates.filter((estimate) => estimate.hasOrphanHeading).length * 14;
+    score -= issues.filter((issue) => issue.severity === 'warning').length * 3;
+    score -= issues.filter((issue) => issue.severity === 'error').length * 10;
+    score -= issues.filter((issue) => issue.severity === 'blocking').length * 25;
     return Math.max(0, Math.min(100, Math.round(score)));
   }
 }

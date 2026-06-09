@@ -8,109 +8,109 @@
 export type CvDoctype = 'cv' | 'resume' | 'coverLetter' | 'portfolio';
 
 export interface CvPersonal {
-  fullName?:  string;
-  headline?:  string;
-  location?:  string;
-  email?:     string;
-  phone?:     string;
-  website?:   string;
-  linkedin?:  string;
-  github?:    string;
-  summary?:   string;
-  photoUrl?:  string;
+  fullName?: string;
+  headline?: string;
+  location?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  linkedin?: string;
+  github?: string;
+  summary?: string;
+  photoUrl?: string;
 }
 
 export interface CvExperience {
-  id:        string;
-  company:   string;
-  role:      string;
+  id: string;
+  company: string;
+  role: string;
   location?: string;
-  start:     string;          // YYYY-MM or YYYY
-  end?:      string;          // null/undefined = "Present"
-  description?: string;       // preserved paragraph/context text
-  bullets:   string[];        // responsibilities / achievements, in source order
+  start: string; // YYYY-MM or YYYY
+  end?: string; // null/undefined = "Present"
+  description?: string; // preserved paragraph/context text
+  bullets: string[]; // responsibilities / achievements, in source order
   achievements?: string[];
   technologies?: string[];
   metrics?: string[];
   projects?: string[];
-  rawText?: string;           // original grouped import text for audit/debug
+  rawText?: string; // original grouped import text for audit/debug
 }
 
 export interface CvEducation {
-  id:          string;
+  id: string;
   institution: string;
-  degree?:     string;
-  field?:      string;
-  start?:      string;
-  end?:        string;
-  gpa?:        string;
-  honors?:     string[];
+  degree?: string;
+  field?: string;
+  start?: string;
+  end?: string;
+  gpa?: string;
+  honors?: string[];
 }
 
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert';
 export type SkillCategory = 'technical' | 'business' | 'language' | 'tool' | 'soft' | 'other';
 
 export interface CvSkill {
-  id:        string;
-  name:      string;
-  category:  SkillCategory;
-  level?:    SkillLevel;
+  id: string;
+  name: string;
+  category: SkillCategory;
+  level?: SkillLevel;
 }
 
 export interface CvLanguage {
-  id:          string;
-  name:        string;
+  id: string;
+  name: string;
   proficiency: 'basic' | 'conversational' | 'fluent' | 'native';
 }
 
 export interface CvProject {
-  id:           string;
-  name:         string;
+  id: string;
+  name: string;
   description?: string;
-  role?:        string;
+  role?: string;
   technologies?: string[];
-  links?:       Array<{ label: string; url: string }>;
-  results?:     string[];
-  start?:       string;
-  end?:         string;
+  links?: Array<{ label: string; url: string }>;
+  results?: string[];
+  start?: string;
+  end?: string;
 }
 
 export interface CvCertification {
-  id:            string;
-  name:          string;
-  issuer:        string;
-  date?:         string;
-  expires?:      string;
+  id: string;
+  name: string;
+  issuer: string;
+  date?: string;
+  expires?: string;
   credentialId?: string;
-  url?:          string;
+  url?: string;
   attachmentUrl?: string;
 }
 
 export interface CvAward {
-  id:           string;
-  title:        string;
-  issuer?:      string;
-  date?:        string;
+  id: string;
+  title: string;
+  issuer?: string;
+  date?: string;
   description?: string;
 }
 
 export interface CvPublication {
-  id:        string;
-  title:     string;
-  venue?:    string;
-  date?:     string;
-  url?:      string;
+  id: string;
+  title: string;
+  venue?: string;
+  date?: string;
+  url?: string;
   coauthors?: string;
 }
 
 export interface CvReference {
-  id:       string;
-  name:     string;
-  title?:   string;
+  id: string;
+  name: string;
+  title?: string;
   company?: string;
-  email?:   string;
-  phone?:   string;
-  note?:    string;
+  email?: string;
+  phone?: string;
+  note?: string;
 }
 
 // =============================================================================
@@ -118,22 +118,22 @@ export interface CvReference {
 // =============================================================================
 
 export interface CvProfileDto {
-  id:        string;
-  userId:    string;
-  personal:  CvPersonal | null;
-  experience:    CvExperience[];
-  education:     CvEducation[];
-  skills:        CvSkill[];
-  languages:     CvLanguage[];
-  projects:      CvProject[];
+  id: string;
+  userId: string;
+  personal: CvPersonal | null;
+  experience: CvExperience[];
+  education: CvEducation[];
+  skills: CvSkill[];
+  languages: CvLanguage[];
+  projects: CvProject[];
   certifications: CvCertification[];
-  awards:        CvAward[];
-  publications:  CvPublication[];
-  references:    CvReference[];
-  importSource:  string | null;
-  importedAt:    string | null;
-  createdAt:     string;
-  updatedAt:     string;
+  awards: CvAward[];
+  publications: CvPublication[];
+  references: CvReference[];
+  importSource: string | null;
+  importedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // =============================================================================
@@ -142,42 +142,60 @@ export interface CvProfileDto {
 
 /** Order + visibility of sections shown in CV / Resume / Portfolio variants. */
 export type CvSectionKey =
-  | 'header' | 'summary' | 'experience' | 'education' | 'skills' | 'languages'
-  | 'projects' | 'certifications' | 'awards' | 'publications' | 'references'
-  | 'testimonials' | 'caseStudies' | 'achievements';
+  | 'header'
+  | 'summary'
+  | 'experience'
+  | 'education'
+  | 'skills'
+  | 'languages'
+  | 'projects'
+  | 'certifications'
+  | 'awards'
+  | 'publications'
+  | 'references'
+  | 'testimonials'
+  | 'caseStudies'
+  | 'achievements';
 
 export interface CvDocumentContent_CV {
   /** Order of sections in the rendered output. */
-  sectionOrder:    CvSectionKey[];
+  sectionOrder: CvSectionKey[];
   /** Per-section overrides (e.g. trim experience to top 5, custom summary). */
   sectionOverrides?: {
-    summary?:        string;
-    experienceIds?:  string[];
-    skillIds?:       string[];
-    projectIds?:     string[];
+    summary?: string;
+    experienceIds?: string[];
+    skillIds?: string[];
+    projectIds?: string[];
   };
   /** Optional job-specific metadata for variants (Phase 42I). */
-  jobTitle?:       string;
-  jobCompany?:     string;
+  jobTitle?: string;
+  jobCompany?: string;
 }
 
 export interface CvDocumentContent_CoverLetter {
-  greeting:     string;
-  intro:        string;
-  body:         string[];
-  whyCompany?:  string;
-  closing:      string;
-  signature?:   string;
-  company?:     string;
-  role?:        string;
+  greeting: string;
+  intro: string;
+  body: string[];
+  whyCompany?: string;
+  closing: string;
+  signature?: string;
+  company?: string;
+  role?: string;
   hiringManager?: string;
 }
 
 export interface CvDocumentContent_Portfolio {
-  sections:           Array<{ key: string; title: string; body?: string; itemIds?: string[] }>;
+  sections: Array<{ key: string; title: string; body?: string; itemIds?: string[] }>;
   showcaseProjectIds: string[];
-  testimonials?:      Array<{ id: string; name: string; role: string; quote: string; company?: string }>;
-  caseStudies?:       Array<{ id: string; title: string; problem: string; solution: string; outcome: string; projectId?: string }>;
+  testimonials?: Array<{ id: string; name: string; role: string; quote: string; company?: string }>;
+  caseStudies?: Array<{
+    id: string;
+    title: string;
+    problem: string;
+    solution: string;
+    outcome: string;
+    projectId?: string;
+  }>;
 }
 
 export type CvDocumentContent =
@@ -186,19 +204,19 @@ export type CvDocumentContent =
   | CvDocumentContent_Portfolio;
 
 export interface CvDocumentDto {
-  id:            string;
-  profileId:     string;
-  userId:        string;
-  doctype:       CvDoctype;
-  title:         string;
-  templateId:    string | null;
-  brandKitId:    string | null;
-  variant:       string | null;
-  content:       CvDocumentContent;
-  thumbnailUrl:  string | null;
+  id: string;
+  profileId: string;
+  userId: string;
+  doctype: CvDoctype;
+  title: string;
+  templateId: string | null;
+  brandKitId: string | null;
+  variant: string | null;
+  content: CvDocumentContent;
+  thumbnailUrl: string | null;
   lastExportUrl: string | null;
-  createdAt:     string;
-  updatedAt:     string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // =============================================================================
@@ -206,19 +224,39 @@ export interface CvDocumentDto {
 // =============================================================================
 
 export const DEFAULT_CV_SECTION_ORDER: CvSectionKey[] = [
-  'header', 'summary', 'experience', 'education', 'skills',
-  'projects', 'certifications', 'languages', 'awards', 'references',
+  'header',
+  'summary',
+  'experience',
+  'education',
+  'skills',
+  'projects',
+  'certifications',
+  'languages',
+  'awards',
+  'references',
 ];
 
 export const DEFAULT_RESUME_SECTION_ORDER: CvSectionKey[] = [
-  'header', 'summary', 'experience', 'skills', 'education', 'certifications',
+  'header',
+  'summary',
+  'experience',
+  'skills',
+  'education',
+  'certifications',
 ];
 
 export function emptyProfile(userId: string): Partial<CvProfileDto> {
   return {
     userId,
     personal: null,
-    experience: [], education: [], skills: [], languages: [],
-    projects: [], certifications: [], awards: [], publications: [], references: [],
+    experience: [],
+    education: [],
+    skills: [],
+    languages: [],
+    projects: [],
+    certifications: [],
+    awards: [],
+    publications: [],
+    references: [],
   };
 }

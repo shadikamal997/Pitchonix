@@ -13,7 +13,7 @@ import { DiversityTracker } from './diversity-tracker';
 
 export interface DetectorContext {
   documentType: string;
-  tracker:      DiversityTracker;
+  tracker: DiversityTracker;
 }
 
 @Injectable()
@@ -59,24 +59,42 @@ export class VisualBlockDetector {
   private hasData(kind: BlockKind, profile: ContentStructureProfile): boolean {
     const e = profile.extracted;
     switch (kind) {
-      case 'metric':            return e.numbers.length >= 1;
-      case 'metricGrid':        return e.numbers.length >= 2;
-      case 'kpi':               return e.numbers.length >= 1;
-      case 'pricing':           return e.pricingTiers.length >= 1;
-      case 'roadmap':           return e.phases.length >= 1;
-      case 'timeline':          return e.phases.length >= 1;
-      case 'team':              return e.people.length >= 1;
-      case 'featureGrid':       return e.features.length >= 2;
-      case 'comparison':        return e.competitors.length >= 1;
-      case 'swot':              return !!e.swot;
-      case 'marketSizing':      return !!e.marketSizing;
-      case 'fundingAllocation': return e.allocations.length >= 1;
-      case 'processSteps':      return e.features.length >= 2;
-      case 'testimonial':       return false; // built only when explicit testimonial input
-      case 'quote':             return false;
-      case 'bulletList':        return true; // always available
-      case 'paragraph':         return true;
-      case 'chart':             return e.numbers.length >= 2;
+      case 'metric':
+        return e.numbers.length >= 1;
+      case 'metricGrid':
+        return e.numbers.length >= 2;
+      case 'kpi':
+        return e.numbers.length >= 1;
+      case 'pricing':
+        return e.pricingTiers.length >= 1;
+      case 'roadmap':
+        return e.phases.length >= 1;
+      case 'timeline':
+        return e.phases.length >= 1;
+      case 'team':
+        return e.people.length >= 1;
+      case 'featureGrid':
+        return e.features.length >= 2;
+      case 'comparison':
+        return e.competitors.length >= 1;
+      case 'swot':
+        return !!e.swot;
+      case 'marketSizing':
+        return !!e.marketSizing;
+      case 'fundingAllocation':
+        return e.allocations.length >= 1;
+      case 'processSteps':
+        return e.features.length >= 2;
+      case 'testimonial':
+        return false; // built only when explicit testimonial input
+      case 'quote':
+        return false;
+      case 'bulletList':
+        return true; // always available
+      case 'paragraph':
+        return true;
+      case 'chart':
+        return e.numbers.length >= 2;
     }
   }
 }

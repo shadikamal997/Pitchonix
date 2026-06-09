@@ -14,32 +14,45 @@ import type { SlideElementDTO, SlideBackground, SlideThemeTokens } from '../slid
 import type { RenderDeckInput } from './render-types';
 import { createRenderPlan } from './render-planner';
 import { exportDeckToPptx } from './element-pptx-exporter';
-import { exportDeckToPdf, exportDeckToPngs, exportDeckToJpegs, buildImageZip, writeExportFile } from './element-image-exporter';
+import {
+  exportDeckToPdf,
+  exportDeckToPngs,
+  exportDeckToJpegs,
+  buildImageZip,
+  writeExportFile,
+} from './element-image-exporter';
 import { MasterElementsService } from '../master-elements/master-elements.service';
 import { buildMasterElementsForSlide } from '../master-elements/master-merge';
 import type { DeckMasterSettings } from '../master-elements/master-element-types';
 import { ComponentsService } from '../components/components.service';
 import { resolveInstancesForSlide } from '../components/component-resolve';
 import type { SavedComponentDTO } from '../components/component-types';
+import { PresentationLedgerService } from '../content-ledger/presentation-ledger.service';
+import { PptxImportLedgerService } from '../content-ledger/pptx-import-ledger.service';
 
 export type ExportFormat = 'pptx' | 'pdf' | 'png' | 'jpeg';
 
 export interface ExportResult {
-  buffer:   Buffer;
+  buffer: Buffer;
   fileName: string;
-  mime:     string;
-  fileUrl:  string;
+  mime: string;
+  fileUrl: string;
   manifest: ExportManifest;
 }
 
 export interface ExportManifest {
-  deckId:        string;
-  format:        ExportFormat;
-  generatedAt:   string;
-  slideCount:    number;
-  elementTotal:  number;
-  slides:        Array<{ slideId: string; title: string; elementsRendered: number; elementsTotal: number }>;
-  warnings:      string[];
+  deckId: string;
+  format: ExportFormat;
+  generatedAt: string;
+  slideCount: number;
+  elementTotal: number;
+  slides: Array<{
+    slideId: string;
+    title: string;
+    elementsRendered: number;
+    elementsTotal: number;
+  }>;
+  warnings: string[];
 }
 
 @Injectable()
@@ -50,6 +63,8 @@ export class SlideExportService {
     private prisma: PrismaService,
     private masters: MasterElementsService,
     private components: ComponentsService,
+    private presentationLedger: PresentationLedgerService,
+    private pptxImportLedger: PptxImportLedgerService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -106,7 +121,12 @@ export class SlideExportService {
           fileName = `${safeFileName(deckTitle || 'slide')}-${Date.now()}.png`;
           mime = 'image/png';
         } else {
-          buffer = await buildImageZip(pngs.map((p, i) => ({ name: `slide-${String(i + 1).padStart(2, '0')}.png`, buffer: p })));
+          buffer = await buildImageZip(
+            pngs.map((p, i) => ({
+              name: `slide-${String(i + 1).padStart(2, '0')}.png`,
+              buffer: p,
+            })),
+          );
           fileName = `${safeFileName(deckTitle || 'presentation')}-png-${Date.now()}.zip`;
           mime = 'application/zip';
         }
@@ -119,7 +139,12 @@ export class SlideExportService {
           fileName = `${safeFileName(deckTitle || 'slide')}-${Date.now()}.jpg`;
           mime = 'image/jpeg';
         } else {
-          buffer = await buildImageZip(jpegs.map((p, i) => ({ name: `slide-${String(i + 1).padStart(2, '0')}.jpg`, buffer: p })));
+          buffer = await buildImageZip(
+            jpegs.map((p, i) => ({
+              name: `slide-${String(i + 1).padStart(2, '0')}.jpg`,
+              buffer: p,
+            })),
+          );
           fileName = `${safeFileName(deckTitle || 'presentation')}-jpeg-${Date.now()}.zip`;
           mime = 'application/zip';
         }
@@ -134,7 +159,7 @@ export class SlideExportService {
       deckId,
       format,
       generatedAt: new Date().toISOString(),
-      slideCount:  planned.deck.slides.length,
+      slideCount: planned.deck.slides.length,
       elementTotal: manifestSlides.reduce((a, s) => a + s.elementsTotal, 0),
       slides: manifestSlides,
       warnings,
@@ -149,6 +174,27 @@ export class SlideExportService {
       this.logger.warn(`failed to persist export record: ${(err as Error).message}`);
     }
 
+    // Phase Ω.CONTENT.2D — mark exported, then reopen by RE-PARSING the actual
+    // exported PPTX (OOXML) / PDF and proving every deck node survived.
+    if (format === 'pptx' || format === 'pdf') {
+      try {
+        await this.presentationLedger.recordExportReopen(deckId, buffer, format);
+      } catch (err) {
+        this.logger.warn(
+          `content ledger export/reopen skipped for ${deckId}: ${(err as Error).message}`,
+        );
+      }
+      // Phase Ω.CONTENT.2F — if this deck originated from a PPTX import, also
+      // close its import-ledger lifecycle (no-op for non-imported decks).
+      try {
+        await this.pptxImportLedger.recordExportReopen(deckId, buffer, format);
+      } catch (err) {
+        this.logger.warn(
+          `pptx-import ledger export/reopen skipped for ${deckId}: ${(err as Error).message}`,
+        );
+      }
+    }
+
     return { buffer, fileName, mime, fileUrl, manifest };
   }
 
@@ -157,10 +203,15 @@ export class SlideExportService {
   // ---------------------------------------------------------------------------
 
   private async loadDeck(deckId: string): Promise<{
-    renderInput:    RenderDeckInput;
-    manifestSlides: Array<{ slideId: string; title: string; elementsRendered: number; elementsTotal: number }>;
-    deckTitle:      string;
-    warnings:       string[];
+    renderInput: RenderDeckInput;
+    manifestSlides: Array<{
+      slideId: string;
+      title: string;
+      elementsRendered: number;
+      elementsTotal: number;
+    }>;
+    deckTitle: string;
+    warnings: string[];
   }> {
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },
@@ -184,20 +235,40 @@ export class SlideExportService {
     // slide in the deck, batched into a single query. Then load each unique
     // component once so we can resolve instances synchronously per slide.
     const slideIds = deck.slides.map((s) => s.id);
-    const instancesPerSlide = new Map<string, Awaited<ReturnType<typeof this.components.listInstancesForSlide>>>();
-    await Promise.all(slideIds.map(async (sid) => {
-      instancesPerSlide.set(sid, await this.components.listInstancesForSlide(sid));
-    }));
-    const componentIds = Array.from(new Set(
-      Array.from(instancesPerSlide.values()).flat().map((i) => i.componentId),
-    ));
+    const instancesPerSlide = new Map<
+      string,
+      Awaited<ReturnType<typeof this.components.listInstancesForSlide>>
+    >();
+    await Promise.all(
+      slideIds.map(async (sid) => {
+        instancesPerSlide.set(sid, await this.components.listInstancesForSlide(sid));
+      }),
+    );
+    const componentIds = Array.from(
+      new Set(
+        Array.from(instancesPerSlide.values())
+          .flat()
+          .map((i) => i.componentId),
+      ),
+    );
     const componentMap = new Map<string, SavedComponentDTO>();
-    await Promise.all(componentIds.map(async (cid) => {
-      try { componentMap.set(cid, await this.components.getById(cid)); } catch { /* component deleted */ }
-    }));
+    await Promise.all(
+      componentIds.map(async (cid) => {
+        try {
+          componentMap.set(cid, await this.components.getById(cid));
+        } catch {
+          /* component deleted */
+        }
+      }),
+    );
 
     const warnings: string[] = [];
-    const manifestSlides: { slideId: string; title: string; elementsRendered: number; elementsTotal: number }[] = [];
+    const manifestSlides: {
+      slideId: string;
+      title: string;
+      elementsRendered: number;
+      elementsTotal: number;
+    }[] = [];
     const total = deck.slides.length;
 
     const renderInput: RenderDeckInput = {
@@ -209,23 +280,32 @@ export class SlideExportService {
           type: row.type as any,
           name: row.name,
           order: row.order,
-          x: row.x, y: row.y, width: row.width, height: row.height,
-          rotation: row.rotation, zIndex: row.zIndex,
-          locked: row.locked, visible: row.visible,
+          x: row.x,
+          y: row.y,
+          width: row.width,
+          height: row.height,
+          rotation: row.rotation,
+          zIndex: row.zIndex,
+          locked: row.locked,
+          visible: row.visible,
           content: (row.content as any) ?? null,
-          data:    (row.data    as any) ?? null,
-          style:   (row.style   as any) ?? null,
-          animations:    (row.animations    as any) ?? null,
+          data: (row.data as any) ?? null,
+          style: (row.style as any) ?? null,
+          animations: (row.animations as any) ?? null,
           accessibility: (row.accessibility as any) ?? null,
           createdAt: row.createdAt.toISOString(),
           updatedAt: row.updatedAt.toISOString(),
         }));
 
-        const masterElements = buildMasterElementsForSlide(masters, {
-          slideId:    slide.id,
-          slideIndex: idx,
-          slideTotal: total,
-        }, masterSettings as DeckMasterSettings);
+        const masterElements = buildMasterElementsForSlide(
+          masters,
+          {
+            slideId: slide.id,
+            slideIndex: idx,
+            slideTotal: total,
+          },
+          masterSettings as DeckMasterSettings,
+        );
 
         // Resolve linked component instances → SlideElement rows.
         const instances = instancesPerSlide.get(slide.id) || [];
@@ -238,25 +318,27 @@ export class SlideExportService {
           slideId: slide.id,
           title: slide.title,
           elementsRendered: rendered,
-          elementsTotal:    elements.length,
+          elementsTotal: elements.length,
         });
 
         if (slideElements.length === 0 && masterElements.length === 0) {
-          warnings.push(`Slide ${idx + 1} "${slide.title}" has no elements — it will export as a blank page. Open the editor to add content.`);
+          warnings.push(
+            `Slide ${idx + 1} "${slide.title}" has no elements — it will export as a blank page. Open the editor to add content.`,
+          );
         }
 
         return {
           index: idx,
           total,
           title: slide.title,
-          background:  (slide.background  as any) as SlideBackground  | null,
-          themeTokens: (slide.themeTokens as any) as SlideThemeTokens | null,
+          background: slide.background as any as SlideBackground | null,
+          themeTokens: slide.themeTokens as any as SlideThemeTokens | null,
           elements,
           // Phase 38E — fidelity passthroughs.
           speakerNotes: (slide as any).speakerNotes ?? null,
-          transition:   ((slide as any).transition  ?? null) as any,
-          sectionId:    (slide as any).sectionId    ?? null,
-          sectionName:  null, // resolved by exporter if needed
+          transition: ((slide as any).transition ?? null) as any,
+          sectionId: (slide as any).sectionId ?? null,
+          sectionName: null, // resolved by exporter if needed
         };
       }),
     };
@@ -275,16 +357,33 @@ export class SlideExportService {
   // ---------------------------------------------------------------------------
   private async loadCommentsAppendix(
     deckId: string,
-    manifestSlides: Array<{ slideId: string; title: string; elementsRendered: number; elementsTotal: number }>,
-  ): Promise<Array<{ slideIndex: number; slideTitle: string; author: string; createdAt: string; body: string; resolved: boolean; status?: string }>> {
-    const slideIndexById = new Map(manifestSlides.map((s, i) => [s.slideId, { idx: i + 1, title: s.title }]));
+    manifestSlides: Array<{
+      slideId: string;
+      title: string;
+      elementsRendered: number;
+      elementsTotal: number;
+    }>,
+  ): Promise<
+    Array<{
+      slideIndex: number;
+      slideTitle: string;
+      author: string;
+      createdAt: string;
+      body: string;
+      resolved: boolean;
+      status?: string;
+    }>
+  > {
+    const slideIndexById = new Map(
+      manifestSlides.map((s, i) => [s.slideId, { idx: i + 1, title: s.title }]),
+    );
     const slideIds = manifestSlides.map((s) => s.slideId);
     if (slideIds.length === 0) return [];
 
     const rows = await this.prisma.comment.findMany({
       where: { slideId: { in: slideIds }, deletedAt: null },
       include: {
-        user:       { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true } },
         assignedTo: { select: { id: true, name: true, email: true } },
       },
       orderBy: [{ slideId: 'asc' }, { createdAt: 'asc' }],
@@ -300,11 +399,11 @@ export class SlideExportService {
       return {
         slideIndex: ref?.idx ?? 0,
         slideTitle: ref?.title ?? '—',
-        author:     r.user?.name || r.user?.email || 'Unknown',
-        createdAt:  r.createdAt.toISOString(),
-        body:       r.parentId ? `↳ Reply: ${r.content}` : r.content,
-        resolved:   r.resolved,
-        status:     statusLabel,
+        author: r.user?.name || r.user?.email || 'Unknown',
+        createdAt: r.createdAt.toISOString(),
+        body: r.parentId ? `↳ Reply: ${r.content}` : r.content,
+        resolved: r.resolved,
+        status: statusLabel,
       };
     });
   }
@@ -315,9 +414,11 @@ export class SlideExportService {
 // =============================================================================
 
 function safeFileName(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60) || 'presentation';
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'presentation'
+  );
 }

@@ -194,9 +194,7 @@ export class ChartGenerationService {
     }
 
     // If time series data (dates in labels), use line
-    const hasTimeSeries = data.labels.some((label: string) =>
-      /\d{4}|\d{2}\/\d{2}/.test(label),
-    );
+    const hasTimeSeries = data.labels.some((label: string) => /\d{4}|\d{2}\/\d{2}/.test(label));
     if (hasTimeSeries) {
       return 'line';
     }

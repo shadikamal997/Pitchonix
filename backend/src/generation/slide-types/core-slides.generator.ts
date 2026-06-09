@@ -1,10 +1,14 @@
 import { SlideType, WizardInput } from './types';
 import { BaseSlideGenerator } from './base-slide.generator';
 import {
-  businessModelTitle, businessModelSubtitle,
-  tractionTitle, tractionSubtitle,
-  teamTitle, teamSubtitle,
-  askTitle, askSubtitle,
+  businessModelTitle,
+  businessModelSubtitle,
+  tractionTitle,
+  tractionSubtitle,
+  teamTitle,
+  teamSubtitle,
+  askTitle,
+  askSubtitle,
 } from './narrative-titles';
 
 // =============================================================================
@@ -40,23 +44,32 @@ import {
 export class BusinessModelSlideGenerator extends BaseSlideGenerator {
   type = SlideType.BUSINESS_MODEL;
   defaultPriority = 5;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
   isApplicable(input: WizardInput): boolean {
-    return !!(input.revenueModel || input.pricing) ||
-           (input.structured?.pricingTiers?.length ?? 0) > 0;
+    return (
+      !!(input.revenueModel || input.pricing) || (input.structured?.pricingTiers?.length ?? 0) > 0
+    );
   }
-  getTitle(input: WizardInput): string    { return businessModelTitle(input); }
-  getSubtitle(input: WizardInput): string { return businessModelSubtitle(input); }
+  getTitle(input: WizardInput): string {
+    return businessModelTitle(input);
+  }
+  getSubtitle(input: WizardInput): string {
+    return businessModelSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return { description: input.revenueModel || 'Revenue model' };
   }
 
   getSpeakerNotes(_input: WizardInput): string {
-    return `Explain the business model clearly and demonstrate unit economics. ` +
-           `Walk through pricing tiers if applicable. Show path to profitability. ` +
-           `Emphasize scalability and margins.`;
+    return (
+      `Explain the business model clearly and demonstrate unit economics. ` +
+      `Walk through pricing tiers if applicable. Show path to profitability. ` +
+      `Emphasize scalability and margins.`
+    );
   }
 }
 
@@ -64,22 +77,32 @@ export class BusinessModelSlideGenerator extends BaseSlideGenerator {
 export class TractionSlideGenerator extends BaseSlideGenerator {
   type = SlideType.TRACTION;
   defaultPriority = 6;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
   isApplicable(input: WizardInput): boolean {
-    return (!!input.traction && input.traction.trim().length > 0) ||
-           (input.structured?.kpis?.length ?? 0) > 0;
+    return (
+      (!!input.traction && input.traction.trim().length > 0) ||
+      (input.structured?.kpis?.length ?? 0) > 0
+    );
   }
-  getTitle(input: WizardInput): string    { return tractionTitle(input); }
-  getSubtitle(input: WizardInput): string { return tractionSubtitle(input); }
+  getTitle(input: WizardInput): string {
+    return tractionTitle(input);
+  }
+  getSubtitle(input: WizardInput): string {
+    return tractionSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return { description: input.traction || '' };
   }
 
   getSpeakerNotes(_input: WizardInput): string {
-    return `Highlight key metrics and show momentum. Emphasize growth trajectory. ` +
-           `Reference specific numbers and milestones. Show product-market fit validation.`;
+    return (
+      `Highlight key metrics and show momentum. Emphasize growth trajectory. ` +
+      `Reference specific numbers and milestones. Show product-market fit validation.`
+    );
   }
 }
 
@@ -87,23 +110,33 @@ export class TractionSlideGenerator extends BaseSlideGenerator {
 export class TeamSlideGenerator extends BaseSlideGenerator {
   type = SlideType.TEAM;
   defaultPriority = 7;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
   isApplicable(input: WizardInput): boolean {
-    return (!!input.team && input.team.trim().length > 0) ||
-           (input.structured?.teamMembers?.length ?? 0) > 0;
+    return (
+      (!!input.team && input.team.trim().length > 0) ||
+      (input.structured?.teamMembers?.length ?? 0) > 0
+    );
   }
-  getTitle(input: WizardInput): string    { return teamTitle(input); }
-  getSubtitle(input: WizardInput): string { return teamSubtitle(input); }
+  getTitle(input: WizardInput): string {
+    return teamTitle(input);
+  }
+  getSubtitle(input: WizardInput): string {
+    return teamSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return { description: input.team || '' };
   }
 
   getSpeakerNotes(_input: WizardInput): string {
-    return `Introduce key team members and highlight relevant experience. ` +
-           `Emphasize why this team is uniquely positioned to execute. ` +
-           `Mention advisors and notable backgrounds.`;
+    return (
+      `Introduce key team members and highlight relevant experience. ` +
+      `Emphasize why this team is uniquely positioned to execute. ` +
+      `Mention advisors and notable backgrounds.`
+    );
   }
 }
 
@@ -111,16 +144,24 @@ export class TeamSlideGenerator extends BaseSlideGenerator {
 export class AskSlideGenerator extends BaseSlideGenerator {
   type = SlideType.ASK;
   defaultPriority = 100; // Usually last slide
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
   isApplicable(input: WizardInput): boolean {
-    return input.documentType === 'pitch_deck' ||
-           !!input.fundingAsk ||
-           !!input.structured?.funding?.amount ||
-           (input.structured?.funding?.allocations?.length ?? 0) > 0;
+    return (
+      input.documentType === 'pitch_deck' ||
+      !!input.fundingAsk ||
+      !!input.structured?.funding?.amount ||
+      (input.structured?.funding?.allocations?.length ?? 0) > 0
+    );
   }
-  getTitle(input: WizardInput): string    { return askTitle(input); }
-  getSubtitle(input: WizardInput): string { return askSubtitle(input); }
+  getTitle(input: WizardInput): string {
+    return askTitle(input);
+  }
+  getSubtitle(input: WizardInput): string {
+    return askSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return {
@@ -133,8 +174,10 @@ export class AskSlideGenerator extends BaseSlideGenerator {
   }
 
   getSpeakerNotes(input: WizardInput): string {
-    return `Clear call to action: ${input.desiredAction || 'investment ask'}. ` +
-           `Reiterate key investment thesis. Be specific about amount and use of funds. ` +
-           `End with confidence and open for questions.`;
+    return (
+      `Clear call to action: ${input.desiredAction || 'investment ask'}. ` +
+      `Reiterate key investment thesis. Be specific about amount and use of funds. ` +
+      `End with confidence and open for questions.`
+    );
   }
 }

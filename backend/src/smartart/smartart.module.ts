@@ -4,7 +4,7 @@ import { SmartArtService } from './smartart.service';
 
 @Module({
   controllers: [SmartArtController],
-  providers:   [SmartArtService],
-  exports:     [SmartArtService],
+  providers: [SmartArtService],
+  exports: [SmartArtService],
 })
 export class SmartArtModule {}

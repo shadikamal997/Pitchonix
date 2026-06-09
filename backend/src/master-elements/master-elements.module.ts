@@ -4,7 +4,7 @@ import { MasterElementsService } from './master-elements.service';
 
 @Module({
   controllers: [MasterElementsController],
-  providers:   [MasterElementsService],
-  exports:     [MasterElementsService],
+  providers: [MasterElementsService],
+  exports: [MasterElementsService],
 })
 export class MasterElementsModule {}

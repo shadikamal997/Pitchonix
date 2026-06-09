@@ -73,7 +73,10 @@ export class ExecutiveQualityEngine {
     // probe (which transparently falls back to legacy fields).
     const kpisAvailable = input.structured?.kpis?.length ?? 0;
     const kpisSurfaced = slides
-      .map((s) => { const sig = analyzeSlide(s); return sig.metricsCount + sig.kpiCount; })
+      .map((s) => {
+        const sig = analyzeSlide(s);
+        return sig.metricsCount + sig.kpiCount;
+      })
       .reduce((a, b) => a + b, 0);
     let kpiCoverage: number;
     if (kpisAvailable === 0 && framework.targets.minKpis > 0) {
@@ -86,12 +89,15 @@ export class ExecutiveQualityEngine {
     }
 
     // ── Financial coverage ──────────────────────────────────────────────
-    const needsFinancials = ['business_plan', 'board_meeting_deck', 'executive_summary'].includes(input.documentType);
+    const needsFinancials = ['business_plan', 'board_meeting_deck', 'executive_summary'].includes(
+      input.documentType,
+    );
     let financialCoverage = 100;
     if (needsFinancials) {
       const hasFinSlide = slides.some((s) => s.type === SlideType.FINANCIALS);
-      const hasFinData  = !!input.structured?.financials?.revenue ||
-                          (input.structured?.financials?.projections?.length ?? 0) > 0;
+      const hasFinData =
+        !!input.structured?.financials?.revenue ||
+        (input.structured?.financials?.projections?.length ?? 0) > 0;
       if (!hasFinSlide && !hasFinData) {
         financialCoverage = 30;
         notes.push('Financials expected for this document type but no data present');
@@ -106,11 +112,10 @@ export class ExecutiveQualityEngine {
     // Heuristic: opening hook + closing CTA + at least 2 supporting slides.
     const types = new Set(slides.map((s) => s.type));
     let narrativeStrength = 50;
-    if (types.has(SlideType.COVER))            narrativeStrength += 10;
-    if (types.has(SlideType.PROBLEM))          narrativeStrength += 15;
-    if (types.has(SlideType.SOLUTION))         narrativeStrength += 15;
-    if (types.has(SlideType.ASK) || types.has(SlideType.EXECUTIVE_SUMMARY))
-                                               narrativeStrength += 10;
+    if (types.has(SlideType.COVER)) narrativeStrength += 10;
+    if (types.has(SlideType.PROBLEM)) narrativeStrength += 15;
+    if (types.has(SlideType.SOLUTION)) narrativeStrength += 15;
+    if (types.has(SlideType.ASK) || types.has(SlideType.EXECUTIVE_SUMMARY)) narrativeStrength += 10;
     narrativeStrength = Math.min(100, narrativeStrength);
     if (narrativeStrength < 70) {
       notes.push('Narrative arc lacks problem→solution→ask structure');
@@ -118,13 +123,13 @@ export class ExecutiveQualityEngine {
 
     // ── Weighted total ──────────────────────────────────────────────────
     const total = Math.round(
-      slideCount             * 0.10 +
-      informationBalance     * 0.15 +
-      visualBalance          * 0.20 +
-      frameworkCompleteness  * 0.25 +
-      kpiCoverage            * 0.10 +
-      financialCoverage      * 0.05 +
-      narrativeStrength      * 0.15,
+      slideCount * 0.1 +
+        informationBalance * 0.15 +
+        visualBalance * 0.2 +
+        frameworkCompleteness * 0.25 +
+        kpiCoverage * 0.1 +
+        financialCoverage * 0.05 +
+        narrativeStrength * 0.15,
     );
 
     return {
@@ -148,13 +153,14 @@ export class ExecutiveQualityEngine {
 function extractWordCount(slide: SlideContent): number {
   const c = slide.content || {};
   const parts: string[] = [];
-  if (slide.title)    parts.push(slide.title);
+  if (slide.title) parts.push(slide.title);
   if (slide.subtitle) parts.push(slide.subtitle);
   for (const v of Object.values(c)) {
     if (typeof v === 'string') parts.push(v);
-    else if (Array.isArray(v)) for (const x of v) {
-      if (typeof x === 'string') parts.push(x);
-    }
+    else if (Array.isArray(v))
+      for (const x of v) {
+        if (typeof x === 'string') parts.push(x);
+      }
   }
   return parts.join(' ').split(/\s+/).filter(Boolean).length;
 }

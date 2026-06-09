@@ -57,7 +57,7 @@ export class ExportService {
     pptx.layout = 'LAYOUT_16x9';
     pptx.author = 'Pitchonix';
     pptx.title = deck.title;
-    
+
     // Set default font
     pptx.defineSlideMaster({
       title: 'MASTER_SLIDE',
@@ -149,8 +149,8 @@ export class ExportService {
 
   private addCoverSlide(slide: any, data: any, colors: BrandColors) {
     // Gradient background using brand colors
-    slide.background = { 
-      fill: `LINEAR_GRADIENT(90, ${colors.primary}, ${colors.secondary})`
+    slide.background = {
+      fill: `LINEAR_GRADIENT(90, ${colors.primary}, ${colors.secondary})`,
     };
 
     // Add decorative shape
@@ -355,10 +355,10 @@ export class ExportService {
     if (data.content.pricing) {
       const tierColors = [colors.primary, colors.secondary, colors.accent];
       let xPos = 1;
-      
+
       data.content.pricing.forEach((tier: any, index: number) => {
         const tierColor = tierColors[index % tierColors.length];
-        
+
         // Card background
         slide.addShape('roundRect', {
           x: xPos,
@@ -477,10 +477,10 @@ export class ExportService {
     if (data.content.phases) {
       const phaseColors = [colors.primary, colors.secondary, colors.accent];
       let xPos = 0.5;
-      
+
       data.content.phases.forEach((phase: any, index: number) => {
         const phaseColor = phaseColors[index % phaseColors.length];
-        
+
         // Timeline circle
         slide.addShape('ellipse', {
           x: xPos + 1.0,
@@ -529,7 +529,7 @@ export class ExportService {
           text: item,
           options: { bullet: true, fontSize: 12, color: colors.text },
         }));
-        
+
         slide.addText(items, {
           x: xPos + 0.2,
           y: 2.9,
@@ -544,8 +544,8 @@ export class ExportService {
 
   private addAskSlide(slide: any, data: any, colors: BrandColors) {
     // Gradient background
-    slide.background = { 
-      fill: `LINEAR_GRADIENT(90, ${colors.primary}, ${colors.secondary})`
+    slide.background = {
+      fill: `LINEAR_GRADIENT(90, ${colors.primary}, ${colors.secondary})`,
     };
 
     slide.addText(data.title, {
@@ -684,9 +684,14 @@ export class ExportService {
     if (data.content.projections) {
       const rows = [];
       const headers = ['Year', 'Revenue', 'Expenses', 'Profit'];
-      
-      rows.push(headers.map(h => ({ text: h, options: { bold: true, fill: colors.primary, color: 'FFFFFF' } })));
-      
+
+      rows.push(
+        headers.map((h) => ({
+          text: h,
+          options: { bold: true, fill: colors.primary, color: 'FFFFFF' },
+        })),
+      );
+
       data.content.projections.forEach((proj: any) => {
         rows.push([
           { text: proj.year },
@@ -776,7 +781,7 @@ export class ExportService {
       this.addSlideToPptx(pptx, slide, brandColors);
     }
 
-    const buffer = await pptx.write({ outputType: 'nodebuffer' }) as Buffer;
+    const buffer = (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;
     const fileName = `${deck.id}_${Date.now()}.pptx`;
     const filePath = join(this.getExportsDir(), fileName);
     await fs.promises.writeFile(filePath, buffer);
@@ -821,7 +826,8 @@ export class ExportService {
   private generateDeckHTML(deck: any): string {
     const slides = (deck.slides || [])
       .map((slide: any) => {
-        const bg = slide.type === 'cover' ? '#1F2937' : slide.type === 'ask' ? '#3B82F6' : '#FFFFFF';
+        const bg =
+          slide.type === 'cover' ? '#1F2937' : slide.type === 'ask' ? '#3B82F6' : '#FFFFFF';
         const textColor = slide.type === 'cover' || slide.type === 'ask' ? '#FFFFFF' : '#1F2937';
         const subtitleColor = slide.type === 'cover' ? '#9CA3AF' : '#6B7280';
 
@@ -861,12 +867,31 @@ export class ExportService {
    * Update export record with file URL
    */
   async updateExportRecord(id: string, fileUrl: string) {
-    return this.prisma.export.update({
+    const updated = await this.prisma.export.update({
       where: { id },
       data: {
         status: 'completed',
         fileUrl,
       },
+      include: { deck: { select: { projectId: true } } },
     });
+
+    // Bump the owning project's exportCount so the dashboard/analytics "Exports"
+    // metric reflects reality. Best-effort: never fail an export over a counter.
+    const projectId = updated.deck?.projectId;
+    if (projectId) {
+      try {
+        await this.prisma.project.update({
+          where: { id: projectId },
+          data: { exportCount: { increment: 1 } },
+        });
+      } catch (err) {
+        this.logger.warn(
+          `Failed to increment exportCount for project ${projectId}: ${(err as any)?.message}`,
+        );
+      }
+    }
+
+    return updated;
   }
 }

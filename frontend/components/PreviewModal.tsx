@@ -258,7 +258,7 @@ export default function PreviewModal({
                   transform: `scale(${zoom})`,
                 }}
                 onLoad={handleIframeLoad}
-                sandbox="allow-same-origin"
+                sandbox="allow-same-origin allow-scripts"
               />
             </div>
           </div>

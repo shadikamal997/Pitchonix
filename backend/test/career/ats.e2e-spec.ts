@@ -21,7 +21,10 @@ describe('Career ATS Analysis (E2E)', () => {
 
   beforeAll(async () => {
     s = await createSession('ats');
-    const doc = await s.req.post('/career/documents').set(auth(s.token)).send({ doctype: 'cv', title: 'ATS Test CV' });
+    const doc = await s.req
+      .post('/career/documents')
+      .set(auth(s.token))
+      .send({ doctype: 'cv', title: 'ATS Test CV' });
     docId = doc.body.id;
   }, 60_000);
 
@@ -42,14 +45,20 @@ describe('Career ATS Analysis (E2E)', () => {
 
   // ── 2. Score range ────────────────────────────────────────────────────────
   it('overallScore is between 0 and 100', async () => {
-    const res = await s.req.post('/career/ats/analyze').set(auth(s.token)).send({ documentId: docId });
+    const res = await s.req
+      .post('/career/ats/analyze')
+      .set(auth(s.token))
+      .send({ documentId: docId });
     expect(res.body.overallScore).toBeGreaterThanOrEqual(0);
     expect(res.body.overallScore).toBeLessThanOrEqual(100);
   });
 
   // ── 3. Response shape ─────────────────────────────────────────────────────
   it('Response has breakdown, recommendations, risks, strengths', async () => {
-    const res = await s.req.post('/career/ats/analyze').set(auth(s.token)).send({ documentId: docId });
+    const res = await s.req
+      .post('/career/ats/analyze')
+      .set(auth(s.token))
+      .send({ documentId: docId });
     expect(res.body.breakdown).toBeDefined();
     expect(Array.isArray(res.body.recommendations)).toBe(true);
     expect(Array.isArray(res.body.risks)).toBe(true);
@@ -79,10 +88,13 @@ describe('Career ATS Analysis (E2E)', () => {
   });
 
   // ── 7. Wrong document owner → 404 ────────────────────────────────────────
-  it('ATS with another user\'s documentId → 404', async () => {
+  it("ATS with another user's documentId → 404", async () => {
     const s2 = await createSession('ats-other');
     try {
-      const doc2 = await s.req.post('/career/documents').set(auth(s.token)).send({ doctype: 'cv', title: 'Private ATS Doc' });
+      const doc2 = await s.req
+        .post('/career/documents')
+        .set(auth(s.token))
+        .send({ doctype: 'cv', title: 'Private ATS Doc' });
       await s.req
         .post('/career/ats/analyze')
         .set(auth(s2.token))
@@ -96,16 +108,19 @@ describe('Career ATS Analysis (E2E)', () => {
 
   // ── 8. Baseline score without job description ─────────────────────────────
   it('Without jobDescription → returns baseline score', async () => {
-    const res = await s.req.post('/career/ats/analyze').set(auth(s.token)).send({ documentId: docId });
+    const res = await s.req
+      .post('/career/ats/analyze')
+      .set(auth(s.token))
+      .send({ documentId: docId });
     expect(res.body.overallScore).toBeGreaterThan(0);
   });
 
   // ── 9. With job description → keywords score present ─────────────────────
   it('With jobDescription → keywords breakdown is populated', async () => {
-    const res = await s.req
-      .post('/career/ats/analyze')
-      .set(auth(s.token))
-      .send({ documentId: docId, jobDescription: 'We need a senior software engineer with TypeScript and React experience.' });
+    const res = await s.req.post('/career/ats/analyze').set(auth(s.token)).send({
+      documentId: docId,
+      jobDescription: 'We need a senior software engineer with TypeScript and React experience.',
+    });
     expect(res.body.breakdown?.keywords).toBeDefined();
   });
 });

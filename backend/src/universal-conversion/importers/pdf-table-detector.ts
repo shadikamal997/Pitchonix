@@ -30,37 +30,37 @@
 // =============================================================================
 
 export interface PdfTextItem {
-  str:    string;
-  x:      number;
-  y:      number;
-  width:  number;
+  str: string;
+  x: number;
+  y: number;
+  width: number;
   height: number;
   fontSize: number;
 }
 
 export interface DetectedCell {
-  text:    string;
+  text: string;
   colspan?: number;
-  bold?:    boolean;
+  bold?: boolean;
 }
 
 export interface DetectedTable {
-  kind:    'table';
-  rows:    DetectedCell[][];
+  kind: 'table';
+  rows: DetectedCell[][];
   headerRow: boolean;
 }
 
 export interface DetectedTextBlock {
-  kind:    'text';
-  text:    string;
+  kind: 'text';
+  text: string;
   fontSize: number;
 }
 
 export type DetectedBlock = DetectedTable | DetectedTextBlock;
 
-const MIN_TABLE_ROWS    = 2;      // need at least 2 rows to call it a table
-const MIN_BORDERLESS_ROWS = 3;    // borderless needs more evidence
-const MIN_COLS_PER_ROW  = 2;
+const MIN_TABLE_ROWS = 2; // need at least 2 rows to call it a table
+const MIN_BORDERLESS_ROWS = 3; // borderless needs more evidence
+const MIN_COLS_PER_ROW = 2;
 
 export function detectTables(lines: PdfTextItem[][]): DetectedBlock[] {
   const out: DetectedBlock[] = [];
@@ -97,7 +97,7 @@ export function detectTables(lines: PdfTextItem[][]): DetectedBlock[] {
         const borderless = !linesHaveExplicitGaps(cluster);
         if (!borderless || cluster.length >= MIN_BORDERLESS_ROWS) {
           out.push({
-            kind:      'table',
+            kind: 'table',
             rows,
             headerRow: inferHeaderRow(rows),
           });
@@ -166,7 +166,7 @@ function clusterBoundaries(lines: PdfTextItem[][]): number[] {
   }
   // Pick the mean of each cluster as the canonical boundary.
   return clusters
-    .filter((c) => c.length >= 2)            // need ≥2 supporting hits per boundary
+    .filter((c) => c.length >= 2) // need ≥2 supporting hits per boundary
     .map((c) => c.reduce((a, b) => a + b, 0) / c.length);
 }
 
@@ -177,7 +177,7 @@ function projectLineOntoBoundaries(line: PdfTextItem[], boundaries: number[]): D
   if (boundaries.length === 0) return line.map((it) => ({ text: it.str }));
 
   const cells: DetectedCell[] = [];
-  const used = new Set<number>();   // boundary indices we've consumed
+  const used = new Set<number>(); // boundary indices we've consumed
 
   // Pre-sort items by x just in case.
   const items = [...line].sort((a, b) => a.x - b.x);
@@ -205,10 +205,14 @@ function projectLineOntoBoundaries(line: PdfTextItem[], boundaries: number[]): D
 }
 
 function nearestBoundary(x: number, boundaries: number[]): number {
-  let best = 0; let bestD = Infinity;
+  let best = 0;
+  let bestD = Infinity;
   for (let i = 0; i < boundaries.length; i++) {
     const d = Math.abs(boundaries[i] - x);
-    if (d < bestD) { bestD = d; best = i; }
+    if (d < bestD) {
+      bestD = d;
+      best = i;
+    }
   }
   return best;
 }
@@ -231,12 +235,15 @@ function inferHeaderRow(rows: DetectedCell[][]): boolean {
   return first.every((c) => {
     const t = (c.text || '').trim();
     if (t.length === 0) return true;
-    if (t.length > 32)  return false;
+    if (t.length > 32) return false;
     // Heading-style: title case, all caps, or "Column 1" pattern.
     return /^[A-Z][\w\s().,'/-]*$/.test(t) || /^[A-Z][A-Z\s\d]+$/.test(t);
   });
 }
 
 function lineText(line: PdfTextItem[]): string {
-  return line.map((it) => it.str).join(' ').trim();
+  return line
+    .map((it) => it.str)
+    .join(' ')
+    .trim();
 }

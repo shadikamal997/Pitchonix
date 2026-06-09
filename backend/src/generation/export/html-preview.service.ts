@@ -70,11 +70,14 @@ export class HTMLPreviewService {
   // ---------------------------------------------------------------------------
 
   private renderSlide(slide: VisualSlideContent, index: number): string {
-    const smart = (slide as any).smartComponent as { family?: string; elementTree?: SlideElementDTO[] } | undefined;
+    const smart = (slide as any).smartComponent as
+      | { family?: string; elementTree?: SlideElementDTO[] }
+      | undefined;
     const bg = this.resolveBackground(slide, smart?.family);
-    const backgroundStyle = bg.startsWith('linear-gradient') || bg.startsWith('radial-gradient')
-      ? `background:${bg}`
-      : `background-color:${bg}`;
+    const backgroundStyle =
+      bg.startsWith('linear-gradient') || bg.startsWith('radial-gradient')
+        ? `background:${bg}`
+        : `background-color:${bg}`;
 
     const inner = smart?.elementTree?.length
       ? this.renderElementTree(smart.elementTree)
@@ -105,33 +108,59 @@ export class HTMLPreviewService {
     const combined = `position:absolute;${pos}overflow:hidden;box-sizing:border-box;${styleStr}`;
 
     switch (el.type) {
-      case 'heading':     return this.renderText(el, combined, 'h1', 'el-heading');
-      case 'subheading':  return this.renderText(el, combined, 'h2', 'el-subheading');
-      case 'paragraph':   return this.renderText(el, combined, 'p',  'el-paragraph');
-      case 'caption':     return this.renderText(el, combined, 'p',  'el-caption');
-      case 'label':       return this.renderText(el, combined, 'span','el-label');
-      case 'footer':      return this.renderText(el, combined, 'p',  'el-footer');
-      case 'quote':       return this.renderQuote(el, combined);
-      case 'cta':         return this.renderCta(el, combined);
-      case 'bulletList':  return this.renderBulletList(el, combined);
-      case 'numberedList':return this.renderNumberedList(el, combined);
-      case 'metric':      return this.renderMetric(el, combined);
-      case 'kpi':         return this.renderKpi(el, combined);
-      case 'teamCard':    return this.renderTeamCard(el, combined);
-      case 'processSteps':return this.renderProcessSteps(el, combined);
-      case 'featureGrid': return this.renderFeatureGrid(el, combined);
-      case 'roadmap':     return this.renderRoadmap(el, combined);
-      case 'comparison':  return this.renderComparison(el, combined);
-      case 'pricingCard': return this.renderPricingCard(el, combined);
-      case 'fundsAllocation': return this.renderFundsAllocation(el, combined);
-      case 'shape':       return this.renderShape(el, combined);
+      case 'heading':
+        return this.renderText(el, combined, 'h1', 'el-heading');
+      case 'subheading':
+        return this.renderText(el, combined, 'h2', 'el-subheading');
+      case 'paragraph':
+        return this.renderText(el, combined, 'p', 'el-paragraph');
+      case 'caption':
+        return this.renderText(el, combined, 'p', 'el-caption');
+      case 'label':
+        return this.renderText(el, combined, 'span', 'el-label');
+      case 'footer':
+        return this.renderText(el, combined, 'p', 'el-footer');
+      case 'quote':
+        return this.renderQuote(el, combined);
+      case 'cta':
+        return this.renderCta(el, combined);
+      case 'bulletList':
+        return this.renderBulletList(el, combined);
+      case 'numberedList':
+        return this.renderNumberedList(el, combined);
+      case 'metric':
+        return this.renderMetric(el, combined);
+      case 'kpi':
+        return this.renderKpi(el, combined);
+      case 'teamCard':
+        return this.renderTeamCard(el, combined);
+      case 'processSteps':
+        return this.renderProcessSteps(el, combined);
+      case 'featureGrid':
+        return this.renderFeatureGrid(el, combined);
+      case 'roadmap':
+        return this.renderRoadmap(el, combined);
+      case 'comparison':
+        return this.renderComparison(el, combined);
+      case 'pricingCard':
+        return this.renderPricingCard(el, combined);
+      case 'fundsAllocation':
+        return this.renderFundsAllocation(el, combined);
+      case 'shape':
+        return this.renderShape(el, combined);
       case 'divider':
-      case 'line':        return this.renderDivider(el, combined);
-      case 'chart':       return this.renderChartEl(el, combined);
-      case 'table':       return this.renderTable(el, combined);
-      case 'image':       return this.renderImage(el, combined);
-      case 'icon':        return this.renderIcon(el, combined);
-      default:            return `<div style="${combined}"></div>`;
+      case 'line':
+        return this.renderDivider(el, combined);
+      case 'chart':
+        return this.renderChartEl(el, combined);
+      case 'table':
+        return this.renderTable(el, combined);
+      case 'image':
+        return this.renderImage(el, combined);
+      case 'icon':
+        return this.renderIcon(el, combined);
+      default:
+        return `<div style="${combined}"></div>`;
     }
   }
 
@@ -142,7 +171,7 @@ export class HTMLPreviewService {
   private renderText(el: SlideElementDTO, style: string, tag: string, cls: string): string {
     const c = (el.content as any) || {};
     const html = typeof c.html === 'string' ? c.html : null;
-    const text = typeof c.text === 'string' ? c.text : (html ? this.stripHtml(html) : '');
+    const text = typeof c.text === 'string' ? c.text : html ? this.stripHtml(html) : '';
     if (!text && !html) return `<${tag} class="${cls}" style="${style}"></${tag}>`;
     const inner = html || this.escapeHtml(text);
     return `<${tag} class="${cls}" style="${style}">${inner}</${tag}>`;
@@ -203,7 +232,8 @@ export class HTMLPreviewService {
   private renderKpi(el: SlideElementDTO, style: string): string {
     const c = (el.content as any) || {};
     const trendIcon = c.trendDirection === 'up' ? '↑' : c.trendDirection === 'down' ? '↓' : '';
-    const trendClass = c.trendDirection === 'up' ? 'delta-up' : c.trendDirection === 'down' ? 'delta-down' : '';
+    const trendClass =
+      c.trendDirection === 'up' ? 'delta-up' : c.trendDirection === 'down' ? 'delta-down' : '';
     return `<div class="el-kpi" style="${style}">
   <div class="kpi-value">${this.escapeHtml(c.value || '')}${trendIcon ? `<span class="kpi-trend ${trendClass}">${trendIcon}</span>` : ''}</div>
   <div class="kpi-label">${this.escapeHtml(c.label || '')}</div>
@@ -217,54 +247,81 @@ export class HTMLPreviewService {
 
   private renderTeamCard(el: SlideElementDTO, style: string): string {
     const c = (el.content as any) || {};
-    const members: Array<{ name: string; role?: string; bio?: string; photoUrl?: string }> = Array.isArray(c.members) ? c.members : [];
+    const members: Array<{ name: string; role?: string; bio?: string; photoUrl?: string }> =
+      Array.isArray(c.members) ? c.members : [];
     const cols = Math.min(members.length, 4) || 1;
     return `<div class="el-team" style="${style};grid-template-columns:repeat(${cols},1fr);">
-  ${members.map((m) => `<div class="team-member">
+  ${members
+    .map(
+      (m) => `<div class="team-member">
     <div class="team-avatar">${m.photoUrl ? `<img src="${m.photoUrl}" alt="${this.escapeHtml(m.name)}" />` : `<span>${this.initials(m.name)}</span>`}</div>
     <div class="team-name">${this.escapeHtml(m.name)}</div>
     ${m.role ? `<div class="team-role">${this.escapeHtml(m.role)}</div>` : ''}
     ${m.bio ? `<div class="team-bio">${this.escapeHtml(m.bio)}</div>` : ''}
-  </div>`).join('')}
+  </div>`,
+    )
+    .join('')}
 </div>`;
   }
 
   private renderProcessSteps(el: SlideElementDTO, style: string): string {
     const c = (el.content as any) || {};
-    const steps: Array<{ title: string; description?: string }> = Array.isArray(c.steps) ? c.steps : [];
+    const steps: Array<{ title: string; description?: string }> = Array.isArray(c.steps)
+      ? c.steps
+      : [];
     const horiz = c.orientation !== 'vertical';
     return `<div class="el-process ${horiz ? 'process-horiz' : 'process-vert'}" style="${style}">
-  ${steps.map((s, i) => `<div class="process-step">
+  ${steps
+    .map(
+      (s, i) => `<div class="process-step">
     <div class="step-num">${String(i + 1).padStart(2, '0')}</div>
     <div class="step-title">${this.escapeHtml(s.title)}</div>
     ${s.description ? `<div class="step-desc">${this.escapeHtml(s.description)}</div>` : ''}
-  </div>${horiz && i < steps.length - 1 ? '<div class="step-arrow">→</div>' : ''}`).join('')}
+  </div>${horiz && i < steps.length - 1 ? '<div class="step-arrow">→</div>' : ''}`,
+    )
+    .join('')}
 </div>`;
   }
 
   private renderFeatureGrid(el: SlideElementDTO, style: string): string {
     const c = (el.content as any) || {};
-    const items: Array<{ title: string; description?: string; icon?: string }> = Array.isArray(c.items) ? c.items : [];
+    const items: Array<{ title: string; description?: string; icon?: string }> = Array.isArray(
+      c.items,
+    )
+      ? c.items
+      : [];
     const cols = c.columns || Math.min(items.length, 3) || 2;
     return `<div class="el-features" style="${style};grid-template-columns:repeat(${cols},1fr);">
-  ${items.map((it) => `<div class="feature-item">
+  ${items
+    .map(
+      (it) => `<div class="feature-item">
     ${it.icon ? `<div class="feature-icon">${this.escapeHtml(it.icon)}</div>` : '<div class="feature-dot"></div>'}
     <div class="feature-title">${this.escapeHtml(it.title)}</div>
     ${it.description ? `<div class="feature-desc">${this.escapeHtml(it.description)}</div>` : ''}
-  </div>`).join('')}
+  </div>`,
+    )
+    .join('')}
 </div>`;
   }
 
   private renderRoadmap(el: SlideElementDTO, style: string): string {
     const c = (el.content as any) || {};
-    const phases: Array<{ phase: string; period?: string; bullets?: string[] }> = Array.isArray(c.phases) ? c.phases : [];
+    const phases: Array<{ phase: string; period?: string; bullets?: string[] }> = Array.isArray(
+      c.phases,
+    )
+      ? c.phases
+      : [];
     return `<div class="el-roadmap" style="${style}">
-  ${phases.map((ph, i) => `<div class="roadmap-phase">
+  ${phases
+    .map(
+      (ph, i) => `<div class="roadmap-phase">
     <div class="phase-marker">${i + 1}</div>
     <div class="phase-label">${this.escapeHtml(ph.phase)}</div>
     ${ph.period ? `<div class="phase-period">${this.escapeHtml(ph.period)}</div>` : ''}
     ${ph.bullets?.length ? `<ul class="phase-bullets">${ph.bullets.map((b) => `<li>${this.escapeHtml(b)}</li>`).join('')}</ul>` : ''}
-  </div>`).join('<div class="roadmap-connector"></div>')}
+  </div>`,
+    )
+    .join('<div class="roadmap-connector"></div>')}
 </div>`;
   }
 
@@ -276,23 +333,37 @@ export class HTMLPreviewService {
     return `<div class="el-comparison" style="${style}">
   <table class="comparison-table">
     <thead><tr><th></th>${columns.map((col, i) => `<th class="${i === hi ? 'col-highlight' : ''}">${this.escapeHtml(col)}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map((row) => `<tr>
+    <tbody>${rows
+      .map(
+        (row) => `<tr>
       <td class="feature-col">${this.escapeHtml(row.feature)}</td>
       ${row.values.map((v, i) => `<td class="${i === hi ? 'col-highlight' : ''}">${this.escapeHtml(v)}</td>`).join('')}
-    </tr>`).join('')}</tbody>
+    </tr>`,
+      )
+      .join('')}</tbody>
   </table>
 </div>`;
   }
 
   private renderPricingCard(el: SlideElementDTO, style: string): string {
     const c = (el.content as any) || {};
-    const tiers: Array<{ name: string; price: string; period?: string; features: string[]; highlight?: boolean }> = Array.isArray(c.tiers) ? c.tiers : [];
+    const tiers: Array<{
+      name: string;
+      price: string;
+      period?: string;
+      features: string[];
+      highlight?: boolean;
+    }> = Array.isArray(c.tiers) ? c.tiers : [];
     return `<div class="el-pricing" style="${style}">
-  ${tiers.map((t) => `<div class="pricing-tier ${t.highlight ? 'tier-highlight' : ''}">
+  ${tiers
+    .map(
+      (t) => `<div class="pricing-tier ${t.highlight ? 'tier-highlight' : ''}">
     <div class="tier-name">${this.escapeHtml(t.name)}</div>
     <div class="tier-price">${this.escapeHtml(t.price)}<span class="tier-period">${t.period ? `/${this.escapeHtml(t.period)}` : ''}</span></div>
     <ul class="tier-features">${(t.features || []).map((f) => `<li>${this.escapeHtml(f)}</li>`).join('')}</ul>
-  </div>`).join('')}
+  </div>`,
+    )
+    .join('')}
 </div>`;
   }
 
@@ -301,15 +372,17 @@ export class HTMLPreviewService {
     const items: any[] = Array.isArray(c.items) ? c.items : [];
     const maxPct = Math.max(...items.map((item) => Number(item.percentage) || 0), 1);
     return `<div class="el-funds" style="${style}">
-  ${items.map((item, i) => {
-    const pct = Number(item.percentage) || 0;
-    const color = item.color || ['#dc2626', '#2563eb', '#16a34a', '#f59e0b'][i % 4];
-    const width = Math.round((pct / maxPct) * 100);
-    return `<div class="fund-row">
+  ${items
+    .map((item, i) => {
+      const pct = Number(item.percentage) || 0;
+      const color = item.color || ['#dc2626', '#2563eb', '#16a34a', '#f59e0b'][i % 4];
+      const width = Math.round((pct / maxPct) * 100);
+      return `<div class="fund-row">
       <div class="fund-head"><span class="fund-dot" style="background:${color}"></span><span>${this.escapeHtml(item.category || 'Allocation')}</span><strong style="color:${color}">${pct}%</strong></div>
       <div class="fund-track"><div class="fund-fill" style="width:${width}%;background:${color}"></div></div>
     </div>`;
-  }).join('')}
+    })
+    .join('')}
 </div>`;
   }
 
@@ -347,7 +420,11 @@ export class HTMLPreviewService {
     const type = c.type || 'bar';
     const title = c.title || '';
     const cats: string[] = Array.isArray(c.categories) ? c.categories : [];
-    const series: Array<{ name: string; values: number[]; color?: string }> = Array.isArray(c.series) ? c.series : [];
+    const series: Array<{ name: string; values: number[]; color?: string }> = Array.isArray(
+      c.series,
+    )
+      ? c.series
+      : [];
 
     // Render as inline SVG bar chart (simple but accurate for export)
     if ((type === 'bar' || type === 'stackedBar') && cats.length && series.length) {
@@ -359,15 +436,28 @@ export class HTMLPreviewService {
     // Fallback: placeholder
     return `<div class="el-chart-placeholder" style="${style}">
   <div class="chart-type-label">${this.escapeHtml(title || type.toUpperCase())}</div>
-  ${cats.length ? `<div class="chart-cats">${cats.slice(0, 5).map((c) => this.escapeHtml(c)).join(' · ')}</div>` : ''}
+  ${
+    cats.length
+      ? `<div class="chart-cats">${cats
+          .slice(0, 5)
+          .map((c) => this.escapeHtml(c))
+          .join(' · ')}</div>`
+      : ''
+  }
 </div>`;
   }
 
   private renderBarChartSvg(
-    _el: SlideElementDTO, style: string,
-    title: string, cats: string[], series: Array<{ name: string; values: number[]; color?: string }>,
+    _el: SlideElementDTO,
+    style: string,
+    title: string,
+    cats: string[],
+    series: Array<{ name: string; values: number[]; color?: string }>,
   ): string {
-    const W = 400; const H = 200; const PAD = 30; const BAR_GAP = 4;
+    const W = 400;
+    const H = 200;
+    const PAD = 30;
+    const BAR_GAP = 4;
     const allVals = series.flatMap((s) => s.values).filter(Number.isFinite);
     const maxVal = Math.max(...allVals, 1);
     const groupW = (W - PAD * 2) / cats.length;
@@ -378,12 +468,13 @@ export class HTMLPreviewService {
     cats.forEach((cat, ci) => {
       series.forEach((s, si) => {
         const val = s.values[ci] ?? 0;
-        const bh = ((val / maxVal) * (H - PAD - 20)) || 0;
+        const bh = (val / maxVal) * (H - PAD - 20) || 0;
         const bx = PAD + ci * groupW + si * (barW + BAR_GAP) + BAR_GAP;
         const by = H - PAD - bh;
         const color = s.color || COLORS[si % COLORS.length];
         bars += `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${color}" rx="2"/>`;
-        if (val > 0) bars += `<text x="${(bx + barW / 2).toFixed(1)}" y="${(by - 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="currentColor">${this.formatVal(val)}</text>`;
+        if (val > 0)
+          bars += `<text x="${(bx + barW / 2).toFixed(1)}" y="${(by - 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="currentColor">${this.formatVal(val)}</text>`;
       });
       const cx = PAD + ci * groupW + groupW / 2;
       bars += `<text x="${cx.toFixed(1)}" y="${(H - 6).toFixed(1)}" text-anchor="middle" font-size="9" fill="currentColor">${this.escapeHtml(cat.slice(0, 10))}</text>`;
@@ -395,8 +486,15 @@ export class HTMLPreviewService {
 </div>`;
   }
 
-  private renderFunnelSvg(_el: SlideElementDTO, style: string, title: string, cats: string[], vals: number[]): string {
-    const W = 300; const H = 200;
+  private renderFunnelSvg(
+    _el: SlideElementDTO,
+    style: string,
+    title: string,
+    cats: string[],
+    vals: number[],
+  ): string {
+    const W = 300;
+    const H = 200;
     const maxVal = Math.max(...vals, 1);
     const rowH = (H - 10) / Math.max(cats.length, 1);
     const COLORS = ['#ea580c', '#f59e0b', '#16a34a', '#2563eb'];
@@ -463,35 +561,52 @@ export class HTMLPreviewService {
     const parts: string[] = [];
 
     if (slide.title) {
-      parts.push(`<h1 style="font-family:${headingFont};font-size:${slide.theme?.fontSize?.h1 || 48}px;color:${primary};font-weight:700;margin:0 0 16px;line-height:1.15;">${this.escapeHtml(slide.title)}</h1>`);
+      parts.push(
+        `<h1 style="font-family:${headingFont};font-size:${slide.theme?.fontSize?.h1 || 48}px;color:${primary};font-weight:700;margin:0 0 16px;line-height:1.15;">${this.escapeHtml(slide.title)}</h1>`,
+      );
     }
     if (slide.subtitle) {
-      parts.push(`<h2 style="font-family:${bodyFont};font-size:${slide.theme?.fontSize?.h3 || 24}px;color:${secondary};font-weight:400;margin:0 0 32px;line-height:1.4;">${this.escapeHtml(slide.subtitle)}</h2>`);
+      parts.push(
+        `<h2 style="font-family:${bodyFont};font-size:${slide.theme?.fontSize?.h3 || 24}px;color:${secondary};font-weight:400;margin:0 0 32px;line-height:1.4;">${this.escapeHtml(slide.subtitle)}</h2>`,
+      );
     }
 
     const content = slide.content;
     if (content) {
       if (typeof content === 'string') {
-        parts.push(`<p style="font-family:${bodyFont};font-size:24px;color:${text};line-height:1.6;">${this.escapeHtml(content)}</p>`);
+        parts.push(
+          `<p style="font-family:${bodyFont};font-size:24px;color:${text};line-height:1.6;">${this.escapeHtml(content)}</p>`,
+        );
       } else if (Array.isArray(content)) {
         const items = content.map((it) => `<li>${this.escapeHtml(String(it))}</li>`).join('');
-        parts.push(`<ul style="padding-left:0;list-style:none;color:${text};font-family:${bodyFont};font-size:22px;">${items}</ul>`);
+        parts.push(
+          `<ul style="padding-left:0;list-style:none;color:${text};font-family:${bodyFont};font-size:22px;">${items}</ul>`,
+        );
       } else if (typeof content === 'object') {
         if (content.description) {
-          parts.push(`<p style="font-family:${bodyFont};font-size:22px;color:${text};line-height:1.6;margin-bottom:20px;">${this.escapeHtml(content.description)}</p>`);
+          parts.push(
+            `<p style="font-family:${bodyFont};font-size:22px;color:${text};line-height:1.6;margin-bottom:20px;">${this.escapeHtml(content.description)}</p>`,
+          );
         }
         const bullets = content.painPoints || content.features || content.keyBenefits || [];
         if (bullets.length) {
-          const lis = bullets.slice(0, 6).map((b: string) => `<li style="margin-bottom:12px;">• ${this.escapeHtml(b)}</li>`).join('');
-          parts.push(`<ul style="padding-left:0;list-style:none;color:${text};font-family:${bodyFont};font-size:20px;">${lis}</ul>`);
+          const lis = bullets
+            .slice(0, 6)
+            .map((b: string) => `<li style="margin-bottom:12px;">• ${this.escapeHtml(b)}</li>`)
+            .join('');
+          parts.push(
+            `<ul style="padding-left:0;list-style:none;color:${text};font-family:${bodyFont};font-size:20px;">${lis}</ul>`,
+          );
         }
       }
     }
 
     if (slide.charts?.length) {
-      const chart = (slide.charts[0] as any);
+      const chart = slide.charts[0] as any;
       if (chart.renderedImage) {
-        parts.push(`<img src="${chart.renderedImage}" alt="Chart" style="max-width:100%;max-height:300px;object-fit:contain;border-radius:8px;" />`);
+        parts.push(
+          `<img src="${chart.renderedImage}" alt="Chart" style="max-width:100%;max-height:300px;object-fit:contain;border-radius:8px;" />`,
+        );
       }
     }
 
@@ -507,7 +622,9 @@ export class HTMLPreviewService {
       try {
         const tokens = getFamilyTokens(family as SmartFamilyId);
         if (tokens?.bg) return tokens.bg;
-      } catch { /* unknown family */ }
+      } catch {
+        /* unknown family */
+      }
     }
     return slide.theme?.colors?.background || '#FAFAF9';
   }
@@ -549,21 +666,21 @@ export class HTMLPreviewService {
     if (style.borderRadius !== undefined) p.push(`border-radius:${style.borderRadius}px`);
     if (style.shadow) p.push(`box-shadow:${style.shadow}`);
     if (style.stroke) p.push(`border:${style.strokeWidth ?? 1}px solid ${style.stroke}`);
-    if (style.paddingTop !== undefined)    p.push(`padding-top:${style.paddingTop}px`);
-    if (style.paddingRight !== undefined)  p.push(`padding-right:${style.paddingRight}px`);
+    if (style.paddingTop !== undefined) p.push(`padding-top:${style.paddingTop}px`);
+    if (style.paddingRight !== undefined) p.push(`padding-right:${style.paddingRight}px`);
     if (style.paddingBottom !== undefined) p.push(`padding-bottom:${style.paddingBottom}px`);
-    if (style.paddingLeft !== undefined)   p.push(`padding-left:${style.paddingLeft}px`);
-    if (style.fontFamily)    p.push(`font-family:${style.fontFamily}`);
-    if (style.fontSize !== undefined)  p.push(`font-size:${style.fontSize}px`);
+    if (style.paddingLeft !== undefined) p.push(`padding-left:${style.paddingLeft}px`);
+    if (style.fontFamily) p.push(`font-family:${style.fontFamily}`);
+    if (style.fontSize !== undefined) p.push(`font-size:${style.fontSize}px`);
     if (style.fontWeight !== undefined) p.push(`font-weight:${style.fontWeight}`);
-    if (style.fontStyle)     p.push(`font-style:${style.fontStyle}`);
-    if (style.textDecoration)p.push(`text-decoration:${style.textDecoration}`);
+    if (style.fontStyle) p.push(`font-style:${style.fontStyle}`);
+    if (style.textDecoration) p.push(`text-decoration:${style.textDecoration}`);
     if (style.textTransform) p.push(`text-transform:${style.textTransform}`);
-    if (style.color)         p.push(`color:${style.color}`);
-    if (style.lineHeight !== undefined)   p.push(`line-height:${style.lineHeight}`);
+    if (style.color) p.push(`color:${style.color}`);
+    if (style.lineHeight !== undefined) p.push(`line-height:${style.lineHeight}`);
     if (style.letterSpacing !== undefined) p.push(`letter-spacing:${style.letterSpacing}px`);
-    if (style.textAlign)     p.push(`text-align:${style.textAlign}`);
-    if (style.textShadow)    p.push(`text-shadow:${style.textShadow}`);
+    if (style.textAlign) p.push(`text-align:${style.textAlign}`);
+    if (style.textShadow) p.push(`text-shadow:${style.textShadow}`);
     return p.join(';') + (p.length ? ';' : '');
   }
 
@@ -575,22 +692,33 @@ export class HTMLPreviewService {
   }
 
   private initials(name: string): string {
-    return (name || '?').split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+    return (name || '?')
+      .split(/\s+/)
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
   }
 
   private formatVal(v: number): string {
     if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
-    if (Math.abs(v) >= 1_000)     return `${(v / 1_000).toFixed(1)}K`;
+    if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
     return v % 1 === 0 ? String(v) : v.toFixed(1);
   }
 
   private stripHtml(s: string): string {
-    return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return s
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private escapeHtml(text: string): string {
     if (typeof text !== 'string') return '';
-    return text.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m]!);
+    return text.replace(
+      /[&<>"']/g,
+      (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m]!,
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -758,12 +886,15 @@ body{font-family:'Inter',system-ui,sans-serif;${forPrint ? '' : 'overflow:hidden
 .el-table th,.el-table td{padding:4px 8px;border-bottom:1px solid rgba(0,0,0,0.08);}
 .el-table th{font-weight:700;}
 
-${forPrint ? `
+${
+  forPrint
+    ? `
 @page{size:landscape;}
 @media print{
   .slide{page-break-after:always;width:100%;height:auto;}
   .slide-number-badge{display:none;}
-}` : `
+}`
+    : `
 .controls{
   position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
   display:flex;gap:20px;align-items:center;
@@ -778,7 +909,8 @@ ${forPrint ? `
 .control-btn:hover{background:#f3f4f6;}
 .control-btn:disabled{opacity:0.4;cursor:not-allowed;}
 #slideCounter{font-size:14px;min-width:70px;text-align:center;}
-`}
+`
+}
 
 @media print{.controls{display:none;}}
 `;

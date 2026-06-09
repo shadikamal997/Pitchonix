@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UploadedAssetService } from '../files/uploaded-asset.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -38,31 +39,38 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR
 const PUBLIC_PREFIX = '/uploads/embeddings';
 
 export interface OleHistoryEntry {
-  version:    number;
-  url:        string;
-  filename:   string;
-  bytes:      number;
+  version: number;
+  url: string;
+  filename: string;
+  bytes: number;
   replacedAt: string;
   replacedBy?: string;
 }
 
 export interface OleContent {
-  kind:      'excel' | 'word' | 'pdf' | 'powerpoint' | 'binary';
-  filename:  string;
-  url:       string;
-  bytes:     number;
-  label?:    string;
-  version?:  number;
-  history?:  OleHistoryEntry[];
+  kind: 'excel' | 'word' | 'pdf' | 'powerpoint' | 'binary';
+  filename: string;
+  url: string;
+  bytes: number;
+  label?: string;
+  version?: number;
+  history?: OleHistoryEntry[];
 }
 
 @Injectable()
 export class OleWorkspaceService {
   private readonly logger = new Logger(OleWorkspaceService.name);
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private uploadedAssets: UploadedAssetService,
+  ) {
     if (!fs.existsSync(UPLOAD_DIR)) {
-      try { fs.mkdirSync(UPLOAD_DIR, { recursive: true }); } catch { /* logged on first write */ }
+      try {
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+      } catch {
+        /* logged on first write */
+      }
     }
   }
 
@@ -85,36 +93,53 @@ export class OleWorkspaceService {
   //  Mutations
   // ---------------------------------------------------------------------------
 
-  async replace(elementId: string, file: { buffer: Buffer; originalname?: string }, userId?: string): Promise<OleContent> {
+  async replace(
+    elementId: string,
+    file: { buffer: Buffer; originalname?: string },
+    userId?: string,
+  ): Promise<OleContent> {
     if (!file?.buffer) throw new BadRequestException('Missing file buffer');
     const c = await this.read(elementId);
 
     // Persist the new binary.
     const original = file.originalname || c.filename || 'replacement.bin';
-    const ext  = path.extname(original).toLowerCase() || pickExtByMagic(file.buffer);
+    const ext = path.extname(original).toLowerCase() || pickExtByMagic(file.buffer);
     const safe = `${crypto.randomUUID()}${ext}`;
     const full = path.join(UPLOAD_DIR, safe);
     fs.writeFileSync(full, file.buffer);
+
+    // Phase Ω.1E — ownership row for the replaced OLE embedding.
+    if (userId) {
+      await this.uploadedAssets.record({
+        userId,
+        publicPath: `${PUBLIC_PREFIX}/${safe}`,
+        storagePath: full,
+        module: 'ole_workspace',
+        documentId: elementId,
+        originalName: original,
+        sizeBytes: file.buffer.length,
+      });
+    }
 
     // Push current state into history.
     const nextVersion = (c.version ?? 1) + 1;
     const history = c.history ? [...c.history] : [];
     history.unshift({
-      version:    c.version ?? 1,
-      url:        c.url,
-      filename:   c.filename,
-      bytes:      c.bytes,
+      version: c.version ?? 1,
+      url: c.url,
+      filename: c.filename,
+      bytes: c.bytes,
       replacedAt: new Date().toISOString(),
       replacedBy: userId,
     });
 
     const next: OleContent = {
-      kind:     kindFor(ext) || c.kind,
+      kind: kindFor(ext) || c.kind,
       filename: original,
-      url:      `${PUBLIC_PREFIX}/${safe}`,
-      bytes:    file.buffer.length,
-      label:    c.label,
-      version:  nextVersion,
+      url: `${PUBLIC_PREFIX}/${safe}`,
+      bytes: file.buffer.length,
+      label: c.label,
+      version: nextVersion,
       history,
     };
     await this.write(elementId, next);
@@ -130,22 +155,22 @@ export class OleWorkspaceService {
     // Push current into history, swap to target.
     const nextHistory = c.history.filter((h) => h.version !== version);
     nextHistory.unshift({
-      version:    c.version ?? 1,
-      url:        c.url,
-      filename:   c.filename,
-      bytes:      c.bytes,
+      version: c.version ?? 1,
+      url: c.url,
+      filename: c.filename,
+      bytes: c.bytes,
       replacedAt: new Date().toISOString(),
       replacedBy: userId,
     });
 
     const next: OleContent = {
-      kind:     c.kind,
+      kind: c.kind,
       filename: target.filename,
-      url:      target.url,
-      bytes:    target.bytes,
-      label:    c.label,
-      version:  (c.version ?? 1) + 1,
-      history:  nextHistory,
+      url: target.url,
+      bytes: target.bytes,
+      label: c.label,
+      version: (c.version ?? 1) + 1,
+      history: nextHistory,
     };
     await this.write(elementId, next);
     return next;
@@ -155,7 +180,7 @@ export class OleWorkspaceService {
   async refresh(elementId: string): Promise<OleContent> {
     const c = await this.read(elementId);
     const filename = path.basename(c.url);
-    const full     = path.join(UPLOAD_DIR, filename);
+    const full = path.join(UPLOAD_DIR, filename);
     try {
       const st = fs.statSync(full);
       const next = { ...c, bytes: st.size };
@@ -174,13 +199,13 @@ export class OleWorkspaceService {
     const el = await this.prisma.slideElement.findUnique({ where: { id: elementId } });
     if (!el) throw new NotFoundException('Element not found');
     if (el.type !== 'oleObject') throw new BadRequestException('Element is not an OLE object');
-    return (el.content as any) as OleContent;
+    return el.content as any as OleContent;
   }
 
   private async write(elementId: string, content: OleContent): Promise<void> {
     await this.prisma.slideElement.update({
       where: { id: elementId },
-      data:  { content: content as any },
+      data: { content: content as any },
     });
   }
 }
@@ -191,17 +216,17 @@ export class OleWorkspaceService {
 
 function pickExtByMagic(buf: Buffer): string {
   if (buf.length < 4) return '.bin';
-  if (buf[0] === 0x50 && buf[1] === 0x4B && buf[2] === 0x03 && buf[3] === 0x04) return '.xlsx';
+  if (buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04) return '.xlsx';
   if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) return '.pdf';
-  if (buf[0] === 0xD0 && buf[1] === 0xCF && buf[2] === 0x11 && buf[3] === 0xE0) return '.xls';
+  if (buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0) return '.xls';
   return '.bin';
 }
 
 function kindFor(ext: string): OleContent['kind'] | undefined {
   const e = ext.toLowerCase();
   if (e === '.xlsx' || e === '.xls' || e === '.xlsm') return 'excel';
-  if (e === '.docx' || e === '.doc')                  return 'word';
-  if (e === '.pdf')                                    return 'pdf';
-  if (e === '.pptx' || e === '.ppt')                  return 'powerpoint';
+  if (e === '.docx' || e === '.doc') return 'word';
+  if (e === '.pdf') return 'pdf';
+  if (e === '.pptx' || e === '.ppt') return 'powerpoint';
   return 'binary';
 }

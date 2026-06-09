@@ -77,7 +77,7 @@ export class RateLimiter {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
@@ -97,10 +97,7 @@ export class RetryStrategy {
   /**
    * Execute function with retry logic
    */
-  async execute<T>(
-    fn: () => Promise<T>,
-    context: string,
-  ): Promise<T> {
+  async execute<T>(fn: () => Promise<T>, context: string): Promise<T> {
     let lastError: Error | null = null;
     let delay = this.initialDelay;
 
@@ -149,7 +146,7 @@ export class RetryStrategy {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 

@@ -24,15 +24,13 @@ export class DocumentParserController {
   ) {}
 
   @Post('parse')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Upload and parse document (PDF/DOCX)',
-    description: 'Extract text and structured business data from uploaded document'
+    description: 'Extract text and structured business data from uploaded document',
   })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
-  async parseDocument(
-    @UploadedFile() file: Express.Multer.File,
-  ): Promise<ParsedDocumentDto> {
+  async parseDocument(@UploadedFile() file: Express.Multer.File): Promise<ParsedDocumentDto> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -44,9 +42,7 @@ export class DocumentParserController {
     const sections = this.documentParserService.extractSections(parsed.text);
 
     // Step 3: Use AI to extract structured data
-    const extractedData = await this.aiExtractorService.extractStructuredData(
-      parsed.text,
-    );
+    const extractedData = await this.aiExtractorService.extractStructuredData(parsed.text);
 
     // Step 4: Validate and clean data
     const validatedData = this.aiExtractorService.validateExtractedData(extractedData);
@@ -78,15 +74,15 @@ export class DocumentParserController {
   }
 
   @Post('extract-text')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Extract raw text only (no AI processing)',
-    description: 'Quickly extract text from document without AI analysis'
+    description: 'Quickly extract text from document without AI analysis',
   })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   async extractText(
     @UploadedFile() file: Express.Multer.File,
-  ): Promise<{ text: string; metadata: any }> {
+  ): Promise<{ text: string; html: string; metadata: any }> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -95,6 +91,8 @@ export class DocumentParserController {
 
     return {
       text: parsed.text,
+      // Phase Ω.2 — structure-preserving HTML for the PDF Studio import flow.
+      html: parsed.html,
       metadata: {
         filename: file.originalname,
         ...parsed.metadata,

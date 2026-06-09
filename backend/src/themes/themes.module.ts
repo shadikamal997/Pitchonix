@@ -4,7 +4,7 @@ import { ThemesService } from './themes.service';
 
 @Module({
   controllers: [ThemesController],
-  providers:   [ThemesService],
-  exports:     [ThemesService],
+  providers: [ThemesService],
+  exports: [ThemesService],
 })
 export class ThemesModule {}

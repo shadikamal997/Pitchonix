@@ -23,7 +23,7 @@ export class AppController {
   @Get('health')
   @ApiOperation({ summary: 'Deep health check — DB, memory, uptime' })
   async healthCheck(): Promise<object> {
-    const mem  = process.memoryUsage();
+    const mem = process.memoryUsage();
     const checks: Record<string, any> = {};
 
     // DB probe — fast SELECT 1
@@ -35,14 +35,14 @@ export class AppController {
     }
 
     return {
-      status:    checks.db === 'ok' ? 'ok' : 'degraded',
+      status: checks.db === 'ok' ? 'ok' : 'degraded',
       timestamp: new Date().toISOString(),
       uptimeSec: Math.round(process.uptime()),
       checks,
       memory: {
-        heapUsedMb:  Math.round(mem.heapUsed  / 1024 / 1024),
+        heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
         heapTotalMb: Math.round(mem.heapTotal / 1024 / 1024),
-        rssMb:       Math.round(mem.rss       / 1024 / 1024),
+        rssMb: Math.round(mem.rss / 1024 / 1024),
       },
       version: process.env.APP_VERSION || 'beta',
     };

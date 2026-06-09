@@ -4,7 +4,7 @@ import { SlideTransitionsService } from './slide-transitions.service';
 
 @Module({
   controllers: [SlideTransitionsController],
-  providers:   [SlideTransitionsService],
-  exports:     [SlideTransitionsService],
+  providers: [SlideTransitionsService],
+  exports: [SlideTransitionsService],
 })
 export class SlideTransitionsModule {}

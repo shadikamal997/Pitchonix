@@ -27,13 +27,13 @@ import { asArray } from './ooxml-parser';
 // =============================================================================
 
 export interface TextRun {
-  text:       string;
-  bold?:      boolean;
-  italic?:    boolean;
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
   underline?: boolean;
-  size?:      number;
-  color?:     string;
-  font?:      string;
+  size?: number;
+  color?: string;
+  font?: string;
 }
 
 export interface RichText {
@@ -51,7 +51,7 @@ export function extractRichText(txBody: any): RichText {
     const rs = asArray(p['a:r']);
     rs.forEach((r) => {
       const t = r['a:t'];
-      const text = typeof t === 'string' ? t : (t?.['#text'] || '');
+      const text = typeof t === 'string' ? t : t?.['#text'] || '';
       if (!text) return;
       runs.push(buildRun(text, r['a:rPr']));
     });
@@ -84,9 +84,9 @@ function buildRun(text: string, rPr: any): TextRun {
   }
 
   // Colour — solidFill > srgbClr / schemeClr.
-  const srgb   = rPr['a:solidFill']?.['a:srgbClr']?.['@val'];
+  const srgb = rPr['a:solidFill']?.['a:srgbClr']?.['@val'];
   const scheme = rPr['a:solidFill']?.['a:schemeClr']?.['@val'];
-  if (srgb)        run.color = `#${String(srgb).toUpperCase()}`;
+  if (srgb) run.color = `#${String(srgb).toUpperCase()}`;
   else if (scheme) run.color = `scheme:${scheme}`;
 
   const face = rPr['a:latin']?.['@typeface'] || rPr['a:ea']?.['@typeface'];

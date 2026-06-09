@@ -46,7 +46,10 @@ export function importRtf(buffer: Buffer, filename = 'document.rtf'): UniversalD
 
 function buildFromPlainText(text: string, fmt: 'txt' | 'rtf', title: string): UniversalDocument {
   const doc = emptyDocument(fmt, title);
-  const blocks = text.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  const blocks = text
+    .split(/\n\s*\n/)
+    .map((b) => b.trim())
+    .filter(Boolean);
   if (blocks.length === 0) {
     doc.pages.push(newPage(title));
     return doc;
@@ -54,7 +57,10 @@ function buildFromPlainText(text: string, fmt: 'txt' | 'rtf', title: string): Un
   let page = newPage();
   doc.pages.push(page);
   for (const block of blocks) {
-    const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
+    const lines = block
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
     if (lines.length === 1 && lookHeading(lines[0])) {
       // Promote single-line headings into a new page when we already have content.
       if (page.nodes.length > 0) {

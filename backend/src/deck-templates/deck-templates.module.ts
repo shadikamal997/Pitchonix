@@ -4,7 +4,7 @@ import { DeckTemplatesService } from './deck-templates.service';
 
 @Module({
   controllers: [DeckTemplatesController],
-  providers:   [DeckTemplatesService],
-  exports:     [DeckTemplatesService],
+  providers: [DeckTemplatesService],
+  exports: [DeckTemplatesService],
 })
 export class DeckTemplatesModule {}

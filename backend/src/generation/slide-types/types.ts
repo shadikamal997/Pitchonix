@@ -13,7 +13,7 @@ export enum SlideType {
   ROADMAP = 'roadmap',
   TEAM = 'team',
   ASK = 'ask',
-  
+
   // Business Details
   COMPETITION = 'competition',
   GO_TO_MARKET = 'go_to_market',
@@ -21,12 +21,12 @@ export enum SlideType {
   TECHNOLOGY = 'technology',
   CASE_STUDY = 'case_study',
   PRICING = 'pricing',
-  
+
   // Financial
   FINANCIALS = 'financials',
   UNIT_ECONOMICS = 'unit_economics',
   REVENUE_MODEL = 'revenue_model',
-  
+
   // Supporting
   VISION = 'vision',
   COMPANY_OVERVIEW = 'company_overview',
@@ -40,21 +40,56 @@ export enum SlideType {
 // Phase 28 — Structured business data optionally supplied by the wizard.
 // When present, the ContentStructureAnalyzer prefers these over text extraction.
 export interface StructuredWizardInput {
-  kpis?:         Array<{ label: string; value: string; trend?: string; trendDirection?: 'up' | 'down' | 'flat' }>;
-  pricingTiers?: Array<{ name: string; price: string; features: string[]; target?: string; highlight?: boolean }>;
+  kpis?: Array<{
+    label: string;
+    value: string;
+    trend?: string;
+    trendDirection?: 'up' | 'down' | 'flat';
+  }>;
+  pricingTiers?: Array<{
+    name: string;
+    price: string;
+    features: string[];
+    target?: string;
+    highlight?: boolean;
+  }>;
   roadmapPhases?: Array<{ phase: string; period?: string; milestones: string[] }>;
-  teamMembers?:  Array<{ name: string; role: string; experience?: string; responsibilities?: string }>;
-  competitors?:  Array<{ name: string; strengths?: string; weaknesses?: string }>;
-  funding?:      { amount?: string; roundType?: string; runway?: string; allocations: Array<{ category: string; percentage?: number; amount?: string }> };
-  marketSizing?: { tam?: string; sam?: string; som?: string; growthRate?: string; region?: string; drivers?: string[] };
-  swot?:         { strengths: string[]; weaknesses: string[]; opportunities: string[]; threats: string[] };
-  financials?:   { revenue?: string; costs?: string; grossMargin?: string; burnRate?: string; runway?: string; projections?: Array<{ year: string; revenue: string; expenses: string; ebitda?: string }> };
+  teamMembers?: Array<{
+    name: string;
+    role: string;
+    experience?: string;
+    responsibilities?: string;
+  }>;
+  competitors?: Array<{ name: string; strengths?: string; weaknesses?: string }>;
+  funding?: {
+    amount?: string;
+    roundType?: string;
+    runway?: string;
+    allocations: Array<{ category: string; percentage?: number; amount?: string }>;
+  };
+  marketSizing?: {
+    tam?: string;
+    sam?: string;
+    som?: string;
+    growthRate?: string;
+    region?: string;
+    drivers?: string[];
+  };
+  swot?: { strengths: string[]; weaknesses: string[]; opportunities: string[]; threats: string[] };
+  financials?: {
+    revenue?: string;
+    costs?: string;
+    grossMargin?: string;
+    burnRate?: string;
+    runway?: string;
+    projections?: Array<{ year: string; revenue: string; expenses: string; ebitda?: string }>;
+  };
 }
 
 export interface WizardInput {
   // Step 1: Document Type
   documentType: string;
-  
+
   // Step 2: Business Info
   companyName: string;
   industry: string;
@@ -63,13 +98,13 @@ export interface WizardInput {
   productService?: string;
   website?: string;
   shortDescription?: string;
-  
+
   // Step 3: Audience & Goal
   audience: string;
   purpose?: string;
   desiredAction?: string;
   tone: string;
-  
+
   // Step 4: Business Details
   problem: string;
   solution: string;
@@ -83,7 +118,7 @@ export interface WizardInput {
   team?: string;
   fundingAsk?: string;
   roadmap?: string;
-  
+
   // Step 5: Design Preferences
   theme: string;
   logo?: string;
@@ -99,7 +134,7 @@ export interface WizardInput {
   // input — overriding `brandColors` / `fontStyle` / `tone` above. Falls
   // back to the inline fields when the kit is absent or the lookup fails.
   brandKitId?: string;
-  
+
   // Step 6: Generation Settings
   slideCount: number;
   contentDepth: 'short' | 'balanced' | 'detailed';
@@ -133,9 +168,9 @@ export interface SlideContent {
    * break generation).
    */
   smartComponent?: {
-    family:      string;     // SmartFamilyId — kept loose to avoid cross-file import
-    type:        string;     // SmartComponentType
-    elementTree: any[];      // SlideElementDTO[]; opaque here to keep the file framework-free
+    family: string; // SmartFamilyId — kept loose to avoid cross-file import
+    type: string; // SmartComponentType
+    elementTree: any[]; // SlideElementDTO[]; opaque here to keep the file framework-free
   };
 }
 

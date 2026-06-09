@@ -27,12 +27,14 @@ import { UniversalDocument } from '../document-model';
 
 const SOFFICE_BIN = process.env.LIBREOFFICE_BIN || 'soffice';
 
-export async function exportPdf(doc: UniversalDocument): Promise<{ buffer: Buffer; mimetype: string; extension: string; mode: 'libreoffice' | 'html' }> {
+export async function exportPdf(
+  doc: UniversalDocument,
+): Promise<{ buffer: Buffer; mimetype: string; extension: string; mode: 'libreoffice' | 'html' }> {
   const hasLO = await sofficeAvailable();
   if (hasLO) {
     try {
       const pptx = await exportPptx(doc);
-      const buf  = await pptxToPdf(pptx);
+      const buf = await pptxToPdf(pptx);
       return { buffer: buf, mimetype: 'application/pdf', extension: 'pdf', mode: 'libreoffice' };
     } catch (e: any) {
       // Fall through to HTML mode if conversion fails (e.g. LibreOffice runtime error).
@@ -40,9 +42,40 @@ export async function exportPdf(doc: UniversalDocument): Promise<{ buffer: Buffe
       console.warn(`[universal-pdf] LibreOffice mode failed (${e?.message}); falling back to HTML`);
     }
   }
-  // HTML fallback — return the HTML buffer with a print-friendly mime.
+  // No LibreOffice — render the HTML to a real PDF with headless Chromium so a
+  // PDF request actually produces application/pdf bytes. Only if Puppeteer also
+  // fails do we return HTML, and then with an honest text/html mime.
   const html = exportHtml(doc);
-  return { buffer: html, mimetype: 'text/html', extension: 'html', mode: 'html' };
+  try {
+    const pdf = await htmlToPdf(html.toString('utf8'));
+    return { buffer: pdf, mimetype: 'application/pdf', extension: 'pdf', mode: 'libreoffice' };
+  } catch (e: any) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[universal-pdf] Chromium HTML→PDF fallback failed (${e?.message}); returning HTML`,
+    );
+    return { buffer: html, mimetype: 'text/html', extension: 'html', mode: 'html' };
+  }
+}
+
+async function htmlToPdf(html: string): Promise<Buffer> {
+  const puppeteer = await import('puppeteer');
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '24px', right: '24px', bottom: '24px', left: '24px' },
+    });
+    return Buffer.from(pdf);
+  } finally {
+    await browser.close();
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -51,19 +84,23 @@ function sofficeAvailable(): Promise<boolean> {
   return new Promise((resolve) => {
     const child = spawn(SOFFICE_BIN, ['--version'], { stdio: 'ignore' });
     child.on('error', () => resolve(false));
-    child.on('exit',  (code) => resolve(code === 0));
+    child.on('exit', (code) => resolve(code === 0));
   });
 }
 
 async function pptxToPdf(pptx: Buffer): Promise<Buffer> {
-  const dir   = fs.mkdtempSync(path.join(os.tmpdir(), 'udm-pdf-'));
-  const file  = path.join(dir, `${crypto.randomUUID()}.pptx`);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'udm-pdf-'));
+  const file = path.join(dir, `${crypto.randomUUID()}.pptx`);
   fs.writeFileSync(file, pptx);
   await runShell(SOFFICE_BIN, ['--headless', '--convert-to', 'pdf', '--outdir', dir, file], 60_000);
   const pdf = file.replace(/\.pptx$/, '.pdf');
   if (!fs.existsSync(pdf)) throw new Error('soffice produced no PDF');
   const out = fs.readFileSync(pdf);
-  try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
+  try {
+    fs.rmSync(dir, { recursive: true, force: true });
+  } catch {
+    /* ignore */
+  }
   return out;
 }
 
@@ -71,13 +108,22 @@ function runShell(bin: string, args: string[], timeoutMs: number): Promise<void>
   return new Promise((resolve, reject) => {
     let stderr = '';
     const timer = setTimeout(() => {
-      try { child.kill('SIGKILL'); } catch { /* */ }
+      try {
+        child.kill('SIGKILL');
+      } catch {
+        /* */
+      }
       reject(new Error(`${bin} timed out after ${timeoutMs}ms`));
     }, timeoutMs);
     const child = spawn(bin, args, { stdio: ['ignore', 'ignore', 'pipe'] });
-    child.stderr?.on('data', (b) => { stderr += b.toString(); });
-    child.on('error', (e) => { clearTimeout(timer); reject(e); });
-    child.on('exit',  (code) => {
+    child.stderr?.on('data', (b) => {
+      stderr += b.toString();
+    });
+    child.on('error', (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+    child.on('exit', (code) => {
       clearTimeout(timer);
       if (code === 0) resolve();
       else reject(new Error(`${bin} exit ${code}; stderr=${stderr.trim().slice(0, 200)}`));

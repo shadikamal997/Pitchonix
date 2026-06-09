@@ -1,8 +1,15 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { TwoFactorService } from './two-factor.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
@@ -12,6 +19,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private emailService: EmailService,
+    private twoFactorService: TwoFactorService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -44,6 +52,16 @@ export class AuthService {
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
     if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
+
+    // Enforce 2FA when enabled: password alone must NOT yield a token. If no
+    // code was supplied, challenge the client; otherwise verify the TOTP code.
+    if (user.twoFactorEnabled) {
+      if (!dto.code) {
+        return { twoFactorRequired: true };
+      }
+      const codeValid = await this.twoFactorService.verifyCode(user.id, dto.code);
+      if (!codeValid) throw new UnauthorizedException('Invalid two-factor code');
+    }
 
     const token = this.generateToken(user.id, user.email);
     return {
@@ -82,7 +100,10 @@ export class AuthService {
     const token = crypto.randomBytes(32).toString('hex');
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { verificationToken: token, verificationTokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+      data: {
+        verificationToken: token,
+        verificationTokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      },
     });
     await this.emailService.sendVerificationEmail(email, token);
     return { message: 'Verification email sent' };
@@ -103,7 +124,8 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string) {
-    if (newPassword.length < 8) throw new BadRequestException('Password must be at least 8 characters');
+    if (newPassword.length < 8)
+      throw new BadRequestException('Password must be at least 8 characters');
 
     const user = await this.prisma.user.findUnique({ where: { resetToken: token } });
     if (!user || !user.resetTokenExpiry || user.resetTokenExpiry < new Date()) {
@@ -169,13 +191,25 @@ export class AuthService {
   async validateUser(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, createdAt: true, isVerified: true, onboardingCompleted: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+        isVerified: true,
+        onboardingCompleted: true,
+      },
     });
     if (!user) throw new UnauthorizedException();
     return user;
   }
 
-  async validateGoogleUser(googleUser: { googleId: string; email: string; name: string; picture?: string }) {
+  async validateGoogleUser(googleUser: {
+    googleId: string;
+    email: string;
+    name: string;
+    picture?: string;
+  }) {
     // Check if user exists by Google ID
     let user = await (this.prisma.user as any).findFirst({
       where: { googleId: googleUser.googleId },
@@ -191,7 +225,11 @@ export class AuthService {
       if (user) {
         user = await this.prisma.user.update({
           where: { id: user.id },
-          data: { googleId: googleUser.googleId, picture: googleUser.picture, isVerified: true } as any,
+          data: {
+            googleId: googleUser.googleId,
+            picture: googleUser.picture,
+            isVerified: true,
+          } as any,
         });
       }
     }

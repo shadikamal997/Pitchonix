@@ -53,26 +53,30 @@ export class AutoExpansionService {
     switch (type) {
       case SlideType.PROBLEM:
         return input.problem?.trim()
-          ? { ok: true,  reason: '' }
+          ? { ok: true, reason: '' }
           : { ok: false, reason: 'No problem statement' };
 
       case SlideType.SOLUTION:
         return input.solution?.trim()
-          ? { ok: true,  reason: '' }
+          ? { ok: true, reason: '' }
           : { ok: false, reason: 'No solution description' };
 
       case SlideType.MARKET_OPPORTUNITY:
-        if (!!(s?.marketSizing?.tam || s?.marketSizing?.sam || s?.marketSizing?.som) ||
-            (input.marketOpportunity || '').trim().length > 20) {
+        if (
+          !!(s?.marketSizing?.tam || s?.marketSizing?.sam || s?.marketSizing?.som) ||
+          (input.marketOpportunity || '').trim().length > 20
+        ) {
           return { ok: true, reason: '' };
         }
         return { ok: false, reason: 'No market sizing data' };
 
       case SlideType.BUSINESS_MODEL:
       case SlideType.REVENUE_MODEL:
-        if ((s?.pricingTiers?.length ?? 0) > 0 ||
-            input.revenueModel?.trim() ||
-            input.pricing?.trim()) {
+        if (
+          (s?.pricingTiers?.length ?? 0) > 0 ||
+          input.revenueModel?.trim() ||
+          input.pricing?.trim()
+        ) {
           return { ok: true, reason: '' };
         }
         return { ok: false, reason: 'No business model / pricing' };
@@ -102,17 +106,18 @@ export class AutoExpansionService {
         return { ok: false, reason: 'No roadmap data' };
 
       case SlideType.ASK:
-        if (!!input.fundingAsk?.trim() ||
-            !!s?.funding?.amount ||
-            (s?.funding?.allocations?.length ?? 0) > 0 ||
-            !!input.desiredAction?.trim()) {
+        if (
+          !!input.fundingAsk?.trim() ||
+          !!s?.funding?.amount ||
+          (s?.funding?.allocations?.length ?? 0) > 0 ||
+          !!input.desiredAction?.trim()
+        ) {
           return { ok: true, reason: '' };
         }
         return { ok: false, reason: 'No ask / next-step' };
 
       case SlideType.FINANCIALS:
-        if (!!s?.financials?.revenue ||
-            (s?.financials?.projections?.length ?? 0) > 0) {
+        if (!!s?.financials?.revenue || (s?.financials?.projections?.length ?? 0) > 0) {
           return { ok: true, reason: '' };
         }
         return { ok: false, reason: 'No financial data' };

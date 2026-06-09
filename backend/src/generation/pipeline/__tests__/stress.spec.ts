@@ -24,10 +24,22 @@ import { SmartFamilyId } from '../../../components/smart/smart-types';
 // ---- Fixtures ---------------------------------------------------------------
 
 const DOC_TYPES = [
-  'pitch_deck', 'business_plan', 'proposal', 'sales_deck', 'company_profile',
-  'board_meeting', 'training_presentation', 'product_launch', 'strategy_presentation',
-  'case_study', 'marketing_plan', 'executive_summary', 'financial_projection',
-  'partnership_proposal', 'internal_report', 'one_pager',
+  'pitch_deck',
+  'business_plan',
+  'proposal',
+  'sales_deck',
+  'company_profile',
+  'board_meeting',
+  'training_presentation',
+  'product_launch',
+  'strategy_presentation',
+  'case_study',
+  'marketing_plan',
+  'executive_summary',
+  'financial_projection',
+  'partnership_proposal',
+  'internal_report',
+  'one_pager',
 ];
 
 function minimalInput(docType: string): WizardInput {
@@ -52,7 +64,10 @@ function minimalInput(docType: string): WizardInput {
     fontStyle: 'modern',
     visualStyle: 'minimal',
     includeSpeakerNotes: false,
-    traction: '', team: '', fundingAsk: '', roadmap: '',
+    traction: '',
+    team: '',
+    fundingAsk: '',
+    roadmap: '',
   } as WizardInput;
 }
 
@@ -76,9 +91,26 @@ function richInput(docType: string): WizardInput {
         { name: 'Sara', role: 'CMO', experience: 'B2B growth, 3 exits' },
       ],
       pricingTiers: [
-        { name: 'Starter', price: '$49', period: 'mo', features: ['5 seats', 'Core features'], highlight: false },
-        { name: 'Pro', price: '$149', period: 'mo', features: ['25 seats', 'AI features', 'Priority support'], highlight: true },
-        { name: 'Enterprise', price: 'Custom', features: ['Unlimited', 'SSO', 'SLA'], highlight: false },
+        {
+          name: 'Starter',
+          price: '$49',
+          period: 'mo',
+          features: ['5 seats', 'Core features'],
+          highlight: false,
+        },
+        {
+          name: 'Pro',
+          price: '$149',
+          period: 'mo',
+          features: ['25 seats', 'AI features', 'Priority support'],
+          highlight: true,
+        },
+        {
+          name: 'Enterprise',
+          price: 'Custom',
+          features: ['Unlimited', 'SSO', 'SLA'],
+          highlight: false,
+        },
       ],
       roadmapPhases: [
         { phase: 'Enterprise', period: 'Q1', milestones: ['SSO', 'Audit logs'] },
@@ -195,7 +227,7 @@ describe('Phase 16: Stress test', () => {
 
     it('returns higher score for rich input', () => {
       const richScore = contentRichness(richInput('pitch_deck'));
-      const minScore  = contentRichness(minimalInput('pitch_deck'));
+      const minScore = contentRichness(minimalInput('pitch_deck'));
       expect(richScore).toBeGreaterThan(minScore);
     });
   });
@@ -215,14 +247,33 @@ describe('Phase 16: Stress test', () => {
   // 6. compositeScore sanity
   describe('compositeScore', () => {
     it('is bounded 0–100', () => {
-      const score = compositeScore({ scorecardTotal: 72, narrativeScore: 85, contentRichness: 60, visualCoverage: 40 });
+      const score = compositeScore({
+        scorecardTotal: 72,
+        narrativeScore: 85,
+        contentRichness: 60,
+        visualCoverage: 40,
+      });
       assertInRange('compositeScore', score, 0, 100);
     });
     it('is 0 when all inputs are 0', () => {
-      expect(compositeScore({ scorecardTotal: 0, narrativeScore: 0, contentRichness: 0, visualCoverage: 0 })).toBe(0);
+      expect(
+        compositeScore({
+          scorecardTotal: 0,
+          narrativeScore: 0,
+          contentRichness: 0,
+          visualCoverage: 0,
+        }),
+      ).toBe(0);
     });
     it('is 100 when all inputs are 100', () => {
-      expect(compositeScore({ scorecardTotal: 100, narrativeScore: 100, contentRichness: 100, visualCoverage: 100 })).toBe(100);
+      expect(
+        compositeScore({
+          scorecardTotal: 100,
+          narrativeScore: 100,
+          contentRichness: 100,
+          visualCoverage: 100,
+        }),
+      ).toBe(100);
     });
   });
 });

@@ -20,7 +20,24 @@
     "lint": "npm run lint:frontend && npm run lint:backend",
     "lint:frontend": "cd frontend && npm run lint",
     "lint:backend": "cd backend && npm run lint",
-    "clean": "rm -rf node_modules frontend/node_modules backend/node_modules frontend/.next backend/dist"
+    "release:verify": "npm run build && npm run lint && cd backend && npm test -- --runInBand && npm run certify:gate",
+    "release:certify:exports": "cd backend && npm run certify:xlsx && npm run certify:pdf-binary",
+    "release:certify:e2e": "cd frontend && npm run test:e2e",
+    "release:certify:visual": "cd frontend && npm run test:visual",
+    "release:certify:templates": "node scripts/certify-template-registries.mjs",
+    "release:certify:auth": "node scripts/certify-authorization-matrix.mjs",
+    "release:certify:security": "node scripts/certify-security.mjs",
+    "release:certify:performance": "node scripts/certify-performance.mjs",
+    "release:certify:v3": "npm run release:verify && npm run release:certify:exports && npm run release:certify:e2e && npm run release:certify:visual && npm run release:certify:templates && npm run release:certify:auth && npm run release:certify:security && npm run release:certify:performance",
+    "clean": "rm -rf node_modules frontend/node_modules backend/node_modules frontend/.next backend/dist",
+    "validate:corpus": "cd backend && npm run validate:corpus",
+    "audit:templates": "node scripts/audit-templates.mjs",
+    "verify:templates": "node scripts/verify-templates.mjs",
+    "render:cert": "cd backend && npm run render:cert",
+    "render:cert:doc": "cd backend && npm run render:cert:doc",
+    "review:packet": "node scripts/human-review.mjs init",
+    "review:aggregate": "node scripts/human-review.mjs",
+    "audit:editors": "node scripts/audit-editors.mjs"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

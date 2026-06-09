@@ -77,3 +77,10 @@ backend/phase12-test.ts
 
 # Tesseract OCR language data (downloaded at runtime)
 *.traineddata
+
+# Ω.PRODUCT certification — runtime data & large generated artifacts (regenerable; some may contain user data)
+backend/backups/
+backend/uploads/
+backend/exports/
+certification-reports/render/
+*.sql

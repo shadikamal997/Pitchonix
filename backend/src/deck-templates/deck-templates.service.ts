@@ -18,10 +18,10 @@ import { PrismaService } from '../prisma/prisma.service';
 // =============================================================================
 
 export interface DeckTemplateInput {
-  name?:        string;
+  name?: string;
   description?: string;
-  thumbnail?:   string | null;
-  isPublic?:    boolean;
+  thumbnail?: string | null;
+  isPublic?: boolean;
   workspaceId?: string | null;
 }
 
@@ -48,11 +48,11 @@ export class DeckTemplatesService {
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },
       include: {
-        slides:         { include: { elements: true } },
-        masterSlides:   true,
+        slides: { include: { elements: true } },
+        masterSlides: true,
         masterElements: true,
-        sections:       true,
-        themes:         true,
+        sections: true,
+        themes: true,
       },
     });
     if (!deck) throw new NotFoundException('Deck not found');
@@ -66,21 +66,25 @@ export class DeckTemplatesService {
 
     return this.prisma.deckTemplate.create({
       data: {
-        workspaceId:  input.workspaceId ?? null,
+        workspaceId: input.workspaceId ?? null,
         sourceDeckId: deckId,
-        name:         input.name?.trim() || `${deck.title} (template)`,
-        description:  input.description ?? null,
-        thumbnail:    input.thumbnail ?? null,
-        isPublic:     input.isPublic ?? false,
+        name: input.name?.trim() || `${deck.title} (template)`,
+        description: input.description ?? null,
+        thumbnail: input.thumbnail ?? null,
+        isPublic: input.isPublic ?? false,
         payload: {
-          version:  1,
-          deck:     { title: deck.title, description: deck.description, masterSettings: deck.masterSettings },
-          masters:  deck.masterSlides,
+          version: 1,
+          deck: {
+            title: deck.title,
+            description: deck.description,
+            masterSettings: deck.masterSettings,
+          },
+          masters: deck.masterSlides,
           masterEls: deck.masterElements,
           layouts,
-          themes:   deck.themes,
+          themes: deck.themes,
           sections: deck.sections,
-          slides:   deck.slides,
+          slides: deck.slides,
         } as any,
       },
     });
@@ -96,45 +100,51 @@ export class DeckTemplatesService {
     const deck = await this.prisma.deck.create({
       data: {
         projectId,
-        title:          title?.trim() || payload?.deck?.title || tmpl.name,
-        description:    payload?.deck?.description ?? null,
+        title: title?.trim() || payload?.deck?.title || tmpl.name,
+        description: payload?.deck?.description ?? null,
         masterSettings: payload?.deck?.masterSettings ?? null,
-        status:         'draft',
+        status: 'draft',
       },
     });
 
     // Recreate masters + sections + themes so FKs resolve.
-    const masterIdMap  = new Map<string, string>();
+    const masterIdMap = new Map<string, string>();
     const sectionIdMap = new Map<string, string>();
-    const themeIdMap   = new Map<string, string>();
+    const themeIdMap = new Map<string, string>();
 
     for (const m of payload?.masters || []) {
       const created = await this.prisma.masterSlide.create({
         data: {
-          deckId:        deck.id,
-          name:          m.name,
-          layoutType:    m.layoutType,
-          background:    m.background,
-          slots:         m.slots,
+          deckId: deck.id,
+          name: m.name,
+          layoutType: m.layoutType,
+          background: m.background,
+          slots: m.slots,
           defaultStyles: m.defaultStyles,
-          preview:       m.preview,
+          preview: m.preview,
         },
       });
       masterIdMap.set(m.id, created.id);
     }
     for (const sec of payload?.sections || []) {
       const created = await this.prisma.deckSection.create({
-        data: { deckId: deck.id, name: sec.name, color: sec.color, order: sec.order, collapsed: sec.collapsed },
+        data: {
+          deckId: deck.id,
+          name: sec.name,
+          color: sec.color,
+          order: sec.order,
+          collapsed: sec.collapsed,
+        },
       });
       sectionIdMap.set(sec.id, created.id);
     }
     for (const th of payload?.themes || []) {
       const created = await this.prisma.deckTheme.create({
         data: {
-          deckId:      deck.id,
+          deckId: deck.id,
           workspaceId: th.workspaceId,
-          name:        th.name,
-          tokens:      th.tokens,
+          name: th.name,
+          tokens: th.tokens,
           isWorkspace: false,
         },
       });
@@ -145,22 +155,22 @@ export class DeckTemplatesService {
     for (const s of payload?.slides || []) {
       const created = await this.prisma.slide.create({
         data: {
-          deckId:           deck.id,
-          type:             s.type,
-          order:            s.order,
-          title:            s.title,
-          subtitle:         s.subtitle,
-          content:          s.content,
-          layoutKey:        s.layoutKey,
-          themeKey:         s.themeKey,
-          speakerNotes:     s.speakerNotes,
-          background:       s.background,
-          themeTokens:      s.themeTokens,
-          metadata:         s.metadata,
-          transition:       s.transition,
-          sectionId:        s.sectionId ? sectionIdMap.get(s.sectionId) ?? null : null,
-          masterSlideId:    s.masterSlideId ? masterIdMap.get(s.masterSlideId) ?? null : null,
-          themeId:          s.themeId ? themeIdMap.get(s.themeId) ?? null : null,
+          deckId: deck.id,
+          type: s.type,
+          order: s.order,
+          title: s.title,
+          subtitle: s.subtitle,
+          content: s.content,
+          layoutKey: s.layoutKey,
+          themeKey: s.themeKey,
+          speakerNotes: s.speakerNotes,
+          background: s.background,
+          themeTokens: s.themeTokens,
+          metadata: s.metadata,
+          transition: s.transition,
+          sectionId: s.sectionId ? (sectionIdMap.get(s.sectionId) ?? null) : null,
+          masterSlideId: s.masterSlideId ? (masterIdMap.get(s.masterSlideId) ?? null) : null,
+          themeId: s.themeId ? (themeIdMap.get(s.themeId) ?? null) : null,
           // layoutTemplateId is workspace-scoped — leave dangling references
           // intact; instantiate() does not re-create layouts.
           layoutTemplateId: s.layoutTemplateId ?? null,
@@ -170,12 +180,22 @@ export class DeckTemplatesService {
         await this.prisma.slideElement.createMany({
           data: s.elements.map((el: any) => ({
             slideId: created.id,
-            type:    el.type, name: el.name, order: el.order,
-            x: el.x, y: el.y, width: el.width, height: el.height,
-            rotation: el.rotation, zIndex: el.zIndex,
-            locked: el.locked, visible: el.visible,
-            content: el.content, data: el.data, style: el.style,
-            animations: el.animations, accessibility: el.accessibility,
+            type: el.type,
+            name: el.name,
+            order: el.order,
+            x: el.x,
+            y: el.y,
+            width: el.width,
+            height: el.height,
+            rotation: el.rotation,
+            zIndex: el.zIndex,
+            locked: el.locked,
+            visible: el.visible,
+            content: el.content,
+            data: el.data,
+            style: el.style,
+            animations: el.animations,
+            accessibility: el.accessibility,
           })),
         });
       }
@@ -186,11 +206,19 @@ export class DeckTemplatesService {
       await this.prisma.masterElement.create({
         data: {
           deckId: deck.id,
-          type:   me.type, name: me.name,
-          x: me.x, y: me.y, width: me.width, height: me.height,
-          rotation: me.rotation, zIndex: me.zIndex, sendToFront: me.sendToFront,
-          visible: me.visible, excludedSlides: me.excludedSlides ?? [],
-          elementData: me.elementData, style: me.style,
+          type: me.type,
+          name: me.name,
+          x: me.x,
+          y: me.y,
+          width: me.width,
+          height: me.height,
+          rotation: me.rotation,
+          zIndex: me.zIndex,
+          sendToFront: me.sendToFront,
+          visible: me.visible,
+          excludedSlides: me.excludedSlides ?? [],
+          elementData: me.elementData,
+          style: me.style,
         },
       });
     }

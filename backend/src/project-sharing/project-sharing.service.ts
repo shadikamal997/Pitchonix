@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 
@@ -12,7 +17,8 @@ export class ProjectSharingService {
   async inviteByEmail(projectId: string, inviterUserId: string, email: string, role: string) {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException('Project not found');
-    if (project.userId !== inviterUserId) throw new ForbiddenException('Only the owner can invite members');
+    if (project.userId !== inviterUserId)
+      throw new ForbiddenException('Only the owner can invite members');
 
     const invitee = await this.prisma.user.findUnique({ where: { email } });
     if (!invitee) throw new NotFoundException('No user found with that email');
@@ -63,7 +69,8 @@ export class ProjectSharingService {
   async updateRole(projectId: string, ownerUserId: string, memberId: string, role: string) {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException('Project not found');
-    if (project.userId !== ownerUserId) throw new ForbiddenException('Only the owner can change roles');
+    if (project.userId !== ownerUserId)
+      throw new ForbiddenException('Only the owner can change roles');
 
     return this.prisma.projectShare.update({
       where: { projectId_userId: { projectId, userId: memberId } },

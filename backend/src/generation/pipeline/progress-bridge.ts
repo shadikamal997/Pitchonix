@@ -24,18 +24,25 @@ import { GenerationEventBus } from './event-bus';
 import { ProgressGateway, ProgressUpdate } from '../progress/progress.gateway';
 import type { PipelineStage } from './types';
 
-const STAGE_UI: Record<PipelineStage, { stage: ProgressUpdate['stage']; progress: number; message: string }> = {
-  'load-context':              { stage: 'outline',  progress: 5,  message: 'Loading wizard context…' },
-  'validate-input':            { stage: 'outline',  progress: 10, message: 'Validating input…' },
-  'build-context':             { stage: 'outline',  progress: 15, message: 'Building generation context…' },
-  'slide-planning':            { stage: 'slides',   progress: 25, message: 'Planning slides…' },
-  'generator-execution':       { stage: 'slides',   progress: 45, message: 'Generating slide content…' },
-  'enhancement':               { stage: 'design',   progress: 60, message: 'Enhancing content…' },
-  'smart-component-attachment':{ stage: 'design',   progress: 70, message: 'Attaching smart components…' },
-  'quality-analysis':          { stage: 'quality',  progress: 80, message: 'Running quality checks…' },
-  'migration':                 { stage: 'complete', progress: 90, message: 'Materialising slide elements…' },
-  'persistence':               { stage: 'complete', progress: 95, message: 'Persisting deck…' },
-  'post-processing':           { stage: 'complete', progress: 98, message: 'Finalising…' },
+const STAGE_UI: Record<
+  PipelineStage,
+  { stage: ProgressUpdate['stage']; progress: number; message: string }
+> = {
+  'load-context': { stage: 'outline', progress: 5, message: 'Loading wizard context…' },
+  'validate-input': { stage: 'outline', progress: 10, message: 'Validating input…' },
+  'build-context': { stage: 'outline', progress: 15, message: 'Building generation context…' },
+  'slide-planning': { stage: 'slides', progress: 25, message: 'Planning slides…' },
+  'generator-execution': { stage: 'slides', progress: 45, message: 'Generating slide content…' },
+  enhancement: { stage: 'design', progress: 60, message: 'Enhancing content…' },
+  'smart-component-attachment': {
+    stage: 'design',
+    progress: 70,
+    message: 'Attaching smart components…',
+  },
+  'quality-analysis': { stage: 'quality', progress: 80, message: 'Running quality checks…' },
+  migration: { stage: 'complete', progress: 90, message: 'Materialising slide elements…' },
+  persistence: { stage: 'complete', progress: 95, message: 'Persisting deck…' },
+  'post-processing': { stage: 'complete', progress: 98, message: 'Finalising…' },
 };
 
 @Injectable()
@@ -52,7 +59,9 @@ export class GenerationProgressBridge implements OnModuleInit {
       const jobId = this.jobId(e.payload);
       if (!jobId) return;
       this.gateway?.emitProgress({
-        jobId, stage: 'outline', progress: 1,
+        jobId,
+        stage: 'outline',
+        progress: 1,
         message: `Generation started (${(e.payload as any).command?.type})`,
         timestamp: new Date(),
       });
@@ -82,7 +91,9 @@ export class GenerationProgressBridge implements OnModuleInit {
     this.bus.on('slides.generated', (e) => {
       const payload = e.payload as { count: number; deckId?: string };
       this.gateway?.emitProgress({
-        jobId: '', stage: 'slides', progress: 50,
+        jobId: '',
+        stage: 'slides',
+        progress: 50,
         message: `Generated ${payload.count} slides`,
         details: { totalSlides: payload.count, deckId: payload.deckId },
         timestamp: new Date(),
@@ -93,7 +104,8 @@ export class GenerationProgressBridge implements OnModuleInit {
       const jobId = this.jobId(e.payload);
       this.gateway?.emitProgress({
         jobId,
-        stage: 'complete', progress: 100,
+        stage: 'complete',
+        progress: 100,
         message: 'Presentation ready',
         details: (e.payload as any).metrics,
         timestamp: new Date(),
@@ -105,7 +117,8 @@ export class GenerationProgressBridge implements OnModuleInit {
       const jobId = this.jobId(payload);
       this.gateway?.emitProgress({
         jobId,
-        stage: 'error', progress: 0,
+        stage: 'error',
+        progress: 0,
         message: `Generation failed at ${payload.stage}: ${payload.reason}`,
         details: { stage: payload.stage },
         timestamp: new Date(),

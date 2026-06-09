@@ -23,7 +23,7 @@ export interface ProgressUpdate {
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3001', 'http://localhost:3000'],
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
     credentials: true,
   },
   namespace: '/progress',
@@ -41,7 +41,7 @@ export class ProgressGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
-    
+
     // Remove client from all job subscriptions
     this.jobSubscriptions.forEach((subscribers, jobId) => {
       subscribers.delete(client.id);
@@ -81,18 +81,18 @@ export class ProgressGateway implements OnGatewayConnection, OnGatewayDisconnect
    */
   emitProgress(update: ProgressUpdate) {
     const subscribers = this.jobSubscriptions.get(update.jobId);
-    
+
     if (!subscribers || subscribers.size === 0) {
       this.logger.debug(`No subscribers for job ${update.jobId}`);
       return;
     }
 
     this.logger.log(
-      `Emitting progress for job ${update.jobId}: ${update.stage} - ${update.progress}% - ${update.message}`
+      `Emitting progress for job ${update.jobId}: ${update.stage} - ${update.progress}% - ${update.message}`,
     );
 
     // Emit to all subscribed clients
-    subscribers.forEach(socketId => {
+    subscribers.forEach((socketId) => {
       this.server.to(socketId).emit('progress', update);
     });
 

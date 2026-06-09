@@ -73,15 +73,15 @@ export abstract class BaseSlideGenerator implements ISlideGenerator {
     let score = 50; // Base score
 
     const content = this.generateContent(input);
-    
+
     // Check for completeness
     if (content && typeof content === 'object') {
       const fields = Object.keys(content);
-      const nonEmptyFields = fields.filter(key => {
+      const nonEmptyFields = fields.filter((key) => {
         const value = content[key];
         return value !== null && value !== undefined && value !== '';
       });
-      
+
       score += (nonEmptyFields.length / fields.length) * 30;
     }
 

@@ -67,7 +67,7 @@ export class EmailDigestService {
     const firstName = user.name?.split(' ')[0] || 'there';
 
     const newProjectRows = newProjects
-      .map(p => `<li style="margin:4px 0">${p.name}</li>`)
+      .map((p) => `<li style="margin:4px 0">${p.name}</li>`)
       .join('');
 
     const html = `
@@ -94,10 +94,14 @@ export class EmailDigestService {
             </div>
           </div>
 
-          ${newProjects.length > 0 ? `
+          ${
+            newProjects.length > 0
+              ? `
           <h3 style="margin-top:24px">New projects this week</h3>
           <ul style="padding-left:20px;color:#374151">${newProjectRows}</ul>
-          ` : ''}
+          `
+              : ''
+          }
 
           <div style="margin-top:24px;text-align:center">
             <a href="${appUrl}/dashboard" style="display:inline-block;background:#7C3AED;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">Open Dashboard</a>

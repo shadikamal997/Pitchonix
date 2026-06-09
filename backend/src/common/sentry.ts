@@ -9,9 +9,7 @@ export function initializeSentry() {
 
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
-    integrations: [
-      nodeProfilingIntegration(),
-    ],
+    integrations: [nodeProfilingIntegration()],
     // Performance Monitoring
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     // Set sampling rate for profiling - this is relative to tracesSampleRate

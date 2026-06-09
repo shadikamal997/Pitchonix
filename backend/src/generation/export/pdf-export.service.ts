@@ -76,16 +76,11 @@ export class PDFExportService {
         preferCSSPageSize: true,
       });
 
-      this.logger.log(
-        `PDF generated: ${slides.length} slides, ${pdfBuffer.length} bytes`,
-      );
+      this.logger.log(`PDF generated: ${slides.length} slides, ${pdfBuffer.length} bytes`);
 
       return Buffer.from(pdfBuffer);
     } catch (error) {
-      this.logger.error(
-        `PDF export failed: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`PDF export failed: ${error.message}`, error.stack);
       throw new Error(`PDF export failed: ${error.message}`);
     } finally {
       if (page) {
@@ -170,9 +165,7 @@ export class PDFExportService {
 
       return Buffer.from(pdfBuffer);
     } catch (error) {
-      this.logger.error(
-        `Advanced PDF export failed: ${error.message}`,
-      );
+      this.logger.error(`Advanced PDF export failed: ${error.message}`);
       throw error;
     } finally {
       if (page) {

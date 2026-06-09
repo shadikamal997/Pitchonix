@@ -31,7 +31,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { smartRegistry } from '../components/smart/smart-registry';
 import {
-  SmartFamilyId, SmartComponentType, SMART_FAMILIES, SMART_COMPONENT_TYPES,
+  SmartFamilyId,
+  SmartComponentType,
+  SMART_FAMILIES,
+  SMART_COMPONENT_TYPES,
 } from '../components/smart/smart-types';
 import type { SmartComponentDTO } from '../components/smart/smart-types';
 import type { SlideElementDTO } from '../slides/element-types';
@@ -40,72 +43,72 @@ import { SlideType } from './slide-types/types';
 
 /** Result of an adapter lookup. `null` means "fall back to manual layout". */
 export interface SmartComponentRequest {
-  family:      SmartFamilyId;
-  type:        SmartComponentType;
+  family: SmartFamilyId;
+  type: SmartComponentType;
   elementTree: SlideElementDTO[];
 }
 
 /** Map from generator SlideType → preferred smart-component type. */
 const SLIDE_TYPE_TO_COMPONENT: Partial<Record<SlideType, SmartComponentType>> = {
   // Tier 4
-  [SlideType.ROADMAP]:            'roadmapBlock',
-  [SlideType.PRICING]:            'pricingTable',
-  [SlideType.BUSINESS_MODEL]:     'pricingTable',
-  [SlideType.TEAM]:               'teamGrid',
+  [SlideType.ROADMAP]: 'roadmapBlock',
+  [SlideType.PRICING]: 'pricingTable',
+  [SlideType.BUSINESS_MODEL]: 'pricingTable',
+  [SlideType.TEAM]: 'teamGrid',
   [SlideType.MARKET_OPPORTUNITY]: 'marketOpportunity',
-  [SlideType.COMPETITION]:        'comparisonMatrix',
-  [SlideType.ASK]:                'fundingBlock',
-  [SlideType.TRACTION]:           'statBlock',
+  [SlideType.COMPETITION]: 'comparisonMatrix',
+  [SlideType.ASK]: 'fundingBlock',
+  [SlideType.TRACTION]: 'statBlock',
   // Tier 6 — completes coverage
-  [SlideType.COVER]:              'coverCard',
-  [SlideType.PROBLEM]:            'problemStatement',
-  [SlideType.SOLUTION]:           'solutionStatement',
-  [SlideType.EXECUTIVE_SUMMARY]:  'executiveSummary',
-  [SlideType.PRODUCT_FEATURES]:   'featureGrid',
-  [SlideType.VISION]:             'visionBlock',
-  [SlideType.GO_TO_MARKET]:       'processFlow',
-  [SlideType.FINANCIALS]:         'financialDashboard',
-  [SlideType.CASE_STUDY]:         'caseStudyBlock',
-  [SlideType.COMPANY_OVERVIEW]:   'companyOverviewBlock',
+  [SlideType.COVER]: 'coverCard',
+  [SlideType.PROBLEM]: 'problemStatement',
+  [SlideType.SOLUTION]: 'solutionStatement',
+  [SlideType.EXECUTIVE_SUMMARY]: 'executiveSummary',
+  [SlideType.PRODUCT_FEATURES]: 'featureGrid',
+  [SlideType.VISION]: 'visionBlock',
+  [SlideType.GO_TO_MARKET]: 'processFlow',
+  [SlideType.FINANCIALS]: 'financialDashboard',
+  [SlideType.CASE_STUDY]: 'caseStudyBlock',
+  [SlideType.COMPANY_OVERVIEW]: 'companyOverviewBlock',
 };
 
 /** Default family by document type. Falls back to `investor-minimal`. */
 const DOC_TYPE_TO_FAMILY: Record<string, SmartFamilyId> = {
-  pitch_deck:        'investor-minimal',
-  sales_deck:        'soft-geometric-blue',
-  board_deck:        'corporate-monochrome',
-  strategy_deck:     'editorial-report',
-  business_plan:     'light-blue-business',
-  investor_deck:     'investor-minimal',
-  internal_review:   'corporate-monochrome',
-  launch_deck:       'startup-gradient',
-  conference_deck:   'luxury-dark',
+  pitch_deck: 'investor-minimal',
+  sales_deck: 'soft-geometric-blue',
+  board_deck: 'corporate-monochrome',
+  strategy_deck: 'editorial-report',
+  business_plan: 'light-blue-business',
+  investor_deck: 'investor-minimal',
+  internal_review: 'corporate-monochrome',
+  launch_deck: 'startup-gradient',
+  conference_deck: 'luxury-dark',
 };
 
 /** Lower-case heuristics for the WizardInput.theme string. */
 const THEME_HINT_TO_FAMILY: Array<{ pattern: RegExp; family: SmartFamilyId }> = [
   // Original 8
-  { pattern: /crimson|red|bold/i,               family: 'crimson-dark' },
-  { pattern: /luxury|gold|premium|elegant/i,    family: 'luxury-dark' },
-  { pattern: /startup|gradient|vibrant|fun/i,   family: 'startup-gradient' },
-  { pattern: /investor|minimal|terracotta/i,    family: 'investor-minimal' },
-  { pattern: /corporate|monochrome|formal/i,    family: 'corporate-monochrome' },
-  { pattern: /editorial|report|magazine|serif/i,family: 'editorial-report' },
-  { pattern: /geometric|soft|playful/i,         family: 'soft-geometric-blue' },
-  { pattern: /business|blue/i,                  family: 'light-blue-business' },
+  { pattern: /crimson|red|bold/i, family: 'crimson-dark' },
+  { pattern: /luxury|gold|premium|elegant/i, family: 'luxury-dark' },
+  { pattern: /startup|gradient|vibrant|fun/i, family: 'startup-gradient' },
+  { pattern: /investor|minimal|terracotta/i, family: 'investor-minimal' },
+  { pattern: /corporate|monochrome|formal/i, family: 'corporate-monochrome' },
+  { pattern: /editorial|report|magazine|serif/i, family: 'editorial-report' },
+  { pattern: /geometric|soft|playful/i, family: 'soft-geometric-blue' },
+  { pattern: /business|blue/i, family: 'light-blue-business' },
   // Phase 4 — 12 new families
-  { pattern: /ocean|navy|deep.*blue|finance/i,  family: 'ocean-deep' },
-  { pattern: /forest|executive|esg|nature/i,    family: 'forest-executive' },
-  { pattern: /ember|orange|energetic|consumer/i,family: 'ember-orange' },
-  { pattern: /arctic|white|ultra.minimal|clean/i,family: 'arctic-white' },
-  { pattern: /slate.*pro|saas|indigo|software/i,family: 'slate-pro' },
-  { pattern: /emerald|fintech|growth.*green/i,  family: 'emerald-fintech' },
-  { pattern: /midnight.*tech|cyber|neon|dev/i,  family: 'midnight-tech' },
-  { pattern: /rose|pink|health|wellness/i,      family: 'rose-modern' },
+  { pattern: /ocean|navy|deep.*blue|finance/i, family: 'ocean-deep' },
+  { pattern: /forest|executive|esg|nature/i, family: 'forest-executive' },
+  { pattern: /ember|orange|energetic|consumer/i, family: 'ember-orange' },
+  { pattern: /arctic|white|ultra.minimal|clean/i, family: 'arctic-white' },
+  { pattern: /slate.*pro|saas|indigo|software/i, family: 'slate-pro' },
+  { pattern: /emerald|fintech|growth.*green/i, family: 'emerald-fintech' },
+  { pattern: /midnight.*tech|cyber|neon|dev/i, family: 'midnight-tech' },
+  { pattern: /rose|pink|health|wellness/i, family: 'rose-modern' },
   { pattern: /cobalt|enterprise.*blue|impact/i, family: 'cobalt-impact' },
-  { pattern: /sand|warm.*earth|lifestyle/i,     family: 'warm-sand' },
-  { pattern: /violet|creative|purple|agency/i,  family: 'violet-creative' },
-  { pattern: /teal|aqua|biotech|medical/i,      family: 'teal-health' },
+  { pattern: /sand|warm.*earth|lifestyle/i, family: 'warm-sand' },
+  { pattern: /violet|creative|purple|agency/i, family: 'violet-creative' },
+  { pattern: /teal|aqua|biotech|medical/i, family: 'teal-health' },
 ];
 
 @Injectable()
@@ -160,7 +163,9 @@ export class GenerationComponentAdapter {
     try {
       return smartRegistry.getOne(family, type);
     } catch (err) {
-      this.logger.warn(`smart-component lookup failed for ${family}/${type}: ${(err as Error).message}`);
+      this.logger.warn(
+        `smart-component lookup failed for ${family}/${type}: ${(err as Error).message}`,
+      );
       return null;
     }
   }
@@ -170,7 +175,11 @@ export class GenerationComponentAdapter {
    * element tree for the current family, and return a request object. Used
    * by the seven Tier-4 generators in the spec.
    */
-  requestFor(slideType: SlideType, input: WizardInput, forcedFamily?: SmartFamilyId | null): SmartComponentRequest | null {
+  requestFor(
+    slideType: SlideType,
+    input: WizardInput,
+    forcedFamily?: SmartFamilyId | null,
+  ): SmartComponentRequest | null {
     const compType = SLIDE_TYPE_TO_COMPONENT[slideType];
     if (!compType) return null;
     const family = this.inferFamily(input, forcedFamily);

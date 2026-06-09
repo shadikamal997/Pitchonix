@@ -25,23 +25,23 @@ const BASELINE_DIR = process.env.PPTX_BASELINE_DIR
 export type RegressionMode = 'establish' | 'compare';
 
 export interface FixtureSpec {
-  name:   string;
+  name: string;
   buffer: Buffer;
 }
 
 export interface FixtureRegressionResult {
-  name:              string;
-  mode:              RegressionMode;
+  name: string;
+  mode: RegressionMode;
   rendererAvailable: boolean;
-  diff:              DeckDiff;
-  baselineHit:       boolean;
+  diff: DeckDiff;
+  baselineHit: boolean;
 }
 
 export interface RegressionSuiteResult {
   rendererAvailable: boolean;
-  fixtures:          FixtureRegressionResult[];
-  averageFidelity:   number;
-  worstFidelity:     number;
+  fixtures: FixtureRegressionResult[];
+  averageFidelity: number;
+  worstFidelity: number;
 }
 
 export async function runVisualRegressionSuite(
@@ -57,14 +57,18 @@ export async function runVisualRegressionSuite(
     const parsed = service.parseBuffer(f.buffer);
     let referenceRenderer;
     if (rendererAvailable) {
-      try { referenceRenderer = await buildReferenceRenderer(parsed); }
-      catch { referenceRenderer = undefined; }
+      try {
+        referenceRenderer = await buildReferenceRenderer(parsed);
+      } catch {
+        referenceRenderer = undefined;
+      }
     }
     const outputDir = path.join(BASELINE_DIR, f.name);
     if (mode === 'establish') ensureDir(outputDir);
 
     const diff = await diffDecks(parsed, parsed, {
-      width: 960, height: 540,
+      width: 960,
+      height: 540,
       threshold: 0.1,
       referenceRenderer,
       outputDir: mode === 'establish' ? outputDir : undefined,
@@ -82,13 +86,22 @@ export async function runVisualRegressionSuite(
     }
     if (mode === 'establish') {
       try {
-        fs.writeFileSync(metaFile, JSON.stringify({
-          name: f.name,
-          recordedAt: new Date().toISOString(),
-          slides: parsed.slides.length,
-          fidelity: diff.fidelityScore,
-        }, null, 2));
-      } catch { /* non-fatal */ }
+        fs.writeFileSync(
+          metaFile,
+          JSON.stringify(
+            {
+              name: f.name,
+              recordedAt: new Date().toISOString(),
+              slides: parsed.slides.length,
+              fidelity: diff.fidelityScore,
+            },
+            null,
+            2,
+          ),
+        );
+      } catch {
+        /* non-fatal */
+      }
     }
 
     results.push({
@@ -101,19 +114,23 @@ export async function runVisualRegressionSuite(
   }
 
   const scores = results.map((r) => r.diff.fidelityScore);
-  const avg    = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-  const worst  = scores.length ? Math.min(...scores) : 0;
+  const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  const worst = scores.length ? Math.min(...scores) : 0;
 
   return {
     rendererAvailable,
     fixtures: results,
     averageFidelity: Number(avg.toFixed(3)),
-    worstFidelity:   Number(worst.toFixed(3)),
+    worstFidelity: Number(worst.toFixed(3)),
   };
 }
 
 function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) {
-    try { fs.mkdirSync(dir, { recursive: true }); } catch { /* logged on first write */ }
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {
+      /* logged on first write */
+    }
   }
 }

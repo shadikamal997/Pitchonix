@@ -107,7 +107,22 @@ export interface TemplateConfig {
   layouts: LayoutComponentType[];
   defaultSections: string[];
   style: {
-    colorScheme: 'blue' | 'navy' | 'gray' | 'purple' | 'green' | 'red' | 'teal' | 'indigo' | 'emerald' | 'amber' | 'orange' | 'rose' | 'slate' | 'dark' | string;
+    colorScheme:
+      | 'blue'
+      | 'navy'
+      | 'gray'
+      | 'purple'
+      | 'green'
+      | 'red'
+      | 'teal'
+      | 'indigo'
+      | 'emerald'
+      | 'amber'
+      | 'orange'
+      | 'rose'
+      | 'slate'
+      | 'dark'
+      | string;
     headerStyle: 'gradient' | 'solid' | 'minimal';
     cardStyle: 'rounded' | 'sharp' | 'soft';
     spacing: 'compact' | 'normal' | 'spacious';

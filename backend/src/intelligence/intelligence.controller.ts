@@ -14,7 +14,8 @@ export class IntelligenceController {
   @Post('analyze')
   @ApiOperation({
     summary: 'Analyze content and get improvement suggestions',
-    description: 'Provides scores, suggestions, and enhanced content for any type of business content',
+    description:
+      'Provides scores, suggestions, and enhanced content for any type of business content',
   })
   async analyzeContent(@Body() dto: AnalyzeContentDto): Promise<ContentAnalysisDto> {
     return this.intelligenceService.analyzeContent(dto.content, dto.type, dto.context);
@@ -25,7 +26,9 @@ export class IntelligenceController {
     summary: 'Quick content quality check',
     description: 'Fast analysis without AI (checks length, jargon, weak words)',
   })
-  async quickCheck(@Body() body: { content: string }): Promise<{ score: number; issues: string[] }> {
+  async quickCheck(
+    @Body() body: { content: string },
+  ): Promise<{ score: number; issues: string[] }> {
     return this.intelligenceService.quickCheck(body.content);
   }
 

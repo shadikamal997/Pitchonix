@@ -1,5 +1,10 @@
 import {
-  Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger, OnModuleInit,
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -7,7 +12,12 @@ import { WorkspaceAuditService } from './workspace-audit.service';
 import { WorkspaceActivityService } from './workspace-activity.service';
 import { EmailService } from '../email/email.service';
 import {
-  canRole, isHigherRole, isAtLeastRole, WorkspaceAction, WorkspaceRole, WORKSPACE_ROLES,
+  canRole,
+  isHigherRole,
+  isAtLeastRole,
+  WorkspaceAction,
+  WorkspaceRole,
+  WORKSPACE_ROLES,
 } from './workspace-permissions';
 
 // =============================================================================
@@ -27,10 +37,10 @@ export class WorkspacesService implements OnModuleInit {
   private readonly logger = new Logger(WorkspacesService.name);
 
   constructor(
-    private prisma:   PrismaService,
-    private audit:    WorkspaceAuditService,
+    private prisma: PrismaService,
+    private audit: WorkspaceAuditService,
     private activity: WorkspaceActivityService,
-    private email:    EmailService,
+    private email: EmailService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -54,14 +64,20 @@ export class WorkspacesService implements OnModuleInit {
    *
    * Idempotent — running it on already-migrated data is a no-op.
    */
-  async backfillPersonalWorkspaces(): Promise<{ usersChecked: number; created: number; projectsMoved: number }> {
-    const users = await this.prisma.user.findMany({ select: { id: true, name: true, email: true } });
+  async backfillPersonalWorkspaces(): Promise<{
+    usersChecked: number;
+    created: number;
+    projectsMoved: number;
+  }> {
+    const users = await this.prisma.user.findMany({
+      select: { id: true, name: true, email: true },
+    });
     let created = 0;
     let projectsMoved = 0;
 
     for (const u of users) {
       const existingMembership = await this.prisma.workspaceMember.findFirst({
-        where:  { userId: u.id },
+        where: { userId: u.id },
         select: { workspaceId: true },
       });
       if (existingMembership) continue;
@@ -69,15 +85,15 @@ export class WorkspacesService implements OnModuleInit {
       // No memberships → create Personal org + workspace + owner row.
       const slug = `personal-${u.id.slice(0, 8)}`;
       const org = await this.prisma.organization.upsert({
-        where:  { slug },
+        where: { slug },
         create: { slug, name: 'Personal', ownerId: u.id },
         update: {},
       });
       const ws = await this.prisma.workspace.create({
         data: {
           organizationId: org.id,
-          name:           'Personal',
-          description:    'Your personal workspace',
+          name: 'Personal',
+          description: 'Your personal workspace',
           members: { create: { userId: u.id, role: 'owner' } },
         },
       });
@@ -86,13 +102,15 @@ export class WorkspacesService implements OnModuleInit {
       // Move every existing project owned by this user into the new workspace.
       const moved = await this.prisma.project.updateMany({
         where: { userId: u.id, workspaceId: null },
-        data:  { workspaceId: ws.id },
+        data: { workspaceId: ws.id },
       });
       projectsMoved += moved.count;
     }
 
     if (created > 0 || projectsMoved > 0) {
-      this.logger.log(`Backfill: ${created} personal workspaces created, ${projectsMoved} projects moved`);
+      this.logger.log(
+        `Backfill: ${created} personal workspaces created, ${projectsMoved} projects moved`,
+      );
     }
     return { usersChecked: users.length, created, projectsMoved };
   }
@@ -104,7 +122,7 @@ export class WorkspacesService implements OnModuleInit {
   /** Returns the caller's WorkspaceMember row or throws. */
   async assertMember(workspaceId: string, userId: string): Promise<{ role: WorkspaceRole }> {
     const member = await this.prisma.workspaceMember.findUnique({
-      where:  { workspaceId_userId: { workspaceId, userId } },
+      where: { workspaceId_userId: { workspaceId, userId } },
       select: { role: true },
     });
     if (!member) throw new ForbiddenException('You are not a member of this workspace');
@@ -112,7 +130,11 @@ export class WorkspacesService implements OnModuleInit {
   }
 
   /** Caller must have the role required for `action`, else throw. */
-  async assertCan(workspaceId: string, userId: string, action: WorkspaceAction): Promise<WorkspaceRole> {
+  async assertCan(
+    workspaceId: string,
+    userId: string,
+    action: WorkspaceAction,
+  ): Promise<WorkspaceRole> {
     const { role } = await this.assertMember(workspaceId, userId);
     if (!canRole(role, action)) {
       throw new ForbiddenException(`Role "${role}" cannot ${action}`);
@@ -126,20 +148,20 @@ export class WorkspacesService implements OnModuleInit {
 
   async listMine(userId: string) {
     const memberships = await this.prisma.workspaceMember.findMany({
-      where:   { userId },
+      where: { userId },
       include: {
         workspace: {
           include: {
             organization: { select: { id: true, name: true, slug: true } },
-            _count:       { select: { members: true, projects: true } },
+            _count: { select: { members: true, projects: true } },
           },
         },
       },
       orderBy: { joinedAt: 'asc' },
     });
     return memberships.map((m) => ({
-      role:        m.role,
-      workspace:   m.workspace,
+      role: m.role,
+      workspace: m.workspace,
       memberCount: m.workspace._count.members,
       projectCount: m.workspace._count.projects,
     }));
@@ -148,10 +170,16 @@ export class WorkspacesService implements OnModuleInit {
   async getById(workspaceId: string, userId: string) {
     await this.assertMember(workspaceId, userId);
     const ws = await this.prisma.workspace.findUnique({
-      where:   { id: workspaceId },
+      where: { id: workspaceId },
       include: {
         organization: true,
-        _count:       { select: { members: true, projects: true, invites: { where: { acceptedAt: null, revokedAt: null } } } },
+        _count: {
+          select: {
+            members: true,
+            projects: true,
+            invites: { where: { acceptedAt: null, revokedAt: null } },
+          },
+        },
       },
     });
     if (!ws) throw new NotFoundException('Workspace not found');
@@ -162,7 +190,10 @@ export class WorkspacesService implements OnModuleInit {
   //  Mutations — workspace
   // ---------------------------------------------------------------------------
 
-  async create(userId: string, input: { name: string; description?: string; organizationId?: string }) {
+  async create(
+    userId: string,
+    input: { name: string; description?: string; organizationId?: string },
+  ) {
     if (!input.name?.trim()) throw new BadRequestException('Workspace name is required');
 
     // If no orgId, create a new "owned by this user" org named after the workspace.
@@ -176,7 +207,8 @@ export class WorkspacesService implements OnModuleInit {
     } else {
       // If specified, caller must own it.
       const org = await this.prisma.organization.findUnique({
-        where: { id: orgId }, select: { ownerId: true },
+        where: { id: orgId },
+        select: { ownerId: true },
       });
       if (!org) throw new NotFoundException('Organization not found');
       if (org.ownerId !== userId) {
@@ -187,35 +219,51 @@ export class WorkspacesService implements OnModuleInit {
     const ws = await this.prisma.workspace.create({
       data: {
         organizationId: orgId,
-        name:           input.name.trim(),
-        description:    input.description?.trim() || null,
-        members:        { create: { userId, role: 'owner' } },
+        name: input.name.trim(),
+        description: input.description?.trim() || null,
+        members: { create: { userId, role: 'owner' } },
       },
       include: { organization: true },
     });
 
     await this.audit.log({
-      workspaceId: ws.id, actorId: userId, action: 'workspace.created',
-      targetType:  'workspace', targetId: ws.id, after: { name: ws.name },
+      workspaceId: ws.id,
+      actorId: userId,
+      action: 'workspace.created',
+      targetType: 'workspace',
+      targetId: ws.id,
+      after: { name: ws.name },
     });
     return ws;
   }
 
-  async rename(workspaceId: string, userId: string, patch: { name?: string; description?: string }) {
+  async rename(
+    workspaceId: string,
+    userId: string,
+    patch: { name?: string; description?: string },
+  ) {
     await this.assertCan(workspaceId, userId, 'workspace.edit');
     const before = await this.prisma.workspace.findUnique({
-      where: { id: workspaceId }, select: { name: true, description: true },
+      where: { id: workspaceId },
+      select: { name: true, description: true },
     });
     const updated = await this.prisma.workspace.update({
       where: { id: workspaceId },
-      data:  {
-        ...(patch.name !== undefined        ? { name: patch.name.trim() } : {}),
-        ...(patch.description !== undefined ? { description: patch.description.trim() || null } : {}),
+      data: {
+        ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+        ...(patch.description !== undefined
+          ? { description: patch.description.trim() || null }
+          : {}),
       },
     });
     await this.audit.log({
-      workspaceId, actorId: userId, action: 'workspace.renamed',
-      targetType:  'workspace', targetId: workspaceId, before, after: { name: updated.name, description: updated.description },
+      workspaceId,
+      actorId: userId,
+      action: 'workspace.renamed',
+      targetType: 'workspace',
+      targetId: workspaceId,
+      before,
+      after: { name: updated.name, description: updated.description },
     });
     return updated;
   }
@@ -223,8 +271,11 @@ export class WorkspacesService implements OnModuleInit {
   async remove(workspaceId: string, userId: string) {
     await this.assertCan(workspaceId, userId, 'workspace.delete');
     await this.audit.log({
-      workspaceId, actorId: userId, action: 'workspace.deleted',
-      targetType: 'workspace', targetId: workspaceId,
+      workspaceId,
+      actorId: userId,
+      action: 'workspace.deleted',
+      targetType: 'workspace',
+      targetId: workspaceId,
     });
     await this.prisma.workspace.delete({ where: { id: workspaceId } });
     return { ok: true };
@@ -237,9 +288,9 @@ export class WorkspacesService implements OnModuleInit {
   async listMembers(workspaceId: string, userId: string) {
     await this.assertCan(workspaceId, userId, 'member.view');
     return this.prisma.workspaceMember.findMany({
-      where:   { workspaceId },
+      where: { workspaceId },
       include: {
-        user:      { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true } },
         invitedBy: { select: { id: true, name: true, email: true } },
       },
       orderBy: { joinedAt: 'asc' },
@@ -251,33 +302,42 @@ export class WorkspacesService implements OnModuleInit {
     if (!WORKSPACE_ROLES.includes(newRole)) throw new BadRequestException('Invalid role');
 
     const target = await this.prisma.workspaceMember.findUnique({
-      where:  { id: memberId },
+      where: { id: memberId },
       include: { user: { select: { id: true, name: true, email: true } } },
     });
-    if (!target || target.workspaceId !== workspaceId) throw new NotFoundException('Member not found');
+    if (!target || target.workspaceId !== workspaceId)
+      throw new NotFoundException('Member not found');
 
     // Can't manipulate an owner unless YOU are an owner (and you can't demote
     // the LAST owner — see ownership.transfer for that).
     if (target.role === 'owner' && actorRole !== 'owner') {
-      throw new ForbiddenException('Only an owner can change another owner\'s role');
+      throw new ForbiddenException("Only an owner can change another owner's role");
     }
     if (newRole === 'owner') {
       throw new BadRequestException('Use the ownership-transfer endpoint to promote an owner');
     }
     // TS narrows newRole to non-owner here because we threw above on `newRole === 'owner'`.
     if (target.role === 'owner') {
-      const ownerCount = await this.prisma.workspaceMember.count({ where: { workspaceId, role: 'owner' } });
+      const ownerCount = await this.prisma.workspaceMember.count({
+        where: { workspaceId, role: 'owner' },
+      });
       if (ownerCount <= 1) throw new BadRequestException('Cannot demote the last owner');
     }
 
     const before = { role: target.role };
     const updated = await this.prisma.workspaceMember.update({
-      where: { id: memberId }, data: { role: newRole },
+      where: { id: memberId },
+      data: { role: newRole },
       include: { user: { select: { id: true, name: true, email: true } } },
     });
     await this.audit.log({
-      workspaceId, actorId, action: 'member.role_changed',
-      targetType:  'member', targetId: memberId, before, after: { role: newRole },
+      workspaceId,
+      actorId,
+      action: 'member.role_changed',
+      targetType: 'member',
+      targetId: memberId,
+      before,
+      after: { role: newRole },
     });
     return updated;
   }
@@ -285,27 +345,36 @@ export class WorkspacesService implements OnModuleInit {
   async removeMember(workspaceId: string, actorId: string, memberId: string) {
     const actorRole = await this.assertCan(workspaceId, actorId, 'member.remove');
     const target = await this.prisma.workspaceMember.findUnique({
-      where:  { id: memberId },
+      where: { id: memberId },
       include: { user: { select: { id: true, name: true, email: true } } },
     });
-    if (!target || target.workspaceId !== workspaceId) throw new NotFoundException('Member not found');
+    if (!target || target.workspaceId !== workspaceId)
+      throw new NotFoundException('Member not found');
 
     // Same protections as changeRole.
     if (target.role === 'owner' && actorRole !== 'owner') {
       throw new ForbiddenException('Only an owner can remove another owner');
     }
     if (target.role === 'owner') {
-      const ownerCount = await this.prisma.workspaceMember.count({ where: { workspaceId, role: 'owner' } });
+      const ownerCount = await this.prisma.workspaceMember.count({
+        where: { workspaceId, role: 'owner' },
+      });
       if (ownerCount <= 1) throw new BadRequestException('Cannot remove the last owner');
     }
 
     await this.prisma.workspaceMember.delete({ where: { id: memberId } });
     await this.audit.log({
-      workspaceId, actorId, action: 'member.removed',
-      targetType:  'member', targetId: memberId, before: { userId: target.userId, role: target.role },
+      workspaceId,
+      actorId,
+      action: 'member.removed',
+      targetType: 'member',
+      targetId: memberId,
+      before: { userId: target.userId, role: target.role },
     });
     await this.activity.log(workspaceId, actorId, 'member.removed', {
-      kind: 'member', id: target.userId, name: target.user?.name || target.user?.email,
+      kind: 'member',
+      id: target.userId,
+      name: target.user?.name || target.user?.email,
     });
     return { ok: true };
   }
@@ -316,7 +385,7 @@ export class WorkspacesService implements OnModuleInit {
     if (toUserId === actorId) throw new BadRequestException('You already own this workspace');
 
     const target = await this.prisma.workspaceMember.findUnique({
-      where:  { workspaceId_userId: { workspaceId, userId: toUserId } },
+      where: { workspaceId_userId: { workspaceId, userId: toUserId } },
       select: { id: true, role: true },
     });
     if (!target) throw new BadRequestException('Target user is not a workspace member');
@@ -326,13 +395,17 @@ export class WorkspacesService implements OnModuleInit {
       // Demote the actor to admin so there's still a clear chain of authority.
       this.prisma.workspaceMember.update({
         where: { workspaceId_userId: { workspaceId, userId: actorId } },
-        data:  { role: 'admin' },
+        data: { role: 'admin' },
       }),
     ]);
     await this.audit.log({
-      workspaceId, actorId, action: 'ownership.transferred',
-      targetType: 'member', targetId: target.id,
-      before: { ownerId: actorId }, after: { ownerId: toUserId },
+      workspaceId,
+      actorId,
+      action: 'ownership.transferred',
+      targetType: 'member',
+      targetId: target.id,
+      before: { ownerId: actorId },
+      after: { ownerId: toUserId },
     });
     return { ok: true };
   }
@@ -344,13 +417,17 @@ export class WorkspacesService implements OnModuleInit {
   async listInvites(workspaceId: string, userId: string) {
     await this.assertCan(workspaceId, userId, 'member.invite');
     return this.prisma.workspaceInvite.findMany({
-      where:   { workspaceId, acceptedAt: null, revokedAt: null },
+      where: { workspaceId, acceptedAt: null, revokedAt: null },
       include: { createdBy: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async invite(workspaceId: string, actorId: string, input: { email: string; role: WorkspaceRole }) {
+  async invite(
+    workspaceId: string,
+    actorId: string,
+    input: { email: string; role: WorkspaceRole },
+  ) {
     await this.assertCan(workspaceId, actorId, 'member.invite');
     const email = input.email?.trim().toLowerCase();
     if (!email) throw new BadRequestException('Email is required');
@@ -362,7 +439,7 @@ export class WorkspacesService implements OnModuleInit {
     const user = await this.prisma.user.findUnique({ where: { email }, select: { id: true } });
     if (user) {
       const existing = await this.prisma.workspaceMember.findUnique({
-        where:  { workspaceId_userId: { workspaceId, userId: user.id } },
+        where: { workspaceId_userId: { workspaceId, userId: user.id } },
         select: { id: true },
       });
       if (existing) throw new BadRequestException('User is already a member of this workspace');
@@ -380,8 +457,12 @@ export class WorkspacesService implements OnModuleInit {
       data: { workspaceId, email, role: input.role, token, expiresAt, createdById: actorId },
     });
     await this.audit.log({
-      workspaceId, actorId, action: 'member.invited',
-      targetType: 'invite', targetId: invite.id, after: { email, role: input.role },
+      workspaceId,
+      actorId,
+      action: 'member.invited',
+      targetType: 'invite',
+      targetId: invite.id,
+      after: { email, role: input.role },
     });
     // Phase 39.1E — best-effort email delivery. Failure is non-fatal; the
     // copy-link UI in InviteMemberModal continues to work as a fallback.
@@ -397,7 +478,8 @@ export class WorkspacesService implements OnModuleInit {
   async resendInvite(workspaceId: string, actorId: string, inviteId: string) {
     await this.assertCan(workspaceId, actorId, 'member.invite');
     const invite = await this.prisma.workspaceInvite.findUnique({ where: { id: inviteId } });
-    if (!invite || invite.workspaceId !== workspaceId) throw new NotFoundException('Invite not found');
+    if (!invite || invite.workspaceId !== workspaceId)
+      throw new NotFoundException('Invite not found');
     if (invite.acceptedAt || invite.revokedAt) {
       throw new BadRequestException('Cannot resend an accepted or revoked invitation');
     }
@@ -405,7 +487,7 @@ export class WorkspacesService implements OnModuleInit {
     const expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
     const updated = await this.prisma.workspaceInvite.update({
       where: { id: inviteId },
-      data:  { token, expiresAt },
+      data: { token, expiresAt },
     });
     await this.sendInviteEmail(updated.id);
     return updated;
@@ -426,12 +508,12 @@ export class WorkspacesService implements OnModuleInit {
     if (!invite) return;
     try {
       await this.email.sendWorkspaceInviteEmail({
-        to:            invite.email,
-        inviterName:   invite.createdBy.name || invite.createdBy.email,
+        to: invite.email,
+        inviterName: invite.createdBy.name || invite.createdBy.email,
         workspaceName: invite.workspace.name,
-        role:          invite.role,
-        token:         invite.token,
-        expiresAt:     invite.expiresAt,
+        role: invite.role,
+        token: invite.token,
+        expiresAt: invite.expiresAt,
       });
     } catch (e: any) {
       this.logger.warn(`Invite email dispatch failed for ${invite.email}: ${e?.message}`);
@@ -441,15 +523,21 @@ export class WorkspacesService implements OnModuleInit {
   async revokeInvite(workspaceId: string, actorId: string, inviteId: string) {
     await this.assertCan(workspaceId, actorId, 'member.invite');
     const invite = await this.prisma.workspaceInvite.findUnique({ where: { id: inviteId } });
-    if (!invite || invite.workspaceId !== workspaceId) throw new NotFoundException('Invite not found');
+    if (!invite || invite.workspaceId !== workspaceId)
+      throw new NotFoundException('Invite not found');
     if (invite.acceptedAt || invite.revokedAt) return invite;
 
     const updated = await this.prisma.workspaceInvite.update({
-      where: { id: inviteId }, data: { revokedAt: new Date() },
+      where: { id: inviteId },
+      data: { revokedAt: new Date() },
     });
     await this.audit.log({
-      workspaceId, actorId, action: 'member.invite_revoked',
-      targetType: 'invite', targetId: inviteId, before: { email: invite.email, role: invite.role },
+      workspaceId,
+      actorId,
+      action: 'member.invite_revoked',
+      targetType: 'invite',
+      targetId: inviteId,
+      before: { email: invite.email, role: invite.role },
     });
     return updated;
   }
@@ -462,11 +550,12 @@ export class WorkspacesService implements OnModuleInit {
     const invite = await this.prisma.workspaceInvite.findUnique({ where: { token } });
     if (!invite) throw new NotFoundException('Invalid invitation link');
     if (invite.acceptedAt) throw new BadRequestException('This invitation has already been used');
-    if (invite.revokedAt)  throw new BadRequestException('This invitation has been revoked');
+    if (invite.revokedAt) throw new BadRequestException('This invitation has been revoked');
     if (invite.expiresAt < new Date()) throw new BadRequestException('This invitation has expired');
 
     const user = await this.prisma.user.findUnique({
-      where:  { id: userId }, select: { id: true, email: true },
+      where: { id: userId },
+      select: { id: true, email: true },
     });
     if (!user) throw new ForbiddenException('Not authenticated');
     if (user.email.toLowerCase() !== invite.email.toLowerCase()) {
@@ -475,7 +564,7 @@ export class WorkspacesService implements OnModuleInit {
 
     // Idempotent: if already a member, just consume the invite.
     const existing = await this.prisma.workspaceMember.findUnique({
-      where:  { workspaceId_userId: { workspaceId: invite.workspaceId, userId } },
+      where: { workspaceId_userId: { workspaceId: invite.workspaceId, userId } },
       select: { id: true },
     });
 
@@ -485,22 +574,29 @@ export class WorkspacesService implements OnModuleInit {
           data: {
             workspaceId: invite.workspaceId,
             userId,
-            role:        invite.role,
+            role: invite.role,
             invitedById: invite.createdById,
           },
         });
       }
       await tx.workspaceInvite.update({
-        where: { id: invite.id }, data: { acceptedAt: new Date() },
+        where: { id: invite.id },
+        data: { acceptedAt: new Date() },
       });
     });
 
     await this.audit.log({
-      workspaceId: invite.workspaceId, actorId: userId, action: 'member.invite_accepted',
-      targetType: 'invite', targetId: invite.id, after: { userId, role: invite.role },
+      workspaceId: invite.workspaceId,
+      actorId: userId,
+      action: 'member.invite_accepted',
+      targetType: 'invite',
+      targetId: invite.id,
+      after: { userId, role: invite.role },
     });
     await this.activity.log(invite.workspaceId, userId, 'member.joined', {
-      kind: 'member', id: userId, name: user.email,
+      kind: 'member',
+      id: userId,
+      name: user.email,
     });
     return { workspaceId: invite.workspaceId, role: invite.role };
   }
@@ -511,9 +607,11 @@ export class WorkspacesService implements OnModuleInit {
 // =============================================================================
 
 function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 48) || 'workspace';
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 48) || 'workspace'
+  );
 }

@@ -51,7 +51,10 @@ export class ContentBlockExtractorService {
       const trimmed = line.trim();
 
       // ── blank line ─────────────────────────────────────────────────────────
-      if (!trimmed) { i++; continue; }
+      if (!trimmed) {
+        i++;
+        continue;
+      }
 
       // ── fenced code block ──────────────────────────────────────────────────
       if (trimmed.startsWith('```')) {
@@ -78,8 +81,7 @@ export class ContentBlockExtractorService {
       if (mdHeading) {
         const level = mdHeading[1].length;
         const text = mdHeading[2].trim();
-        const type: BlockType =
-          level === 1 ? 'title' : level === 2 ? 'heading' : 'subheading';
+        const type: BlockType = level === 1 ? 'title' : level === 2 ? 'heading' : 'subheading';
         blocks.push(this.make(idx++, type, text, { level, mustStayWithNext: true }));
         i++;
         continue;
@@ -99,17 +101,15 @@ export class ContentBlockExtractorService {
         !/^[-*•]\s/.test(trimmed) &&
         !/^\d+[.)]\s/.test(trimmed) &&
         !trimmed.includes('|') &&
-        (
-          /^[A-Z][A-Z\s:,&()\-/]+$/.test(trimmed) || // ALL CAPS (e.g., "EXECUTIVE SUMMARY")
+        (/^[A-Z][A-Z\s:,&()\-/]+$/.test(trimmed) || // ALL CAPS (e.g., "EXECUTIVE SUMMARY")
           (blocks.length === 0 && !trimmed.includes(' ') === false) || // First non-blank line
-          (
-            // Title Case or standalone short line (e.g., "Problem Statement", "Our Solution")
-            trimmed.length <= 60 &&
+          // Title Case or standalone short line (e.g., "Problem Statement", "Our Solution")
+          (trimmed.length <= 60 &&
             /^[A-Z][a-z]/.test(trimmed) && // Starts with capital letter followed by lowercase
             trimmed.split(/\s+/).length <= 6 && // Max 6 words
-            !trimmed.match(/\b(is|are|was|were|has|have|had|will|would|can|could|should|the|a|an|and|or|but|in|on|at|to|for|of|with)\b/i) // Not a sentence (no common verbs/articles at start)
-          )
-        )
+            !trimmed.match(
+              /\b(is|are|was|were|has|have|had|will|would|can|could|should|the|a|an|and|or|but|in|on|at|to|for|of|with)\b/i,
+            ))) // Not a sentence (no common verbs/articles at start)
       ) {
         const type: BlockType = blocks.length === 0 ? 'title' : 'heading';
         blocks.push(this.make(idx++, type, trimmed, { mustStayWithNext: true }));
@@ -125,7 +125,9 @@ export class ContentBlockExtractorService {
           quoteLines.push(lines[i].trim().replace(/^>\s*/, ''));
           i++;
         }
-        blocks.push(this.make(idx++, 'quote', quoteLines.join('\n'), { mustStayWithPrevious: true }));
+        blocks.push(
+          this.make(idx++, 'quote', quoteLines.join('\n'), { mustStayWithPrevious: true }),
+        );
         continue;
       }
 
@@ -137,7 +139,9 @@ export class ContentBlockExtractorService {
           items.push(lines[i].trim().replace(/^[-*•]\s+/, ''));
           i++;
         }
-        const block = this.make(idx++, 'bullet_list', items.join('\n'), { mustStayWithPrevious: true });
+        const block = this.make(idx++, 'bullet_list', items.join('\n'), {
+          mustStayWithPrevious: true,
+        });
         block.items = items;
         blocks.push(block);
         continue;
@@ -151,7 +155,9 @@ export class ContentBlockExtractorService {
           items.push(lines[i].trim().replace(/^\d+[.)]\s+/, ''));
           i++;
         }
-        const block = this.make(idx++, 'numbered_list', items.join('\n'), { mustStayWithPrevious: true });
+        const block = this.make(idx++, 'numbered_list', items.join('\n'), {
+          mustStayWithPrevious: true,
+        });
         block.items = items;
         blocks.push(block);
         continue;
@@ -161,7 +167,11 @@ export class ContentBlockExtractorService {
       if (trimmed.includes('|') && trimmed.startsWith('|')) {
         const tableLines: string[] = [trimmed];
         i++;
-        while (i < lines.length && lines[i].trim().includes('|') && lines[i].trim().startsWith('|')) {
+        while (
+          i < lines.length &&
+          lines[i].trim().includes('|') &&
+          lines[i].trim().startsWith('|')
+        ) {
           tableLines.push(lines[i].trim());
           i++;
         }
@@ -172,11 +182,7 @@ export class ContentBlockExtractorService {
       // ── paragraph (accumulate multi-line) ─────────────────────────────────
       const paraLines: string[] = [trimmed];
       i++;
-      while (
-        i < lines.length &&
-        lines[i].trim() &&
-        !this.isBlockBoundary(lines[i].trim())
-      ) {
+      while (i < lines.length && lines[i].trim() && !this.isBlockBoundary(lines[i].trim())) {
         paraLines.push(lines[i].trim());
         i++;
       }
@@ -238,13 +244,23 @@ export class ContentBlockExtractorService {
   }
 
   private isMetricHeavy(text: string): boolean {
-    const patterns = [/\$[\d,]+[KMB]?/, /\d+%/, /\d+[KMB]\b/, /\bROI\b/, /\bARR\b/, /\bMRR\b/, /\bCAGR\b/];
-    const hits = patterns.filter(p => p.test(text)).length;
+    const patterns = [
+      /\$[\d,]+[KMB]?/,
+      /\d+%/,
+      /\d+[KMB]\b/,
+      /\bROI\b/,
+      /\bARR\b/,
+      /\bMRR\b/,
+      /\bCAGR\b/,
+    ];
+    const hits = patterns.filter((p) => p.test(text)).length;
     return hits >= 2 && text.split(/\s+/).length < 60;
   }
 
   private isCTA(text: string): boolean {
-    return /\b(contact us|get started|sign up|learn more|schedule a|book a|register now|apply now|join us|subscribe)\b/i.test(text);
+    return /\b(contact us|get started|sign up|learn more|schedule a|book a|register now|apply now|join us|subscribe)\b/i.test(
+      text,
+    );
   }
 
   private isContactInfo(text: string): boolean {
@@ -274,15 +290,33 @@ export class ContentBlockExtractorService {
 
     // Type bonuses
     switch (block.type) {
-      case 'title':        score += 45; break;
-      case 'heading':      score += 30; break;
-      case 'subheading':   score += 18; break;
-      case 'metric':       score += 25; break;
-      case 'cta':          score += 18; break;
-      case 'quote':        score += 10; break;
-      case 'table':        score += 20; break;
-      case 'separator':    score  = 5;  break;
-      case 'contact_info': score += 15; break;
+      case 'title':
+        score += 45;
+        break;
+      case 'heading':
+        score += 30;
+        break;
+      case 'subheading':
+        score += 18;
+        break;
+      case 'metric':
+        score += 25;
+        break;
+      case 'cta':
+        score += 18;
+        break;
+      case 'quote':
+        score += 10;
+        break;
+      case 'table':
+        score += 20;
+        break;
+      case 'separator':
+        score = 5;
+        break;
+      case 'contact_info':
+        score += 15;
+        break;
     }
 
     // Contains data → important
@@ -290,25 +324,26 @@ export class ContentBlockExtractorService {
     if (/\b(critical|key|important|essential|must|core|primary)\b/i.test(block.rawText)) score += 8;
 
     // Short blocks are usually less important (unless heading)
-    if (block.wordCount < 5 && !['title', 'heading', 'subheading'].includes(block.type)) score -= 20;
+    if (block.wordCount < 5 && !['title', 'heading', 'subheading'].includes(block.type))
+      score -= 20;
 
     return Math.max(0, Math.min(100, score));
   }
 
   private semanticRole(type: BlockType): string {
     const map: Record<BlockType, string> = {
-      title:        'document_title',
-      heading:      'section_heading',
-      subheading:   'subsection_heading',
-      paragraph:    'body_text',
-      bullet_list:  'enumeration',
-      numbered_list:'ordered_steps',
-      metric:       'data_point',
-      quote:        'emphasis',
-      table:        'tabular_data',
-      code_block:   'technical_content',
-      separator:    'visual_break',
-      cta:          'call_to_action',
+      title: 'document_title',
+      heading: 'section_heading',
+      subheading: 'subsection_heading',
+      paragraph: 'body_text',
+      bullet_list: 'enumeration',
+      numbered_list: 'ordered_steps',
+      metric: 'data_point',
+      quote: 'emphasis',
+      table: 'tabular_data',
+      code_block: 'technical_content',
+      separator: 'visual_break',
+      cta: 'call_to_action',
       contact_info: 'contact',
     };
     return map[type] ?? 'unknown';

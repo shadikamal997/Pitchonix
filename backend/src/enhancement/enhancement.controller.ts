@@ -42,10 +42,7 @@ export class EnhancementController {
 
   @Post('regenerate/:slideId')
   @ApiOperation({ summary: 'Regenerate slide from scratch' })
-  async regenerateSlide(
-    @Param('slideId') slideId: string,
-    @Body() input?: any,
-  ) {
+  async regenerateSlide(@Param('slideId') slideId: string, @Body() input?: any) {
     return this.enhancementService.regenerateSlide(slideId, input || {});
   }
 

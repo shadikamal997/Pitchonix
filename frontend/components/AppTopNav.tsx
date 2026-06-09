@@ -34,6 +34,8 @@ const PATH_LABELS: Record<string, string> = {
   'visual-studio':    'Visual Studio',
   structured:         'Structured',
   career:             'Career Docs',
+  'excel-studio':     'Excel Studio',
+  'feasibility-studio': 'Feasibility Studio',
   convert:            'Convert',
   'pptx-import':      'Import .pptx',
   workspaces:         'Workspace',

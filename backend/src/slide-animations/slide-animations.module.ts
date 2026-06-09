@@ -4,7 +4,7 @@ import { SlideAnimationsService } from './slide-animations.service';
 
 @Module({
   controllers: [SlideAnimationsController],
-  providers:   [SlideAnimationsService],
-  exports:     [SlideAnimationsService],
+  providers: [SlideAnimationsService],
+  exports: [SlideAnimationsService],
 })
 export class SlideAnimationsModule {}

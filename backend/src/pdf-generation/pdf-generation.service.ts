@@ -21,7 +21,7 @@ export interface GeneratePdfOptions {
 @Injectable()
 export class PdfGenerationService {
   private readonly logger = new Logger(PdfGenerationService.name);
-  
+
   constructor(private prisma: PrismaService) {}
 
   async generatePdf(options: GeneratePdfOptions): Promise<string> {
@@ -414,12 +414,16 @@ tr:nth-child(even) td {
 <h1>Table of Contents</h1>
 <div class="divider"></div>
 <div style="margin-top: 24pt;">
-  ${items.map((item: any) => `
+  ${items
+    .map(
+      (item: any) => `
     <div style="display: flex; justify-content: space-between; margin-bottom: 12pt; padding-bottom: 8pt; border-bottom: 1px dotted #e2e8f0;">
       <span style="font-size: 12pt; ${item.level === 2 ? 'padding-left: 16pt;' : ''}">${item.title}</span>
       <span style="font-size: 12pt; color: #94a3b8;">${item.pageNumber}</span>
     </div>
-  `).join('')}
+  `,
+    )
+    .join('')}
 </div>
     `.trim();
   }
@@ -429,12 +433,16 @@ tr:nth-child(even) td {
 <h1>${content.title || 'Executive Summary'}</h1>
 <div class="divider"></div>
 ${content.content ? `<p>${content.content}</p>` : ''}
-${content.highlights && content.highlights.length > 0 ? `
+${
+  content.highlights && content.highlights.length > 0
+    ? `
   <h3 style="margin-top: 24pt;">Key Highlights</h3>
   <ul style="margin-top: 12pt; padding-left: 20pt;">
     ${content.highlights.map((h: string) => `<li style="margin-bottom: 8pt; font-size: 11pt;">${h}</li>`).join('')}
   </ul>
-` : ''}
+`
+    : ''
+}
     `.trim();
   }
 
@@ -460,12 +468,16 @@ ${content.content ? `<p>${content.content}</p>` : ''}
     return `
 ${title ? `<h1>${title}</h1><div class="divider"></div>` : ''}
 <div class="metric-grid">
-  ${metrics.map((m: any) => `
+  ${metrics
+    .map(
+      (m: any) => `
     <div class="metric-card">
       <div class="metric-value">${m.value}</div>
       <div class="metric-label">${m.label}</div>
     </div>
-  `).join('')}
+  `,
+    )
+    .join('')}
 </div>
     `.trim();
   }
@@ -482,7 +494,7 @@ ${title ? `<h1>${title}</h1><div class="divider"></div>` : ''}
   private generateFinancialTableHtml(content: any, title?: string): string {
     const headers = content.headers || [];
     const rows = content.rows || [];
-    
+
     return `
 ${title ? `<h1>${title}</h1><div class="divider"></div>` : ''}
 <table>
@@ -492,12 +504,16 @@ ${title ? `<h1>${title}</h1><div class="divider"></div>` : ''}
     </tr>
   </thead>
   <tbody>
-    ${rows.map((row: any) => `
+    ${rows
+      .map(
+        (row: any) => `
       <tr>
         <td style="${row.isBold ? 'font-weight: 600;' : ''}">${row.label}</td>
         ${row.values.map((v: any) => `<td style="text-align: right; ${row.isBold ? 'font-weight: 600;' : ''}">${v}</td>`).join('')}
       </tr>
-    `).join('')}
+    `,
+      )
+      .join('')}
   </tbody>
 </table>
     `.trim();
@@ -508,14 +524,18 @@ ${title ? `<h1>${title}</h1><div class="divider"></div>` : ''}
     return `
 ${title ? `<h1>${title}</h1><div class="divider"></div>` : ''}
 <div style="margin-top: 24pt;">
-  ${events.map((event: any) => `
+  ${events
+    .map(
+      (event: any) => `
     <div class="timeline-item">
       <div class="timeline-dot"></div>
       <div class="badge badge-primary" style="margin-bottom: 8pt;">${event.date}</div>
       <h3>${event.title}</h3>
       <p style="font-size: 10pt;">${event.description}</p>
     </div>
-  `).join('')}
+  `,
+    )
+    .join('')}
 </div>
     `.trim();
   }
@@ -530,11 +550,15 @@ ${title ? `<h1>${title}</h1><div class="divider"></div>` : ''}
 <p>${content.solution}</p>
 <h2 style="color: #10b981; margin-top: 20pt;">Results</h2>
 <div class="metric-grid">
-  ${(content.results || []).map((r: string) => `
+  ${(content.results || [])
+    .map(
+      (r: string) => `
     <div class="metric-card">
       <p style="font-weight: 600; color: #059669;">${r}</p>
     </div>
-  `).join('')}
+  `,
+    )
+    .join('')}
 </div>
     `.trim();
   }

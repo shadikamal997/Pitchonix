@@ -19,20 +19,45 @@
 import type { ElementType } from './element-types';
 
 export interface SmartTreeValidationResult {
-  valid:        boolean;
-  reason:       string | null;
+  valid: boolean;
+  reason: string | null;
   elementCount: number;
 }
 
 const VALID_ELEMENT_TYPES: ReadonlySet<ElementType> = new Set<ElementType>([
-  'heading', 'subheading', 'paragraph', 'quote', 'caption', 'label',
-  'cta', 'footer', 'pageNumber',
-  'bulletList', 'numberedList',
-  'metric', 'kpi', 'chart', 'table',
-  'image', 'icon', 'logo', 'videoPlaceholder', 'embeddedMediaPlaceholder',
-  'testimonial', 'teamCard', 'pricingCard', 'comparison', 'swot',
-  'featureGrid', 'processSteps', 'timeline', 'roadmap', 'fundsAllocation',
-  'shape', 'line', 'divider',
+  'heading',
+  'subheading',
+  'paragraph',
+  'quote',
+  'caption',
+  'label',
+  'cta',
+  'footer',
+  'pageNumber',
+  'bulletList',
+  'numberedList',
+  'metric',
+  'kpi',
+  'chart',
+  'table',
+  'image',
+  'icon',
+  'logo',
+  'videoPlaceholder',
+  'embeddedMediaPlaceholder',
+  'testimonial',
+  'teamCard',
+  'pricingCard',
+  'comparison',
+  'swot',
+  'featureGrid',
+  'processSteps',
+  'timeline',
+  'roadmap',
+  'fundsAllocation',
+  'shape',
+  'line',
+  'divider',
 ]);
 
 export function validateSmartComponentTree(tree: unknown): SmartTreeValidationResult {
@@ -51,12 +76,20 @@ export function validateSmartComponentTree(tree: unknown): SmartTreeValidationRe
       return { valid: false, reason: `entry ${i} missing id`, elementCount: tree.length };
     }
     if (typeof e.type !== 'string' || !VALID_ELEMENT_TYPES.has(e.type)) {
-      return { valid: false, reason: `entry ${i} has invalid type: ${e.type}`, elementCount: tree.length };
+      return {
+        valid: false,
+        reason: `entry ${i} has invalid type: ${e.type}`,
+        elementCount: tree.length,
+      };
     }
     for (const k of ['x', 'y', 'width', 'height'] as const) {
       const v = e[k];
       if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 100) {
-        return { valid: false, reason: `entry ${i} has invalid ${k}: ${v}`, elementCount: tree.length };
+        return {
+          valid: false,
+          reason: `entry ${i} has invalid ${k}: ${v}`,
+          elementCount: tree.length,
+        };
       }
     }
   }

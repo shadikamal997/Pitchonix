@@ -27,10 +27,10 @@ export interface TopicBoundary {
 
 /**
  * TopicSegmentationService
- * 
+ *
  * Detects topic boundaries and segments document into coherent topic groups.
  * Uses deterministic similarity analysis - NO AI.
- * 
+ *
  * Algorithm:
  * 1. Analyze paragraph-to-paragraph similarity
  * 2. Detect sharp drops in similarity (topic boundaries)
@@ -44,7 +44,7 @@ export class TopicSegmentationService {
   // Threshold for detecting topic boundaries
   private readonly BOUNDARY_THRESHOLD = 0.15; // Similarity below this = boundary
   private readonly SOFT_BOUNDARY_THRESHOLD = 0.25;
-  private readonly HARD_BOUNDARY_THRESHOLD = 0.10;
+  private readonly HARD_BOUNDARY_THRESHOLD = 0.1;
 
   /**
    * Segment document into topics
@@ -115,7 +115,7 @@ export class TopicSegmentationService {
     const segments: TopicSegment[] = [];
 
     let currentSegmentStart = 0;
-    const boundaryIndices = boundaries.map(b => b.afterParagraphId);
+    const boundaryIndices = boundaries.map((b) => b.afterParagraphId);
 
     for (const boundaryIndex of boundaryIndices) {
       if (boundaryIndex > currentSegmentStart) {
@@ -153,7 +153,7 @@ export class TopicSegmentationService {
     const endParagraphId = startParagraphId + paragraphs.length - 1;
 
     // Aggregate keywords
-    const allKeywords = paragraphs.flatMap(p => p.keywords);
+    const allKeywords = paragraphs.flatMap((p) => p.keywords);
     const keywordFreq = new Map<string, number>();
     for (const kw of allKeywords) {
       keywordFreq.set(kw, (keywordFreq.get(kw) || 0) + 1);
@@ -162,7 +162,7 @@ export class TopicSegmentationService {
     const dominantKeywords = Array.from(keywordFreq.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
-      .map(e => e[0]);
+      .map((e) => e[0]);
 
     // Determine topic category (most common)
     const categoryFreq = new Map<string, number>();
@@ -170,8 +170,8 @@ export class TopicSegmentationService {
       categoryFreq.set(p.topicCategory, (categoryFreq.get(p.topicCategory) || 0) + 1);
     }
 
-    const topicCategory = Array.from(categoryFreq.entries())
-      .sort((a, b) => b[1] - a[1])[0]?.[0] || 'General';
+    const topicCategory =
+      Array.from(categoryFreq.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || 'General';
 
     // Generate topic label
     const topicLabel = this.generateTopicLabel(dominantKeywords, topicCategory, paragraphs);
@@ -241,7 +241,7 @@ export class TopicSegmentationService {
     for (let i = 0; i < paragraphs.length - 1; i++) {
       const kw1 = new Set(paragraphs[i].keywords);
       const kw2 = new Set(paragraphs[i + 1].keywords);
-      const intersection = new Set([...kw1].filter(k => kw2.has(k)));
+      const intersection = new Set([...kw1].filter((k) => kw2.has(k)));
       const union = new Set([...kw1, ...kw2]);
 
       if (union.size > 0) {
@@ -280,7 +280,9 @@ export class TopicSegmentationService {
           ...current,
           endParagraphId: next.endParagraphId,
           paragraphCount: current.paragraphCount + next.paragraphCount,
-          dominantKeywords: [...new Set([...current.dominantKeywords, ...next.dominantKeywords])].slice(0, 5),
+          dominantKeywords: [
+            ...new Set([...current.dominantKeywords, ...next.dominantKeywords]),
+          ].slice(0, 5),
           cohesionScore: (current.cohesionScore + next.cohesionScore) / 2,
         };
       } else {

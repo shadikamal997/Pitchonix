@@ -16,7 +16,9 @@ import { auth, closeSession, createSession, TestSession } from './helpers';
 describe('Health & Telemetry (E2E)', () => {
   let s: TestSession;
 
-  beforeAll(async () => { s = await createSession('health'); }, 60_000);
+  beforeAll(async () => {
+    s = await createSession('health');
+  }, 60_000);
   afterAll(async () => closeSession(s));
 
   // ── 1. Health check ───────────────────────────────────────────────────────
@@ -60,11 +62,7 @@ describe('Health & Telemetry (E2E)', () => {
 
   // ── 6. Missing message → 400 ─────────────────────────────────────────────
   it('POST /career/feedback missing message → 400', async () => {
-    await s.req
-      .post('/career/feedback')
-      .set(auth(s.token))
-      .send({ type: 'bug' })
-      .expect(400);
+    await s.req.post('/career/feedback').set(auth(s.token)).send({ type: 'bug' }).expect(400);
   });
 
   // ── 7. Telemetry recorded after a template switch ─────────────────────────

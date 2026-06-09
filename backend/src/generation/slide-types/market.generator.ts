@@ -13,27 +13,39 @@ import { marketTitle, marketSubtitle } from './narrative-titles';
 export class MarketOpportunitySlideGenerator extends BaseSlideGenerator {
   type = SlideType.MARKET_OPPORTUNITY;
   defaultPriority = 4;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
   isApplicable(input: WizardInput): boolean {
-    return (!!input.marketOpportunity && input.marketOpportunity.trim().length > 0) ||
-           !!(input.structured?.marketSizing?.tam ||
-              input.structured?.marketSizing?.sam ||
-              input.structured?.marketSizing?.som);
+    return (
+      (!!input.marketOpportunity && input.marketOpportunity.trim().length > 0) ||
+      !!(
+        input.structured?.marketSizing?.tam ||
+        input.structured?.marketSizing?.sam ||
+        input.structured?.marketSizing?.som
+      )
+    );
   }
-  getTitle(input: WizardInput): string    { return marketTitle(input); }
-  getSubtitle(input: WizardInput): string { return marketSubtitle(input); }
+  getTitle(input: WizardInput): string {
+    return marketTitle(input);
+  }
+  getSubtitle(input: WizardInput): string {
+    return marketSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return {
       description: input.marketOpportunity || '',
-      industry:    input.industry,
+      industry: input.industry,
     };
   }
 
   getSpeakerNotes(input: WizardInput): string {
-    return `Emphasize the market size and growth potential. Explain TAM/SAM/SOM clearly. ` +
-           `Connect market trends to your solution. Reference industry: ${input.industry}. ` +
-           `Show confidence in addressable market opportunity.`;
+    return (
+      `Emphasize the market size and growth potential. Explain TAM/SAM/SOM clearly. ` +
+      `Connect market trends to your solution. Reference industry: ${input.industry}. ` +
+      `Show confidence in addressable market opportunity.`
+    );
   }
 }

@@ -53,13 +53,9 @@ export class PdfDocumentGenerationService {
   /**
    * Create PDF document entity
    */
-  private async createPdfDocument(
-    projectId: string,
-    documentType: string,
-    input: WizardInput,
-  ) {
+  private async createPdfDocument(projectId: string, documentType: string, input: WizardInput) {
     const title = this.generateTitle(documentType, input);
-    
+
     return this.prisma.pdfDocument.create({
       data: {
         projectId,
@@ -116,7 +112,7 @@ export class PdfDocumentGenerationService {
   private formatDocumentType(type: string): string {
     return type
       .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
 }

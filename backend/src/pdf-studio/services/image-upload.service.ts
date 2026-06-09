@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UploadedAssetService } from '../../files/uploaded-asset.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
@@ -22,7 +23,10 @@ export class ImageUploadService {
   private readonly logger = new Logger(ImageUploadService.name);
   private readonly uploadDir = path.join(process.cwd(), 'uploads', 'images');
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private uploadedAssetService: UploadedAssetService,
+  ) {
     this.ensureUploadDir();
   }
 
@@ -70,6 +74,19 @@ export class ImageUploadService {
         },
       });
 
+      // Phase Ω.1D — record ownership for the /uploads gate.
+      if (userId) {
+        await this.uploadedAssetService.record({
+          userId,
+          publicPath: imageRecord.url,
+          storagePath: filePath,
+          module: 'pdf_studio',
+          originalName,
+          mimeType: mimetype,
+          sizeBytes: buffer.length,
+        });
+      }
+
       this.logger.log(`Image uploaded successfully: ${filename} (${buffer.length} bytes)`);
 
       return {
@@ -95,7 +112,7 @@ export class ImageUploadService {
   ): Promise<ImageUploadResult> {
     // Extract mimetype and data from data URL
     const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    
+
     if (!matches || matches.length !== 3) {
       throw new Error('Invalid base64 image data');
     }

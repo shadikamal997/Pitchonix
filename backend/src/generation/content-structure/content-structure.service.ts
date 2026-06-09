@@ -23,9 +23,9 @@ import { StructureValidator, ValidationReport } from './structure-validator.serv
 import { SlideBlueprint, StructureQualityScore } from './types';
 
 export interface EnrichmentResult {
-  slides:     SlideContent[];
+  slides: SlideContent[];
   blueprints: SlideBlueprint[];
-  score:      StructureQualityScore;
+  score: StructureQualityScore;
   validation: ValidationReport;
 }
 
@@ -35,8 +35,8 @@ export class ContentStructureService {
 
   constructor(
     private blueprintEngine: SlideBlueprintGenerator,
-    private scorer:          StructureScorer,
-    private validator:       StructureValidator,
+    private scorer: StructureScorer,
+    private validator: StructureValidator,
   ) {}
 
   /**
@@ -47,16 +47,14 @@ export class ContentStructureService {
    */
   enrich(slides: SlideContent[], input: WizardInput): EnrichmentResult {
     const blueprints = this.blueprintEngine.generateBlueprints(slides, input);
-    const enriched = slides.map((s, i) =>
-      this.blueprintEngine.applyBlueprint(s, blueprints[i]),
-    );
-    const score      = this.scorer.score(blueprints, input.documentType);
+    const enriched = slides.map((s, i) => this.blueprintEngine.applyBlueprint(s, blueprints[i]));
+    const score = this.scorer.score(blueprints, input.documentType);
     const validation = this.validator.validate(blueprints);
 
     this.logger.log(
       `Content-structure enrichment: ${slides.length} slides, score=${score.total.toFixed(0)}/100, ` +
-      `validation=${validation.summary.error}err/${validation.summary.warn}warn/${validation.summary.info}info, ` +
-      `visual blocks=${blueprints.reduce((s, b) => s + b.blocks.length, 0)}`,
+        `validation=${validation.summary.error}err/${validation.summary.warn}warn/${validation.summary.info}info, ` +
+        `visual blocks=${blueprints.reduce((s, b) => s + b.blocks.length, 0)}`,
     );
 
     return { slides: enriched, blueprints, score, validation };

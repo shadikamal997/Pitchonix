@@ -25,6 +25,7 @@ import { AutoExpansionService, DocumentScorecardService } from './document-quali
 import { UnifiedGenerationPipeline } from './pipeline/unified-pipeline.service';
 import type { GenerationCommand } from './pipeline/types';
 import type { SmartFamilyId } from '../components/smart/smart-types';
+import { familyForTemplate } from './template-family-map';
 
 @ApiTags('Generation')
 @Controller('generate')
@@ -57,20 +58,24 @@ export class GenerationController {
   //    - Problem / Solution / Market: one supporting image each (if available)
   //    - Every slide: small logo bottom-left as brand mark
   // ---------------------------------------------------------------------------
-  private async applyBrandAssets(deckId: string, businessInfo: any): Promise<{ logos: number; photos: number }> {
+  private async applyBrandAssets(
+    deckId: string,
+    businessInfo: any,
+  ): Promise<{ logos: number; photos: number }> {
     const logoUrl: string | null = businessInfo?.logo?.url || null;
     const photoUrls: string[] = Array.isArray(businessInfo?.images)
-      ? (businessInfo.images.map((x: any) => x?.url).filter(Boolean))
+      ? businessInfo.images.map((x: any) => x?.url).filter(Boolean)
       : [];
     if (!logoUrl && photoUrls.length === 0) return { logos: 0, photos: 0 };
 
     const slides = await this.slidesService.findAll(deckId);
-    let logos = 0, photos = 0;
+    let logos = 0,
+      photos = 0;
     const photoQueue = [...photoUrls];
 
     for (const slide of slides) {
       const isCover = slide.type === 'cover';
-      const isTeam  = slide.type === 'team';
+      const isTeam = slide.type === 'team';
 
       // Cover slide: big hero photo on the right + logo top-right
       if (isCover && photoQueue.length > 0) {
@@ -78,7 +83,10 @@ export class GenerationController {
         await this.slideElementsService.create(slide.id, {
           type: 'image' as any,
           name: 'Hero photo',
-          x: 50, y: 10, width: 44, height: 70,
+          x: 50,
+          y: 10,
+          width: 44,
+          height: 70,
           zIndex: 1,
           content: { src: url, alt: 'Hero', fit: 'cover', focalX: 0.5, focalY: 0.5 },
         });
@@ -90,23 +98,38 @@ export class GenerationController {
         const teamEls = await this.slideElementsService.listForSlide(slide.id);
         const teamEl = teamEls.find((e) => e.type === 'teamCard');
         if (teamEl) {
-          const members: any[] = ((teamEl.content as any)?.members) || [];
+          const members: any[] = (teamEl.content as any)?.members || [];
           for (const m of members) {
             if (photoQueue.length === 0) break;
             m.photoUrl = photoQueue.shift()!;
             photos++;
           }
-          await this.slideElementsService.update(teamEl.id, { content: { ...(teamEl.content as any), members } });
+          await this.slideElementsService.update(teamEl.id, {
+            content: { ...(teamEl.content as any), members },
+          });
         }
       }
 
       // Problem / Solution / Market: one supporting visual
-      if (['problem', 'solution', 'market_opportunity', 'market', 'traction', 'business_model'].includes(slide.type) && photoQueue.length > 0) {
+      if (
+        [
+          'problem',
+          'solution',
+          'market_opportunity',
+          'market',
+          'traction',
+          'business_model',
+        ].includes(slide.type) &&
+        photoQueue.length > 0
+      ) {
         const url = photoQueue.shift()!;
         await this.slideElementsService.create(slide.id, {
           type: 'image' as any,
           name: 'Supporting visual',
-          x: 64, y: 38, width: 30, height: 44,
+          x: 64,
+          y: 38,
+          width: 30,
+          height: 44,
           zIndex: 1,
           content: { src: url, alt: 'Visual', fit: 'cover', focalX: 0.5, focalY: 0.5 },
         });
@@ -118,7 +141,10 @@ export class GenerationController {
         await this.slideElementsService.create(slide.id, {
           type: 'logo' as any,
           name: 'Brand mark',
-          x: 6, y: 92, width: 8, height: 4,
+          x: 6,
+          y: 92,
+          width: 8,
+          height: 4,
           zIndex: 5,
           content: { src: logoUrl, height: 28 },
         });
@@ -367,17 +393,17 @@ export class GenerationController {
     const businessInfo: any = deck.project?.businessInfo ?? {};
     const input: any = {
       documentType: businessInfo.documentType || 'pitch_deck',
-      companyName:  businessInfo.companyName  || deck.project?.name || 'Untitled',
-      industry:     businessInfo.industry     || 'Technology',
+      companyName: businessInfo.companyName || deck.project?.name || 'Untitled',
+      industry: businessInfo.industry || 'Technology',
       ...businessInfo,
     };
 
     const slides = deck.slides.map((s: any) => ({
-      type:      s.type,
-      order:     s.order,
-      title:     s.title || '',
-      subtitle:  s.subtitle,
-      content:   s.content || {},
+      type: s.type,
+      order: s.order,
+      title: s.title || '',
+      subtitle: s.subtitle,
+      content: s.content || {},
     }));
 
     const scorecard = this.scorecardService.build(input, slides as any);
@@ -394,7 +420,10 @@ export class GenerationController {
   }
 
   @Post('apply-brand-assets/:projectId')
-  @ApiOperation({ summary: 'Apply uploaded logo + photo URLs to an existing deck (re-runs the brand-asset materializer)' })
+  @ApiOperation({
+    summary:
+      'Apply uploaded logo + photo URLs to an existing deck (re-runs the brand-asset materializer)',
+  })
   async applyBrandAssetsEndpoint(
     @Param('projectId') projectId: string,
     @Body() body: { logoUrl?: string | null; imageUrls?: string[] },
@@ -407,13 +436,14 @@ export class GenerationController {
 
     // Find the populated deck (most recent with slides).
     const deck = [...project.decks].reverse().find((d) => d.slides.length > 0);
-    if (!deck) throw new NotFoundException('No deck with slides to apply brand assets to. Generate first.');
+    if (!deck)
+      throw new NotFoundException('No deck with slides to apply brand assets to. Generate first.');
 
     // Persist the new URLs onto businessInfo so re-applies / regenerates remember them.
     const oldBI = (project.businessInfo as any) || {};
     const businessInfo = {
       ...oldBI,
-      logo:   body.logoUrl ? { url: body.logoUrl } : (oldBI.logo || {}),
+      logo: body.logoUrl ? { url: body.logoUrl } : oldBI.logo || {},
       images: (body.imageUrls || []).map((url) => ({ url })),
     };
     await this.prisma.project.update({ where: { id: projectId }, data: { businessInfo } });
@@ -423,7 +453,7 @@ export class GenerationController {
     await this.prisma.slideElement.deleteMany({
       where: {
         slide: { deckId: deck.id },
-        type:  { in: ['image', 'logo'] },
+        type: { in: ['image', 'logo'] },
       },
     });
 
@@ -448,19 +478,26 @@ export class GenerationController {
   // ---------------------------------------------------------------------------
 
   @Post('regenerate/:projectId')
-  @ApiOperation({ summary: 'Synchronously regenerate slides via the unified pipeline (REGENERATE command)' })
+  @ApiOperation({
+    summary: 'Synchronously regenerate slides via the unified pipeline (REGENERATE command)',
+  })
   async regenerate(@Param('projectId') projectId: string) {
     return this.runPipelineCommand({ type: 'REGENERATE', projectId });
   }
 
   @Post('rebuild/:projectId')
-  @ApiOperation({ summary: 'Force a full rebuild (REBUILD command — same stages as REGENERATE but with forceMigrate)' })
+  @ApiOperation({
+    summary:
+      'Force a full rebuild (REBUILD command — same stages as REGENERATE but with forceMigrate)',
+  })
   async rebuild(@Param('projectId') projectId: string) {
     return this.runPipelineCommand({ type: 'REBUILD', projectId, options: { forceMigrate: true } });
   }
 
   @Post('refresh/:deckId')
-  @ApiOperation({ summary: 'Re-run quality + persistence stages without regenerating slides (REFRESH command)' })
+  @ApiOperation({
+    summary: 'Re-run quality + persistence stages without regenerating slides (REFRESH command)',
+  })
   async refresh(@Param('deckId') deckId: string) {
     const deck = await this.prisma.deck.findUnique({ where: { id: deckId } });
     if (!deck) throw new NotFoundException(`Deck ${deckId} not found`);
@@ -468,26 +505,89 @@ export class GenerationController {
   }
 
   @Post('family-switch/:projectId')
-  @ApiOperation({ summary: 'Switch composition family and rebuild smart components (FAMILY_SWITCH command)' })
+  @ApiOperation({
+    summary: 'Switch composition family and rebuild smart components (FAMILY_SWITCH command)',
+  })
   async familySwitch(
     @Param('projectId') projectId: string,
     @Body() body: { familyId: SmartFamilyId; deckId?: string },
   ) {
     return this.runPipelineCommand({
-      type: 'FAMILY_SWITCH', projectId, deckId: body.deckId, familyId: body.familyId,
+      type: 'FAMILY_SWITCH',
+      projectId,
+      deckId: body.deckId,
+      familyId: body.familyId,
     });
   }
 
   @Post('template-switch/:projectId')
   @SkipThrottle({ short: true, medium: true, long: true })
-  @ApiOperation({ summary: 'Switch template and rebuild (TEMPLATE_SWITCH command)' })
+  @ApiOperation({ summary: 'Switch template metadata without regenerating deck content' })
   async templateSwitch(
     @Param('projectId') projectId: string,
     @Body() body: { templateId: string; deckId?: string },
   ) {
-    return this.runPipelineCommand({
-      type: 'TEMPLATE_SWITCH', projectId, deckId: body.deckId, templateId: body.templateId,
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: { decks: { include: { slides: { select: { id: true } } } } },
     });
+    if (!project) throw new NotFoundException('Project not found');
+
+    const deck = body.deckId
+      ? project.decks.find((item) => item.id === body.deckId)
+      : [...project.decks].sort(
+          (a, b) =>
+            new Date(b.updatedAt || b.createdAt).getTime() -
+            new Date(a.updatedAt || a.createdAt).getTime(),
+        )[0];
+    if (!deck) throw new NotFoundException('Deck not found');
+
+    const familyId = familyForTemplate(body.templateId);
+    const businessInfo = (project.businessInfo as any) || {};
+    const deckMetadata = (deck.metadata as any) || {};
+    const templateRow = await this.prisma.template.findUnique({
+      where: { id: body.templateId },
+      select: { id: true },
+    });
+
+    await this.prisma.$transaction([
+      this.prisma.project.update({
+        where: { id: project.id },
+        data: {
+          status: 'ready',
+          businessInfo: {
+            ...businessInfo,
+            ...(familyId ? { theme: familyId } : {}),
+          } as any,
+        },
+      }),
+      this.prisma.deck.update({
+        where: { id: deck.id },
+        data: {
+          ...(templateRow ? { templateId: body.templateId } : {}),
+          metadata: {
+            ...deckMetadata,
+            templateId: body.templateId,
+            familyId: familyId || deckMetadata.familyId || null,
+            templateAppliedNonDestructively: true,
+            appliedAt: new Date().toISOString(),
+          } as any,
+        },
+      }),
+    ]);
+
+    return {
+      success: true,
+      command: 'TEMPLATE_SWITCH',
+      nonDestructive: true,
+      projectId,
+      deckId: deck.id,
+      templateId: body.templateId,
+      familyId,
+      slidesGenerated: 0,
+      slidesPreserved: deck.slides.length,
+      firstSlideId: deck.slides[0]?.id || null,
+    };
   }
 
   /**
@@ -497,12 +597,18 @@ export class GenerationController {
    */
   private async runPipelineCommand(command: GenerationCommand) {
     if (command.projectId) {
-      await this.prisma.project.update({ where: { id: command.projectId }, data: { status: 'generating' } });
+      await this.prisma.project.update({
+        where: { id: command.projectId },
+        data: { status: 'generating' },
+      });
     }
     const result = await this.pipeline.execute(command);
     if (!result.ok) {
       if (command.projectId) {
-        await this.prisma.project.update({ where: { id: command.projectId }, data: { status: 'failed' } });
+        await this.prisma.project.update({
+          where: { id: command.projectId },
+          data: { status: 'failed' },
+        });
       }
       throw new Error(`Pipeline failed at stage ${result.error?.stage}: ${result.error?.reason}`);
     }
@@ -516,23 +622,25 @@ export class GenerationController {
           : null;
         const businessInfo = (project?.businessInfo as any) || {};
         assets = await this.applyBrandAssets(result.context.deckId, businessInfo);
-      } catch (_e) { /* never break the pipeline result on a brand-asset failure */ }
+      } catch (_e) {
+        /* never break the pipeline result on a brand-asset failure */
+      }
     }
 
     return {
       success: true,
       command: result.command,
       durationMs: result.durationMs,
-      stages:  result.stages.map((s) => ({ stage: s.stage, ms: s.ms })),
-      deckId:  result.context.deckId,
+      stages: result.stages.map((s) => ({ stage: s.stage, ms: s.ms })),
+      deckId: result.context.deckId,
       firstSlideId: result.context.persistedSlideIds?.[0] || null,
-      slidesGenerated:         result.context.metrics?.slidesGenerated ?? 0,
+      slidesGenerated: result.context.metrics?.slidesGenerated ?? 0,
       smartComponentsAttached: result.context.metrics?.smartComponentsAttached ?? 0,
-      elementsCreated:         result.context.metrics?.elementsCreated ?? 0,
-      qualityScore:            result.context.metrics?.qualityScore ?? 0,
+      elementsCreated: result.context.metrics?.elementsCreated ?? 0,
+      qualityScore: result.context.metrics?.qualityScore ?? 0,
       photosApplied: assets.photos,
-      logosApplied:  assets.logos,
-      projectId:     result.context.projectId,
+      logosApplied: assets.logos,
+      projectId: result.context.projectId,
     };
   }
 
@@ -554,13 +662,13 @@ export class GenerationController {
     const slides: VisualSlideContent[] = deck.slides.map((slide: any, index: number) => {
       // Get proper layout configuration
       const layoutType = (slide.layoutKey as LayoutType) || LayoutType.TITLE_CONTENT;
-      const layout = this.layoutService.getLayout(layoutType) || 
+      const layout =
+        this.layoutService.getLayout(layoutType) ||
         this.layoutService.getLayout(LayoutType.TITLE_CONTENT)!;
-      
+
       // Get proper theme configuration
       const themeName = slide.themeKey || 'modern';
-      const theme = this.themeService.getTheme(themeName) || 
-        this.themeService.getTheme('modern')!;
+      const theme = this.themeService.getTheme(themeName) || this.themeService.getTheme('modern')!;
 
       return {
         type: slide.type,
@@ -615,7 +723,11 @@ export class GenerationController {
 
   @Get('generation-status/:deckId')
   @ApiOperation({ summary: 'Get real-time generation status' })
-  @ApiResponse({ status: 200, description: 'Generation status retrieved', type: GenerationStatusDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Generation status retrieved',
+    type: GenerationStatusDto,
+  })
   async getGenerationStatus(@Param('deckId') deckId: string): Promise<GenerationStatusDto | any> {
     const status = this.qualityControlService.getStatus(deckId);
 
@@ -784,7 +896,7 @@ export class GenerationController {
   async getQualityHistory(@Param('deckId') deckId: string) {
     const { QualityHistoryService } = await import('../export/services');
     const historyService = new QualityHistoryService(this.prisma);
-    
+
     const history = await historyService.getHistory(deckId, 50);
     const statistics = await historyService.getStatistics(deckId);
 
@@ -799,7 +911,7 @@ export class GenerationController {
   async getQualityTrends(@Param('deckId') deckId: string) {
     const { QualityHistoryService } = await import('../export/services');
     const historyService = new QualityHistoryService(this.prisma);
-    
+
     const trends = await historyService.getTrends(deckId, 30);
     const dimensionTrends = await historyService.getDimensionTrends(deckId, 30);
 
@@ -811,15 +923,13 @@ export class GenerationController {
 
   @Get('compare/:deckId')
   @ApiOperation({ summary: 'Compare quality between versions' })
-  async compareQualityVersions(
-    @Param('deckId') deckId: string,
-  ) {
+  async compareQualityVersions(@Param('deckId') deckId: string) {
     const { QualityHistoryService } = await import('../export/services');
     const historyService = new QualityHistoryService(this.prisma);
-    
+
     // Get latest two versions
     const history = await historyService.getHistory(deckId, 2);
-    
+
     if (history.length < 2) {
       return {
         message: 'Not enough history to compare',
@@ -830,7 +940,7 @@ export class GenerationController {
     const comparison = await historyService.compareVersions(
       deckId,
       history[1].version,
-      history[0].version
+      history[0].version,
     );
 
     return comparison;
@@ -844,64 +954,64 @@ export class GenerationController {
       where: { id: deckId },
       include: { slides: true, project: true },
     });
-    
+
     if (!deck) {
       throw new NotFoundException('Deck not found');
     }
-    
+
     // Convert slides to VisualSlideContent format.
     // Build a ThemeConfig object from the persisted themeTokens so that
     // scoring/validation services can access theme.colors.primary without crashing.
     const visualSlides = deck.slides.map((slide: any, index: number) => {
       const tt = (slide.themeTokens as any) || {};
       return {
-        type:     slide.type,
-        order:    index,
-        title:    slide.title,
+        type: slide.type,
+        order: index,
+        title: slide.title,
         subtitle: slide.subtitle || '',
-        content:  slide.content,
+        content: slide.content,
         layout: {
-          type:    slide.layoutKey || 'title-content',
+          type: slide.layoutKey || 'title-content',
           regions: [],
         },
         theme: {
-          name:        slide.themeKey || 'default',
+          name: slide.themeKey || 'default',
           displayName: slide.themeKey || 'Default',
           colors: {
-            primary:       tt.accent       || '#4F7563',
-            secondary:     tt.accent2      || '#355846',
-            accent:        tt.accent       || '#4F7563',
-            background:    tt.background   || '#ffffff',
-            text:          tt.text         || '#111111',
-            textSecondary: tt.muted        || '#9A9A9A',
+            primary: tt.accent || '#4F7563',
+            secondary: tt.accent2 || '#355846',
+            accent: tt.accent || '#4F7563',
+            background: tt.background || '#ffffff',
+            text: tt.text || '#111111',
+            textSecondary: tt.muted || '#9A9A9A',
           },
-          fonts:    { heading: tt.fontHeading || 'Inter', body: tt.fontBody || 'Inter' },
+          fonts: { heading: tt.fontHeading || 'Inter', body: tt.fontBody || 'Inter' },
           fontSize: { h1: 36, h2: 28, h3: 22, body: 14, small: 11 },
-          spacing:  { small: 8, medium: 16, large: 32 },
+          spacing: { small: 8, medium: 16, large: 32 },
         },
       };
     });
-    
+
     // Run quality check
     const qualityScore = await this.qualityControlService.quickQualityCheck(
       visualSlides,
       deck.project.businessInfo as any,
     );
-    
+
     // Run validation
     const validation = await this.qualityControlService.quickValidation(
       visualSlides,
       deck.project.businessInfo as any,
     );
-    
+
     // Persist results onto the deck so checkExportReady / getQualityReport
     // can read them without requiring a full pipeline re-run.
     const exportReady = validation.isValid && qualityScore.overall >= 60 && deck.slides.length > 0;
     await this.prisma.deck.update({
       where: { id: deckId },
       data: {
-        qualityScore:    qualityScore as any,
-        validationResult: validation  as any,
+        qualityScore: qualityScore as any,
+        validationResult: validation as any,
         exportReady,
         lastQualityCheck: new Date(),
       },

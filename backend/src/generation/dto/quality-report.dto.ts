@@ -56,19 +56,22 @@ export class QualityReportDto {
   @ApiProperty({ type: ValidationSummaryDto, description: 'Validation summary' })
   validation: ValidationSummaryDto;
 
-  @ApiProperty({ 
-    type: [String], 
+  @ApiProperty({
+    type: [String],
     example: [
       'Add charts or visualizations to make data more engaging',
-      'Consider adding more supporting slides'
+      'Consider adding more supporting slides',
     ],
-    description: 'Actionable recommendations for improvement'
+    description: 'Actionable recommendations for improvement',
   })
   recommendations: string[];
 
   @ApiProperty({ example: true, description: 'Whether deck is ready for export' })
   exportReady: boolean;
 
-  @ApiProperty({ example: '2024-05-05T12:34:56.789Z', description: 'When quality check was performed' })
+  @ApiProperty({
+    example: '2024-05-05T12:34:56.789Z',
+    description: 'When quality check was performed',
+  })
   lastQualityCheck: Date;
 }

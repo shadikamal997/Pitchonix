@@ -13,7 +13,7 @@ export const SNAPSHOT_SCHEMA_VERSION = 1;
 
 export function buildSnapshot(input: {
   deck: any;
-  slides: any[];        // each slide has `elements`
+  slides: any[]; // each slide has `elements`
   masters: any[];
   componentInstances: any[];
 }): DeckSnapshot {
@@ -27,35 +27,41 @@ export function buildSnapshot(input: {
 
   return {
     schemaVersion: SNAPSHOT_SCHEMA_VERSION,
-    capturedAt:    new Date().toISOString(),
+    capturedAt: new Date().toISOString(),
     deck: {
-      title:             deck.title,
-      description:       deck.description ?? null,
-      status:            deck.status ?? 'ready',
-      masterSettings:    deck.masterSettings ?? null,
-      qualityScore:      deck.qualityScore ?? null,
-      validationResult:  deck.validationResult ?? null,
+      title: deck.title,
+      description: deck.description ?? null,
+      status: deck.status ?? 'ready',
+      masterSettings: deck.masterSettings ?? null,
+      qualityScore: deck.qualityScore ?? null,
+      validationResult: deck.validationResult ?? null,
       generationMetrics: deck.generationMetrics ?? null,
-      exportReady:       !!deck.exportReady,
+      exportReady: !!deck.exportReady,
     },
     slides: slides.map((s) => ({
-      type:         s.type,
-      order:        s.order,
-      title:        s.title ?? '',
-      subtitle:     s.subtitle ?? null,
-      content:      s.content ?? null,
-      layoutKey:    s.layoutKey ?? null,
-      themeKey:     s.themeKey ?? null,
+      type: s.type,
+      order: s.order,
+      title: s.title ?? '',
+      subtitle: s.subtitle ?? null,
+      content: s.content ?? null,
+      layoutKey: s.layoutKey ?? null,
+      themeKey: s.themeKey ?? null,
       speakerNotes: s.speakerNotes ?? null,
-      background:   s.background ?? null,
-      themeTokens:  s.themeTokens ?? null,
-      metadata:     s.metadata ?? null,
+      background: s.background ?? null,
+      themeTokens: s.themeTokens ?? null,
+      metadata: s.metadata ?? null,
       elements: (s.elements || []).map((e: any) => ({
         type: e.type,
         name: e.name ?? null,
-        order: e.order, x: e.x, y: e.y, width: e.width, height: e.height,
-        rotation: e.rotation, zIndex: e.zIndex,
-        locked: !!e.locked, visible: e.visible !== false,
+        order: e.order,
+        x: e.x,
+        y: e.y,
+        width: e.width,
+        height: e.height,
+        rotation: e.rotation,
+        zIndex: e.zIndex,
+        locked: !!e.locked,
+        visible: e.visible !== false,
         content: e.content ?? null,
         data: e.data ?? null,
         style: e.style ?? null,
@@ -66,18 +72,27 @@ export function buildSnapshot(input: {
     masters: (masters || []).map((m) => ({
       type: m.type,
       name: m.name ?? null,
-      x: m.x, y: m.y, width: m.width, height: m.height,
-      rotation: m.rotation, zIndex: m.zIndex, sendToFront: !!m.sendToFront,
+      x: m.x,
+      y: m.y,
+      width: m.width,
+      height: m.height,
+      rotation: m.rotation,
+      zIndex: m.zIndex,
+      sendToFront: !!m.sendToFront,
       visible: m.visible !== false,
       excludedSlides: m.excludedSlides || [],
       elementData: m.elementData ?? null,
       style: m.style ?? null,
     })),
-    componentInstances: (componentInstances || []).map((ci) => ({
-      componentId: ci.componentId,
-      slideOrder:  slideOrderById.get(ci.slideId) ?? -1,
-      anchorX: ci.anchorX, anchorY: ci.anchorY,
-      scale: ci.scale, version: ci.version,
-    })).filter((ci) => ci.slideOrder >= 0),
+    componentInstances: (componentInstances || [])
+      .map((ci) => ({
+        componentId: ci.componentId,
+        slideOrder: slideOrderById.get(ci.slideId) ?? -1,
+        anchorX: ci.anchorX,
+        anchorY: ci.anchorY,
+        scale: ci.scale,
+        version: ci.version,
+      }))
+      .filter((ci) => ci.slideOrder >= 0),
   };
 }

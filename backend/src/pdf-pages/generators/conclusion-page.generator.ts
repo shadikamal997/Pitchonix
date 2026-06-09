@@ -36,7 +36,9 @@ export class ConclusionPageGenerator extends BasePageGenerator {
     }
 
     if (input.solution) {
-      parts.push(`Our innovative solution addresses critical market needs and positions us for significant growth.`);
+      parts.push(
+        `Our innovative solution addresses critical market needs and positions us for significant growth.`,
+      );
     }
 
     return parts.join(' ');
@@ -74,7 +76,7 @@ export class ConclusionPageGenerator extends BasePageGenerator {
       takeaways.push(
         'Strong competitive positioning',
         'Clear path to profitability',
-        'Strategic execution plan'
+        'Strategic execution plan',
       );
     }
 

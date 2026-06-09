@@ -127,7 +127,7 @@ export class LayoutCompositionService {
       'single-column': () => this.composeSingleColumn(),
       'two-column': () => this.composeTwoColumn(),
       'three-column': () => this.composeThreeColumn(),
-      'sidebar': () => this.composeSidebar(),
+      sidebar: () => this.composeSidebar(),
       'metric-grid': () => this.composeMetricGrid(),
       'editorial-spread': () => this.composeEditorialSpread(),
       'feature-grid': () => this.composeFeatureGrid(),
@@ -145,8 +145,8 @@ export class LayoutCompositionService {
 
     return {
       type: 'combined',
-      columns: Math.max(...layouts.map(l => l.columns)),
-      gap: Math.max(...layouts.map(l => l.gap)),
+      columns: Math.max(...layouts.map((l) => l.columns)),
+      gap: Math.max(...layouts.map((l) => l.gap)),
       alignment: 'left',
       padding: layouts[0].padding,
     };

@@ -1,7 +1,21 @@
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import {
-  Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards,
-  UploadedFile, UseInterceptors, BadRequestException, Res, Req, Logger, Inject,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
+  Res,
+  Req,
+  Logger,
+  Inject,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
@@ -15,18 +29,24 @@ import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Public } from '../auth/public.decorator';
 import { GetUser } from '../auth/get-user.decorator';
-import { CvProfilesService }  from './cv-profiles.service';
+import { UploadedAssetService } from '../files/uploaded-asset.service';
+import { CvProfilesService } from './cv-profiles.service';
 import { CvDocumentsService } from './cv-documents.service';
 import { CvTemplatesService } from './cv-templates.service';
-import { CvImportService }    from './cv-import.service';
+import { CvImportService } from './cv-import.service';
 import { CvExportService, CvExportFormat } from './cv-export.service';
 import { BrandKitsService } from '../brand-kits/brand-kits.service';
 import { CvDoctype, DEFAULT_CV_SECTION_ORDER } from './cv-types';
 import { CvAnalyzerService, CvProfileSnapshot } from './cv-analyzer.service';
 import {
-  CvSnapshotService, CvVariantsService, CvBenchmarkService,
-  CvInterviewReadinessService, CvExportValidationService,
-  CvTemplateInsightsService, VariantPreset, CvSnapshotKind,
+  CvSnapshotService,
+  CvVariantsService,
+  CvBenchmarkService,
+  CvInterviewReadinessService,
+  CvExportValidationService,
+  CvTemplateInsightsService,
+  VariantPreset,
+  CvSnapshotKind,
 } from './cv-pro.service';
 import { ImportProgressTracker } from './cv-import-polish';
 import { CvMappingMemoryService } from './cv-mapping-memory.service';
@@ -74,25 +94,26 @@ export class CareerController {
   private readonly logger = new Logger(CareerController.name);
 
   constructor(
-    private readonly profiles:  CvProfilesService,
+    private readonly profiles: CvProfilesService,
     private readonly documents: CvDocumentsService,
     private readonly templates: CvTemplatesService,
-    private readonly importer:  CvImportService,
-    private readonly exporter:  CvExportService,
+    private readonly importer: CvImportService,
+    private readonly exporter: CvExportService,
     private readonly brandKits: BrandKitsService,
-    private readonly analyzer:  CvAnalyzerService,
+    private readonly analyzer: CvAnalyzerService,
     private readonly snapshots: CvSnapshotService,
-    private readonly variants:  CvVariantsService,
+    private readonly variants: CvVariantsService,
     private readonly benchmark: CvBenchmarkService,
     private readonly interview: CvInterviewReadinessService,
     private readonly preflight: CvExportValidationService,
     private readonly tplInsights: CvTemplateInsightsService,
-    private readonly progress:    ImportProgressTracker,
-    private readonly mappingMem:  CvMappingMemoryService,
-    private readonly prisma:      PrismaService,
+    private readonly progress: ImportProgressTracker,
+    private readonly mappingMem: CvMappingMemoryService,
+    private readonly prisma: PrismaService,
     private readonly atsAnalyzer: AtsAnalyzerService,
-    private readonly jobMatcher:  JobMatcherService,
-    private readonly telemetry:   BetaTelemetryService,
+    private readonly jobMatcher: JobMatcherService,
+    private readonly telemetry: BetaTelemetryService,
+    private readonly uploadedAssets: UploadedAssetService,
     @InjectQueue(CV_EXPORT_QUEUE) private readonly exportQueue: Queue<CvExportJobData>,
   ) {}
 
@@ -124,36 +145,73 @@ export class CareerController {
     const filename = `photo-${crypto.randomBytes(12).toString('hex')}${ext}`;
     const dir = path.join(process.cwd(), 'uploads', 'images');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, filename), file.buffer);
+    const diskPath = path.join(dir, filename);
+    fs.writeFileSync(diskPath, file.buffer);
     const photoUrl = `/uploads/images/${filename}`;
     const profile = await this.profiles.getOrCreate(user.id);
     await this.profiles.patchPersonal(profile.id, { photoUrl }, user.id);
+    // Phase Ω.1D — record ownership so the /uploads gate can owner-gate the photo.
+    await this.uploadedAssets.record({
+      userId: user.id,
+      publicPath: photoUrl,
+      storagePath: diskPath,
+      module: 'career_photo',
+      documentId: profile.id,
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      sizeBytes: file.size ?? file.buffer.length,
+    });
     return { photoUrl };
   }
 
   @Post('profile/:profileId/section/:section')
-  addSectionItem(@GetUser() user: any, @Param('profileId') profileId: string, @Param('section') section: string, @Body() body: any) {
+  addSectionItem(
+    @GetUser() user: any,
+    @Param('profileId') profileId: string,
+    @Param('section') section: string,
+    @Body() body: any,
+  ) {
     return this.profiles.addSectionItem(profileId, section as any, body || {}, user.id);
   }
 
   @Patch('profile/:profileId/section/:section/:itemId')
-  updateSectionItem(@GetUser() user: any, @Param('profileId') profileId: string, @Param('section') section: string, @Param('itemId') itemId: string, @Body() body: any) {
+  updateSectionItem(
+    @GetUser() user: any,
+    @Param('profileId') profileId: string,
+    @Param('section') section: string,
+    @Param('itemId') itemId: string,
+    @Body() body: any,
+  ) {
     return this.profiles.updateSectionItem(profileId, section as any, itemId, body || {}, user.id);
   }
 
   @Delete('profile/:profileId/section/:section/:itemId')
-  removeSectionItem(@GetUser() user: any, @Param('profileId') profileId: string, @Param('section') section: string, @Param('itemId') itemId: string) {
+  removeSectionItem(
+    @GetUser() user: any,
+    @Param('profileId') profileId: string,
+    @Param('section') section: string,
+    @Param('itemId') itemId: string,
+  ) {
     return this.profiles.removeSectionItem(profileId, section as any, itemId, user.id);
   }
 
   @Post('profile/:profileId/section/:section/reorder')
-  reorderSection(@GetUser() user: any, @Param('profileId') profileId: string, @Param('section') section: string, @Body() body: { ids: string[] }) {
+  reorderSection(
+    @GetUser() user: any,
+    @Param('profileId') profileId: string,
+    @Param('section') section: string,
+    @Body() body: { ids: string[] },
+  ) {
     return this.profiles.reorderSection(profileId, section as any, body?.ids ?? [], user.id);
   }
 
   @Post('profile/:profileId/import/linkedin')
   @ApiOperation({ summary: 'Import LinkedIn export JSON into a profile (Phase 42M)' })
-  async importLinkedIn(@GetUser() user: any, @Param('profileId') profileId: string, @Body() body: any) {
+  async importLinkedIn(
+    @GetUser() user: any,
+    @Param('profileId') profileId: string,
+    @Body() body: any,
+  ) {
     await this.profiles.get(profileId, user.id); // verify ownership
     return this.importer.importFromLinkedIn(profileId, body?.payload ?? body);
   }
@@ -161,7 +219,9 @@ export class CareerController {
   // Phase Ω.3C — 5 imports per 5-minute window per user (OCR is expensive).
   @Throttle({ default: { limit: 5, ttl: 300_000 } })
   @Post('profile/:profileId/import/file')
-  @ApiOperation({ summary: 'Import an existing CV (DOCX/PDF/HTML/MD) into a profile (Phase 42L + 42.7 + 42.8)' })
+  @ApiOperation({
+    summary: 'Import an existing CV (DOCX/PDF/HTML/MD) into a profile (Phase 42L + 42.7 + 42.8)',
+  })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 20 * 1024 * 1024 } }))
   async importFile(
@@ -177,28 +237,54 @@ export class CareerController {
     await this.profiles.get(profileId, user.id);
     let sectionMappings: Record<string, any> | undefined;
     if (sectionMappingsRaw) {
-      try { sectionMappings = typeof sectionMappingsRaw === 'string' ? JSON.parse(sectionMappingsRaw) : sectionMappingsRaw; }
-      catch { sectionMappings = undefined; }
+      try {
+        sectionMappings =
+          typeof sectionMappingsRaw === 'string'
+            ? JSON.parse(sectionMappingsRaw)
+            : sectionMappingsRaw;
+      } catch {
+        sectionMappings = undefined;
+      }
     }
-    this.logger.log(`[IMPORT] user=${user.id} profile=${profileId} file=${file.originalname} size=${file.size ?? file.buffer?.length}B`);
-    this.telemetry.track('upload_start', { userId: user.id, meta: { file: file.originalname, size: file.size } });
+    this.logger.log(
+      `[IMPORT] user=${user.id} profile=${profileId} file=${file.originalname} size=${file.size ?? file.buffer?.length}B`,
+    );
+    this.telemetry.track('upload_start', {
+      userId: user.id,
+      meta: { file: file.originalname, size: file.size },
+    });
     // Phase 42.8A — accept a client-generated jobId so polling can start
     // before the response settles. Fall back to a server-generated one.
     const job = this.progress.newJob(clientJobId);
     const t0import = Date.now();
     let importResult: any;
     try {
-      importResult = await this.importer.importFromFile(profileId, file.buffer, file.originalname || 'cv', file.mimetype, {
-        sectionMappings: sectionMappings as any,
-        forceOcr:        forceOcr === '1' || forceOcr === 'true',
-        userId:          user.id,
-        jobId:           job.jobId,
-      });
+      importResult = await this.importer.importFromFile(
+        profileId,
+        file.buffer,
+        file.originalname || 'cv',
+        file.mimetype,
+        {
+          sectionMappings: sectionMappings as any,
+          forceOcr: forceOcr === '1' || forceOcr === 'true',
+          userId: user.id,
+          jobId: job.jobId,
+        },
+      );
     } catch (e: any) {
-      this.telemetry.track('upload_fail', { userId: user.id, durationMs: Date.now()-t0import, success: false, meta: { error: e?.message } });
+      this.telemetry.track('upload_fail', {
+        userId: user.id,
+        durationMs: Date.now() - t0import,
+        success: false,
+        meta: { error: e?.message },
+      });
       throw e;
     }
-    this.telemetry.track('upload_done', { userId: user.id, durationMs: Date.now()-t0import, meta: { file: file.originalname } });
+    this.telemetry.track('upload_done', {
+      userId: user.id,
+      durationMs: Date.now() - t0import,
+      meta: { file: file.originalname },
+    });
     return { jobId: job.jobId, ...importResult };
   }
 
@@ -243,10 +329,10 @@ export class CareerController {
   @Public()
   @Get('profile/import/progress/:jobId/stream')
   importProgressStream(@Param('jobId') jobId: string, @Res() res: Response) {
-    res.setHeader('Content-Type',      'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control',     'no-cache, no-store, no-transform, must-revalidate');
-    res.setHeader('Pragma',            'no-cache');
-    res.setHeader('Connection',        'keep-alive');
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, no-transform, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders?.();
 
@@ -263,19 +349,34 @@ export class CareerController {
         res.write(`data: ${JSON.stringify(p)}\n\n`);
         if (p.phase === 'done' || p.phase === 'failed' || p.phase === 'cancelled') {
           // Brief delay so the final event is flushed before close.
-          setTimeout(() => { try { res.end(); } catch { /* */ } }, 50);
+          setTimeout(() => {
+            try {
+              res.end();
+            } catch {
+              /* */
+            }
+          }, 50);
         }
-      } catch { /* socket closed */ }
+      } catch {
+        /* socket closed */
+      }
     });
 
     // Heartbeat every 15s to keep the connection alive past idle-timeout
     // policies in common reverse proxies.
     const heartbeat = setInterval(() => {
-      try { res.write(': ka\n\n'); } catch { /* */ }
+      try {
+        res.write(': ka\n\n');
+      } catch {
+        /* */
+      }
     }, 15_000);
 
     // Clean up on client disconnect.
-    const cleanup = () => { clearInterval(heartbeat); unsub(); };
+    const cleanup = () => {
+      clearInterval(heartbeat);
+      unsub();
+    };
     res.on('close', cleanup);
     res.on('finish', cleanup);
   }
@@ -297,7 +398,9 @@ export class CareerController {
     // tesseract.js caches packs per-worker so subsequent calls are no-ops.
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { warmupOcrPacks } = await import('./cv-import-pro');
-    warmupOcrPacks(body?.langs).catch(() => { /* silent */ });
+    warmupOcrPacks(body?.langs).catch(() => {
+      /* silent */
+    });
     return { ok: true, scheduled: body?.langs || ['eng', 'ara', 'fra', 'deu', 'ron'] };
   }
 
@@ -305,10 +408,16 @@ export class CareerController {
   //  Phase 42.8D + 42.8E — Section mapping memory CRUD
   // ===========================================================================
   @Get('import/mappings')
-  listMappings(@GetUser() user: any) { return this.mappingMem.list(user.id); }
+  listMappings(@GetUser() user: any) {
+    return this.mappingMem.list(user.id);
+  }
 
   @Patch('import/mappings/:id')
-  updateMapping(@GetUser() user: any, @Param('id') id: string, @Body() body: { targetSection?: string; autoApply?: boolean }) {
+  updateMapping(
+    @GetUser() user: any,
+    @Param('id') id: string,
+    @Body() body: { targetSection?: string; autoApply?: boolean },
+  ) {
     return this.mappingMem.update(user.id, id, body || {});
   }
 
@@ -328,16 +437,25 @@ export class CareerController {
   @Get('import/history')
   importHistory(@GetUser() user: any, @Query('limit') limit?: string) {
     return this.prisma.cvAnalysisSnapshot.findMany({
-      where:   { userId: user.id, kind: 'import' },
+      where: { userId: user.id, kind: 'import' },
       orderBy: { createdAt: 'desc' },
-      take:    Math.max(1, Math.min(200, Number(limit || 50))),
-      select:  { id: true, label: true, score: true, atsScore: true, createdAt: true, analysisJson: true },
+      take: Math.max(1, Math.min(200, Number(limit || 50))),
+      select: {
+        id: true,
+        label: true,
+        score: true,
+        atsScore: true,
+        createdAt: true,
+        analysisJson: true,
+      },
     });
   }
 
   @Delete('import/history/:id')
   deleteImportHistory(@GetUser() user: any, @Param('id') id: string) {
-    return this.prisma.cvAnalysisSnapshot.deleteMany({ where: { id, userId: user.id, kind: 'import' } });
+    return this.prisma.cvAnalysisSnapshot.deleteMany({
+      where: { id, userId: user.id, kind: 'import' },
+    });
   }
 
   // ===========================================================================
@@ -345,7 +463,7 @@ export class CareerController {
   // ===========================================================================
   @Get('import/analytics')
   async importAnalytics(@GetUser() user: any) {
-    if (!await isPlatformAdmin(this.prisma, user.id)) throw new BadRequestException('Admin only');
+    if (!(await isPlatformAdmin(this.prisma, user.id))) throw new BadRequestException('Admin only');
     const since = new Date(Date.now() - 30 * 24 * 60 * 60_000); // 30 days
     const rows = await this.prisma.cvAnalysisSnapshot.findMany({
       where: { kind: 'import', createdAt: { gte: since } },
@@ -354,38 +472,54 @@ export class CareerController {
 
     const total = rows.length;
     if (total === 0) {
-      return { total: 0, since: since.toISOString(), avgConfidence: 0, ocrUsage: 0, avgDurationMs: 0, missingSections: {}, unknownHeadings: {}, skillNormalisations: {}, failureRate: 0, daily: [] };
+      return {
+        total: 0,
+        since: since.toISOString(),
+        avgConfidence: 0,
+        ocrUsage: 0,
+        avgDurationMs: 0,
+        missingSections: {},
+        unknownHeadings: {},
+        skillNormalisations: {},
+        failureRate: 0,
+        daily: [],
+      };
     }
 
-    let confSum = 0, durSum = 0, ocrCount = 0, failed = 0;
-    const missingSections:    Record<string, number> = {};
-    const unknownHeadings:    Record<string, number> = {};
-    const langs:              Record<string, number> = {};
-    const dailyMap:           Record<string, number> = {};
+    let confSum = 0,
+      durSum = 0,
+      ocrCount = 0,
+      failed = 0;
+    const missingSections: Record<string, number> = {};
+    const unknownHeadings: Record<string, number> = {};
+    const langs: Record<string, number> = {};
+    const dailyMap: Record<string, number> = {};
     for (const r of rows) {
       const ev = (r.analysisJson || {}) as any;
       confSum += r.score ?? ev.confidenceOverall ?? 0;
-      durSum  += ev.durationMs ?? 0;
+      durSum += ev.durationMs ?? 0;
       if (ev.ocrUsed) ocrCount++;
-      if (ev.failed)  failed++;
-      for (const k of ev.missing  || []) missingSections[k] = (missingSections[k] || 0) + 1;
+      if (ev.failed) failed++;
+      for (const k of ev.missing || []) missingSections[k] = (missingSections[k] || 0) + 1;
       for (const k of ev.unknownHeadings || []) unknownHeadings[k] = (unknownHeadings[k] || 0) + 1;
       for (const l of ev.ocrLangsUsed || []) langs[l] = (langs[l] || 0) + 1;
       const day = new Date(r.createdAt).toISOString().slice(0, 10);
       dailyMap[day] = (dailyMap[day] || 0) + 1;
     }
-    const daily = Object.entries(dailyMap).sort(([a],[b]) => a.localeCompare(b)).map(([day, n]) => ({ day, n }));
+    const daily = Object.entries(dailyMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([day, n]) => ({ day, n }));
 
     return {
-      since:           since.toISOString(),
+      since: since.toISOString(),
       total,
-      avgConfidence:   Math.round(confSum / total),
-      ocrUsage:        Math.round((ocrCount / total) * 100),
-      avgDurationMs:   Math.round(durSum / total),
-      failureRate:     Math.round((failed / total) * 100),
+      avgConfidence: Math.round(confSum / total),
+      ocrUsage: Math.round((ocrCount / total) * 100),
+      avgDurationMs: Math.round(durSum / total),
+      failureRate: Math.round((failed / total) * 100),
       missingSections: topN(missingSections, 8),
       unknownHeadings: topN(unknownHeadings, 12),
-      langs:           topN(langs, 8),
+      langs: topN(langs, 8),
       daily,
     };
   }
@@ -403,19 +537,27 @@ export class CareerController {
   }
 
   @Post('documents')
-  async createDocument(@GetUser() user: any, @Body() body: {
-    doctype: CvDoctype; title: string; templateId?: string; brandKitId?: string; variant?: string;
-  }) {
+  async createDocument(
+    @GetUser() user: any,
+    @Body()
+    body: {
+      doctype: CvDoctype;
+      title: string;
+      templateId?: string;
+      brandKitId?: string;
+      variant?: string;
+    },
+  ) {
     if (!body?.doctype) throw new BadRequestException('Missing doctype');
     const profile = await this.profiles.getOrCreate(user.id);
     return this.documents.create({
-      userId:     user.id,
-      profileId:  profile.id,
-      doctype:    body.doctype,
-      title:      body.title,
+      userId: user.id,
+      profileId: profile.id,
+      doctype: body.doctype,
+      title: body.title,
       templateId: body.templateId ?? null,
       brandKitId: body.brandKitId ?? null,
-      variant:    body.variant,
+      variant: body.variant,
     });
   }
 
@@ -425,13 +567,24 @@ export class CareerController {
   }
 
   @Post('documents/:id/template')
-  switchTemplate(@Param('id') id: string, @GetUser() user: any, @Body() body: { templateId: string | null }) {
-    this.telemetry.track('template_switch', { userId: user.id, meta: { docId: id, templateId: body?.templateId } });
+  switchTemplate(
+    @Param('id') id: string,
+    @GetUser() user: any,
+    @Body() body: { templateId: string | null },
+  ) {
+    this.telemetry.track('template_switch', {
+      userId: user.id,
+      meta: { docId: id, templateId: body?.templateId },
+    });
     return this.documents.switchTemplate(id, body?.templateId ?? null, user.id);
   }
 
   @Post('documents/:id/duplicate')
-  duplicate(@Param('id') id: string, @GetUser() user: any, @Body() body: { title?: string; variant?: string }) {
+  duplicate(
+    @Param('id') id: string,
+    @GetUser() user: any,
+    @Body() body: { title?: string; variant?: string },
+  ) {
     return this.documents.duplicate(id, body?.title, body?.variant, user.id);
   }
 
@@ -449,7 +602,10 @@ export class CareerController {
     const doc = await this.documents.findOne(id, user.id);
     const { profile, report } = await this.profiles.repair(doc.profileId, user.id);
     const { document, report: documentReport } = await this.documents.repairContent(id, user.id);
-    this.telemetry.track('profile_repair', { userId: user.id, meta: { docId: id, profileId: doc.profileId, ...report, documentReport } });
+    this.telemetry.track('profile_repair', {
+      userId: user.id,
+      meta: { docId: id, profileId: doc.profileId, ...report, documentReport },
+    });
     return { profile, document, report, documentReport };
   }
 
@@ -459,7 +615,10 @@ export class CareerController {
     const doc = await this.documents.findOne(id, user.id);
     const { profile, report } = await this.profiles.repair(doc.profileId, user.id);
     const document = await this.documents.rebuildFromProfile(id, user.id);
-    this.telemetry.track('profile_repair', { userId: user.id, meta: { action: 'rebuild_from_profile', docId: id, profileId: doc.profileId, ...report } });
+    this.telemetry.track('profile_repair', {
+      userId: user.id,
+      meta: { action: 'rebuild_from_profile', docId: id, profileId: doc.profileId, ...report },
+    });
     return { profile, document, report };
   }
 
@@ -467,7 +626,13 @@ export class CareerController {
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Post('documents/:id/export')
   @ApiOperation({ summary: 'Export the document (PDF / DOCX / PPTX / HTML / MD)' })
-  async export(@Param('id') id: string, @Query('format') format: string, @GetUser() user: any, @Res() res: Response, @Body() body: any) {
+  async export(
+    @Param('id') id: string,
+    @Query('format') format: string,
+    @GetUser() user: any,
+    @Res() res: Response,
+    @Body() body: any,
+  ) {
     try {
       const fmt = (format || 'pdf') as CvExportFormat;
       const t0 = Date.now();
@@ -475,16 +640,21 @@ export class CareerController {
       const doc = await this.documents.findOne(id, user.id);
       // Phase 42.12 — allow templateId override in body for live preview without DB save.
       // The builder sends the currently selected templateId so preview updates instantly.
-      const renderDoc = (body?.templateId !== undefined)
-        ? { ...doc, templateId: body.templateId || null }
-        : doc;
+      const renderDoc =
+        body?.templateId !== undefined ? { ...doc, templateId: body.templateId || null } : doc;
       const profile = await this.profiles.get(renderDoc.profileId);
       // Phase 42.1 — fetch BrandKit tokens when the document is linked to one.
       const brandTokens = await this.resolveBrandTokens(renderDoc.brandKitId, user.id);
       const r = await this.exporter.export(fmt, profile, renderDoc, brandTokens);
       const totalMs = Date.now() - t0;
-      this.logger.log(`[EXPORT] user=${user.id} doc=${id} fmt=${fmt} mode=${r.mode} dur=${r.durationMs}ms total=${totalMs}ms`);
-      this.telemetry.track('export_done', { userId: user.id, durationMs: totalMs, meta: { fmt, docId: id, mode: r.mode } });
+      this.logger.log(
+        `[EXPORT] user=${user.id} doc=${id} fmt=${fmt} mode=${r.mode} dur=${r.durationMs}ms total=${totalMs}ms`,
+      );
+      this.telemetry.track('export_done', {
+        userId: user.id,
+        durationMs: totalMs,
+        meta: { fmt, docId: id, mode: r.mode },
+      });
       const safe = (doc.title || 'document').replace(/[^a-z0-9.-]/gi, '_');
       res.setHeader('Content-Type', r.mimetype);
       res.setHeader('Content-Disposition', `attachment; filename="${safe}.${r.extension}"`);
@@ -493,13 +663,23 @@ export class CareerController {
       if (r.mode) res.setHeader('X-Pitchonix-Export-Mode', r.mode);
       if (fmt === 'docx') {
         res.setHeader('X-Pitchonix-DOCX-Fidelity', 'semantic-content-only');
-        res.setHeader('X-Pitchonix-DOCX-Notice', 'DOCX preserves editable content structure, not premium visual design. Use PDF for visual parity.');
+        res.setHeader(
+          'X-Pitchonix-DOCX-Notice',
+          'DOCX preserves editable content structure, not premium visual design. Use PDF for visual parity.',
+        );
       }
-      if (r.diagnostics?.pageCount !== undefined) res.setHeader('X-Pitchonix-PDF-Page-Count', String(r.diagnostics.pageCount));
-      if (r.diagnostics?.fontLoadStatus) res.setHeader('X-Pitchonix-Font-Load-Status', r.diagnostics.fontLoadStatus);
+      if (r.diagnostics?.pageCount !== undefined)
+        res.setHeader('X-Pitchonix-PDF-Page-Count', String(r.diagnostics.pageCount));
+      if (r.diagnostics?.fontLoadStatus)
+        res.setHeader('X-Pitchonix-Font-Load-Status', r.diagnostics.fontLoadStatus);
       res.send(r.buffer);
     } catch (error) {
-      this.telemetry.track('export_fail', { userId: user?.id, durationMs: Date.now() - (Date.now()), success: false, meta: { fmt: format, docId: id, error: (error as any)?.message } });
+      this.telemetry.track('export_fail', {
+        userId: user?.id,
+        durationMs: Date.now() - Date.now(),
+        success: false,
+        meta: { fmt: format, docId: id, error: (error as any)?.message },
+      });
       console.error('[CV Export Error]', {
         id,
         format,
@@ -531,15 +711,21 @@ export class CareerController {
     const fmt = (format || 'pdf') as CvExportJobData['format'];
     const doc = await this.documents.findOne(id, user.id);
     const brandTokens = await this.resolveBrandTokens(doc.brandKitId, user.id);
-    this.telemetry.track('export_start', { userId: user.id, meta: { fmt, docId: id, queued: true } });
-    const job = await this.exportQueue.add({
-      documentId:  id,
-      profileId:   doc.profileId,
-      userId:      user.id,
-      format:      fmt,
-      templateId:  body?.templateId !== undefined ? body.templateId : undefined,
-      brandTokens,
-    }, { priority: 1 });
+    this.telemetry.track('export_start', {
+      userId: user.id,
+      meta: { fmt, docId: id, queued: true },
+    });
+    const job = await this.exportQueue.add(
+      {
+        documentId: id,
+        profileId: doc.profileId,
+        userId: user.id,
+        format: fmt,
+        templateId: body?.templateId !== undefined ? body.templateId : undefined,
+        brandTokens,
+      },
+      { priority: 1 },
+    );
     return { jobId: String(job.id), status: 'queued' };
   }
 
@@ -551,7 +737,11 @@ export class CareerController {
     const state = await job.getState();
     if (state === 'completed') {
       const result = job.returnvalue;
-      return { status: 'completed', result: { ...result, bufferB64: undefined }, downloadReady: true };
+      return {
+        status: 'completed',
+        result: { ...result, bufferB64: undefined },
+        downloadReady: true,
+      };
     }
     if (state === 'failed') {
       return { status: 'failed', error: job.failedReason };
@@ -589,15 +779,15 @@ export class CareerController {
       const tokens: any = kit.tokens || {};
       return {
         colors: {
-          primary:    tokens.colors?.primary    ?? kit.primaryColor   ?? undefined,
-          secondary:  tokens.colors?.secondary  ?? kit.secondaryColor ?? undefined,
-          accent:     tokens.colors?.accent     ?? undefined,
-          text:       tokens.colors?.text       ?? undefined,
+          primary: tokens.colors?.primary ?? kit.primaryColor ?? undefined,
+          secondary: tokens.colors?.secondary ?? kit.secondaryColor ?? undefined,
+          accent: tokens.colors?.accent ?? undefined,
+          text: tokens.colors?.text ?? undefined,
           background: tokens.colors?.background ?? undefined,
         },
         fonts: {
           heading: tokens.typography?.heading?.family ?? kit.fontFamily ?? undefined,
-          body:    tokens.typography?.body?.family    ?? kit.fontFamily ?? undefined,
+          body: tokens.typography?.body?.family ?? kit.fontFamily ?? undefined,
         },
         logo: kit.logo ?? undefined,
       };
@@ -620,13 +810,21 @@ export class CareerController {
   }
 
   @Get('templates/insights')
-  @ApiOperation({ summary: 'Phase 42.5A — 6-axis template performance radar (ATS / Visual / Executive / Creative / Readability / Print)' })
+  @ApiOperation({
+    summary:
+      'Phase 42.5A — 6-axis template performance radar (ATS / Visual / Executive / Creative / Readability / Print)',
+  })
   async templatesInsights(@Query('doctype') doctype?: CvDoctype) {
     const list = await this.templates.list({ doctype: doctype || 'cv' });
-    const rows = Array.isArray(list) ? list : ((list as any)?.items || []);
-    return this.tplInsights.scoreMany(rows.map((t: any) => ({
-      id: t.id, name: t.name, category: t.category, layout: t.layout,
-    })));
+    const rows = Array.isArray(list) ? list : (list as any)?.items || [];
+    return this.tplInsights.scoreMany(
+      rows.map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        category: t.category,
+        layout: t.layout,
+      })),
+    );
   }
 
   // ===========================================================================
@@ -644,7 +842,9 @@ export class CareerController {
   // Phase Ω.3C — 5 uploads per 5-minute window (same expensive OCR budget as /import/file).
   @Throttle({ default: { limit: 5, ttl: 300_000 } })
   @Post('analyze/parse-file')
-  @ApiOperation({ summary: 'Phase 42.3A — parse an uploaded CV into a CvProfile snapshot (no DB write)' })
+  @ApiOperation({
+    summary: 'Phase 42.3A — parse an uploaded CV into a CvProfile snapshot (no DB write)',
+  })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 20 * 1024 * 1024 } }))
   async analyzeParseFile(@GetUser() user: any, @UploadedFile() file: any) {
@@ -653,7 +853,10 @@ export class CareerController {
     // not create or overwrite DB profile data until the user explicitly saves.
     const transientId = `analysis-${crypto.randomUUID()}`;
     const { profile, warnings, debug } = await this.importer.importFromFile(
-      transientId, file.buffer, file.originalname || 'cv', file.mimetype,
+      transientId,
+      file.buffer,
+      file.originalname || 'cv',
+      file.mimetype,
       { persist: false },
     );
     return { profile, warnings, debug };
@@ -661,12 +864,15 @@ export class CareerController {
 
   @Post('analyze/preview')
   @ApiOperation({ summary: 'Render an in-memory CV profile with the production template renderer' })
-  async analyzePreview(@Body() body: {
-    profile: CvProfileSnapshot;
-    templateId?: string | null;
-    doctype?: CvDoctype;
-    title?: string;
-  }) {
+  async analyzePreview(
+    @Body()
+    body: {
+      profile: CvProfileSnapshot;
+      templateId?: string | null;
+      doctype?: CvDoctype;
+      title?: string;
+    },
+  ) {
     if (!body?.profile) throw new BadRequestException('Missing profile');
     const template = body.templateId ? await this.templates.findOne(body.templateId) : null;
     const doctype = body.doctype || 'cv';
@@ -710,7 +916,10 @@ export class CareerController {
     const report = this.analyzer.analyze(body.profile);
     const tpl = await this.templates.list({ doctype: body.doctype || 'cv' });
     const slim = (Array.isArray(tpl) ? tpl : (tpl as any)?.items || []).map((t: any) => ({
-      id: t.id, name: t.name, category: t.category, atsSafe: !!t.atsSafe,
+      id: t.id,
+      name: t.name,
+      category: t.category,
+      atsSafe: !!t.atsSafe,
     }));
     return this.analyzer.recommendTemplates(report, slim);
   }
@@ -718,7 +927,8 @@ export class CareerController {
   @Post('analyze/match-job')
   @ApiOperation({ summary: 'Phase 42.3I — match a profile against a pasted job description' })
   matchJob(@Body() body: { profile: CvProfileSnapshot; jobDescription: string }) {
-    if (!body?.profile || !body?.jobDescription) throw new BadRequestException('Missing profile/jobDescription');
+    if (!body?.profile || !body?.jobDescription)
+      throw new BadRequestException('Missing profile/jobDescription');
     return this.analyzer.matchJob(body.profile, body.jobDescription);
   }
 
@@ -739,7 +949,7 @@ export class CareerController {
   @ApiOperation({ summary: 'Phase Ω.2 — Full ATS analysis for a saved document' })
   async analyzeATS(
     @GetUser() user: any,
-    @Body() body: { documentId: string; jobDescription?: string }
+    @Body() body: { documentId: string; jobDescription?: string },
   ) {
     if (!body?.documentId) throw new BadRequestException('Missing documentId');
 
@@ -751,10 +961,19 @@ export class CareerController {
     const t0ats = Date.now();
     try {
       const result = await this.atsAnalyzer.analyzeCV(profile, doc, body.jobDescription);
-      this.telemetry.track('ats_analyze', { userId: user.id, durationMs: Date.now()-t0ats, meta: { score: result.overallScore, hasJD: !!body.jobDescription } });
+      this.telemetry.track('ats_analyze', {
+        userId: user.id,
+        durationMs: Date.now() - t0ats,
+        meta: { score: result.overallScore, hasJD: !!body.jobDescription },
+      });
       return result;
     } catch (e: any) {
-      this.telemetry.track('ats_fail', { userId: user.id, durationMs: Date.now()-t0ats, success: false, meta: { error: e?.message } });
+      this.telemetry.track('ats_fail', {
+        userId: user.id,
+        durationMs: Date.now() - t0ats,
+        success: false,
+        meta: { error: e?.message },
+      });
       throw e;
     }
   }
@@ -762,11 +981,9 @@ export class CareerController {
   @Post('ats/analyze-profile')
   @Public()
   @ApiOperation({ summary: 'Phase Ω.2 — ATS analysis for an in-memory profile snapshot' })
-  async analyzeATSProfile(
-    @Body() body: { profile: CvProfileSnapshot; jobDescription?: string }
-  ) {
+  async analyzeATSProfile(@Body() body: { profile: CvProfileSnapshot; jobDescription?: string }) {
     if (!body?.profile) throw new BadRequestException('Missing profile');
-    
+
     // Convert snapshot to format expected by analyzer
     return this.atsAnalyzer.analyzeCV(body.profile, {}, body.jobDescription);
   }
@@ -777,12 +994,12 @@ export class CareerController {
   @ApiOperation({ summary: 'Phase Ω.2 — Match a saved document against a job description' })
   async matchJobATS(
     @GetUser() user: any,
-    @Body() body: { documentId: string; jobDescription: string }
+    @Body() body: { documentId: string; jobDescription: string },
   ) {
     if (!body?.documentId || !body?.jobDescription) {
       throw new BadRequestException('Missing documentId or jobDescription');
     }
-    
+
     const doc = await this.documents.findOne(body.documentId, user.id);
     if (!doc) throw new BadRequestException('Document not found');
 
@@ -791,10 +1008,15 @@ export class CareerController {
     const t0jm = Date.now();
     try {
       const result = await this.jobMatcher.matchCVToJob(profile, body.jobDescription);
-      this.telemetry.track('job_match', { userId: user.id, durationMs: Date.now()-t0jm });
+      this.telemetry.track('job_match', { userId: user.id, durationMs: Date.now() - t0jm });
       return result;
     } catch (e: any) {
-      this.telemetry.track('job_match_fail', { userId: user.id, durationMs: Date.now()-t0jm, success: false, meta: { error: e?.message } });
+      this.telemetry.track('job_match_fail', {
+        userId: user.id,
+        durationMs: Date.now() - t0jm,
+        success: false,
+        meta: { error: e?.message },
+      });
       throw e;
     }
   }
@@ -802,13 +1024,11 @@ export class CareerController {
   @Post('ats/match-job-profile')
   @Public()
   @ApiOperation({ summary: 'Phase Ω.2 — Match an in-memory profile against a job description' })
-  async matchJobATSProfile(
-    @Body() body: { profile: CvProfileSnapshot; jobDescription: string }
-  ) {
+  async matchJobATSProfile(@Body() body: { profile: CvProfileSnapshot; jobDescription: string }) {
     if (!body?.profile || !body?.jobDescription) {
       throw new BadRequestException('Missing profile or jobDescription');
     }
-    
+
     return this.jobMatcher.matchCVToJob(body.profile, body.jobDescription);
   }
 
@@ -818,12 +1038,12 @@ export class CareerController {
   @ApiOperation({ summary: 'Phase Ω.2 — Apply an ATS recommendation to a document' })
   async applyATSFix(
     @GetUser() user: any,
-    @Body() body: { documentId: string; recommendationId: string; payload?: any }
+    @Body() body: { documentId: string; recommendationId: string; payload?: any },
   ) {
     if (!body?.documentId || !body?.recommendationId) {
       throw new BadRequestException('Missing documentId or recommendationId');
     }
-    
+
     const doc = await this.documents.findOne(body.documentId, user.id);
     if (!doc) throw new BadRequestException('Document not found');
 
@@ -832,7 +1052,7 @@ export class CareerController {
     // Apply the fix based on recommendation type
     // This would integrate with the CV profiles service to update the profile
     // For now, return success
-    
+
     return { success: true, message: 'Fix applied successfully' };
   }
 
@@ -853,34 +1073,45 @@ export class CareerController {
   // ===========================================================================
 
   @Post('analyze/snapshot')
-  @ApiOperation({ summary: 'Phase 42.4B — persist an analysis / job-match / benchmark / interview snapshot' })
-  async snapshotSave(@GetUser() user: any, @Body() body: {
-    kind:        CvSnapshotKind;
-    profile:     CvProfileSnapshot;
-    documentId?: string;
-    label?:      string;
-    analysisJson: any;
-    score?:      number;
-    atsScore?:   number;
-  }) {
-    if (!body?.kind || !body?.profile || !body?.analysisJson) throw new BadRequestException('Missing kind/profile/analysisJson');
+  @ApiOperation({
+    summary: 'Phase 42.4B — persist an analysis / job-match / benchmark / interview snapshot',
+  })
+  async snapshotSave(
+    @GetUser() user: any,
+    @Body()
+    body: {
+      kind: CvSnapshotKind;
+      profile: CvProfileSnapshot;
+      documentId?: string;
+      label?: string;
+      analysisJson: any;
+      score?: number;
+      atsScore?: number;
+    },
+  ) {
+    if (!body?.kind || !body?.profile || !body?.analysisJson)
+      throw new BadRequestException('Missing kind/profile/analysisJson');
     const transient = await this.profiles.getOrCreate(user.id);
     return this.snapshots.save({
-      userId:     user.id,
-      profileId:  transient.id,
+      userId: user.id,
+      profileId: transient.id,
       documentId: body.documentId ?? null,
-      kind:       body.kind,
-      label:      body.label,
+      kind: body.kind,
+      label: body.label,
       analysisJson: body.analysisJson,
-      profileJson:  body.profile,
-      score:      body.score,
-      atsScore:   body.atsScore,
+      profileJson: body.profile,
+      score: body.score,
+      atsScore: body.atsScore,
     });
   }
 
   @Get('analyze/snapshots')
   @ApiOperation({ summary: 'Phase 42.4B — list snapshots for the caller' })
-  snapshotList(@GetUser() user: any, @Query('documentId') documentId?: string, @Query('kind') kind?: CvSnapshotKind) {
+  snapshotList(
+    @GetUser() user: any,
+    @Query('documentId') documentId?: string,
+    @Query('kind') kind?: CvSnapshotKind,
+  ) {
     return this.snapshots.list(user.id, { documentId, kind });
   }
 
@@ -907,20 +1138,32 @@ export class CareerController {
 
   @Post('analyze/variants')
   @ApiOperation({ summary: 'Phase 42.4C — generate one CvDocument per requested preset' })
-  async variantsGenerate(@GetUser() user: any, @Body() body: {
-    presets: VariantPreset[]; brandKitId?: string; profileId?: string;
-  }) {
+  async variantsGenerate(
+    @GetUser() user: any,
+    @Body()
+    body: {
+      presets: VariantPreset[];
+      brandKitId?: string;
+      profileId?: string;
+    },
+  ) {
     if (!body?.presets?.length) throw new BadRequestException('Missing presets');
     const profile = body.profileId
       ? await this.profiles.get(body.profileId, user.id)
       : await this.profiles.getOrCreate(user.id);
     const tpl = await this.templates.list({ doctype: 'cv' });
     const slim = (Array.isArray(tpl) ? tpl : (tpl as any)?.items || []).map((t: any) => ({
-      id: t.id, name: t.name, category: t.category, atsSafe: !!t.atsSafe,
+      id: t.id,
+      name: t.name,
+      category: t.category,
+      atsSafe: !!t.atsSafe,
     }));
     return this.variants.generate({
-      userId: user.id, profileId: profile.id,
-      presets: body.presets, brandKitId: body.brandKitId, templates: slim,
+      userId: user.id,
+      profileId: profile.id,
+      presets: body.presets,
+      brandKitId: body.brandKitId,
+      templates: slim,
     });
   }
 
@@ -965,21 +1208,21 @@ export class CareerController {
   @Get('admin/telemetry')
   @ApiOperation({ summary: 'Phase Ω.4 — Beta telemetry summary (admin)' })
   async telemetrySummary(@GetUser() user: any, @Query('days') days?: string) {
-    if (!await isPlatformAdmin(this.prisma, user.id)) throw new BadRequestException('Admin only');
+    if (!(await isPlatformAdmin(this.prisma, user.id))) throw new BadRequestException('Admin only');
     return this.telemetry.summary(Number(days || 7));
   }
 
   @Get('admin/telemetry/slow')
   @ApiOperation({ summary: 'Phase Ω.4 — Slow requests (admin)' })
   async telemetrySlow(@GetUser() user: any, @Query('threshold') threshold?: string) {
-    if (!await isPlatformAdmin(this.prisma, user.id)) throw new BadRequestException('Admin only');
+    if (!(await isPlatformAdmin(this.prisma, user.id))) throw new BadRequestException('Admin only');
     return this.telemetry.slowRequests(Number(threshold || 3000));
   }
 
   @Get('admin/telemetry/failures')
   @ApiOperation({ summary: 'Phase Ω.4 — Failure events (admin)' })
   async telemetryFailures(@GetUser() user: any) {
-    if (!await isPlatformAdmin(this.prisma, user.id)) throw new BadRequestException('Admin only');
+    if (!(await isPlatformAdmin(this.prisma, user.id))) throw new BadRequestException('Admin only');
     return this.telemetry.failures();
   }
 
@@ -989,11 +1232,18 @@ export class CareerController {
     @GetUser() user: any,
     @Body() body: { type: string; message: string; context?: any },
   ) {
-    if (!body?.type || !body?.message?.trim()) throw new BadRequestException('Missing type/message');
+    if (!body?.type || !body?.message?.trim())
+      throw new BadRequestException('Missing type/message');
     const allowed = ['bug', 'ats_score', 'recommendation', 'other'];
-    if (!allowed.includes(body.type)) throw new BadRequestException(`type must be one of: ${allowed.join(', ')}`);
+    if (!allowed.includes(body.type))
+      throw new BadRequestException(`type must be one of: ${allowed.join(', ')}`);
     const row = await this.prisma.betaFeedback.create({
-      data: { userId: user.id, type: body.type, message: body.message.trim(), context: body.context ?? null },
+      data: {
+        userId: user.id,
+        type: body.type,
+        message: body.message.trim(),
+        context: body.context ?? null,
+      },
     });
     this.logger.log(`[FEEDBACK] user=${user.id} type=${body.type} id=${row.id}`);
     return { ok: true, id: row.id };
@@ -1001,8 +1251,12 @@ export class CareerController {
 
   @Get('feedback')
   @ApiOperation({ summary: 'Phase Ω.3C — list beta feedback (admin only)' })
-  async listFeedback(@GetUser() user: any, @Query('type') type?: string, @Query('limit') limit?: string) {
-    if (!await isPlatformAdmin(this.prisma, user.id)) throw new BadRequestException('Admin only');
+  async listFeedback(
+    @GetUser() user: any,
+    @Query('type') type?: string,
+    @Query('limit') limit?: string,
+  ) {
+    if (!(await isPlatformAdmin(this.prisma, user.id))) throw new BadRequestException('Admin only');
     return this.prisma.betaFeedback.findMany({
       where: { ...(type ? { type } : {}) },
       orderBy: { createdAt: 'desc' },
@@ -1011,13 +1265,16 @@ export class CareerController {
   }
 
   @Post('analyze/save')
-  @ApiOperation({ summary: 'Phase 42.3K — persist the improved profile + create a CvDocument from it' })
+  @ApiOperation({
+    summary: 'Phase 42.3K — persist the improved profile + create a CvDocument from it',
+  })
   async analyzeSave(
     @GetUser() user: any,
-    @Body() body: {
-      profile:    CvProfileSnapshot;
-      doctype?:   CvDoctype;
-      title?:     string;
+    @Body()
+    body: {
+      profile: CvProfileSnapshot;
+      doctype?: CvDoctype;
+      title?: string;
       templateId?: string | null;
       brandKitId?: string | null;
       overwriteProfile?: boolean;
@@ -1033,10 +1290,10 @@ export class CareerController {
       await this.profiles.replaceFromImport(transient.id, 'docx', body.profile as any);
     }
     const doc = await this.documents.create({
-      userId:     user.id,
-      profileId:  transient.id,
-      doctype:    body.doctype || 'cv',
-      title:      body.title || 'Improved CV',
+      userId: user.id,
+      profileId: transient.id,
+      doctype: body.doctype || 'cv',
+      title: body.title || 'Improved CV',
       templateId: body.templateId ?? null,
       brandKitId: body.brandKitId ?? null,
     });
@@ -1045,5 +1302,8 @@ export class CareerController {
 }
 
 function topN(map: Record<string, number>, n: number) {
-  return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => ({ key: k, count: v }));
+  return Object.entries(map)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([k, v]) => ({ key: k, count: v }));
 }

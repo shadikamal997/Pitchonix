@@ -21,18 +21,18 @@ import { YDocSyncBus } from './ydoc-sync-bus';
 export class CollaborationMetricsController {
   constructor(
     private readonly ydocStore: YDocStore,
-    private readonly gateway:   CollaborationGateway,
-    private readonly syncBus:   YDocSyncBus,
+    private readonly gateway: CollaborationGateway,
+    private readonly syncBus: YDocSyncBus,
   ) {}
 
   @Get('metrics')
   @ApiOperation({ summary: 'Aggregate collaboration metrics (Y.Doc cache + presence rooms)' })
   metrics() {
     return {
-      ydoc:     this.ydocStore.stats(),
+      ydoc: this.ydocStore.stats(),
       presence: this.gateway.presenceStats(),
-      events:   this.gateway.eventCounters(),
-      syncBus:  this.syncBus.stats(),
+      events: this.gateway.eventCounters(),
+      syncBus: this.syncBus.stats(),
     };
   }
 
@@ -69,26 +69,54 @@ export class CollaborationMetricsController {
     };
 
     // Y.Doc cache gauges
-    gauge('collaboration_active_docs',        'Cached Y.Docs with at least one subscriber',  y.activeDocs);
-    gauge('collaboration_cached_docs_total',  'Total cached Y.Docs (active + idle)',          y.cachedDocs);
-    gauge('collaboration_dirty_docs',         'Cached Y.Docs with un-persisted edits',        y.dirtyDocs);
-    gauge('collaboration_subscribers_total',  'Sum of Y.Doc subscribers across cached docs',  y.totalSubscribers);
+    gauge('collaboration_active_docs', 'Cached Y.Docs with at least one subscriber', y.activeDocs);
+    gauge('collaboration_cached_docs_total', 'Total cached Y.Docs (active + idle)', y.cachedDocs);
+    gauge('collaboration_dirty_docs', 'Cached Y.Docs with un-persisted edits', y.dirtyDocs);
+    gauge(
+      'collaboration_subscribers_total',
+      'Sum of Y.Doc subscribers across cached docs',
+      y.totalSubscribers,
+    );
 
     // Presence gauges
-    gauge('collaboration_active_rooms',       'Active deck rooms with at least one socket',   p.rooms);
-    gauge('collaboration_active_users',       'Unique users connected across all rooms',      p.users);
-    gauge('collaboration_connected_sockets',  'Total connected sockets',                       p.connectedSockets);
+    gauge('collaboration_active_rooms', 'Active deck rooms with at least one socket', p.rooms);
+    gauge('collaboration_active_users', 'Unique users connected across all rooms', p.users);
+    gauge('collaboration_connected_sockets', 'Total connected sockets', p.connectedSockets);
 
     // Cumulative counters
-    counter('collaboration_evictions_total',      'Y.Docs evicted from cache (cumulative)',           y.evictionCount);
-    counter('collaboration_cursor_events_total',  'cursor.move events processed (cumulative)',        e.cursorEvents);
-    counter('collaboration_yjs_updates_total',    'yjs.update events processed (cumulative)',         e.yjsUpdates);
-    counter('collaboration_editing_events_total', 'editing.started events (cumulative)',              e.editingEvents);
+    counter(
+      'collaboration_evictions_total',
+      'Y.Docs evicted from cache (cumulative)',
+      y.evictionCount,
+    );
+    counter(
+      'collaboration_cursor_events_total',
+      'cursor.move events processed (cumulative)',
+      e.cursorEvents,
+    );
+    counter(
+      'collaboration_yjs_updates_total',
+      'yjs.update events processed (cumulative)',
+      e.yjsUpdates,
+    );
+    counter(
+      'collaboration_editing_events_total',
+      'editing.started events (cumulative)',
+      e.editingEvents,
+    );
 
     // Sync-bus health
-    gauge('collaboration_syncbus_active',             'YDocSyncBus connected to Redis (0/1)',           b.active ? 1 : 0);
-    counter('collaboration_syncbus_published_total',  'Y.Doc updates published to peers (cumulative)',  b.published);
-    counter('collaboration_syncbus_received_total',   'Y.Doc updates received from peers (cumulative)', b.received);
+    gauge('collaboration_syncbus_active', 'YDocSyncBus connected to Redis (0/1)', b.active ? 1 : 0);
+    counter(
+      'collaboration_syncbus_published_total',
+      'Y.Doc updates published to peers (cumulative)',
+      b.published,
+    );
+    counter(
+      'collaboration_syncbus_received_total',
+      'Y.Doc updates received from peers (cumulative)',
+      b.received,
+    );
 
     return lines.join('\n') + '\n';
   }

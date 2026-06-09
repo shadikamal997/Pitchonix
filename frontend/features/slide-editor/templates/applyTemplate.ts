@@ -41,20 +41,35 @@ export async function applyTemplate(
   template: TemplateSpec,
   opts: ApplyOpts = {},
 ): Promise<{ slidesApplied: number; elementsRestyled: number; slides: DeckSlide[] }> {
+  void projectId;
+
   if (opts.fullDeck === false && opts.slideIds?.length) {
     // The bulk endpoint is deck-wide by design. Keep a guarded escape hatch for
     // future partial-template UX without returning to request-per-slide storms.
     throw new Error('Partial template application is not supported yet.');
   }
 
-  await api.post(`/generate/template-switch/${projectId}`, {
-    deckId,
+  // Template application must be non-destructive. The generation pipeline's
+  // TEMPLATE_SWITCH command rebuilds the deck from wizard input and deletes
+  // existing slides first, which can drop user edits and sparse content. Use the
+  // deck-scoped visual apply endpoint instead: it only updates theme tokens,
+  // backgrounds, deck metadata, and element style fields.
+  const { data } = await api.post<{
+    slidesApplied: number;
+    elementsRestyled: number;
+    slides: DeckSlide[];
+  }>(`/slides/deck/${deckId}/apply-template`, {
     templateId: template.id,
+    theme: template.theme,
+    blueprint: template.blueprint,
   });
 
-  const { data: slides } = await api.get<DeckSlide[]>(`/slides/deck/${deckId}`);
-  const normalizedSlides = Array.isArray(slides) ? slides : [];
+  const normalizedSlides = Array.isArray(data?.slides) ? data.slides : [];
 
   for (const slide of normalizedSlides) opts.onSlideDone?.(slide.id);
-  return { slidesApplied: normalizedSlides.length, elementsRestyled: 0, slides: normalizedSlides };
+  return {
+    slidesApplied: data?.slidesApplied ?? normalizedSlides.length,
+    elementsRestyled: data?.elementsRestyled ?? 0,
+    slides: normalizedSlides,
+  };
 }

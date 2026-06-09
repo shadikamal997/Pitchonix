@@ -4,7 +4,7 @@ import { LayoutTemplatesService } from './layout-templates.service';
 
 @Module({
   controllers: [LayoutTemplatesController],
-  providers:   [LayoutTemplatesService],
-  exports:     [LayoutTemplatesService],
+  providers: [LayoutTemplatesService],
+  exports: [LayoutTemplatesService],
 })
 export class LayoutTemplatesModule {}

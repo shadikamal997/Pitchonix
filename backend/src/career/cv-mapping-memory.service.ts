@@ -33,7 +33,7 @@ export class CvMappingMemoryService {
     const sourceHeading = normaliseLatin(sourceHeadingRaw);
     if (!sourceHeading) return;
     await this.prisma.cvSectionMappingMemory.upsert({
-      where:  { userId_sourceHeading: { userId, sourceHeading } },
+      where: { userId_sourceHeading: { userId, sourceHeading } },
       create: { userId, sourceHeading, targetSection, count: 1, autoApply: true },
       update: { targetSection, count: { increment: 1 }, autoApply: true },
     });
@@ -54,17 +54,19 @@ export class CvMappingMemoryService {
       entries.map(([rawHeading, target]) => {
         const sourceHeading = normaliseLatin(rawHeading);
         return this.prisma.cvSectionMappingMemory.upsert({
-          where:  { userId_sourceHeading: { userId, sourceHeading } },
+          where: { userId_sourceHeading: { userId, sourceHeading } },
           create: { userId, sourceHeading, targetSection: target, count: 1, autoApply: true },
           update: { targetSection: target, count: { increment: 1 }, autoApply: true },
         });
-      })
+      }),
     );
   }
 
   /** Returns the auto-apply map { normalisedHeading → targetSection } for this user. */
   async forUser(userId: string): Promise<Record<string, string>> {
-    const rows = await this.prisma.cvSectionMappingMemory.findMany({ where: { userId, autoApply: true } });
+    const rows = await this.prisma.cvSectionMappingMemory.findMany({
+      where: { userId, autoApply: true },
+    });
     const out: Record<string, string> = {};
     for (const r of rows) out[r.sourceHeading] = r.targetSection;
     return out;
@@ -72,7 +74,7 @@ export class CvMappingMemoryService {
 
   list(userId: string) {
     return this.prisma.cvSectionMappingMemory.findMany({
-      where:   { userId },
+      where: { userId },
       orderBy: { count: 'desc' },
     });
   }

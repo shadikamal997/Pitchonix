@@ -25,7 +25,7 @@ import { ReviewsModule } from '../reviews/reviews.module';
     ReviewsModule,
   ],
   controllers: [CollaborationMetricsController],
-  providers:   [CollaborationGateway, CollaborationBroadcaster, YDocStore, YDocSyncBus],
-  exports:     [CollaborationBroadcaster, YDocStore],
+  providers: [CollaborationGateway, CollaborationBroadcaster, YDocStore, YDocSyncBus],
+  exports: [CollaborationBroadcaster, YDocStore],
 })
 export class CollaborationModule {}

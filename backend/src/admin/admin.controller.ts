@@ -22,7 +22,9 @@ export async function isPlatformAdmin(prisma: PrismaService, userId: string): Pr
 
   // Allowlist check (cheap; do first).
   const allow = (process.env.ADMIN_EMAILS || '')
-    .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
   if (allow.length > 0) {
     const u = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
     if (u?.email && allow.includes(u.email.toLowerCase())) return true;
@@ -30,7 +32,8 @@ export async function isPlatformAdmin(prisma: PrismaService, userId: string): Pr
 
   // Workspace owner check.
   const ownerRow = await prisma.workspaceMember.findFirst({
-    where: { userId, role: 'owner' }, select: { id: true },
+    where: { userId, role: 'owner' },
+    select: { id: true },
   });
   return !!ownerRow;
 }

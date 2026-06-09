@@ -198,7 +198,7 @@ export default function LivePreview({
                   transform: `scale(${scale})`,
                 }}
                 onLoad={handleIframeLoad}
-                sandbox="allow-same-origin"
+                sandbox="allow-same-origin allow-scripts"
               />
             </div>
           </div>

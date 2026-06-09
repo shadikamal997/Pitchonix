@@ -27,10 +27,10 @@ export interface BatchJobStatus {
 @Injectable()
 export class BatchExportService {
   private readonly logger = new Logger(BatchExportService.name);
-  
+
   constructor(
     private readonly prisma: PrismaService,
-    private readonly exportService: ExportService
+    private readonly exportService: ExportService,
   ) {}
 
   /**
@@ -126,7 +126,7 @@ export class BatchExportService {
             deckId,
             job.format,
             job.templateId,
-            (job.options as Record<string, any>) || {}
+            (job.options as Record<string, any>) || {},
           );
 
           outputUrls.push(outputUrl);
@@ -185,7 +185,7 @@ export class BatchExportService {
     deckId: string,
     format: string,
     templateId?: string,
-    options?: Record<string, any>
+    options?: Record<string, any>,
   ): Promise<string> {
     // Get deck data
     const deck = await this.prisma.deck.findUnique({
@@ -356,10 +356,7 @@ export class BatchExportService {
   /**
    * Merge multiple exports into one file
    */
-  private async mergeExports(
-    urls: string[],
-    format: string
-  ): Promise<string> {
+  private async mergeExports(urls: string[], format: string): Promise<string> {
     // If only one file, return it directly
     if (urls.length === 1) {
       return urls[0];
@@ -404,10 +401,7 @@ export class BatchExportService {
   /**
    * Get user's export jobs
    */
-  async getUserJobs(
-    userId: string,
-    limit: number = 10
-  ): Promise<ExportJob[]> {
+  async getUserJobs(userId: string, limit: number = 10): Promise<ExportJob[]> {
     return this.prisma.exportJob.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },

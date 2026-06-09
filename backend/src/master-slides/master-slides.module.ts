@@ -4,7 +4,7 @@ import { MasterSlidesService } from './master-slides.service';
 
 @Module({
   controllers: [MasterSlidesController],
-  providers:   [MasterSlidesService],
-  exports:     [MasterSlidesService],
+  providers: [MasterSlidesService],
+  exports: [MasterSlidesService],
 })
 export class MasterSlidesModule {}

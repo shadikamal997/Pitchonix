@@ -110,7 +110,8 @@ Return as JSON with this structure:
         messages: [
           {
             role: 'system',
-            content: 'You are a creative metaphor expert who makes complex ideas accessible through vivid analogies.',
+            content:
+              'You are a creative metaphor expert who makes complex ideas accessible through vivid analogies.',
           },
           {
             role: 'user',
@@ -169,7 +170,8 @@ Return JSON:
         messages: [
           {
             role: 'system',
-            content: 'You are a master of creating tension and engagement in business writing. You make content impossible to ignore.',
+            content:
+              'You are a master of creating tension and engagement in business writing. You make content impossible to ignore.',
           },
           {
             role: 'user',
@@ -353,9 +355,12 @@ Make it personal, vulnerable, and inspiring.`,
    */
   private getToneGuidance(tone: ToneStyle): string {
     const guidance = {
-      [ToneStyle.INSPIRATIONAL]: 'Use uplifting language, focus on possibility and vision. Create hope and excitement.',
-      [ToneStyle.PROFESSIONAL]: 'Maintain credibility and sophistication. Use data and logic alongside story.',
-      [ToneStyle.CONVERSATIONAL]: 'Write like you speak. Use contractions, simple words, and direct address.',
+      [ToneStyle.INSPIRATIONAL]:
+        'Use uplifting language, focus on possibility and vision. Create hope and excitement.',
+      [ToneStyle.PROFESSIONAL]:
+        'Maintain credibility and sophistication. Use data and logic alongside story.',
+      [ToneStyle.CONVERSATIONAL]:
+        'Write like you speak. Use contractions, simple words, and direct address.',
       [ToneStyle.URGENT]: 'Create time pressure and FOMO. Show what is at stake if they wait.',
       [ToneStyle.CONFIDENT]: 'Be bold and declarative. Show certainty and leadership.',
       [ToneStyle.EMPATHETIC]: 'Show deep understanding of pain. Validate feelings and struggles.',

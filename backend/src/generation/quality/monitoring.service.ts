@@ -41,7 +41,7 @@ export class MonitoringService {
 
     this.statusMap.set(deckId, status);
     this.logger.log(`Started monitoring deck ${deckId} (${totalSlides} slides)`);
-    
+
     return status;
   }
 
@@ -120,7 +120,8 @@ export class MonitoringService {
 
     // Estimate time remaining
     if (status.metrics.stageMetrics.length > 0) {
-      const currentStageMetric = status.metrics.stageMetrics[status.metrics.stageMetrics.length - 1];
+      const currentStageMetric =
+        status.metrics.stageMetrics[status.metrics.stageMetrics.length - 1];
       const elapsedTime = new Date().getTime() - currentStageMetric.startTime.getTime();
       const avgTimePerSlide = currentSlide > 0 ? elapsedTime / currentSlide : 0;
       const remainingSlides = status.progress.totalSlides - currentSlide;
@@ -129,7 +130,8 @@ export class MonitoringService {
 
     // Update slides processed in current stage
     if (status.metrics.stageMetrics.length > 0) {
-      status.metrics.stageMetrics[status.metrics.stageMetrics.length - 1].slidesProcessed = currentSlide;
+      status.metrics.stageMetrics[status.metrics.stageMetrics.length - 1].slidesProcessed =
+        currentSlide;
     }
 
     status.lastUpdated = new Date();
@@ -166,11 +168,13 @@ export class MonitoringService {
 
     // Mark current stage as failed
     if (status.metrics.stageMetrics.length > 0) {
-      const currentStageMetric = status.metrics.stageMetrics[status.metrics.stageMetrics.length - 1];
+      const currentStageMetric =
+        status.metrics.stageMetrics[status.metrics.stageMetrics.length - 1];
       currentStageMetric.success = false;
       currentStageMetric.error = error;
       currentStageMetric.endTime = new Date();
-      currentStageMetric.duration = currentStageMetric.endTime.getTime() - currentStageMetric.startTime.getTime();
+      currentStageMetric.duration =
+        currentStageMetric.endTime.getTime() - currentStageMetric.startTime.getTime();
     }
 
     this.statusMap.set(deckId, status);
@@ -205,10 +209,11 @@ export class MonitoringService {
     status.progress.percentage = 100;
     status.progress.message = success ? 'Generation complete!' : 'Generation failed';
     status.progress.estimatedTimeRemaining = 0;
-    
+
     // Calculate total duration
     status.metrics.endTime = new Date();
-    status.metrics.totalDuration = status.metrics.endTime.getTime() - status.metrics.startTime.getTime();
+    status.metrics.totalDuration =
+      status.metrics.endTime.getTime() - status.metrics.startTime.getTime();
     status.lastUpdated = new Date();
 
     this.statusMap.set(deckId, status);
@@ -240,11 +245,11 @@ export class MonitoringService {
     }
 
     const stageBreakdown = status.metrics.stageMetrics
-      .filter(m => m.duration !== undefined)
-      .map(m => ({
+      .filter((m) => m.duration !== undefined)
+      .map((m) => ({
         stage: m.stage,
         duration: m.duration!,
-        percentage: ((m.duration! / status.metrics.totalDuration!) * 100),
+        percentage: (m.duration! / status.metrics.totalDuration!) * 100,
       }));
 
     // Calculate average time per slide across all stages
@@ -252,9 +257,8 @@ export class MonitoringService {
       (sum, m) => sum + m.slidesProcessed,
       0,
     );
-    const averageSlideTime = totalSlidesProcessed > 0 
-      ? status.metrics.totalDuration / totalSlidesProcessed 
-      : 0;
+    const averageSlideTime =
+      totalSlidesProcessed > 0 ? status.metrics.totalDuration / totalSlidesProcessed : 0;
 
     return {
       totalDuration: status.metrics.totalDuration,
@@ -340,29 +344,29 @@ export class MonitoringService {
   } {
     const allStatuses = this.getAllStatuses();
     const completedStatuses = allStatuses.filter(
-      s => s.status === GenerationStage.COMPLETE || s.status === GenerationStage.FAILED,
+      (s) => s.status === GenerationStage.COMPLETE || s.status === GenerationStage.FAILED,
     );
 
     const activeGenerations = allStatuses.filter(
-      s => s.status !== GenerationStage.COMPLETE && s.status !== GenerationStage.FAILED,
+      (s) => s.status !== GenerationStage.COMPLETE && s.status !== GenerationStage.FAILED,
     ).length;
 
     const durations = completedStatuses
-      .filter(s => s.metrics.totalDuration)
-      .map(s => s.metrics.totalDuration!);
-    const averageDuration = durations.length > 0 
-      ? durations.reduce((sum, d) => sum + d, 0) / durations.length 
-      : 0;
+      .filter((s) => s.metrics.totalDuration)
+      .map((s) => s.metrics.totalDuration!);
+    const averageDuration =
+      durations.length > 0 ? durations.reduce((sum, d) => sum + d, 0) / durations.length : 0;
 
-    const successCount = completedStatuses.filter(s => s.status === GenerationStage.COMPLETE).length;
-    const successRate = completedStatuses.length > 0 
-      ? (successCount / completedStatuses.length) * 100 
-      : 100;
+    const successCount = completedStatuses.filter(
+      (s) => s.status === GenerationStage.COMPLETE,
+    ).length;
+    const successRate =
+      completedStatuses.length > 0 ? (successCount / completedStatuses.length) * 100 : 100;
 
     // Count errors
     const errorCounts = new Map<string, number>();
-    allStatuses.forEach(status => {
-      status.errors.forEach(error => {
+    allStatuses.forEach((status) => {
+      status.errors.forEach((error) => {
         const count = errorCounts.get(error.error) || 0;
         errorCounts.set(error.error, count + 1);
       });

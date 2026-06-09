@@ -58,7 +58,7 @@ export class PageContentNormalizer {
       parts.push(content.highlights.map((h: string) => `• ${h}`).join('\n'));
     }
 
-    const text = parts.filter(p => p.trim()).join('\n\n');
+    const text = parts.filter((p) => p.trim()).join('\n\n');
 
     return {
       ...content,
@@ -75,7 +75,8 @@ export class PageContentNormalizer {
     const text = entries
       .map((entry: any) => {
         if (typeof entry === 'string') return entry;
-        if (entry.section) return `${entry.section}${entry.pageNumber ? ` ........................ ${entry.pageNumber}` : ''}`;
+        if (entry.section)
+          return `${entry.section}${entry.pageNumber ? ` ........................ ${entry.pageNumber}` : ''}`;
         return '';
       })
       .filter((line: string) => line.trim())
@@ -107,7 +108,7 @@ export class PageContentNormalizer {
       }
     }
 
-    const text = parts.filter(p => p.trim()).join('\n\n') || 'Company Overview';
+    const text = parts.filter((p) => p.trim()).join('\n\n') || 'Company Overview';
 
     return {
       ...content,
@@ -136,7 +137,7 @@ export class PageContentNormalizer {
       parts.push(content.bullets.map((b: string) => `• ${b}`).join('\n'));
     }
 
-    const text = parts.filter(p => p.trim()).join('\n\n') || title || 'Content';
+    const text = parts.filter((p) => p.trim()).join('\n\n') || title || 'Content';
 
     return {
       ...content,
@@ -175,13 +176,17 @@ export class PageContentNormalizer {
       }
 
       if (content.timeline && Array.isArray(content.timeline)) {
-        parts.push(content.timeline.map((t: any) => `${t.phase || 'Phase'}: ${t.description || ''}`).join('\n'));
+        parts.push(
+          content.timeline
+            .map((t: any) => `${t.phase || 'Phase'}: ${t.description || ''}`)
+            .join('\n'),
+        );
       }
 
       // Generic field extraction
       const fields = Object.keys(content)
-        .filter(k => !['text', 'html', 'tables', 'notes', 'steps', 'timeline'].includes(k))
-        .map(k => {
+        .filter((k) => !['text', 'html', 'tables', 'notes', 'steps', 'timeline'].includes(k))
+        .map((k) => {
           const value = content[k];
           if (typeof value === 'string' && value.trim()) {
             return value;
@@ -194,7 +199,7 @@ export class PageContentNormalizer {
         .filter((f: string) => f.trim());
 
       parts.push(...fields);
-      text = parts.filter(p => p.trim()).join('\n\n');
+      text = parts.filter((p) => p.trim()).join('\n\n');
     }
 
     return {

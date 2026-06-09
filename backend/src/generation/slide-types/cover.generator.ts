@@ -11,27 +11,37 @@ import { coverSubtitle } from './narrative-titles';
 export class CoverSlideGenerator extends BaseSlideGenerator {
   type = SlideType.COVER;
   defaultPriority = 1;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
-  isApplicable(_input: WizardInput): boolean { return true; }
-  getTitle(input: WizardInput): string       { return input.companyName || 'Company Presentation'; }
-  getSubtitle(input: WizardInput): string    { return coverSubtitle(input); }
+  isApplicable(_input: WizardInput): boolean {
+    return true;
+  }
+  getTitle(input: WizardInput): string {
+    return input.companyName || 'Company Presentation';
+  }
+  getSubtitle(input: WizardInput): string {
+    return coverSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return {
       companyName: input.companyName,
-      tagline:     input.shortDescription,
-      logo:        input.logo || null,
-      industry:    input.industry,
-      website:     input.website,
-      date:        new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      tagline: input.shortDescription,
+      logo: input.logo || null,
+      industry: input.industry,
+      website: input.website,
+      date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
       documentType: input.documentType,
     };
   }
 
   getSpeakerNotes(input: WizardInput): string {
-    return `Welcome and introduction. Start with a strong opening statement about ${input.companyName}. ` +
-           `Briefly mention: ${input.shortDescription || 'what you do'}. ` +
-           `Keep it under 30 seconds. Audience: ${input.audience}.`;
+    return (
+      `Welcome and introduction. Start with a strong opening statement about ${input.companyName}. ` +
+      `Briefly mention: ${input.shortDescription || 'what you do'}. ` +
+      `Keep it under 30 seconds. Audience: ${input.audience}.`
+    );
   }
 }

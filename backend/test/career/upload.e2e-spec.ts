@@ -16,7 +16,9 @@ import { auth, closeSession, createSession, minimalPdfBuffer, TestSession } from
 describe('Career Upload (E2E)', () => {
   let s: TestSession;
 
-  beforeAll(async () => { s = await createSession('upload'); }, 60_000);
+  beforeAll(async () => {
+    s = await createSession('upload');
+  }, 60_000);
   afterAll(async () => closeSession(s));
 
   // ── 1. Profile bootstrap ──────────────────────────────────────────────────
@@ -69,9 +71,11 @@ describe('Career Upload (E2E)', () => {
     const payload = {
       profile: {
         firstName: 'Jane',
-        lastName:  'Smith',
-        headline:  'Software Engineer',
-        positions: { values: [{ title: 'Engineer', companyName: 'Acme', startDate: { year: 2020, month: 1 } }] },
+        lastName: 'Smith',
+        headline: 'Software Engineer',
+        positions: {
+          values: [{ title: 'Engineer', companyName: 'Acme', startDate: { year: 2020, month: 1 } }],
+        },
       },
     };
     const res = await s.req
@@ -94,7 +98,7 @@ describe('Career Upload (E2E)', () => {
   }, 15_000);
 
   // ── 7. Ownership enforcement ──────────────────────────────────────────────
-  it('POST import/file with another user\'s profileId → 404', async () => {
+  it("POST import/file with another user's profileId → 404", async () => {
     const s2 = await createSession('upload-other');
     try {
       const profileB = await s.req.get('/career/profile').set(auth(s2.token)).expect(200);

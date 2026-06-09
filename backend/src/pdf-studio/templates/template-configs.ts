@@ -56,7 +56,12 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Executive Summary', 'Key Highlights', 'Strategic Priorities', 'Recommendations'],
+    defaultSections: [
+      'Executive Summary',
+      'Key Highlights',
+      'Strategic Priorities',
+      'Recommendations',
+    ],
     style: {
       colorScheme: 'navy',
       headerStyle: 'solid',
@@ -121,7 +126,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Summary', 'Background', 'Analysis', 'Findings', 'Recommendations', 'Conclusion'],
+    defaultSections: [
+      'Summary',
+      'Background',
+      'Analysis',
+      'Findings',
+      'Recommendations',
+      'Conclusion',
+    ],
     style: {
       colorScheme: 'gray',
       headerStyle: 'minimal',
@@ -149,7 +161,13 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CASE_STUDY_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Company Overview', 'Mission & Vision', 'Services', 'Track Record', 'Contact'],
+    defaultSections: [
+      'Company Overview',
+      'Mission & Vision',
+      'Services',
+      'Track Record',
+      'Contact',
+    ],
     style: {
       colorScheme: 'navy',
       headerStyle: 'solid',
@@ -180,7 +198,13 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Executive Summary', 'Revenue Analysis', 'Expense Breakdown', 'Financial Highlights', 'Outlook'],
+    defaultSections: [
+      'Executive Summary',
+      'Revenue Analysis',
+      'Expense Breakdown',
+      'Financial Highlights',
+      'Outlook',
+    ],
     style: {
       colorScheme: 'green',
       headerStyle: 'solid',
@@ -235,7 +259,13 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Budget Overview', 'Revenue Projections', 'Expense Allocation', 'Variance Analysis', 'Summary'],
+    defaultSections: [
+      'Budget Overview',
+      'Revenue Projections',
+      'Expense Allocation',
+      'Variance Analysis',
+      'Summary',
+    ],
     style: {
       colorScheme: 'green',
       headerStyle: 'minimal',
@@ -264,7 +294,13 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Executive Summary', 'Data Analysis', 'Key Insights', 'Recommendations', 'Next Steps'],
+    defaultSections: [
+      'Executive Summary',
+      'Data Analysis',
+      'Key Insights',
+      'Recommendations',
+      'Next Steps',
+    ],
     style: {
       colorScheme: 'purple',
       headerStyle: 'gradient',
@@ -295,7 +331,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Introduction', 'Understanding Your Needs', 'Our Solution', 'Case Studies', 'Pricing', 'Next Steps'],
+    defaultSections: [
+      'Introduction',
+      'Understanding Your Needs',
+      'Our Solution',
+      'Case Studies',
+      'Pricing',
+      'Next Steps',
+    ],
     style: {
       colorScheme: 'blue',
       headerStyle: 'gradient',
@@ -326,7 +369,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Executive Summary', 'Value Proposition', 'Solution Overview', 'Success Stories', 'Investment', 'Conclusion'],
+    defaultSections: [
+      'Executive Summary',
+      'Value Proposition',
+      'Solution Overview',
+      'Success Stories',
+      'Investment',
+      'Conclusion',
+    ],
     style: {
       colorScheme: 'purple',
       headerStyle: 'solid',
@@ -355,7 +405,13 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Overview', 'Performance Metrics', 'Achievements', 'Areas for Growth', 'Recommendations'],
+    defaultSections: [
+      'Overview',
+      'Performance Metrics',
+      'Achievements',
+      'Areas for Growth',
+      'Recommendations',
+    ],
     style: {
       colorScheme: 'blue',
       headerStyle: 'gradient',
@@ -384,7 +440,13 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Introduction', 'Partnership Vision', 'Mutual Benefits', 'Collaboration Model', 'Next Steps'],
+    defaultSections: [
+      'Introduction',
+      'Partnership Vision',
+      'Mutual Benefits',
+      'Collaboration Model',
+      'Next Steps',
+    ],
     style: {
       colorScheme: 'navy',
       headerStyle: 'solid',
@@ -415,7 +477,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Executive Summary', 'Strategic Context', 'Goals & Objectives', 'Initiatives', 'Timeline', 'Success Metrics'],
+    defaultSections: [
+      'Executive Summary',
+      'Strategic Context',
+      'Goals & Objectives',
+      'Initiatives',
+      'Timeline',
+      'Success Metrics',
+    ],
     style: {
       colorScheme: 'blue',
       headerStyle: 'minimal',
@@ -441,7 +510,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.SECTION_CARD,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Vision', 'Q1 Milestones', 'Q2 Milestones', 'Q3 Milestones', 'Q4 Milestones', 'Summary'],
+    defaultSections: [
+      'Vision',
+      'Q1 Milestones',
+      'Q2 Milestones',
+      'Q3 Milestones',
+      'Q4 Milestones',
+      'Summary',
+    ],
     style: {
       colorScheme: 'purple',
       headerStyle: 'gradient',
@@ -468,7 +544,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.METRICS_STRIP,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Overview', 'Objectives', 'Key Results', 'Progress', 'Achievements', 'Next Quarter'],
+    defaultSections: [
+      'Overview',
+      'Objectives',
+      'Key Results',
+      'Progress',
+      'Achievements',
+      'Next Quarter',
+    ],
     style: {
       colorScheme: 'green',
       headerStyle: 'minimal',
@@ -496,7 +579,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Team Overview', 'Accomplishments', 'Challenges', 'Metrics', 'Plans', 'Summary'],
+    defaultSections: [
+      'Team Overview',
+      'Accomplishments',
+      'Challenges',
+      'Metrics',
+      'Plans',
+      'Summary',
+    ],
     style: {
       colorScheme: 'gray',
       headerStyle: 'minimal',
@@ -526,7 +616,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.PROCESS_STEPS_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Overview', 'Problem Statement', 'User Stories', 'Requirements', 'Success Criteria', 'Timeline'],
+    defaultSections: [
+      'Overview',
+      'Problem Statement',
+      'User Stories',
+      'Requirements',
+      'Success Criteria',
+      'Timeline',
+    ],
     style: {
       colorScheme: 'blue',
       headerStyle: 'minimal',
@@ -553,7 +650,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.TABLE_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Introduction', 'Architecture', 'API Reference', 'Usage Examples', 'Configuration', 'Troubleshooting'],
+    defaultSections: [
+      'Introduction',
+      'Architecture',
+      'API Reference',
+      'Usage Examples',
+      'Configuration',
+      'Troubleshooting',
+    ],
     style: {
       colorScheme: 'gray',
       headerStyle: 'minimal',
@@ -583,7 +687,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.TWO_COLUMN_LAYOUT,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Brand Overview', 'Logo Usage', 'Color Palette', 'Typography', 'Visual Style', 'Examples'],
+    defaultSections: [
+      'Brand Overview',
+      'Logo Usage',
+      'Color Palette',
+      'Typography',
+      'Visual Style',
+      'Examples',
+    ],
     style: {
       colorScheme: 'purple',
       headerStyle: 'gradient',
@@ -613,7 +724,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.TABLE_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Welcome', 'Company Culture', 'Employment Policies', 'Benefits', 'Code of Conduct', 'Resources'],
+    defaultSections: [
+      'Welcome',
+      'Company Culture',
+      'Employment Policies',
+      'Benefits',
+      'Code of Conduct',
+      'Resources',
+    ],
     style: {
       colorScheme: 'blue',
       headerStyle: 'minimal',
@@ -643,7 +761,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Executive Summary', 'Q Performance', 'Key Wins', 'Challenges', 'Next Quarter Goals', 'Action Items'],
+    defaultSections: [
+      'Executive Summary',
+      'Q Performance',
+      'Key Wins',
+      'Challenges',
+      'Next Quarter Goals',
+      'Action Items',
+    ],
     style: {
       colorScheme: 'navy',
       headerStyle: 'solid',
@@ -673,7 +798,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Board Summary', 'Financial Performance', 'Strategic Initiatives', 'Risk Management', 'Governance', 'Resolutions'],
+    defaultSections: [
+      'Board Summary',
+      'Financial Performance',
+      'Strategic Initiatives',
+      'Risk Management',
+      'Governance',
+      'Resolutions',
+    ],
     style: {
       colorScheme: 'dark',
       headerStyle: 'minimal',
@@ -707,7 +839,16 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Problem', 'Solution', 'Market Opportunity', 'Business Model', 'Traction', 'Team', 'Financials', 'Ask'],
+    defaultSections: [
+      'Problem',
+      'Solution',
+      'Market Opportunity',
+      'Business Model',
+      'Traction',
+      'Team',
+      'Financials',
+      'Ask',
+    ],
     style: {
       colorScheme: 'purple',
       headerStyle: 'gradient',
@@ -737,7 +878,15 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Executive Summary', 'Introduction', 'Problem Analysis', 'Solution Overview', 'Benefits', 'Implementation', 'Conclusion'],
+    defaultSections: [
+      'Executive Summary',
+      'Introduction',
+      'Problem Analysis',
+      'Solution Overview',
+      'Benefits',
+      'Implementation',
+      'Conclusion',
+    ],
     style: {
       colorScheme: 'slate',
       headerStyle: 'minimal',
@@ -767,7 +916,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Customer Overview', 'Challenge', 'Solution', 'Implementation', 'Results', 'Testimonial'],
+    defaultSections: [
+      'Customer Overview',
+      'Challenge',
+      'Solution',
+      'Implementation',
+      'Results',
+      'Testimonial',
+    ],
     style: {
       colorScheme: 'teal',
       headerStyle: 'gradient',
@@ -797,7 +953,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Product Overview', 'Market Analysis', 'Launch Strategy', 'Timeline', 'Marketing Channels', 'Success Metrics'],
+    defaultSections: [
+      'Product Overview',
+      'Market Analysis',
+      'Launch Strategy',
+      'Timeline',
+      'Marketing Channels',
+      'Success Metrics',
+    ],
     style: {
       colorScheme: 'indigo',
       headerStyle: 'gradient',
@@ -829,7 +992,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Executive Summary', 'Market Overview', 'Industry Trends', 'Competitor Analysis', 'Target Segments', 'Recommendations'],
+    defaultSections: [
+      'Executive Summary',
+      'Market Overview',
+      'Industry Trends',
+      'Competitor Analysis',
+      'Target Segments',
+      'Recommendations',
+    ],
     style: {
       colorScheme: 'emerald',
       headerStyle: 'minimal',
@@ -859,7 +1029,15 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.CONCLUSION_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Project Overview', 'Objectives', 'Scope', 'Timeline', 'Resources', 'Budget', 'Success Criteria'],
+    defaultSections: [
+      'Project Overview',
+      'Objectives',
+      'Scope',
+      'Timeline',
+      'Resources',
+      'Budget',
+      'Success Criteria',
+    ],
     style: {
       colorScheme: 'blue',
       headerStyle: 'solid',
@@ -888,7 +1066,14 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       LayoutComponentType.TEXT_BLOCK,
       LayoutComponentType.FOOTER_BLOCK,
     ],
-    defaultSections: ['Sales Process', 'Qualification Criteria', 'Objection Handling', 'Competitive Positioning', 'Closing Strategies', 'Resources'],
+    defaultSections: [
+      'Sales Process',
+      'Qualification Criteria',
+      'Objection Handling',
+      'Competitive Positioning',
+      'Closing Strategies',
+      'Resources',
+    ],
     style: {
       colorScheme: 'orange',
       headerStyle: 'gradient',
@@ -947,9 +1132,7 @@ export function getAllTemplates(): Template[] {
 /**
  * Get templates by category
  */
-export function getTemplatesByCategory(
-  category: TemplateCategory,
-): Template[] {
+export function getTemplatesByCategory(category: TemplateCategory): Template[] {
   return getAllTemplates().filter((t) => t.config.category === category);
 }
 

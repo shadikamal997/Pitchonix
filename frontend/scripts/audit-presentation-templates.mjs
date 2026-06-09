@@ -99,14 +99,12 @@ async function main() {
 
   for (const templateId of templates) {
     console.log(`\n== ${templateId} ==`);
-    // Unmount the editor before regenerating the deck. The backend template
-    // switch replaces slide ids, so leaving an old editor mounted would make
-    // its thumbnail/deck hooks request deleted slide ids and pollute the audit
-    // with transition-only 404s.
+    // Unmount the editor before applying the template so the next load observes
+    // the persisted theme/background metadata from a clean page lifecycle.
     await page.goto('about:blank');
-    const switched = await api(`${BACKEND}/generate/template-switch/${PROJECT_ID}`, {
+    const switched = await api(`${BACKEND}/slides/deck/${DECK_ID}/apply-template`, {
       method: 'POST',
-      body: JSON.stringify({ templateId, deckId: DECK_ID }),
+      body: JSON.stringify({ templateId }),
     });
     const slides = await api(`${BACKEND}/slides/deck/${DECK_ID}`);
     const templateDir = path.join(OUT_DIR, templateId);
@@ -114,9 +112,10 @@ async function main() {
 
     const templateResult = {
       templateId,
-      firstSlideId: switched.firstSlideId,
-      slidesGenerated: switched.slidesGenerated,
-      elementsCreated: switched.elementsCreated,
+      firstSlideId: slides.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0]?.id || null,
+      slidesGenerated: 0,
+      slidesPreserved: switched.slidesApplied,
+      elementsRestyled: switched.elementsRestyled,
       slideResults: [],
     };
 

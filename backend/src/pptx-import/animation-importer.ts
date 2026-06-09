@@ -30,23 +30,26 @@ import { OoxmlPackage, asArray } from './ooxml-parser';
 
 export interface ImportedAnimation {
   /** Synthetic id — caller replaces or persists. */
-  id:        string;
+  id: string;
   /** Raw spid from <p:spTgt>; caller maps to Pitchonix element id. */
-  spid:      string;
-  class:     'entr' | 'exit' | 'emph' | 'path';
-  effect:    string;
+  spid: string;
+  class: 'entr' | 'exit' | 'emph' | 'path';
+  effect: string;
   direction?: 'left' | 'right' | 'top' | 'bottom';
-  duration:  number;
-  delay:     number;
-  order:     number;
-  trigger:   'click' | 'auto' | 'with_previous' | 'after_previous';
+  duration: number;
+  delay: number;
+  order: number;
+  trigger: 'click' | 'auto' | 'with_previous' | 'after_previous';
   motionPath?: string;
-  repeat?:     number | 'indefinite';
+  repeat?: number | 'indefinite';
   byParagraph?: boolean;
 }
 
-export function importAnimationsForSlide(pkg: OoxmlPackage, slidePath: string): ImportedAnimation[] {
-  const doc  = pkg.parse<any>(slidePath);
+export function importAnimationsForSlide(
+  pkg: OoxmlPackage,
+  slidePath: string,
+): ImportedAnimation[] {
+  const doc = pkg.parse<any>(slidePath);
   const root = doc?.['p:sld'];
   const timing = root?.['p:timing'];
   if (!timing) return [];
@@ -63,7 +66,7 @@ export function importAnimationsForSlide(pkg: OoxmlPackage, slidePath: string): 
   const walkPar = (par: any, parentOrder = 0) => {
     if (!par) return;
     const cTn = par['p:cTn'];
-    const id  = cTn?.['@id'] || `imp-anim-${counter++}`;
+    const id = cTn?.['@id'] || `imp-anim-${counter++}`;
     const presetID = Number(cTn?.['@presetID'] || 0);
     const presetClass = String(cTn?.['@presetClass'] || 'entr');
     const presetSubtype = Number(cTn?.['@presetSubtype'] || 0);
@@ -72,7 +75,7 @@ export function importAnimationsForSlide(pkg: OoxmlPackage, slidePath: string): 
 
     // <p:stCondLst><p:cond delay="…"/></p:stCondLst>
     const delayRaw = cTn?.['p:stCondLst']?.['p:cond']?.['@delay'];
-    const delay    = parseDelay(delayRaw);
+    const delay = parseDelay(delayRaw);
 
     // Recurse into nested <p:par> in childTnLst first.
     const child = cTn?.['p:childTnLst'];
@@ -116,7 +119,7 @@ export function importAnimationsForSlide(pkg: OoxmlPackage, slidePath: string): 
       if (animClr) pickFromCBhvr(animClr['p:cBhvr']);
     }
 
-    if (!spid) return;   // no target → not a leaf effect; skip
+    if (!spid) return; // no target → not a leaf effect; skip
 
     const cls = (
       presetClass === 'exit' || presetClass === 'emph' || presetClass === 'path'
@@ -125,9 +128,12 @@ export function importAnimationsForSlide(pkg: OoxmlPackage, slidePath: string): 
     ) as ImportedAnimation['class'];
 
     const { effect, direction } = mapPresetBack(cls, presetID, presetSubtype, motionPath);
-    const trigger = nodeType === 'withEffect' ? 'with_previous'
-                  : nodeType === 'afterEffect' ? 'after_previous'
-                  : 'click';
+    const trigger =
+      nodeType === 'withEffect'
+        ? 'with_previous'
+        : nodeType === 'afterEffect'
+          ? 'after_previous'
+          : 'click';
 
     out.push({
       id,
@@ -169,40 +175,61 @@ function mapPresetBack(
   subtype: number,
   motionPath?: string,
 ): { effect: string; direction?: 'left' | 'right' | 'top' | 'bottom' } {
-  const dir = subtype === 1 ? 'top'
-            : subtype === 4 ? 'left'
-            : subtype === 8 ? 'right'
-            : subtype === 2 ? 'bottom'
+  const dir =
+    subtype === 1
+      ? 'top'
+      : subtype === 4
+        ? 'left'
+        : subtype === 8
+          ? 'right'
+          : subtype === 2
+            ? 'bottom'
             : undefined;
 
   if (cls === 'path') return { effect: 'motionPath' };
 
   if (cls === 'exit') {
     switch (id) {
-      case 10: return { effect: 'fade' };
-      case 2:  return { effect: 'flyOut',  direction: dir };
-      case 23: return { effect: 'zoomOut' };
-      case 22: return { effect: 'wipeOut', direction: dir };
-      default: return { effect: 'fade' };
+      case 10:
+        return { effect: 'fade' };
+      case 2:
+        return { effect: 'flyOut', direction: dir };
+      case 23:
+        return { effect: 'zoomOut' };
+      case 22:
+        return { effect: 'wipeOut', direction: dir };
+      default:
+        return { effect: 'fade' };
     }
   }
   if (cls === 'emph') {
     switch (id) {
-      case 9:  return { effect: 'pulse' };
-      case 32: return { effect: 'colorChange' };
-      case 8:  return { effect: 'spin' };
-      default: return { effect: 'pulse' };
+      case 9:
+        return { effect: 'pulse' };
+      case 32:
+        return { effect: 'colorChange' };
+      case 8:
+        return { effect: 'spin' };
+      default:
+        return { effect: 'pulse' };
     }
   }
   // entry
   switch (id) {
-    case 10: return { effect: 'fade' };
-    case 1:  return { effect: 'appear' };
-    case 2:  return { effect: 'flyIn',  direction: dir };
-    case 23: return { effect: 'zoom' };
-    case 6:  return { effect: 'grow' };
-    case 22: return { effect: 'wipe',   direction: dir };
-    default: return { effect: 'fade' };
+    case 10:
+      return { effect: 'fade' };
+    case 1:
+      return { effect: 'appear' };
+    case 2:
+      return { effect: 'flyIn', direction: dir };
+    case 23:
+      return { effect: 'zoom' };
+    case 6:
+      return { effect: 'grow' };
+    case 22:
+      return { effect: 'wipe', direction: dir };
+    default:
+      return { effect: 'fade' };
   }
 }
 

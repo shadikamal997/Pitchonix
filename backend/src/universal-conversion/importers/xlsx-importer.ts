@@ -1,5 +1,13 @@
 import * as XLSX from 'xlsx';
-import { UniversalDocument, emptyDocument, newPage, heading, paragraph, table, DocumentNode } from '../document-model';
+import {
+  UniversalDocument,
+  emptyDocument,
+  newPage,
+  heading,
+  paragraph,
+  table,
+  DocumentNode,
+} from '../document-model';
 
 // =============================================================================
 //  Phase 41E — Excel + CSV importer.
@@ -16,10 +24,10 @@ import { UniversalDocument, emptyDocument, newPage, heading, paragraph, table, D
 
 export function importXlsx(buffer: Buffer, filename = 'workbook.xlsx'): UniversalDocument {
   const doc = emptyDocument('xlsx', filename.replace(/\.[a-z]+$/i, ''));
-  const wb  = XLSX.read(buffer, { type: 'buffer' });
+  const wb = XLSX.read(buffer, { type: 'buffer' });
 
   for (const sheetName of wb.SheetNames) {
-    const ws   = wb.Sheets[sheetName];
+    const ws = wb.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1, defval: '', raw: false });
     const page = newPage(sheetName);
     page.nodes.push(heading(1, sheetName));
@@ -28,7 +36,10 @@ export function importXlsx(buffer: Buffer, filename = 'workbook.xlsx'): Universa
       page.nodes.push(paragraph('(empty sheet)'));
     } else {
       // Trim trailing empty rows.
-      while (rows.length > 0 && rows[rows.length - 1].every((c: any) => String(c ?? '').trim() === '')) {
+      while (
+        rows.length > 0 &&
+        rows[rows.length - 1].every((c: any) => String(c ?? '').trim() === '')
+      ) {
         rows.pop();
       }
       const headerRow = true;

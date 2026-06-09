@@ -87,7 +87,7 @@ export class SlideFactory {
     };
 
     // Filter applicable generators
-    const applicableGenerators = this.generators.filter(gen => gen.isApplicable(input));
+    const applicableGenerators = this.generators.filter((gen) => gen.isApplicable(input));
 
     // Phase 30I: framework-promoted slide types must override the generator's
     // own `isApplicable` filter — otherwise a generator gated on a config flag
@@ -96,7 +96,7 @@ export class SlideFactory {
     // engine has confirmed backing data exists.
     const promotionSet = new Set(frameworkPromotions);
     const forcedGenerators = this.generators.filter(
-      gen => promotionSet.has(gen.type) && !applicableGenerators.includes(gen),
+      (gen) => promotionSet.has(gen.type) && !applicableGenerators.includes(gen),
     );
     const candidateGenerators = [...applicableGenerators, ...forcedGenerators];
 
@@ -116,7 +116,7 @@ export class SlideFactory {
     // Generate slides, then sort into canonical narrative arc order so optional
     // slides land in story position rather than generator priority order.
     const rawSlides = selectedGenerators.map((gen, index) => gen.generate(input, index + 1));
-    const slides    = sortByNarrativeArc(rawSlides, input.documentType);
+    const slides = sortByNarrativeArc(rawSlides, input.documentType);
 
     return slides;
   }
@@ -129,11 +129,12 @@ export class SlideFactory {
     const s = input.structured;
     if (!s) return [];
     const promoted: SlideType[] = [];
-    if ((s.pricingTiers?.length ?? 0) > 0)  promoted.push(SlideType.PRICING);
+    if ((s.pricingTiers?.length ?? 0) > 0) promoted.push(SlideType.PRICING);
     if ((s.roadmapPhases?.length ?? 0) > 0) promoted.push(SlideType.ROADMAP);
-    if ((s.competitors?.length ?? 0) > 0)   promoted.push(SlideType.COMPETITION);
-    if ((s.kpis?.length ?? 0) >= 3)         promoted.push(SlideType.TRACTION);
-    if (!!s.financials?.revenue || (s.financials?.projections?.length ?? 0) > 0) promoted.push(SlideType.FINANCIALS);
+    if ((s.competitors?.length ?? 0) > 0) promoted.push(SlideType.COMPETITION);
+    if ((s.kpis?.length ?? 0) >= 3) promoted.push(SlideType.TRACTION);
+    if (!!s.financials?.revenue || (s.financials?.projections?.length ?? 0) > 0)
+      promoted.push(SlideType.FINANCIALS);
     return promoted;
   }
 
@@ -161,8 +162,8 @@ export class SlideFactory {
     const coreTypes = Array.from(new Set([...baseCore, ...structuredPromotions]));
 
     // Separate core and optional
-    const coreGenerators = generators.filter(gen => coreTypes.includes(gen.type));
-    const optionalGenerators = generators.filter(gen => !coreTypes.includes(gen.type));
+    const coreGenerators = generators.filter((gen) => coreTypes.includes(gen.type));
+    const optionalGenerators = generators.filter((gen) => !coreTypes.includes(gen.type));
 
     // Start with core slides
     const selected: ISlideGenerator[] = [...coreGenerators];
@@ -215,12 +216,7 @@ export class SlideFactory {
         SlideType.TEAM,
         SlideType.FINANCIALS,
       ],
-      proposal: [
-        SlideType.COVER,
-        SlideType.PROBLEM,
-        SlideType.SOLUTION,
-        SlideType.PRICING,
-      ],
+      proposal: [SlideType.COVER, SlideType.PROBLEM, SlideType.SOLUTION, SlideType.PRICING],
       sales_deck: [
         SlideType.COVER,
         SlideType.PROBLEM,
@@ -351,13 +347,13 @@ export class SlideFactory {
    * Get available slide types
    */
   getAvailableSlideTypes(): SlideType[] {
-    return this.generators.map(gen => gen.type);
+    return this.generators.map((gen) => gen.type);
   }
 
   /**
    * Get generator for specific slide type
    */
   getGenerator(type: SlideType): ISlideGenerator | undefined {
-    return this.generators.find(gen => gen.type === type);
+    return this.generators.find((gen) => gen.type === type);
   }
 }

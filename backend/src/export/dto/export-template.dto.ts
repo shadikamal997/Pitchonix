@@ -29,17 +29,17 @@ export class CreateTemplateDto {
   @IsOptional()
   watermark?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: { primary: '#1e3a8a', secondary: '#64748b', accent: '#3b82f6' },
-    required: false 
+    required: false,
   })
   @IsObject()
   @IsOptional()
   colors?: Record<string, string>;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: { heading: 'Arial', body: 'Arial' },
-    required: false 
+    required: false,
   })
   @IsObject()
   @IsOptional()
@@ -77,17 +77,17 @@ export class UpdateTemplateDto {
   @IsOptional()
   watermark?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: { primary: '#000000', secondary: '#666666' },
-    required: false 
+    required: false,
   })
   @IsObject()
   @IsOptional()
   colors?: Record<string, string>;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: { heading: 'Helvetica', body: 'Helvetica' },
-    required: false 
+    required: false,
   })
   @IsObject()
   @IsOptional()
@@ -100,9 +100,9 @@ export class UpdateTemplateDto {
 }
 
 export class CreateBatchExportDto {
-  @ApiProperty({ 
-    example: ['deck-uuid-1', 'deck-uuid-2'], 
-    description: 'Array of deck IDs to export' 
+  @ApiProperty({
+    example: ['deck-uuid-1', 'deck-uuid-2'],
+    description: 'Array of deck IDs to export',
   })
   @IsArray()
   @IsString({ each: true })
@@ -117,9 +117,9 @@ export class CreateBatchExportDto {
   @IsOptional()
   templateId?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: { layout: 'document', merge: true },
-    description: 'Export options'
+    description: 'Export options',
   })
   @IsObject()
   options: Record<string, any>;
@@ -139,15 +139,15 @@ export class ExportWithOptionsDto {
   @IsOptional()
   templateId?: string;
 
-  @ApiProperty({ 
-    example: { 
+  @ApiProperty({
+    example: {
       layout: 'slide-based',
       pageSize: 'A4',
       orientation: 'landscape',
       watermark: 'Confidential',
-      compression: true
+      compression: true,
     },
-    required: false
+    required: false,
   })
   @IsObject()
   @IsOptional()

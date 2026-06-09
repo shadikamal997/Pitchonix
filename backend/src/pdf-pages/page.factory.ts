@@ -196,14 +196,7 @@ export class PageFactory {
         'TIMELINE',
         'CONCLUSION',
       ],
-      case_study: [
-        'COVER',
-        'EXECUTIVE_SUMMARY',
-        'PROBLEM',
-        'SOLUTION',
-        'CASE_STUDY',
-        'CONCLUSION',
-      ],
+      case_study: ['COVER', 'EXECUTIVE_SUMMARY', 'PROBLEM', 'SOLUTION', 'CASE_STUDY', 'CONCLUSION'],
       internal_report: [
         'COVER',
         'TABLE_OF_CONTENTS',
@@ -222,12 +215,7 @@ export class PageFactory {
         'CASE_STUDY',
         'CONCLUSION',
       ],
-      one_pager: [
-        'COVER',
-        'PROBLEM',
-        'SOLUTION',
-        'MARKET_ANALYSIS',
-      ],
+      one_pager: ['COVER', 'PROBLEM', 'SOLUTION', 'MARKET_ANALYSIS'],
     };
 
     return templates[documentType] || templates.business_plan;
@@ -238,8 +226,11 @@ export class PageFactory {
    */
   private generateCompetitionPage(input: WizardInput, pageNumber: number): PageContent {
     // Parse competitors string into array
-    const competitorsList = input.competitors 
-      ? input.competitors.split(/[,\n]/).map(c => c.trim()).filter(c => c)
+    const competitorsList = input.competitors
+      ? input.competitors
+          .split(/[,\n]/)
+          .map((c) => c.trim())
+          .filter((c) => c)
       : ['Competitor 1', 'Competitor 2', 'Competitor 3'];
 
     return this.contentGenerator.generate(input, pageNumber, {
@@ -301,7 +292,7 @@ export class PageFactory {
             'Digital marketing',
             'Content marketing',
             'Strategic partnerships',
-            'Direct sales'
+            'Direct sales',
           ],
         },
         {
@@ -316,8 +307,8 @@ export class PageFactory {
   private generateTeamPage(input: WizardInput, pageNumber: number): PageContent {
     // Parse team string into sections
     const teamText = input.team || 'Experienced leadership team with proven track record';
-    const teamLines = teamText.split('\n').filter(line => line.trim());
-    
+    const teamLines = teamText.split('\n').filter((line) => line.trim());
+
     return this.contentGenerator.generate(input, pageNumber, {
       title: 'Our Team',
       subtitle: 'Leadership & Expertise',
@@ -325,11 +316,10 @@ export class PageFactory {
         {
           heading: 'Team Overview',
           content: teamText,
-          bullets: teamLines.length > 1 ? teamLines : [
-            'Experienced leadership',
-            'Industry expertise',
-            'Proven track record'
-          ],
+          bullets:
+            teamLines.length > 1
+              ? teamLines
+              : ['Experienced leadership', 'Industry expertise', 'Proven track record'],
         },
       ],
     });

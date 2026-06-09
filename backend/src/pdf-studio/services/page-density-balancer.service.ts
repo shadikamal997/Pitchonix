@@ -1,9 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PageComposition, CompositionMetrics, ComposedSection } from './document-composition.service';
+import {
+  PageComposition,
+  CompositionMetrics,
+  ComposedSection,
+} from './document-composition.service';
 
 /**
  * Page Density Balancer Service
- * 
+ *
  * Ensures optimal page density and visual balance:
  * - No pages under 25% filled (except cover)
  * - No pages above 90% filled
@@ -111,15 +115,15 @@ export class PageDensityBalancerService {
     if (fillPercentage < 90) return false;
 
     // Check if page is mostly paragraphs with no headings
-    const paragraphs = composition.sections.filter(s => s.type === 'paragraph');
-    const headings = composition.sections.filter(s => s.type === 'heading');
+    const paragraphs = composition.sections.filter((s) => s.type === 'paragraph');
+    const headings = composition.sections.filter((s) => s.type === 'heading');
 
     if (paragraphs.length > 5 && headings.length === 0) {
       return true;
     }
 
     // Check if any single section is very long
-    const hasLongSection = composition.sections.some(s => s.content.length > 1000);
+    const hasLongSection = composition.sections.some((s) => s.content.length > 1000);
 
     return hasLongSection;
   }
@@ -136,18 +140,20 @@ export class PageDensityBalancerService {
 
     // Process pages one at a time to avoid index shifting issues
     const rebalanced: PageComposition[] = [];
-    
+
     for (let i = 0; i < pages.length; i++) {
       const page = pages[i];
-      
+
       // Skip balancing for special pages (cover, TOC)
-      if (page.layout === 'cover' || page.density === 'sparse' && i === 0) {
+      if (page.layout === 'cover' || (page.density === 'sparse' && i === 0)) {
         rebalanced.push(page);
         continue;
       }
 
       // Skip TOC pages (they should remain as single pages)
-      if (page.sections.some(s => s.id.includes('toc') || s.content.includes('Table of Contents'))) {
+      if (
+        page.sections.some((s) => s.id.includes('toc') || s.content.includes('Table of Contents'))
+      ) {
         rebalanced.push(page);
         continue;
       }
@@ -162,9 +168,9 @@ export class PageDensityBalancerService {
         if (i < pages.length - 1 && rebalanced.length > 0) {
           // Merge with previous rebalanced page
           const lastPage = rebalanced[rebalanced.length - 1];
-          
+
           // Don't merge into cover or TOC
-          if (lastPage.layout !== 'cover' && !lastPage.sections.some(s => s.id.includes('toc'))) {
+          if (lastPage.layout !== 'cover' && !lastPage.sections.some((s) => s.id.includes('toc'))) {
             rebalanced[rebalanced.length - 1] = this.mergePages(lastPage, page);
           } else {
             rebalanced.push(page);
@@ -172,9 +178,9 @@ export class PageDensityBalancerService {
         } else if (i < pages.length - 1) {
           // Merge current with next
           const nextPage = pages[i + 1];
-          
+
           // Don't merge into special pages
-          if (nextPage.layout !== 'cover' && !nextPage.sections.some(s => s.id.includes('toc'))) {
+          if (nextPage.layout !== 'cover' && !nextPage.sections.some((s) => s.id.includes('toc'))) {
             const merged = this.mergePages(page, nextPage);
             rebalanced.push(merged);
             i++; // Skip next page since we merged it
@@ -205,7 +211,7 @@ export class PageDensityBalancerService {
    */
   private mergePages(page1: PageComposition, page2: PageComposition): PageComposition {
     const combinedSections = [...page1.sections, ...page2.sections];
-    
+
     // Regenerate unique IDs for all sections
     const uniqueSections = combinedSections.map((s, i) => ({
       ...s,
@@ -219,7 +225,8 @@ export class PageDensityBalancerService {
         densityScore: (page1.metrics.densityScore + page2.metrics.densityScore) / 2,
         readabilityScore: (page1.metrics.readabilityScore + page2.metrics.readabilityScore) / 2,
         whitespaceScore: (page1.metrics.whitespaceScore + page2.metrics.whitespaceScore) / 2,
-        visualBalanceScore: (page1.metrics.visualBalanceScore + page2.metrics.visualBalanceScore) / 2,
+        visualBalanceScore:
+          (page1.metrics.visualBalanceScore + page2.metrics.visualBalanceScore) / 2,
         overallQuality: (page1.metrics.overallQuality + page2.metrics.overallQuality) / 2,
       },
     };
@@ -296,7 +303,9 @@ export class PageDensityBalancerService {
 
     for (const page of pages) {
       // Find main topic (first heading)
-      const mainHeading = page.sections.find(s => s.type === 'heading' && s.level === 1 || s.level === 2);
+      const mainHeading = page.sections.find(
+        (s) => (s.type === 'heading' && s.level === 1) || s.level === 2,
+      );
       const topic = mainHeading?.content || 'Untitled Section';
 
       if (topic !== currentTopic && currentGroup.length > 0) {
@@ -331,7 +340,7 @@ export class PageDensityBalancerService {
       pages.reduce((sum, p) => sum + this.calculateFillPercentage(p), 0) / pages.length;
 
     // Check if group needs redistribution
-    const needsRedistribution = pages.some(p => {
+    const needsRedistribution = pages.some((p) => {
       const fill = this.calculateFillPercentage(p);
       return fill < this.MIN_FILL_PERCENTAGE || fill > this.MAX_FILL_PERCENTAGE;
     });

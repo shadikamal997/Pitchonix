@@ -87,12 +87,12 @@ export class UsersService {
     if (workspaceId) {
       // Phase 39K — caller must be a workspace member; scope search to members.
       const me = await this.prisma.workspaceMember.findUnique({
-        where:  { workspaceId_userId: { workspaceId, userId: currentUserId } },
+        where: { workspaceId_userId: { workspaceId, userId: currentUserId } },
         select: { id: true },
       });
-      if (!me) return [];   // not a member → no results
+      if (!me) return []; // not a member → no results
       const members = await this.prisma.workspaceMember.findMany({
-        where:  { workspaceId },
+        where: { workspaceId },
         select: { userId: true },
       });
       peerIds = new Set(members.map((m) => m.userId));
@@ -100,10 +100,7 @@ export class UsersService {
       // Legacy — project-share collaborator pool.
       const projects = await this.prisma.project.findMany({
         where: {
-          OR: [
-            { userId: currentUserId },
-            { shares: { some: { userId: currentUserId } } },
-          ],
+          OR: [{ userId: currentUserId }, { shares: { some: { userId: currentUserId } } }],
         },
         select: {
           userId: true,
@@ -125,7 +122,7 @@ export class UsersService {
       where: {
         id: { in: Array.from(peerIds) },
         OR: [
-          { name:  { contains: needle, mode: 'insensitive' } },
+          { name: { contains: needle, mode: 'insensitive' } },
           { email: { contains: needle, mode: 'insensitive' } },
         ],
       },
@@ -139,7 +136,7 @@ export class UsersService {
       const e = u.email.toLowerCase();
       if (n.startsWith(lowered)) return 0;
       if (e.startsWith(lowered)) return 1;
-      if (n.includes(lowered))   return 2;
+      if (n.includes(lowered)) return 2;
       return 3;
     };
     return matches.sort((a, b) => score(a) - score(b));

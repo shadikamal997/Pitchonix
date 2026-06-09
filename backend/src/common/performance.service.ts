@@ -12,9 +12,7 @@ export class PerformanceService {
   private readonly logger = new Logger(PerformanceService.name);
   private performanceMetrics: Map<string, number[]> = new Map();
 
-  constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   /**
    * Cache wrapper with automatic key generation
@@ -54,10 +52,7 @@ export class PerformanceService {
   /**
    * Measure execution time of a function
    */
-  async measure<T>(
-    operationName: string,
-    fn: () => Promise<T>,
-  ): Promise<T> {
+  async measure<T>(operationName: string, fn: () => Promise<T>): Promise<T> {
     const startTime = performance.now();
 
     try {
@@ -150,9 +145,7 @@ export class PerformanceService {
       const batch = items.slice(i, i + batchSize);
 
       // Process batch in parallel
-      const batchResults = await Promise.all(
-        batch.map((item) => processFn(item)),
-      );
+      const batchResults = await Promise.all(batch.map((item) => processFn(item)));
 
       results.push(...batchResults);
 
@@ -175,10 +168,7 @@ export class PerformanceService {
   /**
    * Memoize expensive function results
    */
-  memoize<T extends (...args: any[]) => Promise<any>>(
-    fn: T,
-    ttl: number = 300,
-  ): T {
+  memoize<T extends (...args: any[]) => Promise<any>>(fn: T, ttl: number = 300): T {
     const cache = new Map<string, { value: any; expires: number }>();
 
     return (async (...args: any[]) => {

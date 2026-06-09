@@ -1,5 +1,14 @@
 import {
-  Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, HttpException, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -29,17 +38,14 @@ import { SlideElementDTO } from './element-types';
 @ApiBearerAuth()
 export class SlideElementsController {
   constructor(
-    private readonly elements:  SlideElementsService,
+    private readonly elements: SlideElementsService,
     private readonly migration: SlideElementsMigrationService,
   ) {}
 
   @Get()
   @ApiOperation({ summary: 'List all editable elements on a slide' })
   @RequireRole('elements.view', { kind: 'workspaceFromSlide', param: 'slideId' })
-  async list(
-    @Param('slideId') slideId: string,
-    @GetUser() user: any,
-  ): Promise<SlideElementDTO[]> {
+  async list(@Param('slideId') slideId: string, @GetUser() user: any): Promise<SlideElementDTO[]> {
     await this.elements.assertSlideOwnership(slideId, user.id);
     return this.elements.listForSlide(slideId);
   }
@@ -61,7 +67,7 @@ export class SlideElementsController {
   @ApiOperation({ summary: 'Update an element (partial)' })
   @RequireRole('elements.edit', { kind: 'workspaceFromElement', param: 'elementId' })
   async update(
-    @Param('slideId')   _slideId: string,
+    @Param('slideId') _slideId: string,
     @Param('elementId') elementId: string,
     @Body() patch: Partial<SlideElementDTO>,
     @GetUser() user: any,
@@ -74,7 +80,7 @@ export class SlideElementsController {
   @ApiOperation({ summary: 'Delete an element' })
   @RequireRole('elements.edit', { kind: 'workspaceFromElement', param: 'elementId' })
   async remove(
-    @Param('slideId')   _slideId: string,
+    @Param('slideId') _slideId: string,
     @Param('elementId') elementId: string,
     @GetUser() user: any,
   ): Promise<{ id: string }> {
@@ -86,7 +92,7 @@ export class SlideElementsController {
   @ApiOperation({ summary: 'Duplicate an element on the same slide' })
   @RequireRole('elements.edit', { kind: 'workspaceFromElement', param: 'elementId' })
   async duplicate(
-    @Param('slideId')   _slideId: string,
+    @Param('slideId') _slideId: string,
     @Param('elementId') elementId: string,
     @GetUser() user: any,
   ): Promise<SlideElementDTO> {

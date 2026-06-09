@@ -1,5 +1,14 @@
 import {
-  Controller, Get, Post, Param, Body, UploadedFile, UseInterceptors, BadRequestException, UseGuards, Req,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiConsumes, ApiOperation } from '@nestjs/swagger';
@@ -32,11 +41,7 @@ export class OleWorkspaceController {
   @ApiOperation({ summary: 'Replace the embedded OLE binary (Phase 38.3G)' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
-  replace(
-    @Param('elementId') id: string,
-    @UploadedFile() file: any,
-    @Req() req: any,
-  ) {
+  replace(@Param('elementId') id: string, @UploadedFile() file: any, @Req() req: any) {
     if (!file?.buffer) throw new BadRequestException('Missing OLE file (multipart field "file")');
     return this.ole.replace(id, file, req?.user?.id);
   }

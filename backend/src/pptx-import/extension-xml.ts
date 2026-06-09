@@ -23,10 +23,10 @@ import { asArray, walk } from './ooxml-parser';
 // =============================================================================
 
 export interface ExtensionXml {
-  uri:      string;           // vendor URI from @uri
-  scope:    'slide' | 'master' | 'layout' | 'shape' | 'unknown';
-  rawXml:   string;           // serialised back to a string
-  spId?:    string;           // shape id when scope=shape
+  uri: string; // vendor URI from @uri
+  scope: 'slide' | 'master' | 'layout' | 'shape' | 'unknown';
+  rawXml: string; // serialised back to a string
+  spId?: string; // shape id when scope=shape
 }
 
 /** Walk a parsed XML doc and collect every <p:extLst>/<a:extLst> child. */
@@ -38,8 +38,11 @@ export function extractExtLst(root: any, scope: ExtensionXml['scope']): Extensio
   // Local helper — serialises a node back to a string (best-effort, used only
   // to keep the blob intact for round-trip).
   const serialise = (node: any): string => {
-    try { return JSON.stringify(node); }
-    catch { return ''; }
+    try {
+      return JSON.stringify(node);
+    } catch {
+      return '';
+    }
   };
 
   walk(root, (key, value) => {
@@ -51,7 +54,7 @@ export function extractExtLst(root: any, scope: ExtensionXml['scope']): Extensio
     for (const ext of exts) {
       if (!ext) continue;
       out.push({
-        uri:    String(ext['@uri'] || 'unknown'),
+        uri: String(ext['@uri'] || 'unknown'),
         scope,
         rawXml: serialise(ext),
       });

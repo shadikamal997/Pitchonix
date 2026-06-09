@@ -1,30 +1,27 @@
-import { 
-  Controller, 
-  Post, 
-  Get, 
-  Patch, 
-  Delete, 
-  Body, 
-  Param, 
-  UseGuards, 
-  Res, 
-  Req 
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Res,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ExportService } from './export.service';
 import { ExportDto } from './dto/export.dto';
-import { 
-  CreateTemplateDto, 
-  UpdateTemplateDto, 
+import {
+  CreateTemplateDto,
+  UpdateTemplateDto,
   CreateBatchExportDto,
-  ExportWithOptionsDto 
+  ExportWithOptionsDto,
 } from './dto/export-template.dto';
-import { 
-  ExportTemplateService,
-  BatchExportService 
-} from './services';
+import { ExportTemplateService, BatchExportService } from './services';
 
 @ApiTags('Export')
 @Controller('export')
@@ -34,7 +31,7 @@ export class ExportController {
   constructor(
     private readonly exportService: ExportService,
     private readonly templateService: ExportTemplateService,
-    private readonly batchService: BatchExportService
+    private readonly batchService: BatchExportService,
   ) {}
 
   @Post('pptx')
@@ -48,8 +45,14 @@ export class ExportController {
       const buffer = await this.exportService.exportToPptx(dto.deckId);
 
       // Set headers
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
-      res.setHeader('Content-Disposition', `attachment; filename="presentation-${dto.deckId}.pptx"`);
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="presentation-${dto.deckId}.pptx"`,
+      );
       res.setHeader('Content-Length', buffer.length);
 
       // Update export record
@@ -115,11 +118,7 @@ export class ExportController {
 
   @Patch('templates/:id')
   @ApiOperation({ summary: 'Update custom export template' })
-  async updateTemplate(
-    @Param('id') id: string,
-    @Body() dto: UpdateTemplateDto,
-    @Req() req: any
-  ) {
+  async updateTemplate(@Param('id') id: string, @Body() dto: UpdateTemplateDto, @Req() req: any) {
     const userId = req.user.id;
     return this.templateService.update(id, dto, userId);
   }
@@ -168,7 +167,7 @@ export class ExportController {
   async downloadBatchExport(@Param('jobId') jobId: string, @Req() req: any) {
     const userId = req.user.id;
     const status = await this.batchService.getJobStatus(jobId, userId);
-    
+
     if (status.status !== 'completed') {
       return {
         message: 'Export not yet completed',
@@ -189,12 +188,9 @@ export class ExportController {
   @ApiOperation({ summary: 'Export deck with template and options' })
   async exportWithOptions(@Body() dto: ExportWithOptionsDto, @Req() req: any) {
     const userId = req.user.id;
-    
+
     // Create export record
-    const exportRecord = await this.exportService.createExportRecord(
-      dto.deckId,
-      dto.format
-    );
+    const exportRecord = await this.exportService.createExportRecord(dto.deckId, dto.format);
 
     try {
       // Get deck with related data

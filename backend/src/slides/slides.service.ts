@@ -1,8 +1,16 @@
-import { ForbiddenException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateSlideDto, UpdateSlideDto } from './dto/slide.dto';
 import { CollaborationBroadcaster } from '../collaboration/collaboration-broadcaster';
+import { familyForTemplate } from '../generation/template-family-map';
+import { getFamilyTokens } from '../components/smart/family-tokens';
+import type { SmartFamilyId } from '../components/smart/smart-types';
 
 @Injectable()
 export class SlidesService {
@@ -23,9 +31,9 @@ export class SlidesService {
         speakerNotes: dto.speakerNotes,
         layoutKey: dto.layoutKey,
         themeKey: dto.themeKey,
-        ...(dto.background   !== undefined ? { background:   dto.background   } : {}),
-        ...(dto.themeTokens  !== undefined ? { themeTokens:  dto.themeTokens  } : {}),
-        ...(dto.metadata     !== undefined ? { metadata:     dto.metadata     } : {}),
+        ...(dto.background !== undefined ? { background: dto.background } : {}),
+        ...(dto.themeTokens !== undefined ? { themeTokens: dto.themeTokens } : {}),
+        ...(dto.metadata !== undefined ? { metadata: dto.metadata } : {}),
       },
     });
     // Phase 34.1A — broadcast structure change to every collaborator.
@@ -34,9 +42,7 @@ export class SlidesService {
   }
 
   async createMany(deckId: string, slides: CreateSlideDto[]) {
-    const createdSlides = await Promise.all(
-      slides.map((slide) => this.create(deckId, slide)),
-    );
+    const createdSlides = await Promise.all(slides.map((slide) => this.create(deckId, slide)));
     return createdSlides;
   }
 
@@ -80,7 +86,8 @@ export class SlidesService {
   async remove(id: string) {
     // Capture deckId BEFORE delete so we can broadcast afterwards.
     const existing = await this.prisma.slide.findUnique({
-      where: { id }, select: { deckId: true },
+      where: { id },
+      select: { deckId: true },
     });
     await this.prisma.slide.delete({ where: { id } });
     if (existing) this.broadcaster.toDeck(existing.deckId, 'slide.deleted', { slideId: id });
@@ -122,7 +129,10 @@ export class SlidesService {
         await tx.slide.update({ where: { id: s.id }, data: { order: s.order + offset } });
       }
       for (const s of shifts) {
-        await tx.slide.update({ where: { id: s.id }, data: { order: s.order + offset + 1 - offset } });
+        await tx.slide.update({
+          where: { id: s.id },
+          data: { order: s.order + offset + 1 - offset },
+        });
       }
       // Now create the new slide
       const created = await tx.slide.create({
@@ -141,36 +151,80 @@ export class SlidesService {
       await tx.slideElement.createMany({
         data: [
           {
-            slideId: created.id, type: 'heading', name: 'Title', order: 0, zIndex: 1,
-            x: 6, y: 10, width: 88, height: 14,
-            rotation: 0, locked: false, visible: true,
+            slideId: created.id,
+            type: 'heading',
+            name: 'Title',
+            order: 0,
+            zIndex: 1,
+            x: 6,
+            y: 10,
+            width: 88,
+            height: 14,
+            rotation: 0,
+            locked: false,
+            visible: true,
             content: { text: opts.title || 'New slide' } as any,
-            data: Prisma.JsonNull, style: Prisma.JsonNull,
-            animations: Prisma.JsonNull, accessibility: Prisma.JsonNull,
+            data: Prisma.JsonNull,
+            style: Prisma.JsonNull,
+            animations: Prisma.JsonNull,
+            accessibility: Prisma.JsonNull,
           },
           {
-            slideId: created.id, type: 'paragraph', name: 'Body', order: 1, zIndex: 2,
-            x: 6, y: 28, width: 88, height: 30,
-            rotation: 0, locked: false, visible: true,
+            slideId: created.id,
+            type: 'paragraph',
+            name: 'Body',
+            order: 1,
+            zIndex: 2,
+            x: 6,
+            y: 28,
+            width: 88,
+            height: 30,
+            rotation: 0,
+            locked: false,
+            visible: true,
             content: { text: '' } as any,
-            data: Prisma.JsonNull, style: Prisma.JsonNull,
-            animations: Prisma.JsonNull, accessibility: Prisma.JsonNull,
+            data: Prisma.JsonNull,
+            style: Prisma.JsonNull,
+            animations: Prisma.JsonNull,
+            accessibility: Prisma.JsonNull,
           },
           {
-            slideId: created.id, type: 'footer', name: 'Footer', order: 2, zIndex: 3,
-            x: 6, y: 94, width: 70, height: 4,
-            rotation: 0, locked: false, visible: true,
+            slideId: created.id,
+            type: 'footer',
+            name: 'Footer',
+            order: 2,
+            zIndex: 3,
+            x: 6,
+            y: 94,
+            width: 70,
+            height: 4,
+            rotation: 0,
+            locked: false,
+            visible: true,
             content: { text: '' } as any,
-            data: Prisma.JsonNull, style: Prisma.JsonNull,
-            animations: Prisma.JsonNull, accessibility: Prisma.JsonNull,
+            data: Prisma.JsonNull,
+            style: Prisma.JsonNull,
+            animations: Prisma.JsonNull,
+            accessibility: Prisma.JsonNull,
           },
           {
-            slideId: created.id, type: 'pageNumber', name: 'Page #', order: 3, zIndex: 4,
-            x: 88, y: 94, width: 8, height: 4,
-            rotation: 0, locked: false, visible: true,
+            slideId: created.id,
+            type: 'pageNumber',
+            name: 'Page #',
+            order: 3,
+            zIndex: 4,
+            x: 88,
+            y: 94,
+            width: 8,
+            height: 4,
+            rotation: 0,
+            locked: false,
+            visible: true,
             content: { format: 'numeric' } as any,
-            data: Prisma.JsonNull, style: Prisma.JsonNull,
-            animations: Prisma.JsonNull, accessibility: Prisma.JsonNull,
+            data: Prisma.JsonNull,
+            style: Prisma.JsonNull,
+            animations: Prisma.JsonNull,
+            accessibility: Prisma.JsonNull,
           },
         ],
       });
@@ -203,7 +257,10 @@ export class SlidesService {
         await tx.slide.update({ where: { id: s.id }, data: { order: s.order + offset } });
       }
       for (const s of subsequent) {
-        await tx.slide.update({ where: { id: s.id }, data: { order: s.order + offset + 1 - offset } });
+        await tx.slide.update({
+          where: { id: s.id },
+          data: { order: s.order + offset + 1 - offset },
+        });
       }
 
       const copy = await tx.slide.create({
@@ -218,27 +275,32 @@ export class SlidesService {
           layoutKey: src.layoutKey,
           themeKey: src.themeKey,
           elementsVersion: src.elementsVersion,
-          background:  (src.background  ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+          background: (src.background ?? Prisma.JsonNull) as Prisma.InputJsonValue,
           themeTokens: (src.themeTokens ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-          metadata:    (src.metadata    ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+          metadata: (src.metadata ?? Prisma.JsonNull) as Prisma.InputJsonValue,
         },
       });
 
       if (src.elements.length > 0) {
         await tx.slideElement.createMany({
           data: src.elements.map((el) => ({
-            slideId:  copy.id,
-            type:     el.type,
-            name:     el.name,
-            order:    el.order,
-            x: el.x, y: el.y, width: el.width, height: el.height,
-            rotation: el.rotation, zIndex: el.zIndex,
-            locked:   el.locked, visible: el.visible,
-            content:        (el.content       ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-            data:           (el.data          ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-            style:          (el.style         ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-            animations:     (el.animations    ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-            accessibility:  (el.accessibility ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            slideId: copy.id,
+            type: el.type,
+            name: el.name,
+            order: el.order,
+            x: el.x,
+            y: el.y,
+            width: el.width,
+            height: el.height,
+            rotation: el.rotation,
+            zIndex: el.zIndex,
+            locked: el.locked,
+            visible: el.visible,
+            content: (el.content ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            data: (el.data ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            style: (el.style ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            animations: (el.animations ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            accessibility: (el.accessibility ?? Prisma.JsonNull) as Prisma.InputJsonValue,
           })),
         });
       }
@@ -294,12 +356,12 @@ export class SlidesService {
     deckId: string,
     input: {
       templateId: string;
-      theme: any;
+      theme?: any;
       blueprint?: { background?: Record<string, any> };
     },
   ) {
-    if (!input?.templateId || !input?.theme) {
-      throw new BadRequestException('templateId and theme are required');
+    if (!input?.templateId) {
+      throw new BadRequestException('templateId is required');
     }
 
     const slides = await this.prisma.slide.findMany({
@@ -307,33 +369,57 @@ export class SlidesService {
       orderBy: { order: 'asc' },
       include: { elements: true },
     });
-    const themeTokens = stripDefaultBackground(input.theme);
+    const familyId = familyForTemplate(input.templateId);
+    const theme = input.theme || fallbackThemeForTemplate(input.templateId, familyId);
+    const themeTokens = stripDefaultBackground(theme);
     const backgroundMap = input.blueprint?.background || {};
-    const defaultBackground = input.theme.defaultBackground || { type: 'solid', color: input.theme.background || '#ffffff' };
+    const defaultBackground = theme.defaultBackground || {
+      type: 'solid',
+      color: theme.background || '#ffffff',
+    };
     const appliedAt = new Date().toISOString();
 
     let elementsRestyled = 0;
     await this.prisma.$transaction(async (tx) => {
+      const deck = await tx.deck.findUnique({
+        where: { id: deckId },
+        select: { metadata: true },
+      });
+      await tx.deck.update({
+        where: { id: deckId },
+        data: {
+          metadata: {
+            ...((deck?.metadata as any) || {}),
+            templateId: input.templateId,
+            familyId: familyId || null,
+            appliedAt,
+            templateAppliedNonDestructively: true,
+          } as Prisma.InputJsonValue,
+        },
+      });
+
       for (const slide of slides) {
         const background = backgroundMap[slide.type] || defaultBackground;
         const metadata = {
           ...((slide.metadata as any) || {}),
           appliedTemplateId: input.templateId,
+          ...(familyId ? { familyId } : {}),
           appliedAt,
+          templateAppliedNonDestructively: true,
         };
         await tx.slide.update({
           where: { id: slide.id },
           data: {
-            background:  (background ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            background: (background ?? Prisma.JsonNull) as Prisma.InputJsonValue,
             themeTokens: (themeTokens ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-            metadata:    metadata as Prisma.InputJsonValue,
+            metadata: metadata as Prisma.InputJsonValue,
           },
         });
 
         for (const element of slide.elements) {
           const style = {
             ...((element.style as any) || {}),
-            ...deriveTemplateElementStyle(input.theme, element),
+            ...deriveTemplateElementStyle(theme, element),
           };
           await tx.slideElement.update({
             where: { id: element.id },
@@ -360,7 +446,58 @@ export class SlidesService {
   }
 }
 
-const TEXT_TYPES = new Set(['heading', 'subheading', 'paragraph', 'quote', 'caption', 'label', 'cta', 'footer', 'pageNumber']);
+function fallbackThemeForTemplate(templateId: string, familyId: string | null) {
+  try {
+    if (familyId) {
+      const tok = getFamilyTokens(familyId as SmartFamilyId);
+      return {
+        background: tok.bg,
+        surface: tok.surface,
+        text: tok.text,
+        muted: tok.muted,
+        accent: tok.accent,
+        primary: tok.accent,
+        accent2: tok.accent2,
+        border: tok.border,
+        fontHeading: tok.fontHeading,
+        fontBody: tok.fontBody,
+        defaultBackground: tok.bg.includes('gradient')
+          ? { type: 'gradient', value: tok.bg }
+          : { type: 'solid', color: tok.bg },
+      };
+    }
+  } catch {
+    // Fall through to neutral fallback below.
+  }
+  return {
+    background: '#ffffff',
+    surface: '#f8fafc',
+    text: '#0f172a',
+    muted: '#64748b',
+    accent: '#2563eb',
+    primary: '#2563eb',
+    accent2: '#7c3aed',
+    border: '#e2e8f0',
+    fontHeading: 'Inter, system-ui, sans-serif',
+    fontBody: 'Inter, system-ui, sans-serif',
+    defaultBackground: {
+      type: 'solid',
+      color: templateId.includes('dark') ? '#0f172a' : '#ffffff',
+    },
+  };
+}
+
+const TEXT_TYPES = new Set([
+  'heading',
+  'subheading',
+  'paragraph',
+  'quote',
+  'caption',
+  'label',
+  'cta',
+  'footer',
+  'pageNumber',
+]);
 const ACCENT_TYPES = new Set(['metric', 'kpi', 'stat']);
 const NEUTRAL_FILLS = new Set(['transparent', 'none', '', 'rgba(0,0,0,0)', '#00000000']);
 const NEUTRAL_COLORS = new Set(['transparent', 'none', '']);
@@ -373,8 +510,14 @@ function stripDefaultBackground(theme: any) {
 function isAbsoluteNeutral(value: string | undefined): boolean {
   if (!value) return false;
   const normalized = value.toLowerCase().trim();
-  return normalized === '#ffffff' || normalized === '#000000' || normalized === '#fff' || normalized === '#000' ||
-    normalized === 'white' || normalized === 'black';
+  return (
+    normalized === '#ffffff' ||
+    normalized === '#000000' ||
+    normalized === '#fff' ||
+    normalized === '#000' ||
+    normalized === 'white' ||
+    normalized === 'black'
+  );
 }
 
 function deriveTemplateElementStyle(theme: any, element: any): Record<string, any> {
@@ -385,7 +528,9 @@ function deriveTemplateElementStyle(theme: any, element: any): Record<string, an
   if (TEXT_TYPES.has(element.type)) {
     const isHeading = element.type === 'heading' || element.type === 'subheading';
     out.fontFamily = isHeading ? theme.fontHeading : theme.fontBody;
-    out.color = ['footer', 'pageNumber', 'caption'].includes(element.type) ? theme.muted : theme.text;
+    out.color = ['footer', 'pageNumber', 'caption'].includes(element.type)
+      ? theme.muted
+      : theme.text;
   }
 
   if (ACCENT_TYPES.has(element.type)) {
@@ -399,14 +544,30 @@ function deriveTemplateElementStyle(theme: any, element: any): Record<string, an
     out.fontFamily = theme.fontBody;
   }
 
-  if (['testimonial', 'teamCard', 'pricingCard', 'comparison', 'swot', 'featureGrid', 'processSteps', 'timeline', 'roadmap'].includes(element.type)) {
+  if (
+    [
+      'testimonial',
+      'teamCard',
+      'pricingCard',
+      'comparison',
+      'swot',
+      'featureGrid',
+      'processSteps',
+      'timeline',
+      'roadmap',
+    ].includes(element.type)
+  ) {
     out.fontFamily = theme.fontBody;
     out.color = theme.text;
   }
 
   if (element.type === 'shape') {
     const currentFill = existing.fill || content.fill;
-    if (currentFill && !NEUTRAL_FILLS.has(String(currentFill)) && !isAbsoluteNeutral(String(currentFill))) {
+    if (
+      currentFill &&
+      !NEUTRAL_FILLS.has(String(currentFill)) &&
+      !isAbsoluteNeutral(String(currentFill))
+    ) {
       const lower = String(currentFill).toLowerCase();
       const looksLikeAccent = lower.includes('accent') || lower.includes('surface');
       out.fill = looksLikeAccent ? theme.accent : theme.primary;
@@ -421,7 +582,8 @@ function deriveTemplateElementStyle(theme: any, element: any): Record<string, an
 
   if (element.type === 'divider') {
     const currentStroke = existing.stroke || content.stroke;
-    out.stroke = currentStroke && !NEUTRAL_COLORS.has(String(currentStroke)) ? theme.accent : theme.muted;
+    out.stroke =
+      currentStroke && !NEUTRAL_COLORS.has(String(currentStroke)) ? theme.accent : theme.muted;
     out.color = theme.muted;
   }
 

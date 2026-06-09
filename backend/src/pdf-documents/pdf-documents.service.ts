@@ -105,7 +105,9 @@ export class PdfDocumentsService {
         validationResult: data.validationResult as any,
         exportReady: data.exportReady,
         lastQualityCheck: data.qualityScore !== undefined ? new Date() : undefined,
-        brandKitId: Object.prototype.hasOwnProperty.call(data, 'brandKitId') ? data.brandKitId : undefined,
+        brandKitId: Object.prototype.hasOwnProperty.call(data, 'brandKitId')
+          ? data.brandKitId
+          : undefined,
       },
       include: {
         project: true,

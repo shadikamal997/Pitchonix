@@ -40,21 +40,21 @@ const SLIDE_VERSION_AFTER_MIGRATE = 1;
  * always 0; it was the Tier 7 minimal-fallback counter, removed in Tier 10.
  */
 export interface MigrationPathMetrics {
-  smartPath:              number;
-  fallbackPath:           number;
-  invalidTrees:           number;
+  smartPath: number;
+  fallbackPath: number;
+  invalidTrees: number;
   missingSmartComponent?: number;
-  families:               Record<string, number>;
-  components:             Record<string, number>;
+  families: Record<string, number>;
+  components: Record<string, number>;
 }
 
 interface MigrationResult {
-  totalSlides:      number;
-  migratedSlides:   number;
-  skippedSlides:    number;
-  elementsCreated:  number;
-  errors:           Array<{ slideId: string; message: string }>;
-  pathMetrics?:     MigrationPathMetrics;
+  totalSlides: number;
+  migratedSlides: number;
+  skippedSlides: number;
+  elementsCreated: number;
+  errors: Array<{ slideId: string; message: string }>;
+  pathMetrics?: MigrationPathMetrics;
 }
 
 @Injectable()
@@ -63,9 +63,12 @@ export class SlideElementsMigrationService {
 
   /** Per-run path metrics. Reset at the top of `migrateAll`. */
   private pathMetrics: MigrationPathMetrics = {
-    smartPath: 0, fallbackPath: 0, invalidTrees: 0,
+    smartPath: 0,
+    fallbackPath: 0,
+    invalidTrees: 0,
     missingSmartComponent: 0,
-    families: {}, components: {},
+    families: {},
+    components: {},
   };
 
   constructor(private prisma: PrismaService) {}
@@ -82,15 +85,21 @@ export class SlideElementsMigrationService {
     });
 
     const result: MigrationResult = {
-      totalSlides: slides.length, migratedSlides: 0, skippedSlides: 0,
-      elementsCreated: 0, errors: [],
+      totalSlides: slides.length,
+      migratedSlides: 0,
+      skippedSlides: 0,
+      elementsCreated: 0,
+      errors: [],
     };
 
     for (const slide of slides) {
       try {
         const created = await this.migrateOne(slide.id, { force: !!opts.force });
         if (created === null) result.skippedSlides++;
-        else { result.migratedSlides++; result.elementsCreated += created; }
+        else {
+          result.migratedSlides++;
+          result.elementsCreated += created;
+        }
       } catch (err) {
         result.errors.push({ slideId: slide.id, message: (err as Error).message });
       }
@@ -99,15 +108,15 @@ export class SlideElementsMigrationService {
     result.pathMetrics = { ...this.pathMetrics };
     this.logger.log(
       `Migration: ${result.migratedSlides}/${result.totalSlides} migrated ` +
-      `(${result.elementsCreated} elements created, ${result.skippedSlides} skipped, ` +
-      `${result.errors.length} errors)`,
+        `(${result.elementsCreated} elements created, ${result.skippedSlides} skipped, ` +
+        `${result.errors.length} errors)`,
     );
     const total = this.pathMetrics.smartPath + this.pathMetrics.fallbackPath;
     if (total > 0) {
       const smartPct = (this.pathMetrics.smartPath / total) * 100;
       this.logger.log(
         `Tier 5 path metrics: ${this.pathMetrics.smartPath} smart / ${this.pathMetrics.fallbackPath} fallback ` +
-        `(${smartPct.toFixed(1)}% smart, ${this.pathMetrics.invalidTrees} invalid trees rejected)`,
+          `(${smartPct.toFixed(1)}% smart, ${this.pathMetrics.invalidTrees} invalid trees rejected)`,
       );
     }
     return result;
@@ -115,14 +124,21 @@ export class SlideElementsMigrationService {
 
   /** Public accessor for tests/scripts (T5E). */
   getPathMetrics(): MigrationPathMetrics {
-    return { ...this.pathMetrics, families: { ...this.pathMetrics.families }, components: { ...this.pathMetrics.components } };
+    return {
+      ...this.pathMetrics,
+      families: { ...this.pathMetrics.families },
+      components: { ...this.pathMetrics.components },
+    };
   }
 
   resetPathMetrics(): void {
     this.pathMetrics = {
-      smartPath: 0, fallbackPath: 0, invalidTrees: 0,
+      smartPath: 0,
+      fallbackPath: 0,
+      invalidTrees: 0,
       missingSmartComponent: 0,
-      families: {}, components: {},
+      families: {},
+      components: {},
     };
   }
 
@@ -152,7 +168,7 @@ export class SlideElementsMigrationService {
       }
       await tx.slide.update({
         where: { id: slide.id },
-        data:  { elementsVersion: SLIDE_VERSION_AFTER_MIGRATE },
+        data: { elementsVersion: SLIDE_VERSION_AFTER_MIGRATE },
       });
     });
 
@@ -173,8 +189,11 @@ export class SlideElementsMigrationService {
   // ---------------------------------------------------------------------------
 
   public buildElementsForSlide(slide: {
-    type: string; title: string; subtitle: string | null;
-    content: Prisma.JsonValue; speakerNotes: string | null;
+    type: string;
+    title: string;
+    subtitle: string | null;
+    content: Prisma.JsonValue;
+    speakerNotes: string | null;
   }): Array<Prisma.SlideElementCreateManyInput> {
     const c = (slide.content || {}) as Record<string, any>;
     const smart = c.smartComponent;
@@ -200,15 +219,15 @@ export class SlideElementsMigrationService {
         this.pathMetrics.invalidTrees += 1;
         this.logger.error(
           `Slide ${slide.type}: smartComponent tree is invalid (${validation.reason}). ` +
-          `Slide will render with chrome only. Fix the generator or repair the slide content.`,
+            `Slide will render with chrome only. Fix the generator or repair the slide content.`,
         );
       }
     } else {
       this.pathMetrics.missingSmartComponent = (this.pathMetrics.missingSmartComponent ?? 0) + 1;
       this.logger.error(
         `Slide ${slide.type}: missing smartComponent.elementTree. ` +
-        `Legacy slide content is no longer renderable directly — convert to a smart component first. ` +
-        `Slide will render with chrome only.`,
+          `Legacy slide content is no longer renderable directly — convert to a smart component first. ` +
+          `Slide will render with chrome only.`,
       );
     }
 
@@ -221,24 +240,33 @@ export class SlideElementsMigrationService {
   // ---------------------------------------------------------------------------
 
   /** Convert a (validated) smart-component element tree into Prisma create inputs. */
-  private materializeSmartTree(smart: { family?: string; type?: string; elementTree: any[] }): Array<Omit<Prisma.SlideElementCreateManyInput, 'slideId'>> {
-    return (smart.elementTree as any[]).map((e, i): Omit<Prisma.SlideElementCreateManyInput, 'slideId'> => ({
-      type:        e.type as ElementType,
-      name:        e.name ?? null,
-      // Title chrome occupies order 0..1, so smart-tree starts at 100 to keep
-      // headings ordered above body elements without colliding.
-      order:       100 + i,
-      zIndex:      typeof e.zIndex === 'number' ? e.zIndex : (100 + i),
-      x:           e.x, y: e.y, width: e.width, height: e.height,
-      rotation:    typeof e.rotation === 'number' ? e.rotation : 0,
-      locked:      !!e.locked,
-      visible:     e.visible !== false,
-      content:     e.content ?? null,
-      data:        e.data ?? null,
-      style:       e.style ?? null,
-      animations:  e.animations ?? null,
-      accessibility: e.accessibility ?? null,
-    }));
+  private materializeSmartTree(smart: {
+    family?: string;
+    type?: string;
+    elementTree: any[];
+  }): Array<Omit<Prisma.SlideElementCreateManyInput, 'slideId'>> {
+    return (smart.elementTree as any[]).map(
+      (e, i): Omit<Prisma.SlideElementCreateManyInput, 'slideId'> => ({
+        type: e.type as ElementType,
+        name: e.name ?? null,
+        // Title chrome occupies order 0..1, so smart-tree starts at 100 to keep
+        // headings ordered above body elements without colliding.
+        order: 100 + i,
+        zIndex: typeof e.zIndex === 'number' ? e.zIndex : 100 + i,
+        x: e.x,
+        y: e.y,
+        width: e.width,
+        height: e.height,
+        rotation: typeof e.rotation === 'number' ? e.rotation : 0,
+        locked: !!e.locked,
+        visible: e.visible !== false,
+        content: e.content ?? null,
+        data: e.data ?? null,
+        style: e.style ?? null,
+        animations: e.animations ?? null,
+        accessibility: e.accessibility ?? null,
+      }),
+    );
   }
 
   /** Slide chrome (title + subtitle + footer + page number) is independent of
@@ -252,31 +280,61 @@ export class SlideElementsMigrationService {
     const includeTitle = opts.includeTitle !== false;
     if (includeTitle && slide.title) {
       chrome.push({
-        type: 'heading', name: 'Title',
-        order: 0, zIndex: 1,
-        x: 6, y: 8, width: 88, height: 14,
-        rotation: 0, locked: false, visible: true,
-        content: { text: slide.title }, data: null, style: null,
-        animations: null, accessibility: null,
+        type: 'heading',
+        name: 'Title',
+        order: 0,
+        zIndex: 1,
+        x: 6,
+        y: 8,
+        width: 88,
+        height: 14,
+        rotation: 0,
+        locked: false,
+        visible: true,
+        content: { text: slide.title },
+        data: null,
+        style: null,
+        animations: null,
+        accessibility: null,
       });
     }
     if (includeTitle && slide.subtitle) {
       chrome.push({
-        type: 'subheading', name: 'Subtitle',
-        order: 1, zIndex: 2,
-        x: 6, y: 22, width: 88, height: 8,
-        rotation: 0, locked: false, visible: true,
-        content: { text: slide.subtitle }, data: null, style: null,
-        animations: null, accessibility: null,
+        type: 'subheading',
+        name: 'Subtitle',
+        order: 1,
+        zIndex: 2,
+        x: 6,
+        y: 22,
+        width: 88,
+        height: 8,
+        rotation: 0,
+        locked: false,
+        visible: true,
+        content: { text: slide.subtitle },
+        data: null,
+        style: null,
+        animations: null,
+        accessibility: null,
       });
     }
     chrome.push({
-      type: 'pageNumber', name: 'Page #',
-      order: 9999, zIndex: 9999,
-      x: 88, y: 94, width: 8, height: 4,
-      rotation: 0, locked: false, visible: true,
-      content: { format: 'numeric' }, data: null, style: null,
-      animations: null, accessibility: null,
+      type: 'pageNumber',
+      name: 'Page #',
+      order: 9999,
+      zIndex: 9999,
+      x: 88,
+      y: 94,
+      width: 8,
+      height: 4,
+      rotation: 0,
+      locked: false,
+      visible: true,
+      content: { format: 'numeric' },
+      data: null,
+      style: null,
+      animations: null,
+      accessibility: null,
     });
     return chrome;
   }
@@ -290,7 +348,6 @@ export class SlideElementsMigrationService {
       this.pathMetrics.components[smart.type] = (this.pathMetrics.components[smart.type] || 0) + 1;
     }
   }
-
 }
 
 // Phase 32.75 Tier 10 — `pickFirst` + `pickFirstArray` deleted along with

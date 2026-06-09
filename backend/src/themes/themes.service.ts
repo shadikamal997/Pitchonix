@@ -11,8 +11,8 @@ import { PrismaService } from '../prisma/prisma.service';
 // =============================================================================
 
 export interface ThemeTokens {
-  colors?:  Record<string, string>;
-  fonts?:   Record<string, string>;
+  colors?: Record<string, string>;
+  fonts?: Record<string, string>;
   spacing?: Record<string, number | string>;
   borders?: Record<string, string>;
   shadows?: Record<string, string>;
@@ -20,12 +20,12 @@ export interface ThemeTokens {
 }
 
 export interface ThemeInput {
-  name?:        string;
-  tokens?:      ThemeTokens;
-  deckId?:      string | null;
+  name?: string;
+  tokens?: ThemeTokens;
+  deckId?: string | null;
   workspaceId?: string | null;
   isWorkspace?: boolean;
-  thumbnail?:   string | null;
+  thumbnail?: string | null;
 }
 
 @Injectable()
@@ -36,7 +36,7 @@ export class ThemesService {
     return this.prisma.deckTheme.findMany({
       where: {
         OR: [
-          opts.deckId      ? { deckId: opts.deckId }           : { id: undefined },
+          opts.deckId ? { deckId: opts.deckId } : { id: undefined },
           opts.workspaceId ? { workspaceId: opts.workspaceId } : { id: undefined },
           { isWorkspace: true },
         ].filter(Boolean) as any,
@@ -52,12 +52,12 @@ export class ThemesService {
   create(input: ThemeInput) {
     return this.prisma.deckTheme.create({
       data: {
-        deckId:      input.deckId ?? null,
+        deckId: input.deckId ?? null,
         workspaceId: input.workspaceId ?? null,
-        name:        input.name?.trim() || 'Untitled theme',
-        tokens:      (input.tokens ?? {}) as any,
+        name: input.name?.trim() || 'Untitled theme',
+        tokens: (input.tokens ?? {}) as any,
         isWorkspace: input.isWorkspace ?? false,
-        thumbnail:   input.thumbnail ?? null,
+        thumbnail: input.thumbnail ?? null,
       },
     });
   }
@@ -79,7 +79,7 @@ export class ThemesService {
     if (!theme) throw new NotFoundException('Theme not found');
     const res = await this.prisma.slide.updateMany({
       where: { deckId },
-      data:  { themeId },
+      data: { themeId },
     });
     return { applied: res.count };
   }
@@ -87,7 +87,7 @@ export class ThemesService {
   async applyToSlide(themeId: string, slideId: string) {
     return this.prisma.slide.update({
       where: { id: slideId },
-      data:  { themeId },
+      data: { themeId },
     });
   }
 }

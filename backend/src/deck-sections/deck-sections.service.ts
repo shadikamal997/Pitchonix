@@ -20,10 +20,10 @@ import { PrismaService } from '../prisma/prisma.service';
 // =============================================================================
 
 export interface SectionInput {
-  name?:      string;
-  color?:     string | null;
+  name?: string;
+  color?: string | null;
   collapsed?: boolean;
-  order?:     number;
+  order?: number;
 }
 
 @Injectable()
@@ -32,7 +32,7 @@ export class DeckSectionsService {
 
   list(deckId: string) {
     return this.prisma.deckSection.findMany({
-      where:   { deckId },
+      where: { deckId },
       orderBy: { order: 'asc' },
     });
   }
@@ -43,14 +43,15 @@ export class DeckSectionsService {
 
   async create(deckId: string, input: SectionInput) {
     const last = await this.prisma.deckSection.findFirst({
-      where: { deckId }, orderBy: { order: 'desc' },
+      where: { deckId },
+      orderBy: { order: 'desc' },
     });
     return this.prisma.deckSection.create({
       data: {
         deckId,
-        name:      input.name?.trim() || 'Untitled section',
-        color:     input.color ?? null,
-        order:     input.order ?? ((last?.order ?? -1) + 1),
+        name: input.name?.trim() || 'Untitled section',
+        color: input.color ?? null,
+        order: input.order ?? (last?.order ?? -1) + 1,
         collapsed: input.collapsed ?? false,
       },
     });
@@ -72,7 +73,7 @@ export class DeckSectionsService {
       ids.map((id, i) =>
         this.prisma.deckSection.updateMany({
           where: { id, deckId },
-          data:  { order: i },
+          data: { order: i },
         }),
       ),
     );
@@ -81,17 +82,17 @@ export class DeckSectionsService {
 
   async duplicate(id: string) {
     const src = await this.prisma.deckSection.findUnique({
-      where:   { id },
+      where: { id },
       include: { slides: { include: { elements: true } } },
     });
     if (!src) throw new NotFoundException('Section not found');
 
     const cloned = await this.prisma.deckSection.create({
       data: {
-        deckId:    src.deckId,
-        name:      `${src.name} (copy)`,
-        color:     src.color,
-        order:     src.order + 1,
+        deckId: src.deckId,
+        name: `${src.name} (copy)`,
+        color: src.color,
+        order: src.order + 1,
         collapsed: src.collapsed,
       },
     });
@@ -101,39 +102,44 @@ export class DeckSectionsService {
     for (const s of src.slides) {
       const dup = await this.prisma.slide.create({
         data: {
-          deckId:       s.deckId,
-          type:         s.type,
-          order:        order++,
-          title:        s.title,
-          subtitle:     s.subtitle,
-          content:      s.content as any,
-          layoutKey:    s.layoutKey,
-          themeKey:     s.themeKey,
+          deckId: s.deckId,
+          type: s.type,
+          order: order++,
+          title: s.title,
+          subtitle: s.subtitle,
+          content: s.content as any,
+          layoutKey: s.layoutKey,
+          themeKey: s.themeKey,
           speakerNotes: s.speakerNotes,
-          background:   s.background  as any,
-          themeTokens:  s.themeTokens as any,
-          metadata:     s.metadata    as any,
-          sectionId:    cloned.id,
+          background: s.background as any,
+          themeTokens: s.themeTokens as any,
+          metadata: s.metadata as any,
+          sectionId: cloned.id,
           masterSlideId: s.masterSlideId,
           layoutTemplateId: s.layoutTemplateId,
-          themeId:      s.themeId,
-          transition:   s.transition as any,
+          themeId: s.themeId,
+          transition: s.transition as any,
         },
       });
       if (s.elements?.length) {
         await this.prisma.slideElement.createMany({
           data: s.elements.map((el) => ({
             slideId: dup.id,
-            type:    el.type,
-            name:    el.name,
-            order:   el.order,
-            x: el.x, y: el.y, width: el.width, height: el.height,
-            rotation: el.rotation, zIndex: el.zIndex,
-            locked: el.locked, visible: el.visible,
+            type: el.type,
+            name: el.name,
+            order: el.order,
+            x: el.x,
+            y: el.y,
+            width: el.width,
+            height: el.height,
+            rotation: el.rotation,
+            zIndex: el.zIndex,
+            locked: el.locked,
+            visible: el.visible,
             content: el.content as any,
-            data:    el.data    as any,
-            style:   el.style   as any,
-            animations:   el.animations   as any,
+            data: el.data as any,
+            style: el.style as any,
+            animations: el.animations as any,
             accessibility: el.accessibility as any,
           })),
         });
@@ -145,14 +151,14 @@ export class DeckSectionsService {
   addSlide(sectionId: string, slideId: string) {
     return this.prisma.slide.update({
       where: { id: slideId },
-      data:  { sectionId },
+      data: { sectionId },
     });
   }
 
   moveSlide(slideId: string, sectionId: string | null) {
     return this.prisma.slide.update({
       where: { id: slideId },
-      data:  { sectionId },
+      data: { sectionId },
     });
   }
 }

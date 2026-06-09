@@ -43,9 +43,48 @@ export default function SmartBuilderPage() {
   const [brandKitId, setBrandKitId] = useState<string | null>(null);
   const [brandKit,   setBrandKit]   = useState<any | null>(null);
 
+  const plainText = (html: string) => html.replace(/<[^>]*>/g, '').replace(/&[a-z]+;/gi, ' ').trim();
+
+  // Phase Ω.2 — import a real PDF/DOCX to ENHANCE (not just paste). The file is
+  // parsed server-side into structure-preserving HTML which populates the editor;
+  // the user then runs the existing analyze → enhance → template → export flow.
+  const [importing, setImporting] = useState(false);
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-importing the same file
+    if (!file) return;
+    setImporting(true);
+    setError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await api.post('/document-parser/extract-text', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const html = (res.data?.html || '').trim();
+      const text = (res.data?.text || '').trim();
+      if (!html && !text) {
+        setError('Could not extract any content from this file. Try a different PDF/DOCX.');
+        return;
+      }
+      setRawContent(html || `<p>${text.replace(/\n/g, '<br/>')}</p>`);
+      const fname = res.data?.metadata?.filename;
+      if (!title && fname) setTitle(String(fname).replace(/\.[^.]+$/, ''));
+    } catch (err: any) {
+      setError(err?.message || err?.response?.data?.message || 'Failed to import document.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleAnalyze = async () => {
-    if (!rawContent.trim()) {
-      setError('Please enter some content to analyze');
+    const text = plainText(rawContent);
+    if (text.length < 10) {
+      setError('Please enter at least a few words to analyze.');
+      return;
+    }
+    if (rawContent.length > 480000) {
+      setError('Content is too large. Please reduce to under 80,000 words and try again.');
       return;
     }
 
@@ -92,7 +131,12 @@ export default function SmartBuilderPage() {
       setAutoSuggestedTemplate(suggestedTemplate);
       setSelectedTemplate(suggestedTemplate);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to analyze content');
+      if (err?.statusCode === 429) {
+        setError('Too many requests — please wait a moment and try again.');
+      } else {
+        const msg = err?.message || err?.response?.data?.message;
+        setError(Array.isArray(msg) ? msg.join(' ') : (msg || 'Failed to analyze content. Please try again.'));
+      }
     } finally {
       setAnalyzing(false);
     }
@@ -138,7 +182,8 @@ export default function SmartBuilderPage() {
       setEnhancement(response.data.data);
       setStep('enhanced');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to enhance content');
+      const msg = err?.message || err?.response?.data?.message;
+      setError(Array.isArray(msg) ? msg.join(' ') : (msg || 'Failed to enhance content. Please try again.'));
     } finally {
       setEnhancing(false);
     }
@@ -193,7 +238,8 @@ export default function SmartBuilderPage() {
       const { document } = data;
       router.push(`/pdf-studio/editor/${document.id}`);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to generate PDF');
+      const msg = err?.message || err?.response?.data?.message;
+      setError(Array.isArray(msg) ? msg.join(' ') : (msg || 'Failed to generate PDF. Please try again.'));
     } finally {
       setGenerating(false);
     }
@@ -206,8 +252,9 @@ export default function SmartBuilderPage() {
     setError('');
   };
 
-  const charCount = rawContent.length;
-  const wordCount = rawContent.trim().split(/\s+/).filter(w => w).length;
+  const plainContent = plainText(rawContent);
+  const charCount = plainContent.length;
+  const wordCount = plainContent ? plainContent.split(/\s+/).filter(Boolean).length : 0;
 
   return (
     <div className="min-h-screen bg-[#EDEBE6]">
@@ -308,7 +355,23 @@ export default function SmartBuilderPage() {
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="text-xs font-semibold text-[#111111]">Your Content</label>
-                        <div className="text-[11px] text-[#9A9A9A]">{wordCount} words · {charCount} chars</div>
+                        <div className="flex items-center gap-3">
+                          <label className={`text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer ${importing ? 'text-[#9A9A9A]' : 'text-[#4F7563] hover:underline'}`}>
+                            {importing ? (
+                              <><Loader2 className="w-3 h-3 animate-spin" /> Importing…</>
+                            ) : (
+                              <>↥ Import PDF / DOCX</>
+                            )}
+                            <input
+                              type="file"
+                              accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                              className="hidden"
+                              disabled={importing}
+                              onChange={handleImportFile}
+                            />
+                          </label>
+                          <div className="text-[11px] text-[#9A9A9A]">{wordCount} words · {charCount} chars</div>
+                        </div>
                       </div>
                       <RichTextEditor
                         content={rawContent}
@@ -335,7 +398,7 @@ Key Features:
 
                     <button
                       onClick={handleAnalyze}
-                      disabled={!rawContent.trim() || analyzing}
+                      disabled={plainContent.length < 10 || analyzing}
                       className="w-full py-3 px-5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold text-sm rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 hover:-translate-y-0.5"
                     >
                       {analyzing ? (

@@ -32,14 +32,21 @@ export async function importPdf(buffer: Buffer): Promise<UniversalDocument> {
   }
   const pageTexts = text.split('\f');
   for (const raw of pageTexts) {
-    const lines = raw.split('\n').map((l) => l.trim()).filter(Boolean);
+    const lines = raw
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
     if (lines.length === 0) continue;
     const page = newPage(lines[0]?.slice(0, 120));
     let firstLine = true;
     for (const line of lines) {
-      if (firstLine) { page.nodes.push(heading(1, line)); firstLine = false; continue; }
+      if (firstLine) {
+        page.nodes.push(heading(1, line));
+        firstLine = false;
+        continue;
+      }
       if (looksLikeHeading(line)) page.nodes.push(heading(2, line));
-      else                        page.nodes.push(paragraph(line));
+      else page.nodes.push(paragraph(line));
     }
     doc.pages.push(page);
   }
@@ -51,8 +58,8 @@ export async function importPdf(buffer: Buffer): Promise<UniversalDocument> {
 
 function looksLikeHeading(line: string): boolean {
   if (line.length > 80) return false;
-  if (/^[A-Z][A-Z\s\d.,'-]+$/.test(line) && line.length > 4) return true;          // all-caps
-  if (/^(?:\d+(?:\.\d+)*\s+)[A-Z]/.test(line)) return true;                          // "1.2 Heading"
+  if (/^[A-Z][A-Z\s\d.,'-]+$/.test(line) && line.length > 4) return true; // all-caps
+  if (/^(?:\d+(?:\.\d+)*\s+)[A-Z]/.test(line)) return true; // "1.2 Heading"
   if (/^(?:Chapter|Section|Part)\s+\d+/i.test(line)) return true;
   return false;
 }

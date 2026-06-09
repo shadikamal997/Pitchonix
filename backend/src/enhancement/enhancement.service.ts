@@ -40,10 +40,7 @@ export class EnhancementService {
       }
 
       // Use AI to improve content
-      const improvedContent = await this.aiService.improveSlideContent(
-        slide.content,
-        slide.type,
-      );
+      const improvedContent = await this.aiService.improveSlideContent(slide.content, slide.type);
 
       // Update slide
       const updatedSlide = await this.prisma.slide.update({
@@ -82,10 +79,7 @@ export class EnhancementService {
       }
 
       // Shorten content by removing redundant information
-      const shortenedContent = await this.aiService.shortenContent(
-        slide.content,
-        slide.type,
-      );
+      const shortenedContent = await this.aiService.shortenContent(slide.content, slide.type);
 
       // Update slide
       const updatedSlide = await this.prisma.slide.update({
@@ -124,10 +118,7 @@ export class EnhancementService {
       }
 
       // Expand content with additional details
-      const expandedContent = await this.aiService.expandContent(
-        slide.content,
-        slide.type,
-      );
+      const expandedContent = await this.aiService.expandContent(slide.content, slide.type);
 
       // Update slide
       const updatedSlide = await this.prisma.slide.update({
@@ -166,10 +157,7 @@ export class EnhancementService {
       }
 
       // Improve tone and language to be more professional
-      const professionalContent = await this.aiService.makeProfessional(
-        slide.content,
-        slide.type,
-      );
+      const professionalContent = await this.aiService.makeProfessional(slide.content, slide.type);
 
       // Update slide
       const updatedSlide = await this.prisma.slide.update({
@@ -208,10 +196,7 @@ export class EnhancementService {
       }
 
       // Optimize for investor audience
-      const investorContent = await this.aiService.makeInvestorReady(
-        slide.content,
-        slide.type,
-      );
+      const investorContent = await this.aiService.makeInvestorReady(slide.content, slide.type);
 
       // Update slide
       const updatedSlide = await this.prisma.slide.update({
@@ -273,11 +258,10 @@ export class EnhancementService {
       } as WizardInput;
 
       // Use AI to enhance/regenerate the slide
-      const enhanced = await this.aiService.enhanceSlide(
-        slide as any,
-        wizardInput,
-        { enhanceContent: true, enhanceSpeakerNotes: true },
-      );
+      const enhanced = await this.aiService.enhanceSlide(slide as any, wizardInput, {
+        enhanceContent: true,
+        enhanceSpeakerNotes: true,
+      });
 
       // Update slide
       const updatedSlide = await this.prisma.slide.update({
@@ -306,7 +290,9 @@ export class EnhancementService {
   /**
    * Fix structure of entire deck
    */
-  async fixStructure(deckId: string): Promise<{ success: boolean; message: string; fixedCount?: number }> {
+  async fixStructure(
+    deckId: string,
+  ): Promise<{ success: boolean; message: string; fixedCount?: number }> {
     try {
       const deck = await this.prisma.deck.findUnique({
         where: { id: deckId },
@@ -322,7 +308,7 @@ export class EnhancementService {
 
       // Basic structure validation - check if slides exist
       const hasSlides = deck.slides && deck.slides.length > 0;
-      
+
       if (hasSlides && this.findDuplicateSlides(deck.slides).length === 0) {
         return {
           success: true,
@@ -367,7 +353,9 @@ export class EnhancementService {
   /**
    * Fix all issues in deck automatically
    */
-  async fixAllIssues(deckId: string): Promise<{ success: boolean; message: string; fixedCount?: number }> {
+  async fixAllIssues(
+    deckId: string,
+  ): Promise<{ success: boolean; message: string; fixedCount?: number }> {
     try {
       const deck = await this.prisma.deck.findUnique({
         where: { id: deckId },
@@ -392,9 +380,10 @@ export class EnhancementService {
       // Improve slides (optional - could check quality score here)
       for (const slide of deck.slides) {
         // Simple heuristic: if slide has minimal content, improve it
-        const hasMinimalContent = !slide.content || 
+        const hasMinimalContent =
+          !slide.content ||
           (typeof slide.content === 'object' && Object.keys(slide.content).length < 2);
-        
+
         if (hasMinimalContent) {
           await this.improveSlide(slide.id);
           fixedCount++;

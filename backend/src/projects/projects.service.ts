@@ -64,6 +64,11 @@ export class ProjectsService {
               updatedAt: true,
             },
           },
+          // Needed so the UI can route PDF Studio projects (documentFormat==='pdf')
+          // to the PDF editor instead of the deck-only project page.
+          pdfDocuments: {
+            select: { id: true },
+          },
         },
         orderBy: {
           lastEditedAt: 'desc',
@@ -143,21 +148,63 @@ export class ProjectsService {
   async duplicate(id: string, userId: string) {
     const originalProject = await this.findOne(id, userId);
 
-    // Create duplicate project
+    // Create duplicate project. Copy branding (logoUrl/imageUrls) and the
+    // documentFormat so PDF Studio copies stay PDF projects and no project
+    // loses its uploaded branding on duplicate.
     const duplicatedProject = await this.prisma.project.create({
       data: {
         userId,
         name: `${originalProject.name} (Copy)`,
         description: originalProject.description,
         documentType: originalProject.documentType,
+        documentFormat: (originalProject as any).documentFormat ?? 'slides',
         industry: originalProject.industry,
         status: 'draft',
         businessInfo: originalProject.businessInfo,
         audience: originalProject.audience,
         tone: originalProject.tone,
-        ...((originalProject as any).workspaceId ? { workspaceId: (originalProject as any).workspaceId } : {}),
+        logoUrl: (originalProject as any).logoUrl ?? null,
+        imageUrls: (originalProject as any).imageUrls ?? [],
+        ...((originalProject as any).workspaceId
+          ? { workspaceId: (originalProject as any).workspaceId }
+          : {}),
       },
     });
+
+    // Deep-copy PDF Studio documents + their pages so a duplicated PDF project
+    // is a real, openable copy (findOne above does not include pdfDocuments,
+    // so fetch them explicitly here).
+    const pdfDocuments = await this.prisma.pdfDocument.findMany({
+      where: { projectId: id },
+      include: { pages: true },
+    });
+    for (const doc of pdfDocuments) {
+      const {
+        id: _docId,
+        projectId: _pid,
+        createdAt: _c,
+        updatedAt: _u,
+        pages,
+        ...docData
+      } = doc as any;
+      const newDoc = await this.prisma.pdfDocument.create({
+        data: { ...docData, projectId: duplicatedProject.id },
+      });
+      if (pages?.length) {
+        await this.prisma.pdfPage.createMany({
+          data: pages.map((p: any) => {
+            const {
+              id: _pageId,
+              documentId: _did,
+              createdAt: _pc,
+              updatedAt: _pu,
+              ...pageData
+            } = p;
+            return { ...pageData, documentId: newDoc.id };
+          }),
+        });
+      }
+    }
 
     // Duplicate decks and slides if they exist
     if (originalProject.decks.length > 0) {
@@ -262,7 +309,10 @@ export class ProjectsService {
       },
     });
     if (!project) throw new NotFoundException('Share link not found or has been revoked');
-    await this.prisma.project.update({ where: { id: project.id }, data: { viewCount: { increment: 1 } } });
+    await this.prisma.project.update({
+      where: { id: project.id },
+      data: { viewCount: { increment: 1 } },
+    });
     return {
       id: project.id,
       name: project.name,

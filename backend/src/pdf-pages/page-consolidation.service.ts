@@ -24,7 +24,9 @@ export class PageConsolidationService {
     if (pages.length <= 2) return pages; // Don't consolidate cover/toc pages
 
     // Skip consolidation markers (cover, toc)
-    const startIndex = pages.findIndex(p => p.type && !['cover', 'COVER', 'toc', 'TABLE_OF_CONTENTS'].includes(p.type));
+    const startIndex = pages.findIndex(
+      (p) => p.type && !['cover', 'COVER', 'toc', 'TABLE_OF_CONTENTS'].includes(p.type),
+    );
     if (startIndex < 0 || startIndex >= pages.length - 1) return pages;
 
     const result = [...pages];
@@ -60,7 +62,7 @@ export class PageConsolidationService {
    */
   private calculateDensity(page: any): ContentDensity {
     const text = this.extractPageText(page);
-    const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+    const wordCount = text.split(/\s+/).filter((w) => w.length > 0).length;
 
     let density: 'empty' | 'sparse' | 'light' | 'balanced' | 'dense';
     if (wordCount < 20) density = 'empty';
@@ -110,14 +112,17 @@ export class PageConsolidationService {
       parts.push(...keyPoints.filter((kp: any) => kp));
     }
     if (content.highlights) {
-      const highlights = Array.isArray(content.highlights) ? content.highlights : [content.highlights];
+      const highlights = Array.isArray(content.highlights)
+        ? content.highlights
+        : [content.highlights];
       parts.push(...highlights.filter((h: any) => h));
     }
     if (content.sections && Array.isArray(content.sections)) {
       for (const section of content.sections) {
         if (section.content) parts.push(String(section.content));
         if (section.heading) parts.push(String(section.heading));
-        if (Array.isArray(section.bullets)) parts.push(...section.bullets.map((b: any) => String(b)));
+        if (Array.isArray(section.bullets))
+          parts.push(...section.bullets.map((b: any) => String(b)));
       }
     }
     if (content.title) parts.push(String(content.title));
@@ -125,7 +130,7 @@ export class PageConsolidationService {
     if (content.description) parts.push(String(content.description));
     if (content.body) parts.push(String(content.body));
 
-    return parts.filter(p => p && p.trim()).join(' ');
+    return parts.filter((p) => p && p.trim()).join(' ');
   }
 
   /**

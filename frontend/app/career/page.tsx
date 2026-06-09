@@ -306,15 +306,15 @@ function CareerWorkspaceBody() {
         </section>
 
         {/* --- ATS OPTIMIZATION PROMO BANNER (Phase Ω.2) -------------- */}
-        <section className="pn-card overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-8">
-          <div className="flex items-center justify-between">
+        <section className="pn-card overflow-hidden bg-[#EEF5F1] border-[#DDE8E1] p-8">
+          <div className="flex items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <div className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">NEW</div>
-                <span className="text-sm font-medium opacity-90">Phase Ω.2</span>
+                <div className="px-3 py-1 bg-[#DDE8E1] text-[#355846] rounded-full text-xs font-bold">NEW</div>
+                <span className="text-sm font-semibold text-[#4F7563]">Phase Ω.2</span>
               </div>
-              <h2 className="text-2xl font-bold mb-2">ATS Optimization & Job Matching</h2>
-              <p className="text-white/90 mb-4 max-w-2xl">
+              <h2 className="text-2xl font-bold mb-2 text-[#111111]">ATS Optimization & Job Matching</h2>
+              <p className="text-[#355846] mb-4 max-w-2xl">
                 Get your CV past applicant tracking systems. See keyword matches, missing skills, 
                 formatting risks, and get one-click fixes. Match your CV against job descriptions 
                 and see exactly what's missing.
@@ -322,24 +322,28 @@ function CareerWorkspaceBody() {
               <div className="flex gap-3">
                 <Link
                   href="/career/ats"
-                  className="px-6 py-3 bg-white text-emerald-600 rounded-lg font-semibold hover:bg-white/90 transition-colors inline-flex items-center gap-2"
+                  className="px-6 py-3 bg-[#111114] text-white rounded-full font-semibold hover:bg-black transition-colors inline-flex items-center gap-2"
                 >
                   <Target className="w-5 h-5" />
                   Analyze ATS Compatibility
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <button className="px-6 py-3 bg-white/20 text-white rounded-lg font-semibold hover:bg-white/30 transition-colors">
+                <Link
+                  href="/career/dashboard"
+                  className="px-6 py-3 bg-white text-[#355846] border border-[#DDE8E1] rounded-full font-semibold hover:bg-[#F7F6F2] transition-colors inline-flex items-center gap-2"
+                >
+                  <BarChart3 className="w-4 h-4" />
                   Learn More
-                </button>
+                </Link>
               </div>
             </div>
             <div className="hidden lg:flex items-center justify-center">
               <div className="relative w-48 h-48">
-                <div className="absolute inset-0 bg-white/10 rounded-full flex items-center justify-center">
-                  <Target className="w-24 h-24 text-white/50" />
+                <div className="absolute inset-0 bg-white/65 rounded-full flex items-center justify-center border border-[#DDE8E1]">
+                  <Target className="w-24 h-24 text-[#A8B9AE]" />
                 </div>
-                <div className="absolute top-4 right-4 w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                  <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                <div className="absolute top-4 right-4 w-16 h-16 bg-[#4F7563] rounded-full flex items-center justify-center shadow-[0_14px_30px_rgba(79,117,99,0.24)]">
+                  <CheckCircle2 className="w-10 h-10 text-white" />
                 </div>
               </div>
             </div>

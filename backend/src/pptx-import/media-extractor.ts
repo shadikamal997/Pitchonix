@@ -21,10 +21,10 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR
 const PUBLIC_PREFIX = '/uploads/images';
 
 export interface MediaEntry {
-  zipPath:   string;
+  zipPath: string;
   publicUrl: string;
-  mimetype:  string | null;
-  bytes:     number;
+  mimetype: string | null;
+  bytes: number;
 }
 
 export function extractMedia(pkg: OoxmlPackage): Map<string, MediaEntry> {
@@ -46,10 +46,10 @@ export function extractMedia(pkg: OoxmlPackage): Map<string, MediaEntry> {
       continue;
     }
     out.set(entry, {
-      zipPath:   entry,
+      zipPath: entry,
       publicUrl: `${PUBLIC_PREFIX}/${safe}`,
-      mimetype:  mimeFor(ext),
-      bytes:     data.length,
+      mimetype: mimeFor(ext),
+      bytes: data.length,
     });
   }
   return out;
@@ -57,7 +57,11 @@ export function extractMedia(pkg: OoxmlPackage): Map<string, MediaEntry> {
 
 function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) {
-    try { fs.mkdirSync(dir, { recursive: true }); } catch { /* logged on first write */ }
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {
+      /* logged on first write */
+    }
   }
 }
 
@@ -68,18 +72,30 @@ function pickExt(p: string): string {
 
 function mimeFor(ext: string): string | null {
   switch (ext) {
-    case '.png':  return 'image/png';
+    case '.png':
+      return 'image/png';
     case '.jpg':
-    case '.jpeg': return 'image/jpeg';
-    case '.gif':  return 'image/gif';
-    case '.webp': return 'image/webp';
-    case '.svg':  return 'image/svg+xml';
-    case '.mp4':  return 'video/mp4';
-    case '.mov':  return 'video/quicktime';
-    case '.webm': return 'video/webm';
-    case '.mp3':  return 'audio/mpeg';
-    case '.wav':  return 'audio/wav';
-    case '.m4a':  return 'audio/mp4';
-    default:      return null;
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.gif':
+      return 'image/gif';
+    case '.webp':
+      return 'image/webp';
+    case '.svg':
+      return 'image/svg+xml';
+    case '.mp4':
+      return 'video/mp4';
+    case '.mov':
+      return 'video/quicktime';
+    case '.webm':
+      return 'video/webm';
+    case '.mp3':
+      return 'audio/mpeg';
+    case '.wav':
+      return 'audio/wav';
+    case '.m4a':
+      return 'audio/mp4';
+    default:
+      return null;
   }
 }

@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CvProfileDto, emptyProfile } from './cv-types';
 import { sanitizeCvProfile, SanitizeReport } from './cv-profile-sanitizer';
+import { CareerLedgerService } from './career-ledger.service';
 
 // =============================================================================
 //  Phase 42A — CvProfilesService.
@@ -13,7 +14,11 @@ import { sanitizeCvProfile, SanitizeReport } from './cv-profile-sanitizer';
 
 @Injectable()
 export class CvProfilesService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(CvProfilesService.name);
+  constructor(
+    private prisma: PrismaService,
+    private readonly careerLedger: CareerLedgerService,
+  ) {}
 
   // ---------------------------------------------------------------------------
   //  Lifecycle
@@ -39,7 +44,11 @@ export class CvProfilesService {
   //  Personal block
   // ---------------------------------------------------------------------------
 
-  async patchPersonal(profileId: string, patch: Partial<CvProfileDto['personal']>, userId?: string): Promise<CvProfileDto> {
+  async patchPersonal(
+    profileId: string,
+    patch: Partial<CvProfileDto['personal']>,
+    userId?: string,
+  ): Promise<CvProfileDto> {
     const cur = await this.get(profileId, userId);
     const next = { ...(cur.personal || {}), ...patch };
     return this.write(profileId, { personal: next as any });
@@ -50,9 +59,12 @@ export class CvProfilesService {
   //                certifications / awards / publications / references)
   // ---------------------------------------------------------------------------
 
-  async addSectionItem<K extends Exclude<keyof CvProfileDto, 'id'|'userId'|'personal'|'importSource'|'importedAt'|'createdAt'|'updatedAt'>>(
-    profileId: string, section: K, item: any, userId?: string,
-  ): Promise<CvProfileDto> {
+  async addSectionItem<
+    K extends Exclude<
+      keyof CvProfileDto,
+      'id' | 'userId' | 'personal' | 'importSource' | 'importedAt' | 'createdAt' | 'updatedAt'
+    >,
+  >(profileId: string, section: K, item: any, userId?: string): Promise<CvProfileDto> {
     const cur = await this.get(profileId, userId);
     const list = ((cur as any)[section] as any[]) || [];
     const id = item.id || makeId(section);
@@ -60,8 +72,17 @@ export class CvProfilesService {
     return this.write(profileId, { [section]: list as any } as any);
   }
 
-  async updateSectionItem<K extends Exclude<keyof CvProfileDto, 'id'|'userId'|'personal'|'importSource'|'importedAt'|'createdAt'|'updatedAt'>>(
-    profileId: string, section: K, itemId: string, patch: any, userId?: string,
+  async updateSectionItem<
+    K extends Exclude<
+      keyof CvProfileDto,
+      'id' | 'userId' | 'personal' | 'importSource' | 'importedAt' | 'createdAt' | 'updatedAt'
+    >,
+  >(
+    profileId: string,
+    section: K,
+    itemId: string,
+    patch: any,
+    userId?: string,
   ): Promise<CvProfileDto> {
     const cur = await this.get(profileId, userId);
     const list = ((cur as any)[section] as any[]) || [];
@@ -71,17 +92,23 @@ export class CvProfilesService {
     return this.write(profileId, { [section]: list as any } as any);
   }
 
-  async removeSectionItem<K extends Exclude<keyof CvProfileDto, 'id'|'userId'|'personal'|'importSource'|'importedAt'|'createdAt'|'updatedAt'>>(
-    profileId: string, section: K, itemId: string, userId?: string,
-  ): Promise<CvProfileDto> {
+  async removeSectionItem<
+    K extends Exclude<
+      keyof CvProfileDto,
+      'id' | 'userId' | 'personal' | 'importSource' | 'importedAt' | 'createdAt' | 'updatedAt'
+    >,
+  >(profileId: string, section: K, itemId: string, userId?: string): Promise<CvProfileDto> {
     const cur = await this.get(profileId, userId);
     const list = (((cur as any)[section] as any[]) || []).filter((i) => i.id !== itemId);
     return this.write(profileId, { [section]: list as any } as any);
   }
 
-  async reorderSection<K extends Exclude<keyof CvProfileDto, 'id'|'userId'|'personal'|'importSource'|'importedAt'|'createdAt'|'updatedAt'>>(
-    profileId: string, section: K, orderedIds: string[], userId?: string,
-  ): Promise<CvProfileDto> {
+  async reorderSection<
+    K extends Exclude<
+      keyof CvProfileDto,
+      'id' | 'userId' | 'personal' | 'importSource' | 'importedAt' | 'createdAt' | 'updatedAt'
+    >,
+  >(profileId: string, section: K, orderedIds: string[], userId?: string): Promise<CvProfileDto> {
     const cur = await this.get(profileId, userId);
     const list = ((cur as any)[section] as any[]) || [];
     const map = new Map(list.map((i) => [i.id, i]));
@@ -95,15 +122,18 @@ export class CvProfilesService {
   //  Repair corrupted profile (Phase Ω.4A)
   // ---------------------------------------------------------------------------
 
-  async repair(profileId: string, userId?: string): Promise<{ profile: CvProfileDto; report: SanitizeReport }> {
+  async repair(
+    profileId: string,
+    userId?: string,
+  ): Promise<{ profile: CvProfileDto; report: SanitizeReport }> {
     const cur = await this.get(profileId, userId);
     const { profile: sanitized, report } = sanitizeCvProfile(cur);
     if (!report.anyChange) return { profile: cur, report };
     const saved = await this.write(profileId, {
-      personal:   sanitized.personal    as any,
-      experience: sanitized.experience  as any,
-      education:  sanitized.education   as any,
-      skills:     sanitized.skills      as any,
+      personal: sanitized.personal as any,
+      experience: sanitized.experience as any,
+      education: sanitized.education as any,
+      skills: sanitized.skills as any,
     });
     return { profile: saved, report };
   }
@@ -112,7 +142,11 @@ export class CvProfilesService {
   //  Bulk replace (used by the LinkedIn / DOCX / PDF importer).
   // ---------------------------------------------------------------------------
 
-  async replaceFromImport(profileId: string, source: 'linkedin'|'docx'|'pdf', payload: Partial<CvProfileDto>): Promise<CvProfileDto> {
+  async replaceFromImport(
+    profileId: string,
+    source: 'linkedin' | 'docx' | 'pdf',
+    payload: Partial<CvProfileDto>,
+  ): Promise<CvProfileDto> {
     // Phase 43.1C — IMPROVED REPLACE WITH MERGE FALLBACK.
     //
     // If the import payload has populated sections, we use those.
@@ -121,8 +155,8 @@ export class CvProfilesService {
     //
     // Only if a section has actual content in the payload do we replace it.
     const currentProfile = await this.get(profileId);
-    
-    const sanitized = sanitizeCvProfile({
+
+    const { profile: sanitized, report: sanitizeReport } = sanitizeCvProfile({
       ...(payload as any),
       id: profileId,
       userId: currentProfile.userId,
@@ -140,28 +174,51 @@ export class CvProfilesService {
       importedAt: null,
       createdAt: currentProfile.createdAt,
       updatedAt: currentProfile.updatedAt,
-    }).profile;
+    });
 
     const data: any = {
       importSource: source,
-      importedAt:   new Date(),
+      importedAt: new Date(),
       // Section arrays — use payload if it has content, otherwise preserve existing
-      experience:     sanitized.experience?.length ? sanitized.experience : currentProfile.experience,
-      education:      sanitized.education?.length ? sanitized.education : currentProfile.education,
-      skills:         sanitized.skills?.length ? sanitized.skills : currentProfile.skills,
-      languages:      ((payload as any).languages?.length ? sanitized.languages : currentProfile.languages) ?? [],
-      projects:       ((payload as any).projects?.length ? (payload as any).projects : currentProfile.projects) ?? [],
-      certifications: ((payload as any).certifications?.length ? (payload as any).certifications : currentProfile.certifications) ?? [],
-      awards:         ((payload as any).awards?.length ? (payload as any).awards : currentProfile.awards) ?? [],
-      publications:   ((payload as any).publications?.length ? (payload as any).publications : currentProfile.publications) ?? [],
-      references:     ((payload as any).references?.length ? (payload as any).references : currentProfile.references) ?? [],
+      experience: sanitized.experience?.length ? sanitized.experience : currentProfile.experience,
+      education: sanitized.education?.length ? sanitized.education : currentProfile.education,
+      skills: sanitized.skills?.length ? sanitized.skills : currentProfile.skills,
+      languages:
+        ((payload as any).languages?.length ? sanitized.languages : currentProfile.languages) ?? [],
+      projects:
+        ((payload as any).projects?.length ? (payload as any).projects : currentProfile.projects) ??
+        [],
+      certifications:
+        ((payload as any).certifications?.length
+          ? (payload as any).certifications
+          : currentProfile.certifications) ?? [],
+      awards:
+        ((payload as any).awards?.length ? (payload as any).awards : currentProfile.awards) ?? [],
+      publications:
+        ((payload as any).publications?.length
+          ? (payload as any).publications
+          : currentProfile.publications) ?? [],
+      references:
+        ((payload as any).references?.length
+          ? (payload as any).references
+          : currentProfile.references) ?? [],
     };
     // Personal - merge with existing data to preserve photo/location
     if ('personal' in payload) {
       data.personal = { ...currentProfile.personal, ...sanitized.personal };
     }
     const row = await this.prisma.cvProfile.update({ where: { id: profileId }, data });
-    return toDto(row);
+    const saved = toDto(row);
+    // Phase Ω.CONTENT.2C — the ledger begins at import. Record every CV entity
+    // (plus sanitizer-rejected nodes) so nothing disappears silently.
+    try {
+      await this.careerLedger.recordImport(profileId, saved, sanitizeReport?.rejectedNodes || []);
+    } catch (error: any) {
+      this.logger.warn(
+        `Content ledger import skipped for ${profileId}: ${error?.message || error}`,
+      );
+    }
+    return saved;
   }
 
   // ---------------------------------------------------------------------------
@@ -180,21 +237,21 @@ function makeId(prefix: string | symbol): string {
 
 function toDto(row: any): CvProfileDto {
   return {
-    id:         row.id,
-    userId:     row.userId,
-    personal:   (row.personal as any) ?? null,
-    experience: (row.experience    as any[]) ?? [],
-    education:  (row.education     as any[]) ?? [],
-    skills:     (row.skills        as any[]) ?? [],
-    languages:  (row.languages     as any[]) ?? [],
-    projects:   (row.projects      as any[]) ?? [],
+    id: row.id,
+    userId: row.userId,
+    personal: (row.personal as any) ?? null,
+    experience: (row.experience as any[]) ?? [],
+    education: (row.education as any[]) ?? [],
+    skills: (row.skills as any[]) ?? [],
+    languages: (row.languages as any[]) ?? [],
+    projects: (row.projects as any[]) ?? [],
     certifications: (row.certifications as any[]) ?? [],
-    awards:        (row.awards         as any[]) ?? [],
-    publications:  (row.publications   as any[]) ?? [],
-    references:    (row.references     as any[]) ?? [],
-    importSource:  row.importSource ?? null,
-    importedAt:    row.importedAt?.toISOString() ?? null,
-    createdAt:     row.createdAt.toISOString(),
-    updatedAt:     row.updatedAt.toISOString(),
+    awards: (row.awards as any[]) ?? [],
+    publications: (row.publications as any[]) ?? [],
+    references: (row.references as any[]) ?? [],
+    importSource: row.importSource ?? null,
+    importedAt: row.importedAt?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }

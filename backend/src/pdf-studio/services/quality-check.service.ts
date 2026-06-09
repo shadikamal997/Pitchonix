@@ -74,8 +74,7 @@ export class QualityCheckService {
     const grade = this.getGrade(overallScore);
 
     // Validation passed if no errors and score >= 60
-    const validationPassed =
-      !issues.some((i) => i.severity === 'error') && overallScore >= 60;
+    const validationPassed = !issues.some((i) => i.severity === 'error') && overallScore >= 60;
 
     const result: QualityCheckResult = {
       overallScore,
@@ -153,7 +152,10 @@ export class QualityCheckService {
 
     // Check for logical page order
     const pageTypes = document.pages.map((p) => p.pageType);
-    if (pageTypes.includes('conclusion') && pageTypes.indexOf('conclusion') < pageTypes.length - 2) {
+    if (
+      pageTypes.includes('conclusion') &&
+      pageTypes.indexOf('conclusion') < pageTypes.length - 2
+    ) {
       issues.push({
         severity: 'warning',
         category: 'structure',
@@ -196,7 +198,10 @@ export class QualityCheckService {
     const grammarPatterns = [
       { pattern: /\btheir\s+is\b/gi, message: 'Incorrect use of "their" (should be "there")' },
       { pattern: /\btheir\s+are\b/gi, message: 'Incorrect use of "their" (should be "there")' },
-      { pattern: /\byour\s+(doing|going|being)\b/gi, message: 'Incorrect use of "your" (should be "you\'re")' },
+      {
+        pattern: /\byour\s+(doing|going|being)\b/gi,
+        message: 'Incorrect use of "your" (should be "you\'re")',
+      },
       { pattern: /\bits\s+(a|the|an)\s/gi, message: 'Incorrect use of "its" (should be "it\'s")' },
       { pattern: /\bi\s+[a-z]/g, message: 'Lowercase "i" should be capitalized' },
     ];

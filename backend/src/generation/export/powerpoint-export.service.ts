@@ -41,15 +41,10 @@ export class PowerPointExportService {
 
       // Generate buffer
       const buffer = await pptx.write({ outputType: 'nodebuffer' });
-      this.logger.log(
-        `PowerPoint generated: ${slides.length} slides`,
-      );
+      this.logger.log(`PowerPoint generated: ${slides.length} slides`);
       return buffer as Buffer;
     } catch (error) {
-      this.logger.error(
-        `PowerPoint export failed: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`PowerPoint export failed: ${error.message}`, error.stack);
       throw new Error(`PowerPoint export failed: ${error.message}`);
     }
   }
@@ -57,10 +52,7 @@ export class PowerPointExportService {
   /**
    * Add a single slide to presentation
    */
-  private async addSlide(
-    pptx: any,
-    slideContent: VisualSlideContent,
-  ): Promise<void> {
+  private async addSlide(pptx: any, slideContent: VisualSlideContent): Promise<void> {
     const slide = pptx.addSlide();
 
     // Apply background color from theme
@@ -91,9 +83,7 @@ export class PowerPointExportService {
     }
 
     // Add subtitle
-    const subtitleRegion = layout.regions.find(
-      (r) => r.type === 'subtitle',
-    );
+    const subtitleRegion = layout.regions.find((r) => r.type === 'subtitle');
     if (subtitleRegion && slideContent.subtitle) {
       slide.addText(slideContent.subtitle, {
         x: `${subtitleRegion.x}%`,
@@ -108,9 +98,7 @@ export class PowerPointExportService {
     }
 
     // Add content
-    const contentRegion = layout.regions.find(
-      (r) => r.type === 'content',
-    );
+    const contentRegion = layout.regions.find((r) => r.type === 'content');
     if (contentRegion && slideContent.content) {
       await this.addContent(slide, slideContent, contentRegion);
     }
@@ -154,24 +142,14 @@ export class PowerPointExportService {
       this.addBulletPoints(slide, content, region, slideContent.theme);
     } else if (typeof content === 'object') {
       // Structured content
-      this.addStructuredContent(
-        slide,
-        content,
-        region,
-        slideContent.theme,
-      );
+      this.addStructuredContent(slide, content, region, slideContent.theme);
     }
   }
 
   /**
    * Add bullet points
    */
-  private addBulletPoints(
-    slide: any,
-    bullets: string[],
-    region: any,
-    theme: any,
-  ): void {
+  private addBulletPoints(slide: any, bullets: string[], region: any, theme: any): void {
     const bulletText = bullets
       .filter((b) => b && b.length > 0)
       .map((bullet) => ({
@@ -197,12 +175,7 @@ export class PowerPointExportService {
   /**
    * Add structured content (objects)
    */
-  private addStructuredContent(
-    slide: any,
-    content: any,
-    region: any,
-    theme: any,
-  ): void {
+  private addStructuredContent(slide: any, content: any, region: any, theme: any): void {
     // Extract key fields and format as bullet points
     const bullets: string[] = [];
 
@@ -230,18 +203,13 @@ export class PowerPointExportService {
   /**
    * Add charts to slide
    */
-  private async addCharts(
-    slide: any,
-    charts: any[],
-    region: any,
-  ): Promise<void> {
+  private async addCharts(slide: any, charts: any[], region: any): Promise<void> {
     // Render first chart only (multiple charts would require layout adjustment)
     if (charts.length > 0) {
       const chart = charts[0];
       try {
         // Render chart to base64 image
-        const imageData =
-          await this.chartRenderingService.renderChart(chart);
+        const imageData = await this.chartRenderingService.renderChart(chart);
 
         // Add image to slide
         slide.addImage({
@@ -252,9 +220,7 @@ export class PowerPointExportService {
           h: `${region.height}%`,
         });
       } catch (error) {
-        this.logger.warn(
-          `Failed to add chart to slide: ${error.message}`,
-        );
+        this.logger.warn(`Failed to add chart to slide: ${error.message}`);
       }
     }
   }
@@ -262,9 +228,7 @@ export class PowerPointExportService {
   /**
    * Map vertical alignment
    */
-  private mapVerticalAlign(
-    align?: 'top' | 'middle' | 'bottom',
-  ): 'top' | 'middle' | 'bottom' {
+  private mapVerticalAlign(align?: 'top' | 'middle' | 'bottom'): 'top' | 'middle' | 'bottom' {
     return align || 'top';
   }
 

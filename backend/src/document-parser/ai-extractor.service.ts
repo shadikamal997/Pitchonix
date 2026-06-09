@@ -104,18 +104,8 @@ Return ONLY valid JSON. Use null for fields where information is not found. Be s
    * Calculate confidence score based on filled fields
    */
   private calculateConfidence(data: ExtractedData): number {
-    const criticalFields = [
-      'companyName',
-      'problem',
-      'solution',
-      'targetCustomers',
-    ];
-    const importantFields = [
-      'industry',
-      'differentiation',
-      'marketSize',
-      'revenueModel',
-    ];
+    const criticalFields = ['companyName', 'problem', 'solution', 'targetCustomers'];
+    const importantFields = ['industry', 'differentiation', 'marketSize', 'revenueModel'];
     const optionalFields = [
       'businessStage',
       'country',
@@ -168,7 +158,8 @@ Return ONLY valid JSON. Use null for fields where information is not found. Be s
         messages: [
           {
             role: 'system',
-            content: 'You are a business analyst. Enhance the provided business information with industry context and insights.',
+            content:
+              'You are a business analyst. Enhance the provided business information with industry context and insights.',
           },
           {
             role: 'user',

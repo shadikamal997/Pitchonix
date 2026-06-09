@@ -7,9 +7,10 @@ import { CvExportService } from './src/career/cv-export.service';
 
 async function main() {
   const prisma = new PrismaClient();
-  const profiles = new CvProfilesService(prisma as any);
+  const ledgerStub: any = { recordImport: async () => 0, recordRenderExportReopen: async () => ({ reopened: 0, mutated: 0, lost: 0 }) };
+  const profiles = new CvProfilesService(prisma as any, ledgerStub);
   const templates = new CvTemplatesService(prisma as any);
-  const exporter = new CvExportService(templates);
+  const exporter = new CvExportService(templates, ledgerStub);
 
   const documentId = 'dc6a3b2f-b64b-43b1-bf45-5197f2c1bbc4';
 

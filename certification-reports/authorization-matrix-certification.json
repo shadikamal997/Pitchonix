@@ -1,0 +1,168 @@
+{
+  "generatedAt": "2026-06-09T09:41:00.597Z",
+  "scope": [
+    "Projects",
+    "Decks",
+    "Slides",
+    "CVs",
+    "PDFs",
+    "Excel Workbooks",
+    "Uploads",
+    "Exports",
+    "Brand Kits",
+    "Shares",
+    "Workspaces",
+    "Feasibility Studies"
+  ],
+  "summary": {
+    "resources": 12,
+    "passed": 12,
+    "failed": 0
+  },
+  "rows": [
+    {
+      "resource": "Projects",
+      "status": "pass",
+      "controller": "backend/src/projects/projects.controller.ts",
+      "service": "backend/src/projects/projects.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "Decks",
+      "status": "pass",
+      "controller": "backend/src/decks/decks.controller.ts",
+      "service": "backend/src/decks/decks.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "Slides",
+      "status": "pass",
+      "controller": "backend/src/slides/slides.controller.ts",
+      "service": "backend/src/slides/slides.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "CVs",
+      "status": "pass",
+      "controller": "backend/src/career/career.controller.ts",
+      "service": "backend/src/career/cv-documents.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "PDFs",
+      "status": "pass",
+      "controller": "backend/src/pdf-studio/controllers/pdf-export.controller.ts",
+      "service": "backend/src/pdf-documents/pdf-documents.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "Excel Workbooks",
+      "status": "pass",
+      "controller": "backend/src/excel-studio/excel-studio.controller.ts",
+      "service": "backend/src/excel-studio/excel-studio.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "Uploads",
+      "status": "pass",
+      "controller": "backend/src/upload/upload.controller.ts",
+      "service": "backend/src/files/uploaded-asset.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "Exports",
+      "status": "pass",
+      "controller": "backend/src/export/export.controller.ts",
+      "service": "backend/src/main.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "Brand Kits",
+      "status": "pass",
+      "controller": "backend/src/brand-kits/brand-kits.controller.ts",
+      "service": "backend/src/brand-kits/brand-kits.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "Shares",
+      "status": "pass",
+      "controller": "backend/src/sharing/deck-shares.controller.ts",
+      "service": "backend/src/sharing/deck-shares.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "Workspaces",
+      "status": "pass",
+      "controller": "backend/src/workspaces/workspaces.controller.ts",
+      "service": "backend/src/workspaces/workspaces.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    },
+    {
+      "resource": "Feasibility Studies",
+      "status": "pass",
+      "controller": "backend/src/feasibility-studio/feasibility-studio.controller.ts",
+      "service": "backend/src/feasibility-studio/feasibility-studio.service.ts",
+      "checks": {
+        "jwtGuard": true,
+        "ownerOrWorkspaceScope": true,
+        "denyPath": true
+      },
+      "findings": []
+    }
+  ]
+}

@@ -13,10 +13,7 @@ export class ChartGenerationService {
   /**
    * Generate charts for a slide based on its content
    */
-  generateChartsForSlide(
-    slide: SlideContent,
-    input: WizardInput,
-  ): ChartConfig[] {
+  generateChartsForSlide(slide: SlideContent, input: WizardInput): ChartConfig[] {
     if (!input.includeCharts) {
       return [];
     }
@@ -48,9 +45,7 @@ export class ChartGenerationService {
           break;
       }
     } catch (error) {
-      this.logger.warn(
-        `Failed to generate charts for slide ${slide.type}: ${error.message}`,
-      );
+      this.logger.warn(`Failed to generate charts for slide ${slide.type}: ${error.message}`);
     }
 
     return charts;
@@ -125,9 +120,7 @@ export class ChartGenerationService {
         data: [
           {
             name: 'Metrics',
-            values: content.metrics.map((m: any) =>
-              this.extractNumericValue(m.value) || 0,
-            ),
+            values: content.metrics.map((m: any) => this.extractNumericValue(m.value) || 0),
             labels: content.metrics.map((m: any) => m.label),
             color: '#10B981',
           },
@@ -185,9 +178,7 @@ export class ChartGenerationService {
       data: [
         {
           name: 'Price',
-          values: content.pricing.map((p: any) =>
-            this.extractNumericValue(p.price) || 0,
-          ),
+          values: content.pricing.map((p: any) => this.extractNumericValue(p.price) || 0),
           labels: content.pricing.map((p: any) => p.tier || p.name),
           color: '#8B5CF6',
         },
@@ -219,17 +210,13 @@ export class ChartGenerationService {
         data: [
           {
             name: 'Revenue',
-            values: content.projections.map((p: any) =>
-              this.extractNumericValue(p.revenue) || 0,
-            ),
+            values: content.projections.map((p: any) => this.extractNumericValue(p.revenue) || 0),
             labels: content.projections.map((p: any) => p.year?.toString() || ''),
             color: '#059669',
           },
           {
             name: 'Expenses',
-            values: content.projections.map((p: any) =>
-              this.extractNumericValue(p.expenses) || 0,
-            ),
+            values: content.projections.map((p: any) => this.extractNumericValue(p.expenses) || 0),
             labels: content.projections.map((p: any) => p.year?.toString() || ''),
             color: '#DC2626',
           },
@@ -251,9 +238,7 @@ export class ChartGenerationService {
         data: [
           {
             name: 'EBITDA',
-            values: content.projections.map((p: any) =>
-              this.extractNumericValue(p.ebitda) || 0,
-            ),
+            values: content.projections.map((p: any) => this.extractNumericValue(p.ebitda) || 0),
             labels: content.projections.map((p: any) => p.year?.toString() || ''),
             color: '#F59E0B',
           },
@@ -288,8 +273,8 @@ export class ChartGenerationService {
       data: [
         {
           name: 'Features',
-          values: content.competitors.map((_: any, i: number) => 
-            i === 0 ? 95 : 60 + Math.random() * 20
+          values: content.competitors.map((_: any, i: number) =>
+            i === 0 ? 95 : 60 + Math.random() * 20,
           ),
           labels: content.competitors.map((c: any) => c.name),
           color: '#6366F1',

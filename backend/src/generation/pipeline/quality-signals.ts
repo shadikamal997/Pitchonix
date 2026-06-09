@@ -24,11 +24,14 @@ import type { WizardInput, SlideContent } from '../slide-types/types';
  */
 export function contentRichness(input: WizardInput): number {
   let points = 0;
-  const max   = 100;
+  const max = 100;
 
   // Core narrative fields (4 pts each)
   const coreFields: (keyof WizardInput)[] = [
-    'companyName', 'problem', 'solution', 'shortDescription',
+    'companyName',
+    'problem',
+    'solution',
+    'shortDescription',
   ];
   for (const f of coreFields) {
     if (input[f] && String(input[f]).trim().length >= 10) points += 4;
@@ -36,8 +39,13 @@ export function contentRichness(input: WizardInput): number {
 
   // Supporting narrative (3 pts each)
   const supportFields: (keyof WizardInput)[] = [
-    'marketOpportunity', 'traction', 'team', 'fundingAsk',
-    'revenueModel', 'roadmap', 'differentiation',
+    'marketOpportunity',
+    'traction',
+    'team',
+    'fundingAsk',
+    'revenueModel',
+    'roadmap',
+    'differentiation',
   ];
   for (const f of supportFields) {
     if (input[f] && String(input[f]).trim().length >= 10) points += 3;
@@ -46,13 +54,13 @@ export function contentRichness(input: WizardInput): number {
   // Structured data — highest weight (up to 8 pts per section)
   const s = input.structured;
   if (s) {
-    if ((s.kpis?.length ?? 0) >= 2)           points += 8;
-    if ((s.teamMembers?.length ?? 0) >= 2)    points += 8;
-    if ((s.roadmapPhases?.length ?? 0) >= 2)  points += 6;
-    if ((s.pricingTiers?.length ?? 0) >= 2)   points += 6;
+    if ((s.kpis?.length ?? 0) >= 2) points += 8;
+    if ((s.teamMembers?.length ?? 0) >= 2) points += 8;
+    if ((s.roadmapPhases?.length ?? 0) >= 2) points += 6;
+    if ((s.pricingTiers?.length ?? 0) >= 2) points += 6;
     if (s.financials?.revenue || (s.financials?.projections?.length ?? 0) > 0) points += 6;
-    if ((s.competitors?.length ?? 0) >= 2)    points += 4;
-    if (s.marketSizing?.tam)                  points += 4;
+    if ((s.competitors?.length ?? 0) >= 2) points += 4;
+    if (s.marketSizing?.tam) points += 4;
     if ((s.funding?.allocations?.length ?? 0) >= 2) points += 4;
   }
 
@@ -92,16 +100,11 @@ export function visualCoverage(slides: SlideContent[]): number {
  *   visualCoverage   15%
  */
 export function compositeScore(params: {
-  scorecardTotal:  number;
-  narrativeScore:  number;
+  scorecardTotal: number;
+  narrativeScore: number;
   contentRichness: number;
-  visualCoverage:  number;
+  visualCoverage: number;
 }): number {
   const { scorecardTotal, narrativeScore, contentRichness: cr, visualCoverage: vc } = params;
-  return Math.round(
-    scorecardTotal  * 0.40 +
-    narrativeScore  * 0.25 +
-    cr              * 0.20 +
-    vc              * 0.15,
-  );
+  return Math.round(scorecardTotal * 0.4 + narrativeScore * 0.25 + cr * 0.2 + vc * 0.15);
 }

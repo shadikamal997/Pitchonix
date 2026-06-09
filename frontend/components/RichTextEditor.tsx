@@ -67,6 +67,18 @@ export function RichTextEditor({
     },
   });
 
+  // Phase Ω.2 — sync external content changes (e.g. an imported PDF/DOCX) into
+  // the editor. TipTap only reads `content` at init, so without this an import
+  // would never appear. Guard against clobbering in-progress typing.
+  React.useEffect(() => {
+    if (!editor) return;
+    const incoming = content || '';
+    if (incoming !== editor.getHTML()) {
+      editor.commands.setContent(incoming, { emitUpdate: false } as any);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, editor]);
+
   if (!editor) {
     return null;
   }

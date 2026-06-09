@@ -1,5 +1,10 @@
 import type { SlideElementDTO, ElementStyle } from '../slides/element-types';
-import type { ExportTextFit, PlannedSlideElement, RenderDeckInput, RenderPlanResult } from './render-types';
+import type {
+  ExportTextFit,
+  PlannedSlideElement,
+  RenderDeckInput,
+  RenderPlanResult,
+} from './render-types';
 
 const SLIDE_W = 1280;
 const SLIDE_H = 720;
@@ -46,18 +51,100 @@ const SPACING = {
   2: 8,
 } as const;
 
-export type TextRole = 'heading' | 'subheading' | 'paragraph' | 'caption' | 'label' | 'footer' | 'quote' | 'cta' | 'metric';
+export type TextRole =
+  | 'heading'
+  | 'subheading'
+  | 'paragraph'
+  | 'caption'
+  | 'label'
+  | 'footer'
+  | 'quote'
+  | 'cta'
+  | 'metric';
 
-const TYPE_STYLES: Record<TextRole, { size: number; weight: number; lineHeight: number; letterSpacing: number; maxLines?: number; minSize: number }> = {
-  heading:    { size: TYPOGRAPHY['4xl'], weight: WEIGHT.bold,     lineHeight: LINE_HEIGHT.snug,    letterSpacing: -0.5, maxLines: 3, minSize: TYPOGRAPHY.xl },
-  subheading: { size: TYPOGRAPHY.md,     weight: WEIGHT.semibold, lineHeight: LINE_HEIGHT.normal,  letterSpacing: 0,    maxLines: 3, minSize: TYPOGRAPHY.sm },
-  paragraph:  { size: TYPOGRAPHY.base,   weight: WEIGHT.regular,  lineHeight: LINE_HEIGHT.relaxed, letterSpacing: 0,    maxLines: 8, minSize: TYPOGRAPHY.xs },
-  caption:    { size: TYPOGRAPHY.xs,     weight: WEIGHT.medium,   lineHeight: LINE_HEIGHT.normal,  letterSpacing: 1,    maxLines: 3, minSize: TYPOGRAPHY.xs },
-  label:      { size: TYPOGRAPHY.sm,     weight: WEIGHT.bold,     lineHeight: LINE_HEIGHT.snug,    letterSpacing: 2,    maxLines: 2, minSize: TYPOGRAPHY.xs },
-  footer:     { size: TYPOGRAPHY.xs,     weight: WEIGHT.medium,   lineHeight: LINE_HEIGHT.normal,  letterSpacing: 1,    maxLines: 2, minSize: TYPOGRAPHY.xs },
-  quote:      { size: TYPOGRAPHY['2xl'], weight: WEIGHT.medium,   lineHeight: LINE_HEIGHT.normal,  letterSpacing: -0.3, maxLines: 4, minSize: TYPOGRAPHY.sm },
-  cta:        { size: TYPOGRAPHY.sm,     weight: WEIGHT.bold,     lineHeight: LINE_HEIGHT.snug,    letterSpacing: 2,    maxLines: 1, minSize: TYPOGRAPHY.xs },
-  metric:     { size: TYPOGRAPHY['8xl'], weight: WEIGHT.black,    lineHeight: LINE_HEIGHT.tight,   letterSpacing: -3,   maxLines: 1, minSize: TYPOGRAPHY.lg },
+const TYPE_STYLES: Record<
+  TextRole,
+  {
+    size: number;
+    weight: number;
+    lineHeight: number;
+    letterSpacing: number;
+    maxLines?: number;
+    minSize: number;
+  }
+> = {
+  heading: {
+    size: TYPOGRAPHY['4xl'],
+    weight: WEIGHT.bold,
+    lineHeight: LINE_HEIGHT.snug,
+    letterSpacing: -0.5,
+    maxLines: 3,
+    minSize: TYPOGRAPHY.xl,
+  },
+  subheading: {
+    size: TYPOGRAPHY.md,
+    weight: WEIGHT.semibold,
+    lineHeight: LINE_HEIGHT.normal,
+    letterSpacing: 0,
+    maxLines: 3,
+    minSize: TYPOGRAPHY.sm,
+  },
+  paragraph: {
+    size: TYPOGRAPHY.base,
+    weight: WEIGHT.regular,
+    lineHeight: LINE_HEIGHT.relaxed,
+    letterSpacing: 0,
+    maxLines: 8,
+    minSize: TYPOGRAPHY.xs,
+  },
+  caption: {
+    size: TYPOGRAPHY.xs,
+    weight: WEIGHT.medium,
+    lineHeight: LINE_HEIGHT.normal,
+    letterSpacing: 1,
+    maxLines: 3,
+    minSize: TYPOGRAPHY.xs,
+  },
+  label: {
+    size: TYPOGRAPHY.sm,
+    weight: WEIGHT.bold,
+    lineHeight: LINE_HEIGHT.snug,
+    letterSpacing: 2,
+    maxLines: 2,
+    minSize: TYPOGRAPHY.xs,
+  },
+  footer: {
+    size: TYPOGRAPHY.xs,
+    weight: WEIGHT.medium,
+    lineHeight: LINE_HEIGHT.normal,
+    letterSpacing: 1,
+    maxLines: 2,
+    minSize: TYPOGRAPHY.xs,
+  },
+  quote: {
+    size: TYPOGRAPHY['2xl'],
+    weight: WEIGHT.medium,
+    lineHeight: LINE_HEIGHT.normal,
+    letterSpacing: -0.3,
+    maxLines: 4,
+    minSize: TYPOGRAPHY.sm,
+  },
+  cta: {
+    size: TYPOGRAPHY.sm,
+    weight: WEIGHT.bold,
+    lineHeight: LINE_HEIGHT.snug,
+    letterSpacing: 2,
+    maxLines: 1,
+    minSize: TYPOGRAPHY.xs,
+  },
+  metric: {
+    size: TYPOGRAPHY['8xl'],
+    weight: WEIGHT.black,
+    lineHeight: LINE_HEIGHT.tight,
+    letterSpacing: -3,
+    maxLines: 1,
+    minSize: TYPOGRAPHY.lg,
+  },
 };
 
 export function createRenderPlan(deck: RenderDeckInput): RenderPlanResult {
@@ -73,7 +160,9 @@ export function createRenderPlan(deck: RenderDeckInput): RenderPlanResult {
     const planned = validation.elements.map((el) => {
       const fit = planTextFit(el);
       if (fit && !fit.fits) {
-        warnings.push(`Slide ${slide.index + 1}: ${el.type} "${el.name || el.id}" required minimum typography and may need manual copy reduction.`);
+        warnings.push(
+          `Slide ${slide.index + 1}: ${el.type} "${el.name || el.id}" required minimum typography and may need manual copy reduction.`,
+        );
       }
       return fit ? { ...el, exportFit: fit } : el;
     });
@@ -108,7 +197,10 @@ export function stripHtml(s: string): string {
     .trim();
 }
 
-function validateAndAdjust(input: PlannedSlideElement[]): { elements: PlannedSlideElement[]; warnings: string[] } {
+function validateAndAdjust(input: PlannedSlideElement[]): {
+  elements: PlannedSlideElement[];
+  warnings: string[];
+} {
   const elements = input.map((el) => ({ ...el }));
   const warnings: string[] = [];
 
@@ -135,21 +227,24 @@ function validateAndAdjust(input: PlannedSlideElement[]): { elements: PlannedSli
     }
 
     if (isEmptyComposite(el)) {
-      warnings.push(`${el.type} "${el.name || el.id}" has no content and may export as an empty card.`);
+      warnings.push(
+        `${el.type} "${el.name || el.id}" has no content and may export as an empty card.`,
+      );
     }
   }
 
   const stackables = elements
     .filter((el) => !isChrome(el.type) && !isDecor(el.type))
-    .sort((a, b) => (a.y - b.y) || (a.x - b.x));
+    .sort((a, b) => a.y - b.y || a.x - b.x);
 
-  const overlapsX = (a: PlannedSlideElement, b: PlannedSlideElement) => Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0.5;
+  const overlapsX = (a: PlannedSlideElement, b: PlannedSlideElement) =>
+    Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 0.5;
   for (let i = 1; i < stackables.length; i++) {
     const current = stackables[i];
     const blocker = stackables
       .slice(0, i)
       .filter((prev) => overlapsX(prev, current))
-      .sort((a, b) => (b.y + b.height) - (a.y + a.height))[0];
+      .sort((a, b) => b.y + b.height - (a.y + a.height))[0];
 
     if (!blocker) continue;
     const minY = blocker.y + blocker.height + rhythmGapPct;
@@ -161,7 +256,9 @@ function validateAndAdjust(input: PlannedSlideElement[]): { elements: PlannedSli
         else current.y = Math.max(SAFE_AREA.top, bottomLimit - current.height);
       }
       current.exportAdjusted = true;
-      warnings.push(`${current.type} "${current.name || current.id}" stacked below ${blocker.type} to prevent export overlap.`);
+      warnings.push(
+        `${current.type} "${current.name || current.id}" stacked below ${blocker.type} to prevent export overlap.`,
+      );
     }
   }
 
@@ -203,10 +300,9 @@ function fitElementText(el: SlideElementDTO, role: TextRole): ExportTextFit {
   }
 
   const finalLines = estimateLineCount(text, boxWidth, best, fontWeight, letterSpacing);
-  const fits = finalLines * best * lineHeight <= Math.min(
-    boxHeight,
-    token.maxLines ? token.maxLines * best * lineHeight : boxHeight,
-  );
+  const fits =
+    finalLines * best * lineHeight <=
+    Math.min(boxHeight, token.maxLines ? token.maxLines * best * lineHeight : boxHeight);
 
   return {
     role,
@@ -242,13 +338,27 @@ function textForRole(el: SlideElementDTO, role: TextRole): string {
   return stripHtml(content.html || content.text || '');
 }
 
-function estimateLineCount(text: string, widthPx: number, fontSize: number, fontWeight?: number | string, letterSpacing = 0): number {
+function estimateLineCount(
+  text: string,
+  widthPx: number,
+  fontSize: number,
+  fontWeight?: number | string,
+  letterSpacing = 0,
+): number {
   const normalized = (text || ' ').replace(/\s+/g, ' ').trim() || ' ';
-  const weightNum = typeof fontWeight === 'number' ? fontWeight : String(fontWeight).toLowerCase() === 'bold' ? 700 : 400;
+  const weightNum =
+    typeof fontWeight === 'number'
+      ? fontWeight
+      : String(fontWeight).toLowerCase() === 'bold'
+        ? 700
+        : 400;
   const avgChar = fontSize * (weightNum >= 700 ? 0.57 : 0.53) + Math.max(0, letterSpacing);
   const charsPerLine = Math.max(4, Math.floor(widthPx / Math.max(1, avgChar)));
   const hardLines = normalized.split(/\n+/);
-  return hardLines.reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / charsPerLine)), 0);
+  return hardLines.reduce(
+    (sum, line) => sum + Math.max(1, Math.ceil(line.length / charsPerLine)),
+    0,
+  );
 }
 
 function horizontalPaddingFor(role: TextRole): number {
@@ -266,19 +376,36 @@ function verticalPaddingFor(role: TextRole): number {
 function isEmptyComposite(el: SlideElementDTO): boolean {
   const c = (el.content || {}) as any;
   switch (el.type) {
-    case 'teamCard': return !Array.isArray(c.members) || c.members.length === 0;
-    case 'pricingCard': return !Array.isArray(c.tiers) || c.tiers.length === 0;
-    case 'comparison': return !Array.isArray(c.rows) || c.rows.length === 0;
-    case 'featureGrid': return !Array.isArray(c.items) || c.items.length === 0;
-    case 'processSteps': return !Array.isArray(c.steps) || c.steps.length === 0;
-    case 'timeline': return !Array.isArray(c.items) || c.items.length === 0;
-    case 'roadmap': return !Array.isArray(c.phases) || c.phases.length === 0;
-    case 'swot': return !(c.strengths?.length || c.weaknesses?.length || c.opportunities?.length || c.threats?.length);
-    case 'chart': return !Array.isArray(c.series) || c.series.length === 0;
-    case 'table': return !Array.isArray(c.rows) || c.rows.length === 0;
+    case 'teamCard':
+      return !Array.isArray(c.members) || c.members.length === 0;
+    case 'pricingCard':
+      return !Array.isArray(c.tiers) || c.tiers.length === 0;
+    case 'comparison':
+      return !Array.isArray(c.rows) || c.rows.length === 0;
+    case 'featureGrid':
+      return !Array.isArray(c.items) || c.items.length === 0;
+    case 'processSteps':
+      return !Array.isArray(c.steps) || c.steps.length === 0;
+    case 'timeline':
+      return !Array.isArray(c.items) || c.items.length === 0;
+    case 'roadmap':
+      return !Array.isArray(c.phases) || c.phases.length === 0;
+    case 'swot':
+      return !(
+        c.strengths?.length ||
+        c.weaknesses?.length ||
+        c.opportunities?.length ||
+        c.threats?.length
+      );
+    case 'chart':
+      return !Array.isArray(c.series) || c.series.length === 0;
+    case 'table':
+      return !Array.isArray(c.rows) || c.rows.length === 0;
     case 'bulletList':
-    case 'numberedList': return !Array.isArray(c.items) || c.items.length === 0;
-    default: return false;
+    case 'numberedList':
+      return !Array.isArray(c.items) || c.items.length === 0;
+    default:
+      return false;
   }
 }
 

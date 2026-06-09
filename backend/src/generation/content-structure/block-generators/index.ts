@@ -8,26 +8,47 @@
 
 import { BlockKind, ContentStructureProfile, SlideBlock } from '../types';
 
-export function generateBlock(kind: BlockKind, profile: ContentStructureProfile): SlideBlock | null {
+export function generateBlock(
+  kind: BlockKind,
+  profile: ContentStructureProfile,
+): SlideBlock | null {
   switch (kind) {
-    case 'metric':            return generateMetricBlock(profile);
-    case 'metricGrid':        return generateMetricGridBlock(profile);
-    case 'kpi':               return generateKpiBlock(profile);
-    case 'pricing':           return generatePricingBlock(profile);
-    case 'roadmap':           return generateRoadmapBlock(profile);
-    case 'timeline':          return generateTimelineBlock(profile);
-    case 'team':              return generateTeamBlock(profile);
-    case 'featureGrid':       return generateFeatureGridBlock(profile);
-    case 'comparison':        return generateComparisonBlock(profile);
-    case 'swot':              return generateSwotBlock(profile);
-    case 'marketSizing':      return generateMarketSizingBlock(profile);
-    case 'fundingAllocation': return generateFundingAllocationBlock(profile);
-    case 'processSteps':      return generateProcessStepsBlock(profile);
-    case 'testimonial':       return null;
-    case 'quote':             return null;
-    case 'bulletList':        return generateBulletListBlock(profile);
-    case 'paragraph':         return generateParagraphBlock(profile);
-    case 'chart':             return generateChartBlock(profile);
+    case 'metric':
+      return generateMetricBlock(profile);
+    case 'metricGrid':
+      return generateMetricGridBlock(profile);
+    case 'kpi':
+      return generateKpiBlock(profile);
+    case 'pricing':
+      return generatePricingBlock(profile);
+    case 'roadmap':
+      return generateRoadmapBlock(profile);
+    case 'timeline':
+      return generateTimelineBlock(profile);
+    case 'team':
+      return generateTeamBlock(profile);
+    case 'featureGrid':
+      return generateFeatureGridBlock(profile);
+    case 'comparison':
+      return generateComparisonBlock(profile);
+    case 'swot':
+      return generateSwotBlock(profile);
+    case 'marketSizing':
+      return generateMarketSizingBlock(profile);
+    case 'fundingAllocation':
+      return generateFundingAllocationBlock(profile);
+    case 'processSteps':
+      return generateProcessStepsBlock(profile);
+    case 'testimonial':
+      return null;
+    case 'quote':
+      return null;
+    case 'bulletList':
+      return generateBulletListBlock(profile);
+    case 'paragraph':
+      return generateParagraphBlock(profile);
+    case 'chart':
+      return generateChartBlock(profile);
   }
 }
 
@@ -39,11 +60,13 @@ function generateMetricBlock(profile: ContentStructureProfile): SlideBlock | nul
   return {
     kind: 'metric',
     content: {
-      metrics: [{
-        value: num.value,
-        label: inferMetricLabel(num.context),
-        unit:  num.isPercent ? '%' : num.isCurrency ? undefined : num.unit,
-      }],
+      metrics: [
+        {
+          value: num.value,
+          label: inferMetricLabel(num.context),
+          unit: num.isPercent ? '%' : num.isCurrency ? undefined : num.unit,
+        },
+      ],
     },
     meta: { role: 'metric', priority: 70 },
   };
@@ -58,7 +81,7 @@ function generateMetricGridBlock(profile: ContentStructureProfile): SlideBlock |
       metrics: nums.map((n, i) => ({
         value: n.value,
         label: inferMetricLabel(n.context) || defaultMetricLabel(i),
-        unit:  n.isPercent ? '%' : undefined,
+        unit: n.isPercent ? '%' : undefined,
       })),
     },
     meta: { role: 'metric-strip', priority: 80 },
@@ -68,16 +91,20 @@ function generateMetricGridBlock(profile: ContentStructureProfile): SlideBlock |
 function generateKpiBlock(profile: ContentStructureProfile): SlideBlock | null {
   const num = profile.extracted.numbers[0];
   if (!num) return null;
-  const trend = profile.extracted.numbers.find((n) => n.isPercent && /(growth|increase|up|YoY|MoM)/i.test(n.context));
+  const trend = profile.extracted.numbers.find(
+    (n) => n.isPercent && /(growth|increase|up|YoY|MoM)/i.test(n.context),
+  );
   return {
     kind: 'kpi',
     content: {
-      kpis: [{
-        value: num.value,
-        label: inferMetricLabel(num.context) || 'Key Metric',
-        sublabel: trend ? trend.value : undefined,
-        trendDirection: trend ? 'up' : undefined,
-      }],
+      kpis: [
+        {
+          value: num.value,
+          label: inferMetricLabel(num.context) || 'Key Metric',
+          sublabel: trend ? trend.value : undefined,
+          trendDirection: trend ? 'up' : undefined,
+        },
+      ],
     },
     meta: { role: 'kpi', priority: 75 },
   };
@@ -88,17 +115,24 @@ function generateKpiBlock(profile: ContentStructureProfile): SlideBlock | null {
 function generatePricingBlock(profile: ContentStructureProfile): SlideBlock | null {
   const tiers = profile.extracted.pricingTiers;
   if (tiers.length === 0) return null;
-  const expanded = tiers.length < 2 ? [
-    ...tiers,
-    { name: 'Pro',        price: 'Custom',  features: ['Advanced features', 'Priority support'] },
-    { name: 'Enterprise', price: 'Contact', features: ['Custom', 'SLA', 'Dedicated support'] },
-  ].slice(0, 3) : tiers.slice(0, 4);
+  const expanded =
+    tiers.length < 2
+      ? [
+          ...tiers,
+          { name: 'Pro', price: 'Custom', features: ['Advanced features', 'Priority support'] },
+          {
+            name: 'Enterprise',
+            price: 'Contact',
+            features: ['Custom', 'SLA', 'Dedicated support'],
+          },
+        ].slice(0, 3)
+      : tiers.slice(0, 4);
   return {
     kind: 'pricing',
     content: {
       pricingTiers: expanded.map((t, i) => ({
-        name:     t.name || defaultTierName(i),
-        price:    t.price || '',
+        name: t.name || defaultTierName(i),
+        price: t.price || '',
         features: t.features.length > 0 ? t.features : ['Core feature set'],
         highlight: i === 1 && expanded.length >= 3, // middle tier
       })),
@@ -116,8 +150,8 @@ function generateRoadmapBlock(profile: ContentStructureProfile): SlideBlock | nu
     kind: 'roadmap',
     content: {
       phases: phases.slice(0, 6).map((p, i) => ({
-        phase:   p.phase || `Phase ${i + 1}`,
-        period:  p.period,
+        phase: p.phase || `Phase ${i + 1}`,
+        period: p.period,
         bullets: p.bullets.length > 0 ? p.bullets : [`Milestone ${i + 1}`],
       })),
     },
@@ -132,8 +166,8 @@ function generateTimelineBlock(profile: ContentStructureProfile): SlideBlock | n
     kind: 'timeline',
     content: {
       timeline: phases.slice(0, 6).map((p, i) => ({
-        date:        p.period,
-        title:       p.phase || `Milestone ${i + 1}`,
+        date: p.period,
+        title: p.phase || `Milestone ${i + 1}`,
         description: p.bullets[0],
       })),
     },
@@ -152,7 +186,7 @@ function generateTeamBlock(profile: ContentStructureProfile): SlideBlock | null 
       team: people.slice(0, 6).map((p, i) => ({
         name: p.name,
         role: p.role || defaultRole(i),
-        bio:  p.background,
+        bio: p.background,
       })),
     },
     meta: { role: 'team', priority: 80 },
@@ -169,8 +203,8 @@ function generateFeatureGridBlock(profile: ContentStructureProfile): SlideBlock 
     content: {
       featureGrid: {
         items: feats.slice(0, 6).map((f, i) => ({
-          id:          `feat-${i + 1}`,
-          title:       f.title || `Feature ${i + 1}`,
+          id: `feat-${i + 1}`,
+          title: f.title || `Feature ${i + 1}`,
           description: f.description,
         })),
         columns: feats.length >= 4 ? 3 : 2,
@@ -190,8 +224,8 @@ function generateProcessStepsBlock(profile: ContentStructureProfile): SlideBlock
     content: {
       processSteps: {
         steps: feats.slice(0, 5).map((f, i) => ({
-          id:          `step-${i + 1}`,
-          title:       f.title || `Step ${i + 1}`,
+          id: `step-${i + 1}`,
+          title: f.title || `Step ${i + 1}`,
           description: f.description,
         })),
         orientation: 'horizontal',
@@ -214,7 +248,7 @@ function generateComparisonBlock(profile: ContentStructureProfile): SlideBlock |
         columns: ['Us', ...comps.slice(0, 3).map((c) => c.name)],
         rows: features.slice(0, 4).map((feat) => ({
           feature: feat,
-          values:  ['✓', ...comps.slice(0, 3).map(() => '—')],
+          values: ['✓', ...comps.slice(0, 3).map(() => '—')],
         })),
         highlightColumn: 0,
       },
@@ -232,10 +266,10 @@ function generateSwotBlock(profile: ContentStructureProfile): SlideBlock | null 
     kind: 'swot',
     content: {
       swot: {
-        strengths:     swot.strengths,
-        weaknesses:    swot.weaknesses,
+        strengths: swot.strengths,
+        weaknesses: swot.weaknesses,
         opportunities: swot.opportunities,
-        threats:       swot.threats,
+        threats: swot.threats,
       },
     },
     meta: { role: 'swot', priority: 80 },
@@ -269,8 +303,11 @@ function generateFundingAllocationBlock(profile: ContentStructureProfile): Slide
     content: {
       featureGrid: {
         items: allocs.slice(0, 5).map((a, i) => ({
-          id:          `alloc-${i + 1}`,
-          title:       a.percentage !== undefined ? `${a.percentage}% — ${truncate(a.category, 28)}` : truncate(a.category, 32),
+          id: `alloc-${i + 1}`,
+          title:
+            a.percentage !== undefined
+              ? `${a.percentage}% — ${truncate(a.category, 28)}`
+              : truncate(a.category, 32),
           description: a.amount,
         })),
         columns: allocs.length >= 4 ? 3 : 2,
@@ -288,11 +325,16 @@ function generateChartBlock(profile: ContentStructureProfile): SlideBlock | null
   return {
     kind: 'chart',
     content: {
-      charts: [{
-        type: 'bar',
-        title: 'Key Metrics',
-        data: nums.map((n) => ({ label: inferMetricLabel(n.context) || n.value, value: n.numeric })),
-      }],
+      charts: [
+        {
+          type: 'bar',
+          title: 'Key Metrics',
+          data: nums.map((n) => ({
+            label: inferMetricLabel(n.context) || n.value,
+            value: n.numeric,
+          })),
+        },
+      ],
     },
     meta: { role: 'chart', priority: 70 },
   };
@@ -324,20 +366,20 @@ function generateParagraphBlock(_profile: ContentStructureProfile): SlideBlock |
 
 function inferMetricLabel(context: string): string {
   const c = context.toLowerCase();
-  if (/\bmrr\b/.test(c))                      return 'MRR';
-  if (/\barr\b/.test(c))                      return 'ARR';
-  if (/\b(nps|net promoter)\b/.test(c))       return 'NPS';
-  if (/\b(cac|acquisition cost)\b/.test(c))   return 'CAC';
-  if (/\b(ltv|lifetime value)\b/.test(c))     return 'LTV';
-  if (/\b(churn)\b/.test(c))                  return 'Churn';
-  if (/\b(growth|growing)\b/.test(c))         return 'Growth';
-  if (/\b(retention)\b/.test(c))              return 'Retention';
+  if (/\bmrr\b/.test(c)) return 'MRR';
+  if (/\barr\b/.test(c)) return 'ARR';
+  if (/\b(nps|net promoter)\b/.test(c)) return 'NPS';
+  if (/\b(cac|acquisition cost)\b/.test(c)) return 'CAC';
+  if (/\b(ltv|lifetime value)\b/.test(c)) return 'LTV';
+  if (/\b(churn)\b/.test(c)) return 'Churn';
+  if (/\b(growth|growing)\b/.test(c)) return 'Growth';
+  if (/\b(retention)\b/.test(c)) return 'Retention';
   if (/\b(margin|gross|operating)\b/.test(c)) return 'Margin';
   if (/\b(user|customer|client)s?\b/.test(c)) return 'Customers';
-  if (/\b(revenue|sales)\b/.test(c))          return 'Revenue';
-  if (/\bdownload/.test(c))                   return 'Downloads';
-  if (/\bsubscriber/.test(c))                 return 'Subscribers';
-  if (/\bmarket\b/.test(c))                   return 'Market';
+  if (/\b(revenue|sales)\b/.test(c)) return 'Revenue';
+  if (/\bdownload/.test(c)) return 'Downloads';
+  if (/\bsubscriber/.test(c)) return 'Subscribers';
+  if (/\bmarket\b/.test(c)) return 'Market';
   return '';
 }
 

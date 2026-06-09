@@ -1,5 +1,13 @@
 import {
-  Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -8,12 +16,18 @@ import { GetUser } from '../auth/get-user.decorator';
 import { RequireRole } from '../workspaces/role.guard';
 import { ComponentsService } from './components.service';
 import {
-  SavedComponentDTO, ComponentInstanceDTO,
-  CreateComponentInput, ListComponentsQuery, ComponentCategory,
+  SavedComponentDTO,
+  ComponentInstanceDTO,
+  CreateComponentInput,
+  ListComponentsQuery,
+  ComponentCategory,
 } from './component-types';
 import { smartRegistry } from './smart/smart-registry';
 import {
-  SmartFamilyId, SmartComponentType, SMART_FAMILIES, SMART_COMPONENT_TYPES,
+  SmartFamilyId,
+  SmartComponentType,
+  SMART_FAMILIES,
+  SMART_COMPONENT_TYPES,
 } from './smart/smart-types';
 
 /**
@@ -56,22 +70,19 @@ export class ComponentsController {
   @ApiOperation({ summary: 'List every (family × type) built-in component (Tier 3)' })
   async listSmart(
     @Query('family') family?: SmartFamilyId,
-    @Query('type')   type?: SmartComponentType,
+    @Query('type') type?: SmartComponentType,
   ) {
     if (family && !SMART_FAMILIES.includes(family)) return [];
     if (type && !SMART_COMPONENT_TYPES.includes(type)) return [];
     if (family && type) return [smartRegistry.getOne(family, type)];
-    if (family)         return smartRegistry.listForFamily(family);
-    if (type)           return smartRegistry.listForType(type);
+    if (family) return smartRegistry.listForFamily(family);
+    if (type) return smartRegistry.listForType(type);
     return smartRegistry.listAll();
   }
 
   @Get('components/smart/:family/:type')
   @ApiOperation({ summary: 'Get a single built-in component by (family, type)' })
-  async getSmart(
-    @Param('family') family: SmartFamilyId,
-    @Param('type')   type: SmartComponentType,
-  ) {
+  async getSmart(@Param('family') family: SmartFamilyId, @Param('type') type: SmartComponentType) {
     if (!SMART_FAMILIES.includes(family) || !SMART_COMPONENT_TYPES.includes(type)) {
       return null;
     }
@@ -83,23 +94,23 @@ export class ComponentsController {
   // ---------------------------------------------------------------------------
 
   @Get('components')
-  @ApiOperation({ summary: 'List the current user\'s component library' })
+  @ApiOperation({ summary: "List the current user's component library" })
   async list(
     @GetUser() user: any,
-    @Query('search')   search?: string,
+    @Query('search') search?: string,
     @Query('category') category?: ComponentCategory,
     @Query('favorite') favorite?: string,
-    @Query('tag')      tag?: string,
-    @Query('limit')    limit?: string,
-    @Query('offset')   offset?: string,
+    @Query('tag') tag?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
   ): Promise<SavedComponentDTO[]> {
     const q: ListComponentsQuery = {
       search,
       category,
       tag,
       favorite: favorite === 'true' ? true : undefined,
-      limit:    limit  ? parseInt(limit, 10)  : undefined,
-      offset:   offset ? parseInt(offset, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
     };
     return this.components.listForUser(user.id, q);
   }
@@ -116,7 +127,10 @@ export class ComponentsController {
 
   @Post('components')
   @ApiOperation({ summary: 'Save a new component (selection → library)' })
-  async create(@GetUser() user: any, @Body() body: CreateComponentInput): Promise<SavedComponentDTO> {
+  async create(
+    @GetUser() user: any,
+    @Body() body: CreateComponentInput,
+  ): Promise<SavedComponentDTO> {
     return this.components.create(user.id, body);
   }
 
@@ -158,7 +172,10 @@ export class ComponentsController {
   //  Instance sync
   // ---------------------------------------------------------------------------
   @Get('components/:id/instances')
-  async listInstances(@Param('id') id: string, @GetUser() user: any): Promise<ComponentInstanceDTO[]> {
+  async listInstances(
+    @Param('id') id: string,
+    @GetUser() user: any,
+  ): Promise<ComponentInstanceDTO[]> {
     await this.components.assertComponentOwnership(id, user.id);
     return this.components.listInstancesForComponent(id);
   }
@@ -171,7 +188,9 @@ export class ComponentsController {
   }
 
   @Post('components/:id/acknowledge')
-  @ApiOperation({ summary: '"Update all instances?" → YES (acknowledge latest version everywhere)' })
+  @ApiOperation({
+    summary: '"Update all instances?" → YES (acknowledge latest version everywhere)',
+  })
   async acknowledge(@Param('id') id: string, @GetUser() user: any) {
     return this.components.acknowledgeAllInstances(user.id, id);
   }
@@ -197,14 +216,17 @@ export class ComponentsController {
     @GetUser() user: any,
   ): Promise<ComponentInstanceDTO> {
     return this.components.createInstance(user.id, body.componentId, slideId, {
-      x:     body.anchorX ?? 0,
-      y:     body.anchorY ?? 0,
+      x: body.anchorX ?? 0,
+      y: body.anchorY ?? 0,
       scale: body.scale,
     });
   }
 
   @Delete('component-instances/:instanceId')
-  async deleteInstance(@Param('instanceId') instanceId: string, @GetUser() user: any): Promise<void> {
+  async deleteInstance(
+    @Param('instanceId') instanceId: string,
+    @GetUser() user: any,
+  ): Promise<void> {
     return this.components.deleteInstance(user.id, instanceId);
   }
 }

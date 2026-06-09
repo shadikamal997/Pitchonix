@@ -1,18 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { TemplateType, getTemplateConfig, LayoutComponentType } from '../templates/template-configs';
+import {
+  TemplateType,
+  getTemplateConfig,
+  LayoutComponentType,
+} from '../templates/template-configs';
 import { LAYOUT_RENDERERS } from '../templates/layout-components';
 import { VisualCompositionService } from './visual-composition.service';
 import { ChartRenderingService } from './chart-rendering.service';
 import { BrowserPoolService } from './browser-pool.service';
 import { ProTemplateRendererService } from '../pro-templates/renderers/pro-template-renderer.service';
+import { BrandKitService } from './brand-kit.service';
 
 export interface PdfExportOptions {
   paperSize?: 'A4' | 'Letter' | 'A3' | 'Legal';
   quality?: 'standard' | 'high' | 'compressed';
   watermark?: {
     text: string;
-    opacity?: number;   // 0-1, default 0.12
+    opacity?: number; // 0-1, default 0.12
     position?: 'center' | 'diagonal';
   };
   pageRange?: { from: number; to: number } | null;
@@ -28,6 +33,7 @@ export class PdfExportService {
     private chartRenderingService: ChartRenderingService,
     private browserPoolService: BrowserPoolService,
     private proTemplateRendererService: ProTemplateRendererService,
+    private brandKitService: BrandKitService,
   ) {}
 
   /**
@@ -66,6 +72,20 @@ export class PdfExportService {
       },
     };
 
+    // Phase Ω.2 (P1#8) — apply the document's brand kit so its colors/fonts/logo
+    // actually reach the renderer (previously metadata-only). An explicit
+    // colorScheme query param still wins over the kit.
+    if ((document as any).brandKitId && !colorScheme) {
+      try {
+        const kit = await this.brandKitService.getBrandKit(undefined, (document as any).brandKitId);
+        templateConfig.style = this.brandKitService.applyBrandKitToStyle(templateConfig.style, kit);
+      } catch (e: any) {
+        this.logger.warn(
+          `Brand kit ${(document as any).brandKitId} could not be applied: ${e?.message}`,
+        );
+      }
+    }
+
     // Apply page range filter if specified
     if (exportOptions?.pageRange) {
       const { from, to } = exportOptions.pageRange;
@@ -79,7 +99,11 @@ export class PdfExportService {
     const html = await this.generateHTML(document, templateConfig, proTemplateId, exportOptions);
 
     // Convert to PDF using Puppeteer
-    const pdfBuffer = await this.htmlToPDF(html, exportOptions?.paperSize || 'A4', exportOptions?.quality || 'standard');
+    const pdfBuffer = await this.htmlToPDF(
+      html,
+      exportOptions?.paperSize || 'A4',
+      exportOptions?.quality || 'standard',
+    );
 
     const filename = `${document.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
 
@@ -91,7 +115,12 @@ export class PdfExportService {
   /**
    * Generate HTML from document and template
    */
-  private async generateHTML(document: any, templateConfig: any, proTemplateId?: string | null, exportOptions?: PdfExportOptions): Promise<string> {
+  private async generateHTML(
+    document: any,
+    templateConfig: any,
+    proTemplateId?: string | null,
+    exportOptions?: PdfExportOptions,
+  ): Promise<string> {
     const { pages } = document;
     const { style } = templateConfig;
 
@@ -110,13 +139,18 @@ export class PdfExportService {
     const useProTemplate = this.proTemplateRendererService.canRender(proTemplateId);
 
     if (useProTemplate) {
-      pageContent = this.proTemplateRendererService.renderDocument(document, proTemplateId!, 'export');
+      pageContent = this.proTemplateRendererService.renderDocument(
+        document,
+        proTemplateId!,
+        'export',
+      );
     } else if (isVisualDocument) {
       // Use visual composition for visual documents
       pageContent = await this.generateVisualPages(pages, style, purify);
     } else {
-      // Use traditional layout for structured documents
-      pageContent = this.generateStructuredPages(pages, style, purify, document);
+      // Use traditional layout for structured documents — body composition is
+      // now driven by the template's declared `layouts` (Phase Ω.2 P0#10).
+      pageContent = this.generateStructuredPages(pages, style, purify, document, templateConfig);
     }
 
     // Complete HTML document with modern, print-optimized styling
@@ -258,7 +292,10 @@ export class PdfExportService {
   }
 
   private buildWatermarkHtml(wm: NonNullable<PdfExportOptions['watermark']>): string {
-    const text = String(wm.text || 'DRAFT').replace(/[<>"'&]/g, c => ({ '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;' }[c] || c));
+    const text = String(wm.text || 'DRAFT').replace(
+      /[<>"'&]/g,
+      (c) => ({ '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;' })[c] || c,
+    );
     const op = Math.max(0.03, Math.min(0.6, wm.opacity ?? 0.12));
     const isDiag = (wm.position || 'diagonal') === 'diagonal';
     return `<div style="position:fixed;inset:0;pointer-events:none;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;">
@@ -289,7 +326,7 @@ export class PdfExportService {
 
     for (const page of pages) {
       const content = page.content as any;
-      
+
       // Determine composition config from page metadata
       const compositionConfig = {
         layoutType: content.layoutType || 'hero',
@@ -337,11 +374,17 @@ export class PdfExportService {
         if (parsed.date) html += `<p style="color:#6B7280;">${parsed.date}</p>`;
         return html || text;
       }
-    } catch (_) { /* not JSON */ }
+    } catch (_) {
+      /* not JSON */
+    }
     try {
       return basicMarkdownToHtml(text);
     } catch (_) {
-      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br>');
     }
   }
 
@@ -350,12 +393,80 @@ export class PdfExportService {
    * Skips blank TOC pages, renders cover pages properly,
    * and converts markdown to HTML before sanitization.
    */
-  private generateStructuredPages(pages: any[], style: any, purify: any, document?: any): string {
+  /**
+   * Phase Ω.2 — choose the prose body component for content pages from the
+   * template's declared `layouts`. This is what makes templates structurally
+   * distinct (single card vs two-column vs flat text) while always preserving
+   * the page's content (all three accept arbitrary prose).
+   */
+  private pickProseBody(templateConfig?: any): 'two_column' | 'text' | 'card' {
+    const layouts: LayoutComponentType[] = templateConfig?.layouts || [];
+    if (layouts.includes(LayoutComponentType.TWO_COLUMN_LAYOUT)) return 'two_column';
+    // TEXT_BLOCK only when the template explicitly prefers flat text over cards.
+    if (
+      layouts.includes(LayoutComponentType.TEXT_BLOCK) &&
+      !layouts.includes(LayoutComponentType.SECTION_CARD)
+    )
+      return 'text';
+    return 'card';
+  }
+
+  /** Split HTML into two balanced halves on block boundaries (for two-column). */
+  private splitHtmlForColumns(html: string): [string, string] {
+    const blocks = html
+      .split(/(?<=<\/(?:p|div|h[1-6]|ul|ol|table|blockquote)>)/i)
+      .filter((b) => b.trim());
+    if (blocks.length <= 1) return [html, ''];
+    const mid = Math.ceil(blocks.length / 2);
+    return [blocks.slice(0, mid).join(''), blocks.slice(mid).join('')];
+  }
+
+  /** Render a content page's body via the template-selected prose component. */
+  private composeContentBody(
+    proseBody: 'two_column' | 'text' | 'card',
+    title: string,
+    innerHtml: string,
+    style: any,
+  ): string {
+    if (proseBody === 'two_column') {
+      const [left, right] = this.splitHtmlForColumns(innerHtml);
+      const heading = title
+        ? `<h2 style="font-size:22px;font-weight:700;color:${style.primaryColor || '#111827'};margin:0 0 16px;">${title}</h2>`
+        : '';
+      const body = LAYOUT_RENDERERS[LayoutComponentType.TWO_COLUMN_LAYOUT].render(
+        { left, right },
+        style,
+      );
+      return heading + body;
+    }
+    if (proseBody === 'text') {
+      const heading = title
+        ? `<h2 style="font-size:22px;font-weight:700;color:${style.primaryColor || '#111827'};margin:0 0 16px;border-bottom:2px solid ${style.primaryColor || '#2563EB'};padding-bottom:8px;">${title}</h2>`
+        : '';
+      return (
+        heading +
+        LAYOUT_RENDERERS[LayoutComponentType.TEXT_BLOCK].render({ content: innerHtml }, style)
+      );
+    }
+    return LAYOUT_RENDERERS[LayoutComponentType.SECTION_CARD].render(
+      { title, content: innerHtml },
+      style,
+    );
+  }
+
+  private generateStructuredPages(
+    pages: any[],
+    style: any,
+    purify: any,
+    document?: any,
+    templateConfig?: any,
+  ): string {
     let pageIndex = 0;
     let firstContentPage = true;
     const parts: string[] = [];
     const hasCoverPage = pages.some((p: any) => p.pageType === 'cover');
     const nonTocPages = pages.filter((p: any) => p.pageType !== 'toc');
+    const proseBody = this.pickProseBody(templateConfig);
 
     for (const page of pages) {
       const pageType = page.pageType || 'content';
@@ -368,18 +479,28 @@ export class PdfExportService {
         const tocHtml = tocContent
           .split('\n')
           .filter((line: string) => line.trim())
-          .map((line: string) => `<div style="padding:6px 0;border-bottom:1px dotted #E5E7EB;font-size:14px;color:#374151;">${purify.sanitize(line)}</div>`)
+          .map(
+            (line: string) =>
+              `<div style="padding:6px 0;border-bottom:1px dotted #E5E7EB;font-size:14px;color:#374151;">${purify.sanitize(line)}</div>`,
+          )
           .join('');
 
         const footerHTML = document
           ? LAYOUT_RENDERERS[LayoutComponentType.FOOTER_BLOCK].render(
-              { companyName: document.metadata?.companyName || '', contact: document.metadata?.contact || '', pageNumber: pageIndex + 1, totalPages: nonTocPages.length },
+              {
+                companyName: document.metadata?.companyName || '',
+                contact: document.metadata?.contact || '',
+                pageNumber: pageIndex + 1,
+                totalPages: nonTocPages.length,
+              },
               style,
             )
           : '';
 
         const tocPageHtml = `<div style="margin-bottom:24px;"><h2 style="font-size:24px;font-weight:700;color:#111827;border-bottom:3px solid ${style.primaryColor || '#2563EB'};padding-bottom:8px;">Table of Contents</h2></div><div>${tocHtml}</div>${footerHTML}`;
-        parts.push(pageIndex++ === 0 ? tocPageHtml : `<div class="page-break"></div>${tocPageHtml}`);
+        parts.push(
+          pageIndex++ === 0 ? tocPageHtml : `<div class="page-break"></div>${tocPageHtml}`,
+        );
         continue;
       }
 
@@ -398,29 +519,40 @@ export class PdfExportService {
             overview: Array.isArray(coverData.overview)
               ? coverData.overview.map((item: string) => purify.sanitize(item))
               : [],
-            date: purify.sanitize(coverData.date || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })),
+            date: purify.sanitize(
+              coverData.date ||
+                new Date().toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                }),
+            ),
           },
           style,
         );
         const placedImagesHtml = this.renderPlacedImages(page.content?.placedImages || [], purify);
         const coverPageHtml = `<div style="position:relative;">${coverHtml}${placedImagesHtml}</div>`;
-        parts.push(pageIndex++ === 0 ? coverPageHtml : `<div class="page-break"></div>${coverPageHtml}`);
+        parts.push(
+          pageIndex++ === 0 ? coverPageHtml : `<div class="page-break"></div>${coverPageHtml}`,
+        );
         continue;
       }
 
-      const htmlContent = page.content?.html || this.convertMarkdownToHtml(page.content?.text || '');
+      const htmlContent =
+        page.content?.html || this.convertMarkdownToHtml(page.content?.text || '');
       const content = purify.sanitize(htmlContent);
       const title = purify.sanitize(page.title || '');
       const textStyles = this.buildTextStyle(page.content?.styles || {});
 
       // Header only on first content page when there is no cover page
       // (cover page already introduces the document title)
-      const headerHTML = firstContentPage && document && !hasCoverPage
-        ? LAYOUT_RENDERERS[LayoutComponentType.HERO_HEADER].render(
-            { title: document.title, description: document.outline?.detectedType || '' },
-            style,
-          )
-        : '';
+      const headerHTML =
+        firstContentPage && document && !hasCoverPage
+          ? LAYOUT_RENDERERS[LayoutComponentType.HERO_HEADER].render(
+              { title: document.title, description: document.outline?.detectedType || '' },
+              style,
+            )
+          : '';
 
       const footerHTML = document
         ? LAYOUT_RENDERERS[LayoutComponentType.FOOTER_BLOCK].render(
@@ -443,10 +575,8 @@ export class PdfExportService {
       // Charts as inline SVG
       const chartsHtml = this.renderChartsHtml(page.content?.charts || [], style);
 
-      const card = LAYOUT_RENDERERS[LayoutComponentType.SECTION_CARD].render(
-        { title, content: `<div style="${textStyles}">${content}</div>` + imageHtml + chartsHtml },
-        style,
-      );
+      const innerHtml = `<div style="${textStyles}">${content}</div>` + imageHtml + chartsHtml;
+      const card = this.composeContentBody(proseBody, title, innerHtml, style);
       const placedImagesHtml = this.renderPlacedImages(page.content?.placedImages || [], purify);
       const pageHtml = `<div style="position:relative;">${headerHTML}${card}${footerHTML}${placedImagesHtml}</div>`;
 
@@ -480,12 +610,17 @@ export class PdfExportService {
 
   private buildTextStyle(styles: Record<string, any>): string {
     const rules: string[] = [];
-    if (styles.fontFamily) rules.push(`font-family:${String(styles.fontFamily).replace(/[;"<>]/g, '')}`);
-    if (styles.fontSize) rules.push(`font-size:${Math.max(10, Math.min(32, Number(styles.fontSize) || 16))}px`);
-    if (styles.lineHeight) rules.push(`line-height:${Math.max(1.1, Math.min(2.2, Number(styles.lineHeight) || 1.6))}`);
+    if (styles.fontFamily)
+      rules.push(`font-family:${String(styles.fontFamily).replace(/[;"<>]/g, '')}`);
+    if (styles.fontSize)
+      rules.push(`font-size:${Math.max(10, Math.min(32, Number(styles.fontSize) || 16))}px`);
+    if (styles.lineHeight)
+      rules.push(`line-height:${Math.max(1.1, Math.min(2.2, Number(styles.lineHeight) || 1.6))}`);
     if (styles.color && /^#[0-9a-f]{6}$/i.test(styles.color)) rules.push(`color:${styles.color}`);
-    if (['left', 'center', 'right', 'justify'].includes(styles.textAlign)) rules.push(`text-align:${styles.textAlign}`);
-    if (['400', '500', '600', '700', 400, 500, 600, 700].includes(styles.fontWeight)) rules.push(`font-weight:${styles.fontWeight}`);
+    if (['left', 'center', 'right', 'justify'].includes(styles.textAlign))
+      rules.push(`text-align:${styles.textAlign}`);
+    if (['400', '500', '600', '700', 400, 500, 600, 700].includes(styles.fontWeight))
+      rules.push(`font-weight:${styles.fontWeight}`);
     if (styles.fontStyle === 'italic') rules.push('font-style:italic');
     if (styles.textDecoration === 'underline') rules.push('text-decoration:underline');
     return rules.join(';');
@@ -494,7 +629,7 @@ export class PdfExportService {
   private renderChartsHtml(charts: any[], style: any): string {
     if (!charts || charts.length === 0) return '';
     const primary = style?.primaryColor || '#2563EB';
-    const chartHtmlList = charts.map(chart => {
+    const chartHtmlList = charts.map((chart) => {
       if (!chart || !chart.data?.length) return '';
       const color = chart.color || primary;
       const data: { label: string; value: number }[] = chart.data;
@@ -502,84 +637,135 @@ export class PdfExportService {
       const title = chart.title || '';
 
       if (chart.type === 'kpi') {
-        const cells = data.slice(0, 6).map(d =>
-          `<div style="background:${color}15;border-radius:8px;padding:10px 14px;text-align:center;min-width:80px;">
+        const cells = data
+          .map(
+            (d) =>
+              `<div style="background:${color}15;border-radius:8px;padding:10px 14px;text-align:center;min-width:80px;">
             <div style="font-size:22px;font-weight:800;color:${color};">${d.value}</div>
             <div style="font-size:10px;color:#6B7280;margin-top:2px;">${d.label}</div>
-          </div>`
-        ).join('');
+          </div>`,
+          )
+          .join('');
         return `<div style="margin:16px 0;">
           ${title ? `<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;">${title}</div>` : ''}
           <div style="display:flex;flex-wrap:wrap;gap:8px;">${cells}</div>
+          ${this.renderChartDataAppendix(data, 'KPI data')}
         </div>`;
       }
 
       if (chart.type === 'pie') {
-        const COLORS = ['#2563EB','#7C3AED','#059669','#EA580C','#DB2777','#0D9488'];
+        const COLORS = ['#2563EB', '#7C3AED', '#059669', '#EA580C', '#DB2777', '#0D9488'];
         const total = data.reduce((s: number, d: any) => s + (Number(d.value) || 0), 0) || 1;
         let angle = 0;
-        const slices = data.map((d: any, i: number) => {
-          const slice = (Number(d.value) / total) * 360;
-          const start = angle; angle += slice;
-          const startR = (start * Math.PI) / 180;
-          const endR = ((start + slice) * Math.PI) / 180;
-          const x1 = 50 + 40 * Math.cos(startR); const y1 = 50 + 40 * Math.sin(startR);
-          const x2 = 50 + 40 * Math.cos(endR);   const y2 = 50 + 40 * Math.sin(endR);
-          const large = slice > 180 ? 1 : 0;
-          return `<path d="M50 50 L${x1} ${y1} A40 40 0 ${large} 1 ${x2} ${y2} Z" fill="${COLORS[i % COLORS.length]}" opacity="0.85"/>`;
-        }).join('');
-        const legend = data.slice(0, 6).map((d: any, i: number) =>
-          `<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#374151;">
+        const slices = data
+          .map((d: any, i: number) => {
+            const slice = (Number(d.value) / total) * 360;
+            const start = angle;
+            angle += slice;
+            const startR = (start * Math.PI) / 180;
+            const endR = ((start + slice) * Math.PI) / 180;
+            const x1 = 50 + 40 * Math.cos(startR);
+            const y1 = 50 + 40 * Math.sin(startR);
+            const x2 = 50 + 40 * Math.cos(endR);
+            const y2 = 50 + 40 * Math.sin(endR);
+            const large = slice > 180 ? 1 : 0;
+            return `<path d="M50 50 L${x1} ${y1} A40 40 0 ${large} 1 ${x2} ${y2} Z" fill="${COLORS[i % COLORS.length]}" opacity="0.85"/>`;
+          })
+          .join('');
+        const legend = data
+          .map(
+            (d: any, i: number) =>
+              `<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#374151;">
             <div style="width:8px;height:8px;border-radius:2px;background:${COLORS[i % COLORS.length]};flex-shrink:0;"></div>
             ${d.label} (${d.value})
-          </div>`
-        ).join('');
+          </div>`,
+          )
+          .join('');
         return `<div style="margin:16px 0;">
           ${title ? `<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;">${title}</div>` : ''}
           <div style="display:flex;align-items:center;gap:20px;">
             <svg viewBox="0 0 100 100" width="120" height="120">${slices}<circle cx="50" cy="50" r="18" fill="white"/></svg>
-            <div style="display:flex;flex-direction:column;gap:4px;">${legend}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:4px 10px;flex:1;">${legend}</div>
           </div>
+          ${this.renderChartDataAppendix(data, 'Pie chart data')}
         </div>`;
       }
 
       const barW = Math.max(12, Math.floor(280 / data.length) - 4);
       const chartH = 80;
-      const bars = data.map((d: any, i: number) => {
-        const h = Math.round((Number(d.value) / max) * chartH);
-        const x = i * (barW + 4);
-        const y = chartH - h;
-        return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="${color}" opacity="0.82"/>
+      const bars = data
+        .map((d: any, i: number) => {
+          const h = Math.round((Number(d.value) / max) * chartH);
+          const x = i * (barW + 4);
+          const y = chartH - h;
+          return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="${color}" opacity="0.82"/>
           <text x="${x + barW / 2}" y="${chartH + 12}" text-anchor="middle" font-size="8" fill="#6B7280">${d.label}</text>
           <text x="${x + barW / 2}" y="${y - 3}" text-anchor="middle" font-size="8" fill="${color}" font-weight="600">${d.value}</text>`;
-      }).join('');
+        })
+        .join('');
       const svgW = data.length * (barW + 4);
       return `<div style="margin:16px 0;">
         ${title ? `<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;">${title}</div>` : ''}
         <svg viewBox="0 0 ${svgW} ${chartH + 20}" width="${Math.min(svgW, 380)}" height="${chartH + 20}" style="overflow:visible;">${bars}</svg>
+        ${this.renderChartDataAppendix(data, 'Chart data')}
       </div>`;
     });
     return chartHtmlList.join('');
   }
 
+  private renderChartDataAppendix(
+    data: Array<{ label: string; value: number }>,
+    heading: string,
+  ): string {
+    if (!Array.isArray(data) || data.length === 0) return '';
+    const rows = data
+      .map(
+        (d, index) => `
+      <tr>
+        <td style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;color:#374151;">${index + 1}</td>
+        <td style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;color:#374151;">${d.label}</td>
+        <td style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;color:#374151;">${d.value}</td>
+      </tr>`,
+      )
+      .join('');
+    return `<div class="chart-overflow-data" data-overflow-nodes="${data.length}" style="margin-top:10px;break-inside:avoid;">
+      <div style="font-size:9px;font-weight:700;color:#6B7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;">${heading}</div>
+      <table style="width:100%;border-collapse:collapse;table-layout:auto;">
+        <thead><tr>
+          <th style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;text-align:left;">#</th>
+          <th style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;text-align:left;">Label</th>
+          <th style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;text-align:left;">Value</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }
+
   /**
    * Convert HTML to PDF using Puppeteer with optimized settings
    */
-  private async htmlToPDF(html: string, paperSize: string = 'A4', quality: string = 'standard'): Promise<Buffer> {
+  private async htmlToPDF(
+    html: string,
+    paperSize: string = 'A4',
+    quality: string = 'standard',
+  ): Promise<Buffer> {
     const scaleFactor = quality === 'high' ? 3 : quality === 'compressed' ? 1 : 2;
 
     // Map paper size to Puppeteer-accepted format string
     const formatMap: Record<string, string> = {
-      A4: 'A4', Letter: 'Letter', A3: 'A3', Legal: 'Legal',
+      A4: 'A4',
+      Letter: 'Letter',
+      A3: 'A3',
+      Legal: 'Legal',
     };
     const puppeteerFormat = formatMap[paperSize] || 'A4';
 
     // Viewport dimensions per paper size at 96 DPI
     const viewportMap: Record<string, { w: number; h: number }> = {
-      A4:     { w: 794,  h: 1123 },
-      Letter: { w: 816,  h: 1056 },
-      A3:     { w: 1123, h: 1587 },
-      Legal:  { w: 816,  h: 1344 },
+      A4: { w: 794, h: 1123 },
+      Letter: { w: 816, h: 1056 },
+      A3: { w: 1123, h: 1587 },
+      Legal: { w: 816, h: 1344 },
     };
     const vp = viewportMap[paperSize] || viewportMap.A4;
 
@@ -612,8 +798,8 @@ export class PdfExportService {
                     img.onerror = reject;
                     // Timeout after 5 seconds
                     setTimeout(resolve, 5000);
-                  })
-              )
+                  }),
+              ),
           );
         });
 
@@ -639,7 +825,9 @@ export class PdfExportService {
 }
 
 async function createPurifier(): Promise<{ sanitize: (value: any) => string }> {
-  const nativeImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+  const nativeImport = new Function('specifier', 'return import(specifier)') as (
+    specifier: string,
+  ) => Promise<any>;
   const [domPurifyModule, jsdomModule] = await Promise.all([
     nativeImport('dompurify'),
     nativeImport('jsdom'),
@@ -663,7 +851,10 @@ function basicMarkdownToHtml(markdown: string): string {
   return escaped
     .split(/\n{2,}/)
     .map((block) => {
-      const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+      const lines = block
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
       if (!lines.length) return '';
       if (lines.every((line) => /^[-*]\s+/.test(line))) {
         return `<ul>${lines.map((line) => `<li>${line.replace(/^[-*]\s+/, '')}</li>`).join('')}</ul>`;

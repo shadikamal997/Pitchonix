@@ -4,7 +4,7 @@ import { DeckSectionsService } from './deck-sections.service';
 
 @Module({
   controllers: [DeckSectionsController],
-  providers:   [DeckSectionsService],
-  exports:     [DeckSectionsService],
+  providers: [DeckSectionsService],
+  exports: [DeckSectionsService],
 })
 export class DeckSectionsModule {}

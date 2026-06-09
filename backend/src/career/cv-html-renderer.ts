@@ -1,6 +1,15 @@
-import { CvProfileDto, CvDocumentDto, CvDocumentContent_CV, CvDocumentContent_CoverLetter, CvDocumentContent_Portfolio, CvSectionKey, DEFAULT_CV_SECTION_ORDER } from './cv-types';
+import {
+  CvProfileDto,
+  CvDocumentDto,
+  CvDocumentContent_CV,
+  CvDocumentContent_CoverLetter,
+  CvDocumentContent_Portfolio,
+  CvSectionKey,
+  DEFAULT_CV_SECTION_ORDER,
+} from './cv-types';
 import { safeFullName, sanitizeCvProfile, sanitizeCvSummaryText } from './cv-profile-sanitizer';
 import { sanitizeCvDocumentContent } from './cv-document-sanitizer';
+import { signFilePath } from '../files/file-security';
 
 // =============================================================================
 //  Phase 42.22 — Premium CV Marketplace Transformation.
@@ -34,33 +43,39 @@ import { sanitizeCvDocumentContent } from './cv-document-sanitizer';
 // =============================================================================
 
 export interface BrandTokens {
-  colors?: { primary?: string; secondary?: string; accent?: string; text?: string; background?: string };
-  fonts?:  { heading?: string; body?: string };
-  logo?:   string;
+  colors?: {
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+    text?: string;
+    background?: string;
+  };
+  fonts?: { heading?: string; body?: string };
+  logo?: string;
 }
 
 export interface CvTemplateLayout {
-  style?:           string;
-  columns?:         1 | 2;
-  accent?:          string;
-  headerStyle?:     'banner' | 'block' | 'sidebar' | 'minimal' | 'split';
-  typography?:      { heading?: string; body?: string };
-  density?:         'compact' | 'comfortable' | 'spacious';
-  sidebarColor?:    string;
-  sidebarSide?:     'left' | 'right';
-  sidebarWidth?:    number;
-  photoShape?:      'circle' | 'square' | 'none';
-  photoPlace?:      'sidebar' | 'header';
-  skillStyle?:      string;
-  languageStyle?:   string;
-  icons?:           boolean;
-  timeline?:        boolean;
-  accentDividers?:  boolean;
-  atsSafe?:         boolean;
-  logoPlace?:       'header' | 'watermark' | 'footer' | 'none';
-  headerBg?:        string;
+  style?: string;
+  columns?: 1 | 2;
+  accent?: string;
+  headerStyle?: 'banner' | 'block' | 'sidebar' | 'minimal' | 'split';
+  typography?: { heading?: string; body?: string };
+  density?: 'compact' | 'comfortable' | 'spacious';
+  sidebarColor?: string;
+  sidebarSide?: 'left' | 'right';
+  sidebarWidth?: number;
+  photoShape?: 'circle' | 'square' | 'none';
+  photoPlace?: 'sidebar' | 'header';
+  skillStyle?: string;
+  languageStyle?: string;
+  icons?: boolean;
+  timeline?: boolean;
+  accentDividers?: boolean;
+  atsSafe?: boolean;
+  logoPlace?: 'header' | 'watermark' | 'footer' | 'none';
+  headerBg?: string;
   bannerBorderBottom?: string;
-  customCss?:       string;
+  customCss?: string;
 }
 
 export function renderCvHtml(
@@ -70,15 +85,20 @@ export function renderCvHtml(
   brand?: BrandTokens,
 ): string {
   const sanitizedProfile = sanitizeCvProfile(profile).profile;
-  const sanitizedDoc = (doc.doctype === 'cv' || doc.doctype === 'resume')
-    ? { ...doc, content: sanitizeCvDocumentContent(doc.content, doc.doctype).content }
-    : doc;
+  const sanitizedDoc =
+    doc.doctype === 'cv' || doc.doctype === 'resume'
+      ? { ...doc, content: sanitizeCvDocumentContent(doc.content, doc.doctype).content }
+      : doc;
   switch (doc.doctype) {
     case 'cv':
-    case 'resume':       return cvHtml(sanitizedProfile, sanitizedDoc, layout, brand);
-    case 'coverLetter':  return coverLetterHtml(sanitizedProfile, sanitizedDoc, layout, brand);
-    case 'portfolio':    return portfolioHtml(sanitizedProfile, sanitizedDoc, layout, brand);
-    default:             return cvHtml(sanitizedProfile, sanitizedDoc, layout, brand);
+    case 'resume':
+      return cvHtml(sanitizedProfile, sanitizedDoc, layout, brand);
+    case 'coverLetter':
+      return coverLetterHtml(sanitizedProfile, sanitizedDoc, layout, brand);
+    case 'portfolio':
+      return portfolioHtml(sanitizedProfile, sanitizedDoc, layout, brand);
+    default:
+      return cvHtml(sanitizedProfile, sanitizedDoc, layout, brand);
   }
 }
 
@@ -86,53 +106,84 @@ export function renderCvHtml(
 //  CV / Resume
 // =============================================================================
 
-function cvHtml(profile: CvProfileDto, doc: CvDocumentDto, layout: CvTemplateLayout, brand?: BrandTokens): string {
+function cvHtml(
+  profile: CvProfileDto,
+  doc: CvDocumentDto,
+  layout: CvTemplateLayout,
+  brand?: BrandTokens,
+): string {
   const t = resolveTheme(layout, brand);
-  const content: CvDocumentContent_CV = (doc.content as CvDocumentContent_CV) || { sectionOrder: DEFAULT_CV_SECTION_ORDER };
+  const content: CvDocumentContent_CV = (doc.content as CvDocumentContent_CV) || {
+    sectionOrder: DEFAULT_CV_SECTION_ORDER,
+  };
   const order = (content.sectionOrder || DEFAULT_CV_SECTION_ORDER) as CvSectionKey[];
 
-  const SIDEBAR_KEYS: CvSectionKey[] = ['header', 'skills', 'languages', 'certifications', 'awards'];
-  const useSidebar   = t.columns === 2 || t.style === 'sidebar' || t.style === 'twoColumn';
-  const sidebarKeys  = useSidebar ? order.filter((k) => SIDEBAR_KEYS.includes(k)) : [];
-  const mainKeys     = useSidebar ? order.filter((k) => !SIDEBAR_KEYS.includes(k)) : order;
+  const SIDEBAR_KEYS: CvSectionKey[] = [
+    'header',
+    'skills',
+    'languages',
+    'certifications',
+    'awards',
+  ];
+  const useSidebar = t.columns === 2 || t.style === 'sidebar' || t.style === 'twoColumn';
+  const sidebarKeys = useSidebar ? order.filter((k) => SIDEBAR_KEYS.includes(k)) : [];
+  const mainKeys = useSidebar ? order.filter((k) => !SIDEBAR_KEYS.includes(k)) : order;
 
-  const mainHtml    = mainKeys.map((key) => sectionHtml(key, profile, content, t)).join('');
-  const sidebarHtml = sidebarKeys.map((key) => sectionHtml(key, profile, content, t, true)).join('');
+  const mainHtml = mainKeys.map((key) => sectionHtml(key, profile, content, t)).join('');
+  const sidebarHtml = sidebarKeys
+    .map((key) => sectionHtml(key, profile, content, t, true))
+    .join('');
   const renderedH1 = safeFullName(profile.personal?.fullName) || 'Untitled Candidate';
   // Runtime parity guard logs: these show the exact source values used by
   // preview and export, not certification fixtures.
-  console.log(`[CV-RENDER:HEADER] fullName="${profile.personal?.fullName || ''}" headline="${profile.personal?.headline || ''}" sectionHeaderCandidate="${content.sectionOrder?.[0] || ''}" renderedH1="${renderedH1}"`);
-  console.log(`[CV-RENDER:SECTIONS] sectionsRendered=${[...sidebarKeys, ...mainKeys].join(',')} headerSkipped=true experienceEntries=${profile.experience?.length || 0} educationEntries=${profile.education?.length || 0}`);
+  console.log(
+    `[CV-RENDER:HEADER] fullName="${profile.personal?.fullName || ''}" headline="${profile.personal?.headline || ''}" sectionHeaderCandidate="${content.sectionOrder?.[0] || ''}" renderedH1="${renderedH1}"`,
+  );
+  console.log(
+    `[CV-RENDER:SECTIONS] sectionsRendered=${[...sidebarKeys, ...mainKeys].join(',')} headerSkipped=true experienceEntries=${profile.experience?.length || 0} educationEntries=${profile.education?.length || 0}`,
+  );
 
   return shell({
     title: doc.title,
     theme: t,
-    body:  useSidebar
+    body: useSidebar
       ? sidebarLayout(t, sidebarHtml, mainHtml, profile, brand)
       : singleColumn(t, mainHtml, profile, brand),
   });
 }
 
-function singleColumn(t: ResolvedTheme, main: string, profile: CvProfileDto, brand?: BrandTokens): string {
+function singleColumn(
+  t: ResolvedTheme,
+  main: string,
+  profile: CvProfileDto,
+  brand?: BrandTokens,
+): string {
   const headerHtml = renderHeader(profile, t, brand, false);
   return `<div class="${pageClasses(t, 'single')}">${headerHtml}<div class="content">${main}</div></div>`;
 }
 
-function sidebarLayout(t: ResolvedTheme, sidebar: string, main: string, profile: CvProfileDto, brand?: BrandTokens): string {
+function sidebarLayout(
+  t: ResolvedTheme,
+  sidebar: string,
+  main: string,
+  profile: CvProfileDto,
+  brand?: BrandTokens,
+): string {
   const side = t.sidebarSide === 'right' ? 'right' : 'left';
 
   // When headerStyle==='sidebar', name+headline live in the sidebar, not main.
   // For all other header styles the header renders inside .main but WITHOUT
   // contact info (already shown in the sidebar contact-list).
-  const sidebarHead   = t.headerStyle === 'sidebar' ? renderSidebarHead(profile) : '';
-  const mainHeaderHtml = t.headerStyle === 'sidebar' ? '' : renderHeader(profile, t, brand, true /* noContact */);
-  const photoHtml      = renderPhoto(profile, t) || '';
+  const sidebarHead = t.headerStyle === 'sidebar' ? renderSidebarHead(profile) : '';
+  const mainHeaderHtml =
+    t.headerStyle === 'sidebar' ? '' : renderHeader(profile, t, brand, true /* noContact */);
+  const photoHtml = renderPhoto(profile, t) || '';
 
   const lightSidebar = t.sidebarColor === 'light' || t.sidebarColor === 'warmlight';
   const sidebarClass = lightSidebar ? 'sidebar light' : 'sidebar';
 
   const sidebarBlock = `<aside class="${sidebarClass}">${sidebarHead}${photoHtml}${renderContact(profile, t)}${sidebar}</aside>`;
-  const mainBlock    = `<main class="main">${mainHeaderHtml}<div class="content">${main}</div></main>`;
+  const mainBlock = `<main class="main">${mainHeaderHtml}<div class="content">${main}</div></main>`;
 
   return `<div class="${pageClasses(t, `sidebar-layout side-${side}`)}">${side === 'left' ? sidebarBlock + mainBlock : mainBlock + sidebarBlock}</div>`;
 }
@@ -145,7 +196,7 @@ function pageClasses(t: ResolvedTheme, base: string): string {
 }
 
 function renderSidebarHead(profile: CvProfileDto): string {
-  const p    = profile.personal || {};
+  const p = profile.personal || {};
   const name = safeFullName(p.fullName) || 'Untitled Candidate';
   if (!name && !p.headline) return '';
   return `<div class="sidebar-head">${name ? `<h1>${esc(name)}</h1>` : ''}${p.headline ? `<p class="s-headline">${esc(p.headline)}</p>` : ''}</div>`;
@@ -155,47 +206,74 @@ function renderSidebarHead(profile: CvProfileDto): string {
 //  Section renderers
 // =============================================================================
 
-function sectionHtml(key: CvSectionKey, profile: CvProfileDto, content: CvDocumentContent_CV, t: ResolvedTheme, inSidebar = false): string {
+function sectionHtml(
+  key: CvSectionKey,
+  profile: CvProfileDto,
+  content: CvDocumentContent_CV,
+  t: ResolvedTheme,
+  inSidebar = false,
+): string {
   switch (key) {
-    case 'header':         return '';
+    case 'header':
+      return '';
     case 'summary': {
-      const override = content.sectionOverrides?.summary ? sanitizeCvSummaryText(content.sectionOverrides.summary) : '';
+      const override = content.sectionOverrides?.summary
+        ? sanitizeCvSummaryText(content.sectionOverrides.summary)
+        : '';
       const text = override || sanitizeCvSummaryText(profile.personal?.summary || '');
       if (!text) return '';
       return sectionWrap('Summary', `<p class="summary-body">${esc(text)}</p>`, t);
     }
-    case 'experience':     return renderExperience(profile, content, t);
-    case 'education':      return renderEducation(profile, t);
-    case 'skills':         return renderSkills(profile, content, t, inSidebar);
-    case 'languages':      return renderLanguages(profile, t, inSidebar);
-    case 'projects':       return renderProjects(profile, content, t);
-    case 'certifications': return renderCertifications(profile, t);
-    case 'awards':         return renderAwards(profile, t);
-    case 'publications':   return renderPublications(profile, t);
-    case 'references':     return renderReferences(profile, t);
-    default:               return '';
+    case 'experience':
+      return renderExperience(profile, content, t);
+    case 'education':
+      return renderEducation(profile, t);
+    case 'skills':
+      return renderSkills(profile, content, t, inSidebar);
+    case 'languages':
+      return renderLanguages(profile, t, inSidebar);
+    case 'projects':
+      return renderProjects(profile, content, t);
+    case 'certifications':
+      return renderCertifications(profile, t);
+    case 'awards':
+      return renderAwards(profile, t);
+    case 'publications':
+      return renderPublications(profile, t);
+    case 'references':
+      return renderReferences(profile, t);
+    default:
+      return '';
   }
 }
 
 // ─── Header ──────────────────────────────────────────────────────────────────
 // noContact: suppress the contact row when a sidebar will already show it.
 
-function renderHeader(profile: CvProfileDto, t: ResolvedTheme, brand?: BrandTokens, noContact = false): string {
+function renderHeader(
+  profile: CvProfileDto,
+  t: ResolvedTheme,
+  brand?: BrandTokens,
+  noContact = false,
+): string {
   const p = profile.personal || {};
 
-  const logoHtml = brand?.logo && (t.logoPlace === 'header' || !t.logoPlace)
-    ? `<img src="${esc(assetUrl(brand.logo))}" class="brand-logo" alt="" />`
-    : '';
-  const photoHtml = t.photoPlace === 'header' && p.photoUrl
-    ? `<img src="${esc(assetUrl(p.photoUrl))}" class="photo photo-banner photo-${t.photoShape || 'circle'}" alt="" />`
-    : '';
+  const logoHtml =
+    brand?.logo && (t.logoPlace === 'header' || !t.logoPlace)
+      ? `<img src="${esc(assetUrl(brand.logo))}" class="brand-logo" alt="" />`
+      : '';
+  const photoHtml =
+    t.photoPlace === 'header' && p.photoUrl
+      ? `<img src="${esc(assetUrl(p.photoUrl))}" class="photo photo-banner photo-${t.photoShape || 'circle'}" alt="" />`
+      : '';
 
-  const safeName     = safeFullName(p.fullName) || 'Untitled Candidate';
-  const nameHtml     = safeName    ? `<h1>${esc(safeName)}</h1>`              : '';
-  const headlineHtml = p.headline  ? `<p class="headline">${esc(p.headline)}</p>` : '';
+  const safeName = safeFullName(p.fullName) || 'Untitled Candidate';
+  const nameHtml = safeName ? `<h1>${esc(safeName)}</h1>` : '';
+  const headlineHtml = p.headline ? `<p class="headline">${esc(p.headline)}</p>` : '';
 
-  const contactFields = noContact ? [] :
-    [p.email, p.phone, p.location, p.website, p.linkedin, p.github].filter(Boolean) as string[];
+  const contactFields = noContact
+    ? []
+    : ([p.email, p.phone, p.location, p.website, p.linkedin, p.github].filter(Boolean) as string[]);
 
   if (t.headerStyle === 'banner') {
     const contactHtml = contactFields.length
@@ -234,12 +312,12 @@ function renderPhoto(profile: CvProfileDto, t: ResolvedTheme): string | null {
 function renderContact(profile: CvProfileDto, _t: ResolvedTheme): string {
   const p = profile.personal || {};
   const rows = [
-    p.email    ? cRow('✉', p.email)    : '',
-    p.phone    ? cRow('✆', p.phone)    : '',
+    p.email ? cRow('✉', p.email) : '',
+    p.phone ? cRow('✆', p.phone) : '',
     p.location ? cRow('⌖', p.location) : '',
-    p.website  ? cRow('⊕', p.website)  : '',
+    p.website ? cRow('⊕', p.website) : '',
     p.linkedin ? cRow('in', p.linkedin) : '',
-    p.github   ? cRow('⌥', p.github)   : '',
+    p.github ? cRow('⌥', p.github) : '',
   ].filter(Boolean);
   if (!rows.length) return '';
   return `<div class="contact-list">${rows.join('')}</div>`;
@@ -254,6 +332,12 @@ function assetUrl(url?: string | null): string {
   if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
   if (!raw.startsWith('/uploads/') && !raw.startsWith('/exports/')) return raw;
 
+  // Phase Ω.1B — these paths now sit behind an auth-gate. Append a short-lived
+  // signed token so the server-side Puppeteer renderer (which carries no auth
+  // cookie) can still fetch the photo/logo when generating the CV.
+  const secret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+  const signedPath = `${raw}?token=${signFilePath(raw, secret, 3600)}`;
+
   const configured =
     process.env.PUBLIC_BACKEND_URL ||
     process.env.BACKEND_PUBLIC_URL ||
@@ -262,12 +346,16 @@ function assetUrl(url?: string | null): string {
     (process.env.NODE_ENV === 'production' ? '' : `http://localhost:${process.env.PORT || 4000}`);
 
   const origin = configured.replace(/\/$/, '');
-  return origin ? `${origin}${raw}` : raw;
+  return origin ? `${origin}${signedPath}` : signedPath;
 }
 
 // ─── Experience ───────────────────────────────────────────────────────────────
 
-function renderExperience(profile: CvProfileDto, content: CvDocumentContent_CV, t: ResolvedTheme): string {
+function renderExperience(
+  profile: CvProfileDto,
+  content: CvDocumentContent_CV,
+  t: ResolvedTheme,
+): string {
   let list = profile.experience || [];
   if (content.sectionOverrides?.experienceIds?.length) {
     const set = new Set(content.sectionOverrides.experienceIds);
@@ -276,21 +364,25 @@ function renderExperience(profile: CvProfileDto, content: CvDocumentContent_CV, 
   if (!list.length) return '';
 
   const isTimeline = !!t.timeline;
-  const items = list.map((e) => {
-    const dateStr = formatRange(e.start, e.end);
-    const explicitBullets = Array.isArray(e.bullets) ? e.bullets : uniqueTextArray((e as any).bullets);
-    const rawFallbackBullets = !explicitBullets.length && !(e as any).description
-      ? experienceRawFallbackLines(e)
-      : [];
-    const displayBullets = explicitBullets.length ? explicitBullets : rawFallbackBullets;
-    const description = renderPreservedParagraphs((e as any).description);
-    const bulletKeys = new Set(displayBullets.map((b) => String(b).trim().toLowerCase()));
-    const achievementValues = uniqueTextArray((e as any).achievements).filter((a) => !bulletKeys.has(a.toLowerCase()));
-    const achievements = renderRichList(achievementValues, 'Achievement', 'achievement-list');
-    const metrics = renderSemanticChips((e as any).metrics, 'metric-pills');
-    const technologies = renderSemanticChips((e as any).technologies, 'tech-pills');
-    const projects = renderRichList((e as any).projects, 'Project', 'project-list');
-    return `<article class="entry${isTimeline ? ' entry-tl' : ''}">
+  const items = list
+    .map((e) => {
+      const dateStr = formatRange(e.start, e.end);
+      const explicitBullets = Array.isArray(e.bullets)
+        ? e.bullets
+        : uniqueTextArray((e as any).bullets);
+      const rawFallbackBullets =
+        !explicitBullets.length && !(e as any).description ? experienceRawFallbackLines(e) : [];
+      const displayBullets = explicitBullets.length ? explicitBullets : rawFallbackBullets;
+      const description = renderPreservedParagraphs((e as any).description);
+      const bulletKeys = new Set(displayBullets.map((b) => String(b).trim().toLowerCase()));
+      const achievementValues = uniqueTextArray((e as any).achievements).filter(
+        (a) => !bulletKeys.has(a.toLowerCase()),
+      );
+      const achievements = renderRichList(achievementValues, 'Achievement', 'achievement-list');
+      const metrics = renderSemanticChips((e as any).metrics, 'metric-pills');
+      const technologies = renderSemanticChips((e as any).technologies, 'tech-pills');
+      const projects = renderRichList((e as any).projects, 'Project', 'project-list');
+      return `<article class="entry${isTimeline ? ' entry-tl' : ''}">
       ${isTimeline ? '<span class="tl-dot"></span>' : ''}
       <div class="entry-row">
         <div class="entry-main">
@@ -306,9 +398,14 @@ function renderExperience(profile: CvProfileDto, content: CvDocumentContent_CV, 
       ${metrics || technologies ? `<div class="experience-chips">${metrics}${technologies}</div>` : ''}
       ${projects}
     </article>`;
-  }).join('');
+    })
+    .join('');
 
-  return sectionWrap('Experience', `<div class="${isTimeline ? 'tl-track' : 'entries'}">${items}</div>`, t);
+  return sectionWrap(
+    'Experience',
+    `<div class="${isTimeline ? 'tl-track' : 'entries'}">${items}</div>`,
+    t,
+  );
 }
 
 // ─── Education ────────────────────────────────────────────────────────────────
@@ -317,11 +414,12 @@ function renderEducation(profile: CvProfileDto, t: ResolvedTheme): string {
   const list = profile.education || [];
   if (!list.length) return '';
 
-  const items = list.map((ed) => {
-    const titleStr = [ed.degree, ed.field].filter(Boolean).join(', ') || ed.institution || '';
-    const instStr  = (ed.degree || ed.field) ? (ed.institution || '') : '';
-    const dateStr  = formatRange(ed.start, ed.end);
-    return `<article class="entry">
+  const items = list
+    .map((ed) => {
+      const titleStr = [ed.degree, ed.field].filter(Boolean).join(', ') || ed.institution || '';
+      const instStr = ed.degree || ed.field ? ed.institution || '' : '';
+      const dateStr = formatRange(ed.start, ed.end);
+      return `<article class="entry">
       <div class="entry-row">
         <div class="entry-main">
           <span class="e-role">${esc(titleStr)}</span>
@@ -332,14 +430,20 @@ function renderEducation(profile: CvProfileDto, t: ResolvedTheme): string {
       ${ed.gpa ? `<div class="e-location">GPA ${esc(String(ed.gpa))}</div>` : ''}
       ${ed.honors?.length ? `<ul class="e-bullets">${ed.honors.map((h: string) => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
     </article>`;
-  }).join('');
+    })
+    .join('');
 
   return sectionWrap('Education', `<div class="entries">${items}</div>`, t);
 }
 
 // ─── Skills ───────────────────────────────────────────────────────────────────
 
-function renderSkills(profile: CvProfileDto, content: CvDocumentContent_CV, t: ResolvedTheme, _inSidebar: boolean): string {
+function renderSkills(
+  profile: CvProfileDto,
+  content: CvDocumentContent_CV,
+  t: ResolvedTheme,
+  _inSidebar: boolean,
+): string {
   let list = profile.skills || [];
   if (content.sectionOverrides?.skillIds?.length) {
     const set = new Set(content.sectionOverrides.skillIds);
@@ -348,14 +452,21 @@ function renderSkills(profile: CvProfileDto, content: CvDocumentContent_CV, t: R
   if (!list.length) return '';
 
   if (t.skillStyle === 'bars') {
-    const items = list.map((s) => {
-      const pct = levelPct(s.level);
-      return `<div class="sk-bar"><div class="sk-name">${esc(s.name)}</div><div class="bar"><div class="fill" style="width:${pct}%"></div></div></div>`;
-    }).join('');
+    const items = list
+      .map((s) => {
+        const pct = levelPct(s.level);
+        return `<div class="sk-bar"><div class="sk-name">${esc(s.name)}</div><div class="bar"><div class="fill" style="width:${pct}%"></div></div></div>`;
+      })
+      .join('');
     return sectionWrap('Skills', items, t);
   }
   if (t.skillStyle === 'dots') {
-    const items = list.map((s) => `<div class="sk-dots"><span>${esc(s.name)}</span><span class="dots">${levelDots(s.level)}</span></div>`).join('');
+    const items = list
+      .map(
+        (s) =>
+          `<div class="sk-dots"><span>${esc(s.name)}</span><span class="dots">${levelDots(s.level)}</span></div>`,
+      )
+      .join('');
     return sectionWrap('Skills', items, t);
   }
   if (t.skillStyle === 'pills' || t.skillStyle === 'tags') {
@@ -363,33 +474,41 @@ function renderSkills(profile: CvProfileDto, content: CvDocumentContent_CV, t: R
     return sectionWrap('Skills', `<div class="pills">${items}</div>`, t);
   }
   if (t.skillStyle === 'ratings') {
-    const items = list.map((s) => {
-      const lvl = levelStars(s.level);
-      return `<div class="sk-rating"><span>${esc(s.name)}</span><span class="stars">${'★'.repeat(lvl)}${'☆'.repeat(5 - lvl)}</span></div>`;
-    }).join('');
+    const items = list
+      .map((s) => {
+        const lvl = levelStars(s.level);
+        return `<div class="sk-rating"><span>${esc(s.name)}</span><span class="stars">${'★'.repeat(lvl)}${'☆'.repeat(5 - lvl)}</span></div>`;
+      })
+      .join('');
     return sectionWrap('Skills', items, t);
   }
   if (t.skillStyle === 'percent') {
-    const items = list.map((s) => {
-      const pct = levelPct(s.level);
-      return `<div class="sk-bar"><div class="sk-name">${esc(s.name)} <em>${pct}%</em></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div></div>`;
-    }).join('');
+    const items = list
+      .map((s) => {
+        const pct = levelPct(s.level);
+        return `<div class="sk-bar"><div class="sk-name">${esc(s.name)} <em>${pct}%</em></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div></div>`;
+      })
+      .join('');
     return sectionWrap('Skills', items, t);
   }
   // Phase 42.22 — Chips style (expertise chips with level tag and left accent)
   if (t.skillStyle === 'chips') {
-    const items = list.map((s) => {
-      const levelLabel = s.level ? capitalise(s.level) : '';
-      return `<div class="sk-chip"><span class="chip-name">${esc(s.name)}</span>${levelLabel ? `<span class="chip-level">${esc(levelLabel)}</span>` : ''}</div>`;
-    }).join('');
+    const items = list
+      .map((s) => {
+        const levelLabel = s.level ? capitalise(s.level) : '';
+        return `<div class="sk-chip"><span class="chip-name">${esc(s.name)}</span>${levelLabel ? `<span class="chip-level">${esc(levelLabel)}</span>` : ''}</div>`;
+      })
+      .join('');
     return sectionWrap('Skills', items, t);
   }
   // Phase 42.22 — Compact style (2-column grid with 5-step level bars)
   if (t.skillStyle === 'compact') {
-    const items = list.map((s) => {
-      const lvl = levelStars(s.level);
-      return `<div class="sk-compact"><span class="sk-name">${esc(s.name)}</span><span class="compact-dots">${'●'.repeat(lvl)}${'○'.repeat(5 - lvl)}</span></div>`;
-    }).join('');
+    const items = list
+      .map((s) => {
+        const lvl = levelStars(s.level);
+        return `<div class="sk-compact"><span class="sk-name">${esc(s.name)}</span><span class="compact-dots">${'●'.repeat(lvl)}${'○'.repeat(5 - lvl)}</span></div>`;
+      })
+      .join('');
     return sectionWrap('Skills', `<div class="sk-compact-grid">${items}</div>`, t);
   }
   // plain (grouped by category)
@@ -399,9 +518,12 @@ function renderSkills(profile: CvProfileDto, content: CvDocumentContent_CV, t: R
     if (!groups.has(cat)) groups.set(cat, []);
     groups.get(cat)!.push(s.name);
   }
-  const body = Array.from(groups).map(([cat, names]) =>
-    `<p class="sk-group"><strong>${esc(capitalise(cat))}:</strong> ${names.map(esc).join(', ')}</p>`,
-  ).join('');
+  const body = Array.from(groups)
+    .map(
+      ([cat, names]) =>
+        `<p class="sk-group"><strong>${esc(capitalise(cat))}:</strong> ${names.map(esc).join(', ')}</p>`,
+    )
+    .join('');
   return sectionWrap('Skills', body, t);
 }
 
@@ -412,63 +534,87 @@ function renderLanguages(profile: CvProfileDto, t: ResolvedTheme, _inSidebar: bo
   if (!list.length) return '';
 
   const profMap: Record<string, number> = { basic: 1, conversational: 2, fluent: 3, native: 4 };
-  const pctMap:  Record<string, number> = { basic: 25, conversational: 50, fluent: 80, native: 100 };
+  const pctMap: Record<string, number> = { basic: 25, conversational: 50, fluent: 80, native: 100 };
 
   if (t.languageStyle === 'dots') {
-    const items = list.map((l) => {
-      const n = profMap[l.proficiency] || 3;
-      return `<div class="lang-row"><span>${esc(l.name)}</span><span class="dots">${'●'.repeat(n)}${'○'.repeat(4 - n)}</span></div>`;
-    }).join('');
+    const items = list
+      .map((l) => {
+        const n = profMap[l.proficiency] || 3;
+        return `<div class="lang-row"><span>${esc(l.name)}</span><span class="dots">${'●'.repeat(n)}${'○'.repeat(4 - n)}</span></div>`;
+      })
+      .join('');
     return sectionWrap('Languages', items, t);
   }
   if (t.languageStyle === 'pills') {
-    const items = list.map((l) =>
-      `<span class="pill">${esc(l.name)} <em class="lang-lv">${esc(capitalise(l.proficiency || ''))}</em></span>`
-    ).join('');
+    const items = list
+      .map(
+        (l) =>
+          `<span class="pill">${esc(l.name)} <em class="lang-lv">${esc(capitalise(l.proficiency || ''))}</em></span>`,
+      )
+      .join('');
     return sectionWrap('Languages', `<div class="pills">${items}</div>`, t);
   }
   if (t.languageStyle === 'bars') {
-    const items = list.map((l) => {
-      const pct = pctMap[l.proficiency] ?? 70;
-      return `<div class="sk-bar"><div class="sk-name">${esc(l.name)} <em>${esc(capitalise(l.proficiency || ''))}</em></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div></div>`;
-    }).join('');
+    const items = list
+      .map((l) => {
+        const pct = pctMap[l.proficiency] ?? 70;
+        return `<div class="sk-bar"><div class="sk-name">${esc(l.name)} <em>${esc(capitalise(l.proficiency || ''))}</em></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div></div>`;
+      })
+      .join('');
     return sectionWrap('Languages', items, t);
   }
   if (t.languageStyle === 'stars') {
     const starMap: Record<string, number> = { basic: 1, conversational: 2, fluent: 4, native: 5 };
-    const items = list.map((l) => {
-      const lvl = starMap[l.proficiency] ?? 3;
-      return `<div class="sk-rating"><span>${esc(l.name)}</span><span class="stars">${'★'.repeat(lvl)}${'☆'.repeat(5 - lvl)}</span></div>`;
-    }).join('');
+    const items = list
+      .map((l) => {
+        const lvl = starMap[l.proficiency] ?? 3;
+        return `<div class="sk-rating"><span>${esc(l.name)}</span><span class="stars">${'★'.repeat(lvl)}${'☆'.repeat(5 - lvl)}</span></div>`;
+      })
+      .join('');
     return sectionWrap('Languages', items, t);
   }
   if (t.languageStyle === 'text') {
-    const items = list.map((l) =>
-      `<div class="lang-text"><strong>${esc(l.name)}</strong> — <em>${esc(capitalise(l.proficiency || ''))}</em></div>`
-    ).join('');
+    const items = list
+      .map(
+        (l) =>
+          `<div class="lang-text"><strong>${esc(l.name)}</strong> — <em>${esc(capitalise(l.proficiency || ''))}</em></div>`,
+      )
+      .join('');
     return sectionWrap('Languages', items, t);
   }
   // default plain
-  return sectionWrap('Languages', `<ul>${list.map((l) => `<li>${esc(l.name)} — ${esc(capitalise(l.proficiency || ''))}</li>`).join('')}</ul>`, t);
+  return sectionWrap(
+    'Languages',
+    `<ul>${list.map((l) => `<li>${esc(l.name)} — ${esc(capitalise(l.proficiency || ''))}</li>`).join('')}</ul>`,
+    t,
+  );
 }
 
 // ─── Projects ─────────────────────────────────────────────────────────────────
 
-function renderProjects(profile: CvProfileDto, content: CvDocumentContent_CV, t: ResolvedTheme): string {
+function renderProjects(
+  profile: CvProfileDto,
+  content: CvDocumentContent_CV,
+  t: ResolvedTheme,
+): string {
   let list = profile.projects || [];
   if (content.sectionOverrides?.projectIds?.length) {
     const set = new Set(content.sectionOverrides.projectIds);
     list = list.filter((p) => set.has(p.id));
   }
   if (!list.length) return '';
-  const items = list.map((p) => `
+  const items = list
+    .map(
+      (p) => `
     <article class="entry">
       <div class="entry-row"><div class="entry-main"><span class="e-role">${esc(p.name || '')}</span></div></div>
       ${p.description ? `<p class="proj-desc">${esc(p.description)}</p>` : ''}
       ${p.technologies?.length ? `<div class="pills tech-pills">${p.technologies.map((tg: string) => `<span class="pill">${esc(tg)}</span>`).join('')}</div>` : ''}
       ${p.results?.length ? `<ul class="e-bullets">${p.results.map((r: string) => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
       ${p.links?.length ? `<div class="proj-links">${p.links.map((l: any) => `<a href="${esc(l.url)}">${esc(l.label)}</a>`).join(' · ')}</div>` : ''}
-    </article>`).join('');
+    </article>`,
+    )
+    .join('');
   return sectionWrap('Projects', `<div class="entries">${items}</div>`, t);
 }
 
@@ -478,9 +624,12 @@ function renderProjects(profile: CvProfileDto, content: CvDocumentContent_CV, t:
 function renderCertifications(profile: CvProfileDto, t: ResolvedTheme): string {
   const list = profile.certifications || [];
   if (!list.length) return '';
-  const items = list.map((c) =>
-    `<div class="cert-item"><div class="cert-name">${esc(c.name || '')}</div>${c.issuer ? `<div class="cert-issuer">${esc(c.issuer)}</div>` : ''}${c.date ? `<div class="cert-date">${esc(c.date)}</div>` : ''}</div>`
-  ).join('');
+  const items = list
+    .map(
+      (c) =>
+        `<div class="cert-item"><div class="cert-name">${esc(c.name || '')}</div>${c.issuer ? `<div class="cert-issuer">${esc(c.issuer)}</div>` : ''}${c.date ? `<div class="cert-date">${esc(c.date)}</div>` : ''}</div>`,
+    )
+    .join('');
   return sectionWrap('Certifications', items, t);
 }
 
@@ -488,26 +637,52 @@ function renderCertifications(profile: CvProfileDto, t: ResolvedTheme): string {
 function renderAwards(profile: CvProfileDto, t: ResolvedTheme): string {
   const list = profile.awards || [];
   if (!list.length) return '';
-  const items = list.map((a) =>
-    `<div class="award-item"><div class="award-name">${esc(a.title || '')}</div><div class="award-meta">${[a.issuer, a.date].filter(Boolean).map((x) => esc(x!)).join(' · ')}</div></div>`
-  ).join('');
+  const items = list
+    .map(
+      (a) =>
+        `<div class="award-item"><div class="award-name">${esc(a.title || '')}</div><div class="award-meta">${[
+          a.issuer,
+          a.date,
+        ]
+          .filter(Boolean)
+          .map((x) => esc(x!))
+          .join(' · ')}</div></div>`,
+    )
+    .join('');
   return sectionWrap('Awards', items, t);
 }
 
 function renderPublications(profile: CvProfileDto, t: ResolvedTheme): string {
   const list = profile.publications || [];
   if (!list.length) return '';
-  return sectionWrap('Publications', `<ul>${list.map((p) =>
-    `<li><strong>${esc(p.title || '')}</strong>${p.venue ? ` — <em>${esc(p.venue)}</em>` : ''}${p.date ? ` <span class="muted">${esc(p.date)}</span>` : ''}</li>`
-  ).join('')}</ul>`, t);
+  return sectionWrap(
+    'Publications',
+    `<ul>${list
+      .map(
+        (p) =>
+          `<li><strong>${esc(p.title || '')}</strong>${p.venue ? ` — <em>${esc(p.venue)}</em>` : ''}${p.date ? ` <span class="muted">${esc(p.date)}</span>` : ''}</li>`,
+      )
+      .join('')}</ul>`,
+    t,
+  );
 }
 
 function renderReferences(profile: CvProfileDto, t: ResolvedTheme): string {
   const list = profile.references || [];
   if (!list.length) return '';
-  const items = list.map((r) =>
-    `<div class="ref-card"><div class="e-role">${esc(r.name || '')}</div>${r.title ? `<div class="e-company">${esc(r.title)}${r.company ? `, ${esc(r.company)}` : ''}</div>` : ''}${r.email || r.phone ? `<div class="ref-contact">${[r.email, r.phone].filter(Boolean).map((c) => esc(c!)).join(' · ')}</div>` : ''}</div>`
-  ).join('');
+  const items = list
+    .map(
+      (r) =>
+        `<div class="ref-card"><div class="e-role">${esc(r.name || '')}</div>${r.title ? `<div class="e-company">${esc(r.title)}${r.company ? `, ${esc(r.company)}` : ''}</div>` : ''}${
+          r.email || r.phone
+            ? `<div class="ref-contact">${[r.email, r.phone]
+                .filter(Boolean)
+                .map((c) => esc(c!))
+                .join(' · ')}</div>`
+            : ''
+        }</div>`,
+    )
+    .join('');
   return sectionWrap('References', items, t);
 }
 
@@ -515,18 +690,27 @@ function renderReferences(profile: CvProfileDto, t: ResolvedTheme): string {
 //  Cover letter / Portfolio
 // =============================================================================
 
-function coverLetterHtml(profile: CvProfileDto, doc: CvDocumentDto, layout: CvTemplateLayout, brand?: BrandTokens): string {
+function coverLetterHtml(
+  profile: CvProfileDto,
+  doc: CvDocumentDto,
+  layout: CvTemplateLayout,
+  brand?: BrandTokens,
+): string {
   const t = resolveTheme(layout, brand);
-  const c = (doc.content as CvDocumentContent_CoverLetter) || {} as any;
+  const c = (doc.content as CvDocumentContent_CoverLetter) || ({} as any);
   const p = profile.personal || {};
-  const contactBar = [p.email, p.phone, p.location].filter(Boolean).map((x) => esc(x!)).join(' · ');
+  const contactBar = [p.email, p.phone, p.location]
+    .filter(Boolean)
+    .map((x) => esc(x!))
+    .join(' · ');
   return shell({
-    title: doc.title, theme: t,
+    title: doc.title,
+    theme: t,
     body: `<div class="page single">
       <header class="header block">
-        ${safeFullName(p.fullName)  ? `<h1>${esc(safeFullName(p.fullName))}</h1>` : ''}
-        ${p.headline  ? `<p class="headline">${esc(p.headline)}</p>` : ''}
-        ${contactBar  ? `<div class="contact-bar">${contactBar}</div>` : ''}
+        ${safeFullName(p.fullName) ? `<h1>${esc(safeFullName(p.fullName))}</h1>` : ''}
+        ${p.headline ? `<p class="headline">${esc(p.headline)}</p>` : ''}
+        ${contactBar ? `<div class="contact-bar">${contactBar}</div>` : ''}
       </header>
       <div class="content">
         <p class="letter-date">${esc(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }))}</p>
@@ -534,7 +718,7 @@ function coverLetterHtml(profile: CvProfileDto, doc: CvDocumentDto, layout: CvTe
         ${c.hiringManager ? `<p>${esc(c.hiringManager)}</p>` : ''}
         <p>${esc(c.greeting || 'Dear Hiring Manager,')}</p>
         ${c.intro ? `<p>${esc(c.intro)}</p>` : ''}
-        ${(c.body || []).map((para: string) => para ? `<p>${esc(para)}</p>` : '').join('')}
+        ${(c.body || []).map((para: string) => (para ? `<p>${esc(para)}</p>` : '')).join('')}
         ${c.whyCompany ? `<p>${esc(c.whyCompany)}</p>` : ''}
         <p class="letter-closing">${esc(c.closing || 'Sincerely,')}</p>
         <p class="letter-sig">${esc(c.signature || p.fullName || '')}</p>
@@ -543,17 +727,30 @@ function coverLetterHtml(profile: CvProfileDto, doc: CvDocumentDto, layout: CvTe
   });
 }
 
-function portfolioHtml(profile: CvProfileDto, doc: CvDocumentDto, layout: CvTemplateLayout, brand?: BrandTokens): string {
+function portfolioHtml(
+  profile: CvProfileDto,
+  doc: CvDocumentDto,
+  layout: CvTemplateLayout,
+  brand?: BrandTokens,
+): string {
   const t = resolveTheme(layout, brand);
   const c = (doc.content as CvDocumentContent_Portfolio) || ({} as any);
   const p = profile.personal || {};
-  const sections = (c.sections || []).map((sec: any) => {
-    const projects = sec.key === 'projects'
-      ? (profile.projects || []).filter((pr) => !sec.itemIds?.length || sec.itemIds.includes(pr.id))
-        .map((pr) => `<article class="p-card"><h3>${esc(pr.name || '')}</h3>${pr.description ? `<p>${esc(pr.description)}</p>` : ''}${pr.technologies?.length ? `<div class="pills">${pr.technologies.map((tg: string) => `<span class="pill">${esc(tg)}</span>`).join('')}</div>` : ''}</article>`).join('')
-      : '';
-    return `<section class="port-section"><h2>${esc(sec.title || '')}</h2>${sec.body ? `<p>${esc(sec.body)}</p>` : ''}${projects ? `<div class="p-grid">${projects}</div>` : ''}</section>`;
-  }).join('');
+  const sections = (c.sections || [])
+    .map((sec: any) => {
+      const projects =
+        sec.key === 'projects'
+          ? (profile.projects || [])
+              .filter((pr) => !sec.itemIds?.length || sec.itemIds.includes(pr.id))
+              .map(
+                (pr) =>
+                  `<article class="p-card"><h3>${esc(pr.name || '')}</h3>${pr.description ? `<p>${esc(pr.description)}</p>` : ''}${pr.technologies?.length ? `<div class="pills">${pr.technologies.map((tg: string) => `<span class="pill">${esc(tg)}</span>`).join('')}</div>` : ''}</article>`,
+              )
+              .join('')
+          : '';
+      return `<section class="port-section"><h2>${esc(sec.title || '')}</h2>${sec.body ? `<p>${esc(sec.body)}</p>` : ''}${projects ? `<div class="p-grid">${projects}</div>` : ''}</section>`;
+    })
+    .join('');
   const cover = `<section class="port-cover"><h1>${esc(p.fullName || doc.title)}</h1>${p.headline ? `<p class="headline">${esc(p.headline)}</p>` : ''}${p.summary ? `<p>${esc(p.summary)}</p>` : ''}</section>`;
   return shell({ title: doc.title, theme: t, body: cover + sections });
 }
@@ -563,56 +760,82 @@ function portfolioHtml(profile: CvProfileDto, doc: CvDocumentDto, layout: CvTemp
 // =============================================================================
 
 interface ResolvedTheme {
-  accent:        string;
-  secondary:     string;
-  text:          string;
-  background:    string;
-  sidebarBg:     string;
-  sidebarFg:     string;
-  headingFont:   string;
-  bodyFont:      string;
-  density:       'compact' | 'comfortable' | 'spacious';
-  headerStyle:   'banner' | 'block' | 'sidebar' | 'minimal' | 'split';
-  style:         string;
-  columns:       1 | 2;
-  sidebarSide?:  'left' | 'right';
-  sidebarWidth:  number;
-  photoShape?:   'circle' | 'square' | 'none';
-  photoPlace?:   'sidebar' | 'header';
-  skillStyle?:   string;
-  languageStyle?:string;
-  icons?:         boolean;
-  timeline?:     boolean;
+  accent: string;
+  secondary: string;
+  text: string;
+  background: string;
+  sidebarBg: string;
+  sidebarFg: string;
+  headingFont: string;
+  bodyFont: string;
+  density: 'compact' | 'comfortable' | 'spacious';
+  headerStyle: 'banner' | 'block' | 'sidebar' | 'minimal' | 'split';
+  style: string;
+  columns: 1 | 2;
+  sidebarSide?: 'left' | 'right';
+  sidebarWidth: number;
+  photoShape?: 'circle' | 'square' | 'none';
+  photoPlace?: 'sidebar' | 'header';
+  skillStyle?: string;
+  languageStyle?: string;
+  icons?: boolean;
+  timeline?: boolean;
   accentDividers?: boolean;
-  atsSafe?:      boolean;
-  logoPlace?:    'header' | 'watermark' | 'footer' | 'none';
-  logoUrl?:      string;
-  customCss?:    string;
-  headerBg?:     string;
+  atsSafe?: boolean;
+  logoPlace?: 'header' | 'watermark' | 'footer' | 'none';
+  logoUrl?: string;
+  customCss?: string;
+  headerBg?: string;
   bannerBorderBottom?: string;
   sidebarColor?: string;
 }
 
 const FONT_NORM: Record<string, string> = {
-  'Playfair':     'Playfair Display',
-  'JetBrains':    'JetBrains Mono',
-  'Cormorant':    'Cormorant Garamond',
-  'DM Serif':     'DM Serif Display',
+  Playfair: 'Playfair Display',
+  JetBrains: 'JetBrains Mono',
+  Cormorant: 'Cormorant Garamond',
+  'DM Serif': 'DM Serif Display',
 };
-function normFont(f: string): string { return FONT_NORM[f] || f; }
+function normFont(f: string): string {
+  return FONT_NORM[f] || f;
+}
 
 const LOCAL_FONT_FACES = [
   { family: 'Inter', local: ['Inter', 'Inter Regular'], fallback: 'Arial, sans-serif' },
   { family: 'Poppins', local: ['Poppins', 'Poppins Regular'], fallback: 'Arial, sans-serif' },
   { family: 'DM Sans', local: ['DM Sans', 'DM Sans Regular'], fallback: 'Arial, sans-serif' },
-  { family: 'DM Serif Display', local: ['DM Serif Display', 'DM Serif Display Regular'], fallback: 'Georgia, serif' },
+  {
+    family: 'DM Serif Display',
+    local: ['DM Serif Display', 'DM Serif Display Regular'],
+    fallback: 'Georgia, serif',
+  },
   { family: 'Lora', local: ['Lora', 'Lora Regular'], fallback: 'Georgia, serif' },
-  { family: 'Cormorant Garamond', local: ['Cormorant Garamond', 'Cormorant Garamond Regular'], fallback: 'Georgia, serif' },
-  { family: 'Playfair Display', local: ['Playfair Display', 'Playfair Display Regular'], fallback: 'Georgia, serif' },
-  { family: 'JetBrains Mono', local: ['JetBrains Mono', 'JetBrains Mono Regular'], fallback: 'Menlo, monospace' },
+  {
+    family: 'Cormorant Garamond',
+    local: ['Cormorant Garamond', 'Cormorant Garamond Regular'],
+    fallback: 'Georgia, serif',
+  },
+  {
+    family: 'Playfair Display',
+    local: ['Playfair Display', 'Playfair Display Regular'],
+    fallback: 'Georgia, serif',
+  },
+  {
+    family: 'JetBrains Mono',
+    local: ['JetBrains Mono', 'JetBrains Mono Regular'],
+    fallback: 'Menlo, monospace',
+  },
   { family: 'Manrope', local: ['Manrope', 'Manrope Regular'], fallback: 'Arial, sans-serif' },
-  { family: 'Plus Jakarta Sans', local: ['Plus Jakarta Sans', 'Plus Jakarta Sans Regular'], fallback: 'Arial, sans-serif' },
-  { family: 'Merriweather', local: ['Merriweather', 'Merriweather Regular'], fallback: 'Georgia, serif' },
+  {
+    family: 'Plus Jakarta Sans',
+    local: ['Plus Jakarta Sans', 'Plus Jakarta Sans Regular'],
+    fallback: 'Arial, sans-serif',
+  },
+  {
+    family: 'Merriweather',
+    local: ['Merriweather', 'Merriweather Regular'],
+    fallback: 'Georgia, serif',
+  },
 ];
 
 function localFontCss(): string {
@@ -626,54 +849,70 @@ function localFontCss(): string {
 function fontStack(font: string, kind: 'heading' | 'body'): string {
   const face = LOCAL_FONT_FACES.find((f) => f.family === font);
   if (face) return `'${face.family}', ${face.fallback}`;
-  return kind === 'heading'
-    ? `'${font}', Georgia, serif`
-    : `'${font}', Arial, sans-serif`;
+  return kind === 'heading' ? `'${font}', Georgia, serif` : `'${font}', Arial, sans-serif`;
 }
 
 function resolveTheme(layout: CvTemplateLayout, brand?: BrandTokens): ResolvedTheme {
   const ats = !!layout.atsSafe;
-  const accent    = ats ? '#000000' : (brand?.colors?.primary || layout.accent || '#1F2937');
+  const accent = ats ? '#000000' : brand?.colors?.primary || layout.accent || '#1F2937';
   const secondary = brand?.colors?.secondary || '#64748B';
 
   const sc = layout.sidebarColor;
-  let sidebarBg = '#F1F5F9', sidebarFg = '#0F172A';
-  if      (sc === 'accent')    { sidebarBg = accent;    sidebarFg = '#FFFFFF'; }
-  else if (sc === 'dark')      { sidebarBg = '#0F172A'; sidebarFg = '#F8FAFC'; }
-  else if (sc === 'charcoal')  { sidebarBg = '#1E293B'; sidebarFg = '#F1F5F9'; }
-  else if (sc === 'navy')      { sidebarBg = '#0D1B2A'; sidebarFg = '#EEF2F7'; }
-  else if (sc === 'light')     { sidebarBg = '#F8FAFC'; sidebarFg = '#0F172A'; }
-  else if (sc === 'warmlight') { sidebarBg = '#FAFAF8'; sidebarFg = '#1A1A1A'; }
-  else if (sc && /^#/.test(sc)){ sidebarBg = sc;        sidebarFg = '#FFFFFF'; }
+  let sidebarBg = '#F1F5F9',
+    sidebarFg = '#0F172A';
+  if (sc === 'accent') {
+    sidebarBg = accent;
+    sidebarFg = '#FFFFFF';
+  } else if (sc === 'dark') {
+    sidebarBg = '#0F172A';
+    sidebarFg = '#F8FAFC';
+  } else if (sc === 'charcoal') {
+    sidebarBg = '#1E293B';
+    sidebarFg = '#F1F5F9';
+  } else if (sc === 'navy') {
+    sidebarBg = '#0D1B2A';
+    sidebarFg = '#EEF2F7';
+  } else if (sc === 'light') {
+    sidebarBg = '#F8FAFC';
+    sidebarFg = '#0F172A';
+  } else if (sc === 'warmlight') {
+    sidebarBg = '#FAFAF8';
+    sidebarFg = '#1A1A1A';
+  } else if (sc && /^#/.test(sc)) {
+    sidebarBg = sc;
+    sidebarFg = '#FFFFFF';
+  }
 
   const rawH = brand?.fonts?.heading || layout.typography?.heading || 'Inter';
-  const rawB = brand?.fonts?.body    || layout.typography?.body    || 'Inter';
+  const rawB = brand?.fonts?.body || layout.typography?.body || 'Inter';
 
   return {
-    accent, secondary,
-    text:        brand?.colors?.text       || '#0F172A',
-    background:  brand?.colors?.background || '#FFFFFF',
-    sidebarBg, sidebarFg,
+    accent,
+    secondary,
+    text: brand?.colors?.text || '#0F172A',
+    background: brand?.colors?.background || '#FFFFFF',
+    sidebarBg,
+    sidebarFg,
     headingFont: ats ? 'Arial' : normFont(rawH),
-    bodyFont:    ats ? 'Arial' : normFont(rawB),
-    density:     layout.density     || 'comfortable',
-    headerStyle: ats ? 'block' : ((layout.headerStyle as any) || 'block'),
-    style:       ats ? 'classic' : (layout.style || 'classic'),
-    columns:     ats ? 1 : (layout.columns || 1),
+    bodyFont: ats ? 'Arial' : normFont(rawB),
+    density: layout.density || 'comfortable',
+    headerStyle: ats ? 'block' : (layout.headerStyle as any) || 'block',
+    style: ats ? 'classic' : layout.style || 'classic',
+    columns: ats ? 1 : layout.columns || 1,
     sidebarSide: ats ? undefined : layout.sidebarSide,
     sidebarWidth: layout.sidebarWidth || 275,
-    photoShape:  ats ? 'none' : layout.photoShape,
-    photoPlace:  ats ? undefined : layout.photoPlace,
-    skillStyle:  ats ? 'plain' : layout.skillStyle,
+    photoShape: ats ? 'none' : layout.photoShape,
+    photoPlace: ats ? undefined : layout.photoPlace,
+    skillStyle: ats ? 'plain' : layout.skillStyle,
     languageStyle: ats ? 'plain' : layout.languageStyle,
-    icons:        ats ? false : (layout.icons ?? true),
-    timeline:    ats ? false : layout.timeline,
+    icons: ats ? false : (layout.icons ?? true),
+    timeline: ats ? false : layout.timeline,
     accentDividers: ats ? false : layout.accentDividers,
-    atsSafe:     ats,
-    logoPlace:   layout.logoPlace ?? (brand?.logo ? 'header' : 'none'),
-    logoUrl:     brand?.logo,
-    customCss:   layout.customCss,
-    headerBg:    layout.headerBg,
+    atsSafe: ats,
+    logoPlace: layout.logoPlace ?? (brand?.logo ? 'header' : 'none'),
+    logoUrl: brand?.logo,
+    customCss: layout.customCss,
+    headerBg: layout.headerBg,
     bannerBorderBottom: layout.bannerBorderBottom,
     sidebarColor: layout.sidebarColor,
   };
@@ -687,21 +926,25 @@ function shell(opts: { title: string; theme: ResolvedTheme; body: string }): str
   const t = opts.theme;
 
   // Phase 43.1C — Ensure minimum spacing values to prevent broken layouts
-  const spGap  = Math.max(18, t.density === 'compact' ? 20 : t.density === 'spacious' ? 36 : 28);  // section gap
-  const enGap  = Math.max(12, t.density === 'compact' ? 14 : t.density === 'spacious' ? 22 : 18);  // entry gap
-  const pgPad  = Math.max(28, t.density === 'compact' ? 32 : t.density === 'spacious' ? 48 : 40);  // page top/bottom pad
-  const hPad   = Math.max(20, t.density === 'compact' ? 24 : t.density === 'spacious' ? 44 : 36);  // header top/bottom internal pad
-  const sidePad = 48;  // page side pad (single-col)
-  const mainPad = 44;  // main-column side pad (two-col)
+  const spGap = Math.max(18, t.density === 'compact' ? 20 : t.density === 'spacious' ? 36 : 28); // section gap
+  const enGap = Math.max(12, t.density === 'compact' ? 14 : t.density === 'spacious' ? 22 : 18); // entry gap
+  const pgPad = Math.max(28, t.density === 'compact' ? 32 : t.density === 'spacious' ? 48 : 40); // page top/bottom pad
+  const hPad = Math.max(20, t.density === 'compact' ? 24 : t.density === 'spacious' ? 44 : 36); // header top/bottom internal pad
+  const sidePad = 48; // page side pad (single-col)
+  const mainPad = 44; // main-column side pad (two-col)
 
-  const sidebarW  = Math.max(200, Math.min(320, t.sidebarWidth || 275));  // clamp sidebar width
-  const bannerBg  = t.headerBg || t.accent;
+  const sidebarW = Math.max(200, Math.min(320, t.sidebarWidth || 275)); // clamp sidebar width
+  const bannerBg = t.headerBg || t.accent;
   const bannerBrd = t.bannerBorderBottom ? `border-bottom:${t.bannerBorderBottom};` : '';
 
-  const watermark = t.logoPlace === 'watermark' && t.logoUrl
-    ? `<div class="wm"><img src="${esc(t.logoUrl)}" alt=""/></div>` : '';
-  const footLogo  = t.logoPlace === 'footer' && t.logoUrl
-    ? `<footer class="foot-logo"><img src="${esc(t.logoUrl)}" alt=""/></footer>` : '';
+  const watermark =
+    t.logoPlace === 'watermark' && t.logoUrl
+      ? `<div class="wm"><img src="${esc(t.logoUrl)}" alt=""/></div>`
+      : '';
+  const footLogo =
+    t.logoPlace === 'footer' && t.logoUrl
+      ? `<footer class="foot-logo"><img src="${esc(t.logoUrl)}" alt=""/></footer>`
+      : '';
   const fontCss = localFontCss();
 
   return `<!DOCTYPE html>
@@ -733,15 +976,15 @@ body { margin:0; padding:0; font-family:var(--bf); font-size:11.5px; line-height
 /* ── Page containers ─────────────────────────────────── */
 .page { background:var(--bg); margin:0 auto; width:210mm; max-width:880px; min-height:297mm; }
 /* Single-column: page owns the padding, banner bleeds through negative margin */
-.page.single { padding:${pgPad}px ${sidePad}px ${Math.round(pgPad*1.2)}px; }
+.page.single { padding:${pgPad}px ${sidePad}px ${Math.round(pgPad * 1.2)}px; }
 /* full-bleed banner in single-col */
-.page.single>.header.banner { margin:-${pgPad}px -${sidePad}px 0; margin-bottom:${Math.round(hPad*0.8)}px; padding:${hPad}px ${sidePad}px ${Math.round(hPad*0.65)}px; }
+.page.single>.header.banner { margin:-${pgPad}px -${sidePad}px 0; margin-bottom:${Math.round(hPad * 0.8)}px; padding:${hPad}px ${sidePad}px ${Math.round(hPad * 0.65)}px; }
 /* Sidebar grid */
 .page.sidebar-layout { display:grid; min-height:297mm; align-items:stretch; }
 .page.sidebar-layout.side-left  { grid-template-columns:${sidebarW}px 1fr; }
 .page.sidebar-layout.side-right { grid-template-columns:1fr ${sidebarW}px; }
 /* ── Sidebar ─────────────────────────────────────────── */
-.sidebar { background:var(--sb); color:var(--sf); padding:${Math.round(hPad*0.85)}px 22px ${pgPad}px; }
+.sidebar { background:var(--sb); color:var(--sf); padding:${Math.round(hPad * 0.85)}px 22px ${pgPad}px; }
 .sidebar.light { background:var(--sb); color:var(--tx); }
 .sidebar h1,.sidebar h2,.sidebar h3 { color:var(--sf); }
 .sidebar.light h1,.sidebar.light h2,.sidebar.light h3 { color:var(--tx); }
@@ -759,16 +1002,16 @@ body { margin:0; padding:0; font-family:var(--bf); font-size:11.5px; line-height
 .sidebar .lang-text,
 .sidebar .sk-name { overflow-wrap:anywhere; }
 /* ── Main column ─────────────────────────────────────── */
-.main { padding:${Math.round(hPad*0.85)}px ${mainPad}px ${pgPad}px; }
+.main { padding:${Math.round(hPad * 0.85)}px ${mainPad}px ${pgPad}px; }
 /* Headers inside .main: strip top/side padding — .main already provides it */
 .main>.header.block,
 .main>.header.minimal,
 .main>.header.split  { padding-top:0; padding-left:0; padding-right:0; }
 /* Full-bleed banner inside .main */
-.main>.header.banner { margin:-${Math.round(hPad*0.85)}px -${mainPad}px 0; margin-bottom:${Math.round(hPad*0.7)}px; padding:${Math.round(hPad*0.75)}px ${mainPad}px ${Math.round(hPad*0.5)}px; }
+.main>.header.banner { margin:-${Math.round(hPad * 0.85)}px -${mainPad}px 0; margin-bottom:${Math.round(hPad * 0.7)}px; padding:${Math.round(hPad * 0.75)}px ${mainPad}px ${Math.round(hPad * 0.5)}px; }
 .main .content { padding:0; }
 /* Content for single-col: top gap between header and sections */
-.page.single .content { padding-top:${Math.round(spGap*0.9)}px; }
+.page.single .content { padding-top:${Math.round(spGap * 0.9)}px; }
 /* Section spacing */
 .content>.section+.section { margin-top:var(--sp); }
 /* ── Typography ─────────────────────────────────────── */
@@ -955,7 +1198,9 @@ ul li { margin-bottom:3px; }
 h2,h3,.section>h2 { page-break-after:avoid; break-after:avoid-page; }
 .section>h2 { orphans:3; widows:3; }
 /* ── ATS overrides ───────────────────────────────────── */
-${t.atsSafe ? `
+${
+  t.atsSafe
+    ? `
 .photo,.sidebar-photo,.wm,.foot-logo,.dots,.stars { display:none!important; }
 .tl-track { padding-left:0!important; border-left:none!important; }
 .tl-dot { display:none!important; }
@@ -967,7 +1212,9 @@ h1,h2,h3,.e-company { color:black!important; }
 .pill { display:inline!important; padding:0!important; border:0!important; background:transparent!important; color:black!important; font-size:inherit!important; font-weight:400!important; }
 .pill+.pill::before { content:', '; color:black; }
 h2 { border-bottom:1px solid black!important; font-size:13px!important; letter-spacing:.05em!important; text-transform:uppercase!important; }
-` : ''}
+`
+    : ''
+}
 /* ── Marketplace premium system ─────────────────────── */
 .premium-page { box-shadow:0 18px 44px rgba(15,23,42,.14); overflow:visible; }
 .premium-page .section { position:relative; }
@@ -1016,7 +1263,7 @@ h2 { border-bottom:1px solid black!important; font-size:13px!important; letter-s
 @media print {
   body { background:white; }
   .page { box-shadow:none; max-width:none; width:210mm; min-height:297mm; overflow:visible; }
-  .page.sidebar-layout { display:${t.atsSafe?'block':'grid'}; }
+  .page.sidebar-layout { display:${t.atsSafe ? 'block' : 'grid'}; }
   .sidebar { background:var(--sb)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .header.banner,.fill,.pill,.cert-item,.sk-chip,.sec-ico { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .page.sidebar-layout { grid-template-columns:${t.sidebarSide === 'right' ? `1fr ${sidebarW}px` : `${sidebarW}px 1fr`}; }
@@ -1084,14 +1331,18 @@ function splitPreservedText(value: any): string[] {
 function experienceRawFallbackLines(exp: any): string[] {
   const rawLines = splitPreservedText(exp?.rawText);
   if (!rawLines.length) return [];
-  const headerKeys = new Set([
-    exp?.role,
-    exp?.company,
-    exp?.location,
-    exp?.start,
-    exp?.end,
-    formatRange(exp?.start, exp?.end),
-  ].filter(Boolean).map((value) => String(value).trim().toLowerCase()));
+  const headerKeys = new Set(
+    [
+      exp?.role,
+      exp?.company,
+      exp?.location,
+      exp?.start,
+      exp?.end,
+      formatRange(exp?.start, exp?.end),
+    ]
+      .filter(Boolean)
+      .map((value) => String(value).trim().toLowerCase()),
+  );
 
   return uniqueTextArray(rawLines)
     .filter((line) => !headerKeys.has(line.toLowerCase()))
@@ -1127,10 +1378,26 @@ function highlightMetrics(text: string): string {
 }
 
 function levelPct(level?: string): number {
-  return level === 'expert' ? 95 : level === 'advanced' ? 80 : level === 'intermediate' ? 60 : level === 'beginner' ? 35 : 70;
+  return level === 'expert'
+    ? 95
+    : level === 'advanced'
+      ? 80
+      : level === 'intermediate'
+        ? 60
+        : level === 'beginner'
+          ? 35
+          : 70;
 }
 function levelStars(level?: string): number {
-  return level === 'expert' ? 5 : level === 'advanced' ? 4 : level === 'intermediate' ? 3 : level === 'beginner' ? 2 : 3;
+  return level === 'expert'
+    ? 5
+    : level === 'advanced'
+      ? 4
+      : level === 'intermediate'
+        ? 3
+        : level === 'beginner'
+          ? 2
+          : 3;
 }
 function levelDots(level?: string): string {
   const n = levelStars(level);
@@ -1144,5 +1411,9 @@ function capitalise(s: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 }
 function esc(s: string): string {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

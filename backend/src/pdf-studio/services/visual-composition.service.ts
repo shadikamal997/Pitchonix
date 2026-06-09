@@ -35,10 +35,7 @@ export class VisualCompositionService {
   /**
    * Generate visual layout from content and configuration
    */
-  generateVisualLayout(
-    content: any,
-    config: CompositionConfig,
-  ): VisualLayout {
+  generateVisualLayout(content: any, config: CompositionConfig): VisualLayout {
     this.logger.log(`Generating ${config.layoutType} layout with ${config.visualStyle} style`);
 
     switch (config.layoutType) {
@@ -522,8 +519,10 @@ export class VisualCompositionService {
 
     if (style.backgroundColor) css += `background-color: ${style.backgroundColor};`;
     if (style.color) css += `color: ${style.color};`;
-    if (style.padding) css += `padding: ${typeof style.padding === 'number' ? style.padding + 'px' : style.padding};`;
-    if (style.borderRadius) css += `border-radius: ${typeof style.borderRadius === 'number' ? style.borderRadius + 'px' : style.borderRadius};`;
+    if (style.padding)
+      css += `padding: ${typeof style.padding === 'number' ? style.padding + 'px' : style.padding};`;
+    if (style.borderRadius)
+      css += `border-radius: ${typeof style.borderRadius === 'number' ? style.borderRadius + 'px' : style.borderRadius};`;
     if (style.boxShadow) css += `box-shadow: ${style.boxShadow};`;
     if (style.opacity) css += `opacity: ${style.opacity};`;
     if (style.fontSize) css += `font-size: ${style.fontSize}px;`;

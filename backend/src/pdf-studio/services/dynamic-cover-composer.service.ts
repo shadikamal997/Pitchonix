@@ -3,7 +3,7 @@ import { PageComposition, ComposedSection } from './document-composition.service
 
 /**
  * Dynamic Cover Composer
- * 
+ *
  * Creates professional, adaptive cover pages with:
  * - Adaptive title scaling
  * - Subtitle hierarchy
@@ -15,12 +15,12 @@ import { PageComposition, ComposedSection } from './document-composition.service
  */
 
 export type CoverStyle =
-  | 'modern'      // Clean, minimal, bold typography
-  | 'executive'   // Corporate, professional, formal
-  | 'minimal'     // Ultra-minimal, maximal whitespace
-  | 'magazine'    // Editorial, dynamic, asymmetric
-  | 'startup'     // Energetic, friendly, modern
-  | 'corporate';  // Traditional, conservative, structured
+  | 'modern' // Clean, minimal, bold typography
+  | 'executive' // Corporate, professional, formal
+  | 'minimal' // Ultra-minimal, maximal whitespace
+  | 'magazine' // Editorial, dynamic, asymmetric
+  | 'startup' // Energetic, friendly, modern
+  | 'corporate'; // Traditional, conservative, structured
 
 export interface CoverContent {
   title: string;
@@ -56,12 +56,12 @@ export class DynamicCoverComposerService {
    */
   composeCover(content: CoverContent, style: CoverStyle = 'modern'): PageComposition {
     const layout = this.selectCoverLayout(content, style);
-    
+
     // Add auto-generated description if missing
     if (!content.description && content.subtitle) {
       content.description = `A comprehensive document exploring ${content.subtitle.toLowerCase()}`;
     }
-    
+
     const sections = this.buildCoverSections(content, layout);
 
     return {
@@ -163,7 +163,7 @@ export class DynamicCoverComposerService {
   private calculateTitleSize(titleLength: number, baseSize: 'xlarge' | 'large' | 'medium'): number {
     const baseSizes = {
       xlarge: 3.052, // ~49px (Perfect Fourth scale)
-      large: 2.441,  // ~39px (Major Third scale)
+      large: 2.441, // ~39px (Major Third scale)
       medium: 1.953, // ~31px
     };
 
@@ -357,11 +357,11 @@ export class DynamicCoverComposerService {
    */
   private getDefaultAccent(style: CoverStyle): string {
     const map: Record<CoverStyle, string> = {
-      modern: '#2563eb',    // Blue
+      modern: '#2563eb', // Blue
       executive: '#1e40af', // Dark blue
-      minimal: '#000000',   // Black
-      magazine: '#dc2626',  // Red
-      startup: '#8b5cf6',   // Purple
+      minimal: '#000000', // Black
+      magazine: '#dc2626', // Red
+      startup: '#8b5cf6', // Purple
       corporate: '#059669', // Green
     };
     return map[style];
@@ -540,7 +540,7 @@ export class DynamicCoverComposerService {
 
     // Check for matches
     for (const [style, words] of Object.entries(keywords)) {
-      if (words.some(word => title.includes(word) || subtitle.includes(word))) {
+      if (words.some((word) => title.includes(word) || subtitle.includes(word))) {
         return style as CoverStyle;
       }
     }

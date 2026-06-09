@@ -4,7 +4,7 @@ import { OleWorkspaceService } from './ole-workspace.service';
 
 @Module({
   controllers: [OleWorkspaceController],
-  providers:   [OleWorkspaceService],
-  exports:     [OleWorkspaceService],
+  providers: [OleWorkspaceService],
+  exports: [OleWorkspaceService],
 })
 export class OleWorkspaceModule {}

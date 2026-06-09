@@ -15,11 +15,11 @@ import { PrismaService } from '../prisma/prisma.service';
 export type TransitionEffect = 'fade' | 'push' | 'reveal' | 'morph' | 'cover';
 
 export interface SlideTransition {
-  effect:          TransitionEffect;
-  duration:        number;
-  direction?:      'left' | 'right' | 'top' | 'bottom';
+  effect: TransitionEffect;
+  duration: number;
+  direction?: 'left' | 'right' | 'top' | 'bottom';
   advanceOnClick?: boolean;
-  advanceAfter?:   number;
+  advanceAfter?: number;
 }
 
 @Injectable()
@@ -28,7 +28,7 @@ export class SlideTransitionsService {
 
   async get(slideId: string): Promise<SlideTransition | null> {
     const slide = await this.prisma.slide.findUnique({
-      where:  { id: slideId },
+      where: { id: slideId },
       select: { transition: true },
     });
     if (!slide) throw new NotFoundException('Slide not found');
@@ -37,15 +37,15 @@ export class SlideTransitionsService {
 
   async set(slideId: string, transition: SlideTransition) {
     const data: SlideTransition = {
-      effect:          transition.effect,
-      duration:        Math.max(0, Number(transition.duration ?? 400)),
-      direction:       transition.direction,
-      advanceOnClick:  transition.advanceOnClick ?? true,
-      advanceAfter:    transition.advanceAfter,
+      effect: transition.effect,
+      duration: Math.max(0, Number(transition.duration ?? 400)),
+      direction: transition.direction,
+      advanceOnClick: transition.advanceOnClick ?? true,
+      advanceAfter: transition.advanceAfter,
     };
     await this.prisma.slide.update({
       where: { id: slideId },
-      data:  { transition: data as any },
+      data: { transition: data as any },
     });
     return data;
   }
@@ -53,7 +53,7 @@ export class SlideTransitionsService {
   async clear(slideId: string) {
     await this.prisma.slide.update({
       where: { id: slideId },
-      data:  { transition: null as any },
+      data: { transition: null as any },
     });
     return { cleared: true };
   }
@@ -62,7 +62,7 @@ export class SlideTransitionsService {
   async applyToDeck(deckId: string, transition: SlideTransition) {
     const res = await this.prisma.slide.updateMany({
       where: { deckId },
-      data:  { transition: transition as any },
+      data: { transition: transition as any },
     });
     return { applied: res.count };
   }

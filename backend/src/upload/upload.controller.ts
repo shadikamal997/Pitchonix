@@ -12,6 +12,7 @@ import {
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { GetUser } from '../auth/get-user.decorator';
 import { UploadService, UploadedFile as UploadedFileInfo } from './upload.service';
 
 @ApiTags('Upload')
@@ -25,31 +26,40 @@ export class UploadController {
   @ApiOperation({ summary: 'Upload single image' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadImage(@UploadedFile() file: Express.Multer.File): Promise<UploadedFileInfo> {
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @GetUser() user: any,
+  ): Promise<UploadedFileInfo> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
 
-    return this.uploadService.saveImage(file);
+    return this.uploadService.saveImage(file, { userId: user?.id, module: 'generic' });
   }
 
   @Post('images')
   @ApiOperation({ summary: 'Upload multiple images' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FilesInterceptor('files', 10)) // Max 10 files
-  async uploadImages(@UploadedFiles() files: Express.Multer.File[]): Promise<UploadedFileInfo[]> {
+  async uploadImages(
+    @UploadedFiles() files: Express.Multer.File[],
+    @GetUser() user: any,
+  ): Promise<UploadedFileInfo[]> {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');
     }
 
-    return this.uploadService.saveImages(files);
+    return this.uploadService.saveImages(files, { userId: user?.id, module: 'generic' });
   }
 
   @Post('thumbnail')
   @ApiOperation({ summary: 'Upload image and generate thumbnail' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadThumbnail(@UploadedFile() file: Express.Multer.File): Promise<{
+  async uploadThumbnail(
+    @UploadedFile() file: Express.Multer.File,
+    @GetUser() user: any,
+  ): Promise<{
     original: UploadedFileInfo;
     thumbnail: UploadedFileInfo;
   }> {
@@ -58,8 +68,8 @@ export class UploadController {
     }
 
     const [original, thumbnail] = await Promise.all([
-      this.uploadService.saveImage(file),
-      this.uploadService.generateThumbnail(file),
+      this.uploadService.saveImage(file, { userId: user?.id, module: 'generic' }),
+      this.uploadService.generateThumbnail(file, 300, 300, { userId: user?.id, module: 'generic' }),
     ]);
 
     return { original, thumbnail };

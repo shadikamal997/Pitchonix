@@ -37,10 +37,10 @@ export class UnsplashService {
         `${this.baseUrl}/search/photos?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`,
         {
           headers: {
-            'Authorization': `Client-ID ${this.apiKey}`,
+            Authorization: `Client-ID ${this.apiKey}`,
             'Accept-Version': 'v1',
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -48,7 +48,7 @@ export class UnsplashService {
       }
 
       const data = await response.json();
-      
+
       return data.results.map((photo: any) => ({
         id: photo.id,
         url: photo.urls.regular,
@@ -73,15 +73,12 @@ export class UnsplashService {
 
     try {
       const queryParam = query ? `&query=${encodeURIComponent(query)}` : '';
-      const response = await fetch(
-        `${this.baseUrl}/photos/random?count=${count}${queryParam}`,
-        {
-          headers: {
-            'Authorization': `Client-ID ${this.apiKey}`,
-            'Accept-Version': 'v1',
-          },
-        }
-      );
+      const response = await fetch(`${this.baseUrl}/photos/random?count=${count}${queryParam}`, {
+        headers: {
+          Authorization: `Client-ID ${this.apiKey}`,
+          'Accept-Version': 'v1',
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Unsplash API error: ${response.status}`);
@@ -89,7 +86,7 @@ export class UnsplashService {
 
       const photos = await response.json();
       const photoArray = Array.isArray(photos) ? photos : [photos];
-      
+
       return photoArray.map((photo: any) => ({
         id: photo.id,
         url: photo.urls.regular,
@@ -116,7 +113,7 @@ export class UnsplashService {
       // Trigger download tracking as per Unsplash guidelines
       await fetch(downloadUrl, {
         headers: {
-          'Authorization': `Client-ID ${this.apiKey}`,
+          Authorization: `Client-ID ${this.apiKey}`,
         },
       });
     } catch (error) {

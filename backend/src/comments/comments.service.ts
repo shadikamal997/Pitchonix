@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { parseMentions, MentionMeta } from './mention-parser';
 import { ReviewEventBus } from '../reviews/review-event-bus';
@@ -18,21 +25,21 @@ import { ReviewEventBus } from '../reviews/review-event-bus';
 // =============================================================================
 
 export interface CreateCommentInput {
-  content:         string;
-  parentId?:       string;
-  slideId?:        string;
+  content: string;
+  parentId?: string;
+  slideId?: string;
   slideElementId?: string;
-  pageId?:         string;
-  anchorX?:        number;
-  anchorY?:        number;
+  pageId?: string;
+  anchorX?: number;
+  anchorY?: number;
 }
 
 const COMMENT_INCLUDE = {
-  user:       { select: { id: true, name: true, email: true } },
+  user: { select: { id: true, name: true, email: true } },
   assignedTo: { select: { id: true, name: true, email: true } },
   replies: {
     include: {
-      user:       { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, name: true, email: true } },
       assignedTo: { select: { id: true, name: true, email: true } },
     },
     orderBy: { createdAt: 'asc' as const },
@@ -163,15 +170,23 @@ export class CommentsService {
     if (input.parentId) {
       const parent = await this.prisma.comment.findUnique({
         where: { id: input.parentId },
-        select: { projectId: true, slideId: true, slideElementId: true, pageId: true, anchorX: true, anchorY: true },
+        select: {
+          projectId: true,
+          slideId: true,
+          slideElementId: true,
+          pageId: true,
+          anchorX: true,
+          anchorY: true,
+        },
       });
       if (!parent) throw new NotFoundException('Parent comment not found');
-      if (parent.projectId !== projectId) throw new BadRequestException('Parent comment belongs to a different project');
-      slideId        = slideId        ?? parent.slideId        ?? undefined;
+      if (parent.projectId !== projectId)
+        throw new BadRequestException('Parent comment belongs to a different project');
+      slideId = slideId ?? parent.slideId ?? undefined;
       slideElementId = slideElementId ?? parent.slideElementId ?? undefined;
-      pageId         = pageId         ?? parent.pageId         ?? undefined;
-      anchorX        = anchorX        ?? parent.anchorX        ?? undefined;
-      anchorY        = anchorY        ?? parent.anchorY        ?? undefined;
+      pageId = pageId ?? parent.pageId ?? undefined;
+      anchorX = anchorX ?? parent.anchorX ?? undefined;
+      anchorY = anchorY ?? parent.anchorY ?? undefined;
     }
 
     // Phase 36.1A — parse @mentions. We only handle the bracket form server-
@@ -184,14 +199,24 @@ export class CommentsService {
         userId,
         content,
         parentId: input.parentId,
-        slideId, slideElementId, pageId, anchorX, anchorY,
+        slideId,
+        slideElementId,
+        pageId,
+        anchorX,
+        anchorY,
         mentions: mentions.length > 0 ? (mentions as any) : undefined,
       },
       include: COMMENT_INCLUDE,
     });
 
     // Phase 36.1M — event emission (notification-center stub).
-    this.events.emit({ type: 'comment.created', commentId: created.id, projectId, userId, mentions });
+    this.events.emit({
+      type: 'comment.created',
+      commentId: created.id,
+      projectId,
+      userId,
+      mentions,
+    });
     return created;
   }
 
@@ -204,26 +229,27 @@ export class CommentsService {
    * bare @handles, attempt to match them against project members (owner +
    * shares) by name or email prefix.
    */
-  private async parseAndResolveMentions(content: string, projectId: string): Promise<MentionMeta[]> {
+  private async parseAndResolveMentions(
+    content: string,
+    projectId: string,
+  ): Promise<MentionMeta[]> {
     // Build candidate pool: project owner + share members.
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: {
-        user:   { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true } },
         shares: { select: { user: { select: { id: true, name: true, email: true } } } },
       },
     });
     if (!project) return [];
 
-    const pool = [
-      project.user,
-      ...project.shares.map((s) => s.user),
-    ];
+    const pool = [project.user, ...project.shares.map((s) => s.user)];
     const byHandle = (h: string) => {
       const needle = h.toLowerCase();
-      const hit = pool.find((u) =>
-        (u.name || '').toLowerCase().startsWith(needle) ||
-        (u.email || '').toLowerCase().split('@')[0].startsWith(needle),
+      const hit = pool.find(
+        (u) =>
+          (u.name || '').toLowerCase().startsWith(needle) ||
+          (u.email || '').toLowerCase().split('@')[0].startsWith(needle),
       );
       return hit ? { userId: hit.id, displayName: hit.name || hit.email } : null;
     };
@@ -249,7 +275,7 @@ export class CommentsService {
     const mentions = await this.parseAndResolveMentions(trimmed, comment.projectId);
     return this.prisma.comment.update({
       where: { id },
-      data:  {
+      data: {
         content: trimmed,
         editedAt: new Date(),
         mentions: mentions.length > 0 ? (mentions as any) : undefined,
@@ -275,17 +301,23 @@ export class CommentsService {
 
     if (assigneeId) {
       const member = await this.prisma.user.findUnique({
-        where: { id: assigneeId }, select: { id: true },
+        where: { id: assigneeId },
+        select: { id: true },
       });
       if (!member) throw new BadRequestException('Assignee user not found');
     }
 
     const updated = await this.prisma.comment.update({
       where: { id },
-      data:  { assignedToId: assigneeId },
+      data: { assignedToId: assigneeId },
       include: COMMENT_INCLUDE,
     });
-    this.events.emit({ type: 'comment.assigned', commentId: id, projectId: comment.projectId, assigneeId });
+    this.events.emit({
+      type: 'comment.assigned',
+      commentId: id,
+      projectId: comment.projectId,
+      assigneeId,
+    });
     return updated;
   }
 
@@ -298,7 +330,7 @@ export class CommentsService {
     await this.assertProjectAccess(projectId, userId);
     const res = await this.prisma.comment.updateMany({
       where: { slideId, parentId: null, resolved: false, deletedAt: null },
-      data:  { resolved: true },
+      data: { resolved: true },
     });
     this.events.emit({ type: 'comments.resolved_all', projectId, slideId, count: res.count });
     return { resolved: res.count };
@@ -315,7 +347,7 @@ export class CommentsService {
     if (ids.length === 0) return { resolved: 0 };
     const res = await this.prisma.comment.updateMany({
       where: { slideId: { in: ids }, parentId: null, resolved: false, deletedAt: null },
-      data:  { resolved: true },
+      data: { resolved: true },
     });
     this.events.emit({ type: 'comments.resolved_all', deckId, count: res.count });
     return { resolved: res.count };
@@ -339,47 +371,67 @@ export class CommentsService {
     const slideIds = Array.from(new Set(rows.map((r) => r.slideId).filter(Boolean) as string[]));
     const slides = slideIds.length
       ? await this.prisma.slide.findMany({
-          where:  { id: { in: slideIds } },
+          where: { id: { in: slideIds } },
           select: { id: true, title: true },
         })
       : [];
     const slideTitleById = new Map(slides.map((s) => [s.id, s.title]));
 
-    return rows.filter((c) => {
-      const slideTitle = c.slideId ? slideTitleById.get(c.slideId) : undefined;
-      const blob = [
-        c.content,
-        c.user?.name, c.user?.email,
-        ...c.replies.map((r) => r.content),
-        ...c.replies.map((r) => r.user?.name),
-        ...c.replies.map((r) => r.user?.email),
-        slideTitle,
-        ...(Array.isArray(c.mentions)
-          ? (c.mentions as any[]).map((m: any) => m?.displayName)
-          : []),
-      ].filter(Boolean).join(' ').toLowerCase();
-      return blob.includes(needle);
-    }).map((c) => ({
-      ...c,
-      // Inline slide title so the search panel can show "Slide 3 — Problem".
-      slide: c.slideId ? { id: c.slideId, title: slideTitleById.get(c.slideId) || null } : null,
-    }));
+    return rows
+      .filter((c) => {
+        const slideTitle = c.slideId ? slideTitleById.get(c.slideId) : undefined;
+        const blob = [
+          c.content,
+          c.user?.name,
+          c.user?.email,
+          ...c.replies.map((r) => r.content),
+          ...c.replies.map((r) => r.user?.name),
+          ...c.replies.map((r) => r.user?.email),
+          slideTitle,
+          ...(Array.isArray(c.mentions)
+            ? (c.mentions as any[]).map((m: any) => m?.displayName)
+            : []),
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return blob.includes(needle);
+      })
+      .map((c) => ({
+        ...c,
+        // Inline slide title so the search panel can show "Slide 3 — Problem".
+        slide: c.slideId ? { id: c.slideId, title: slideTitleById.get(c.slideId) || null } : null,
+      }));
   }
 
   async resolve(id: string, userId: string) {
-    const comment = await this.prisma.comment.findUnique({ where: { id }, select: { id: true, projectId: true } });
+    const comment = await this.prisma.comment.findUnique({
+      where: { id },
+      select: { id: true, projectId: true },
+    });
     if (!comment) throw new NotFoundException('Comment not found');
     await this.assertProjectAccess(comment.projectId, userId);
-    const updated = await this.prisma.comment.update({ where: { id }, data: { resolved: true }, include: COMMENT_INCLUDE });
+    const updated = await this.prisma.comment.update({
+      where: { id },
+      data: { resolved: true },
+      include: COMMENT_INCLUDE,
+    });
     this.events.emit({ type: 'comment.resolved', commentId: id, projectId: comment.projectId });
     return updated;
   }
 
   async reopen(id: string, userId: string) {
-    const comment = await this.prisma.comment.findUnique({ where: { id }, select: { id: true, projectId: true } });
+    const comment = await this.prisma.comment.findUnique({
+      where: { id },
+      select: { id: true, projectId: true },
+    });
     if (!comment) throw new NotFoundException('Comment not found');
     await this.assertProjectAccess(comment.projectId, userId);
-    const updated = await this.prisma.comment.update({ where: { id }, data: { resolved: false }, include: COMMENT_INCLUDE });
+    const updated = await this.prisma.comment.update({
+      where: { id },
+      data: { resolved: false },
+      include: COMMENT_INCLUDE,
+    });
     this.events.emit({ type: 'comment.reopened', commentId: id, projectId: comment.projectId });
     return updated;
   }
@@ -390,11 +442,12 @@ export class CommentsService {
   async remove(id: string, userId: string) {
     const comment = await this.prisma.comment.findUnique({ where: { id } });
     if (!comment) throw new NotFoundException('Comment not found');
-    if (comment.userId !== userId) throw new ForbiddenException("Cannot delete another user's comment");
+    if (comment.userId !== userId)
+      throw new ForbiddenException("Cannot delete another user's comment");
     if (comment.deletedAt) return { id, ok: true };
     await this.prisma.comment.update({
       where: { id },
-      data:  { deletedAt: new Date(), content: '[deleted]' },
+      data: { deletedAt: new Date(), content: '[deleted]' },
     });
     return { id, ok: true };
   }

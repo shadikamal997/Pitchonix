@@ -35,7 +35,11 @@ export function presentationToDocument(deck: UniversalDocument): UniversalDocume
       page.nodes.push(node as DocumentNode);
     }
     if (slide.notes) {
-      page.nodes.push({ type: 'paragraph', text: `Notes: ${slide.notes}`, runs: [{ text: `Notes: ${slide.notes}`, italic: true }] });
+      page.nodes.push({
+        type: 'paragraph',
+        text: `Notes: ${slide.notes}`,
+        runs: [{ text: `Notes: ${slide.notes}`, italic: true }],
+      });
     }
   }
 

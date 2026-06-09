@@ -14,10 +14,10 @@ export class CoverPageGenerator extends BasePageGenerator {
       companyName: input.companyName || '',
       tagline: input.shortDescription || input.problem?.substring(0, 100) || '',
       logo: input.logo || null,
-      date: new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      date: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       }),
       documentType: this.formatDocumentType(input.documentType),
     };

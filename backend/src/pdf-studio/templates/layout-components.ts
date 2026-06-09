@@ -46,7 +46,9 @@ export const CoverPageLayout: LayoutRenderer = {
 
           ${logo ? `<img src="${logo}" alt="Logo" style="max-width:80px;margin-bottom:32px;position:relative;z-index:1;" />` : ''}
 
-          ${subtitle ? `<div style="
+          ${
+            subtitle
+              ? `<div style="
             font-size: 12px;
             font-weight: 700;
             letter-spacing: 3px;
@@ -55,7 +57,9 @@ export const CoverPageLayout: LayoutRenderer = {
             margin-bottom: 20px;
             position: relative;
             z-index: 1;
-          ">${subtitle}</div>` : ''}
+          ">${subtitle}</div>`
+              : ''
+          }
 
           <h1 style="
             font-size: 44px;
@@ -78,21 +82,30 @@ export const CoverPageLayout: LayoutRenderer = {
             ${author ? `<p style="font-size:16px;font-weight:600;color:#111827;margin:0 0 6px 0;">${author}</p>` : ''}
             ${date ? `<p style="font-size:14px;color:#6B7280;margin:0;">${date}</p>` : ''}
 
-            ${description ? `<p style="
+            ${
+              description
+                ? `<p style="
               font-size: 15px;
               color: #374151;
               line-height: 1.65;
               max-width: 600px;
               margin: 28px 0 0;
-            ">${description}</p>` : ''}
+            ">${description}</p>`
+                : ''
+            }
 
-            ${Array.isArray(overview) && overview.length > 0 ? `<div style="
+            ${
+              Array.isArray(overview) && overview.length > 0
+                ? `<div style="
               display: flex;
               flex-wrap: wrap;
               gap: 8px;
               margin-top: 24px;
             ">
-              ${overview.slice(0, 6).map((item: string) => `<span style="
+              ${overview
+                .slice(0, 6)
+                .map(
+                  (item: string) => `<span style="
                 border: 1px solid #E5E7EB;
                 border-radius: 999px;
                 padding: 7px 11px;
@@ -102,8 +115,12 @@ export const CoverPageLayout: LayoutRenderer = {
                 text-transform: uppercase;
                 color: ${colorScheme.primary};
                 background: #F9FAFB;
-              ">${item}</span>`).join('')}
-            </div>` : ''}
+              ">${item}</span>`,
+                )
+                .join('')}
+            </div>`
+                : ''
+            }
           </div>
 
           <!-- Footer row -->
@@ -132,7 +149,8 @@ export const HeroHeaderLayout: LayoutRenderer = {
   render: (data, style) => {
     const { title, description } = data;
     const colorScheme = getColorScheme(style.colorScheme);
-    const radius = style.cardStyle === 'rounded' ? '12px' : style.cardStyle === 'soft' ? '8px' : '4px';
+    const radius =
+      style.cardStyle === 'rounded' ? '12px' : style.cardStyle === 'soft' ? '8px' : '4px';
 
     return `
       <div class="hero-header" style="
@@ -163,10 +181,12 @@ export const MetricsStripLayout: LayoutRenderer = {
   render: (data, style) => {
     const { metrics } = data; // [{label, value, change}]
     const colorScheme = getColorScheme(style.colorScheme);
-    
+
     if (!metrics || metrics.length === 0) return '';
-    
-    const metricCards = metrics.map((metric: any) => `
+
+    const metricCards = metrics
+      .map(
+        (metric: any) => `
       <div style="
         flex: 1;
         padding: 24px;
@@ -179,12 +199,18 @@ export const MetricsStripLayout: LayoutRenderer = {
           ${metric.value}
         </div>
         <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">${metric.label}</div>
-        ${metric.change ? `<div style="font-size: 12px; color: ${metric.change > 0 ? '#10B981' : '#EF4444'};">
+        ${
+          metric.change
+            ? `<div style="font-size: 12px; color: ${metric.change > 0 ? '#10B981' : '#EF4444'};">
           ${metric.change > 0 ? '↑' : '↓'} ${Math.abs(metric.change)}%
-        </div>` : ''}
+        </div>`
+            : ''
+        }
       </div>
-    `).join('');
-    
+    `,
+      )
+      .join('');
+
     return `
       <div class="metrics-strip" style="
         display: flex;
@@ -206,7 +232,7 @@ export const SectionCardLayout: LayoutRenderer = {
   render: (data, style) => {
     const { title, content } = data;
     const colorScheme = getColorScheme(style.colorScheme);
-    
+
     return `
       <div class="section-card" style="
         background: white;
@@ -231,7 +257,7 @@ export const TwoColumnLayout: LayoutRenderer = {
   type: LayoutComponentType.TWO_COLUMN_LAYOUT,
   render: (data, style) => {
     const { left, right } = data;
-    
+
     return `
       <div class="two-column" style="
         display: flex;
@@ -253,7 +279,7 @@ export const TextBlockLayout: LayoutRenderer = {
   type: LayoutComponentType.TEXT_BLOCK,
   render: (data, style) => {
     const { content } = data;
-    
+
     return `
       <div class="text-block" style="
         font-size: 16px;
@@ -276,21 +302,25 @@ export const TableBlockLayout: LayoutRenderer = {
   render: (data, style) => {
     const { headers, rows } = data;
     const colorScheme = getColorScheme(style.colorScheme);
-    
+
     if (!headers || !rows) return '';
-    
+
     const headerRow = `
       <tr style="background: ${colorScheme.primary}; color: white;">
         ${headers.map((h: string) => `<th style="padding: 12px; text-align: left; font-weight: 600;">${h}</th>`).join('')}
       </tr>
     `;
-    
-    const dataRows = rows.map((row: any[], i: number) => `
+
+    const dataRows = rows
+      .map(
+        (row: any[], i: number) => `
       <tr style="background: ${i % 2 === 0 ? '#F9FAFB' : 'white'};">
         ${row.map((cell) => `<td style="padding: 12px; border-bottom: 1px solid #E5E7EB;">${cell}</td>`).join('')}
       </tr>
-    `).join('');
-    
+    `,
+      )
+      .join('');
+
     return `
       <div class="table-block" style="margin-bottom: 32px; overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
@@ -311,10 +341,12 @@ export const ProcessStepsBlockLayout: LayoutRenderer = {
   render: (data, style) => {
     const { steps } = data; // [{title, description}]
     const colorScheme = getColorScheme(style.colorScheme);
-    
+
     if (!steps || steps.length === 0) return '';
-    
-    const stepsHTML = steps.map((step: any, i: number) => `
+
+    const stepsHTML = steps
+      .map(
+        (step: any, i: number) => `
       <div style="
         display: flex;
         gap: 20px;
@@ -340,8 +372,10 @@ export const ProcessStepsBlockLayout: LayoutRenderer = {
           <p style="font-size: 14px; color: #6B7280; margin: 0; line-height: 1.5;">${step.description}</p>
         </div>
       </div>
-    `).join('');
-    
+    `,
+      )
+      .join('');
+
     return `
       <div class="process-steps" style="margin-bottom: 32px;">
         ${stepsHTML}
@@ -359,7 +393,8 @@ export const ConclusionBlockLayout: LayoutRenderer = {
   render: (data, style) => {
     const { title, content, cta } = data;
     const colorScheme = getColorScheme(style.colorScheme);
-    const radius = style.cardStyle === 'rounded' ? '12px' : style.cardStyle === 'soft' ? '8px' : '4px';
+    const radius =
+      style.cardStyle === 'rounded' ? '12px' : style.cardStyle === 'soft' ? '8px' : '4px';
 
     return `
       <div class="conclusion-block" style="
@@ -373,7 +408,9 @@ export const ConclusionBlockLayout: LayoutRenderer = {
       ">
         <h2 style="font-size: 24px; font-weight: 700; margin: 0 0 14px 0; color: ${colorScheme.primary};">${title || 'Conclusion'}</h2>
         <p style="font-size: 15px; line-height: 1.7; margin: 0 0 20px 0; color: #374151;">${content}</p>
-        ${cta ? `<div style="
+        ${
+          cta
+            ? `<div style="
           display: inline-block;
           font-size: 15px;
           font-weight: 600;
@@ -381,7 +418,9 @@ export const ConclusionBlockLayout: LayoutRenderer = {
           background: ${colorScheme.primary};
           padding: 10px 22px;
           border-radius: 6px;
-        ">${cta}</div>` : ''}
+        ">${cta}</div>`
+            : ''
+        }
       </div>
     `;
   },
@@ -396,7 +435,7 @@ export const FooterBlockLayout: LayoutRenderer = {
   render: (data, style) => {
     const { companyName, contact, pageNumber, totalPages } = data;
     const colorScheme = getColorScheme(style.colorScheme);
-    
+
     return `
       <div class="footer-block" style="
         border-top: 2px solid ${colorScheme.primary};
@@ -423,7 +462,17 @@ export const FooterBlockLayout: LayoutRenderer = {
 /**
  * Get color scheme by name
  */
-function getColorScheme(name: string) {
+function getColorScheme(name: any) {
+  // Phase Ω.2 — a brand kit injects an explicit color object (not a named
+  // scheme). Use it directly so brand colors actually reach the renderers.
+  if (name && typeof name === 'object') {
+    return {
+      primary: name.primary || '#2563EB',
+      secondary: name.secondary || name.primary || '#1D4ED8',
+      accent: name.accent || name.secondary || '#60A5FA',
+      ...name,
+    };
+  }
   const schemes: Record<string, any> = {
     blue: {
       primary: '#2563EB',
@@ -508,7 +557,7 @@ export const ChartBlockLayout: LayoutRenderer = {
   type: LayoutComponentType.CHART_BLOCK,
   render: (data, style) => {
     const { title, chartType, chartImage, chartData } = data;
-    
+
     // If chartImage is provided (base64), display it
     if (chartImage) {
       return `
@@ -527,7 +576,7 @@ export const ChartBlockLayout: LayoutRenderer = {
         </div>
       `;
     }
-    
+
     // Fallback placeholder if no image
     return `
       <div class="chart-block" style="
@@ -554,10 +603,12 @@ export const TimelineBlockLayout: LayoutRenderer = {
   render: (data, style) => {
     const { events } = data; // [{date, title, description}]
     const colorScheme = getColorScheme(style.colorScheme);
-    
+
     if (!events || events.length === 0) return '';
-    
-    const timeline = events.map((event: any, i: number) => `
+
+    const timeline = events
+      .map(
+        (event: any, i: number) => `
       <div style="display: flex; gap: 20px; margin-bottom: 24px;">
         <div style="width: 100px; flex-shrink: 0; text-align: right; padding-top: 4px;">
           <div style="font-weight: 600; color: ${colorScheme.primary};">${event.date}</div>
@@ -576,8 +627,10 @@ export const TimelineBlockLayout: LayoutRenderer = {
           <p style="font-size: 14px; color: #6B7280; margin: 0; line-height: 1.5;">${event.description}</p>
         </div>
       </div>
-    `).join('');
-    
+    `,
+      )
+      .join('');
+
     return `
       <div class="timeline-block" style="margin-bottom: 32px;">
         ${timeline}
@@ -594,7 +647,7 @@ export const CaseStudyBlockLayout: LayoutRenderer = {
   render: (data, style) => {
     const { client, challenge, solution, results } = data;
     const colorScheme = getColorScheme(style.colorScheme);
-    
+
     return `
       <div class="case-study-block" style="
         background: white;
@@ -633,7 +686,7 @@ export const QuoteBlockLayout: LayoutRenderer = {
   render: (data, style) => {
     const { quote, author, role } = data;
     const colorScheme = getColorScheme(style.colorScheme);
-    
+
     return `
       <div class="quote-block" style="
         background: linear-gradient(135deg, ${colorScheme.primary}15 0%, ${colorScheme.secondary}15 100%);
@@ -662,7 +715,7 @@ export const ImageBlockLayout: LayoutRenderer = {
   type: LayoutComponentType.IMAGE_BLOCK,
   render: (data, style) => {
     const { src, alt, caption } = data;
-    
+
     return `
       <div class="image-block" style="margin-bottom: 32px;">
         <img src="${src}" alt="${alt || ''}" style="

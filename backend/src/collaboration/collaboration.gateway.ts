@@ -1,7 +1,12 @@
 import {
-  WebSocketGateway, WebSocketServer, SubscribeMessage,
-  OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit,
-  ConnectedSocket, MessageBody,
+  WebSocketGateway,
+  WebSocketServer,
+  SubscribeMessage,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
+  ConnectedSocket,
+  MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
@@ -28,38 +33,67 @@ import { YDocStore } from './ydoc-store';
 //  damage is contained to one room.
 // =============================================================================
 
-interface JoinPayload  { deckId: string; slideId?: string }
-interface CursorPayload    { slideId: string; x: number; y: number }
-interface SelectionPayload { slideId: string; elementIds: string[] }
-interface SlideViewPayload { slideId: string }
-interface EditingStartPayload { slideId: string; elementId: string; field?: string }
-interface EditingStopPayload  { slideId: string; elementId: string }
-interface YjsUpdatePayload    { docId: string; update: number[] }   // update is Uint8Array serialised as number[]
-interface YjsAwarenessPayload { docId: string; update: number[] }
-interface YjsJoinPayload      { docId: string }
+interface JoinPayload {
+  deckId: string;
+  slideId?: string;
+}
+interface CursorPayload {
+  slideId: string;
+  x: number;
+  y: number;
+}
+interface SelectionPayload {
+  slideId: string;
+  elementIds: string[];
+}
+interface SlideViewPayload {
+  slideId: string;
+}
+interface EditingStartPayload {
+  slideId: string;
+  elementId: string;
+  field?: string;
+}
+interface EditingStopPayload {
+  slideId: string;
+  elementId: string;
+}
+interface YjsUpdatePayload {
+  docId: string;
+  update: number[];
+} // update is Uint8Array serialised as number[]
+interface YjsAwarenessPayload {
+  docId: string;
+  update: number[];
+}
+interface YjsJoinPayload {
+  docId: string;
+}
 
 @WebSocketGateway({
   cors: { origin: '*' },
   namespace: '/collaboration',
 })
-export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class CollaborationGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   private readonly logger = new Logger(CollaborationGateway.name);
-  private readonly store  = new PresenceStore();
+  private readonly store = new PresenceStore();
   // Phase 34.4D — monotonic event counters surfaced via /collaboration/metrics
   // and the Prometheus exporter. Reset only on process restart.
   private cursorEvents = 0;
-  private yjsUpdates   = 0;
+  private yjsUpdates = 0;
   private editingEvents = 0;
 
   @WebSocketServer()
   server!: Server;
 
   constructor(
-    private jwt:          JwtService,
-    private prisma:       PrismaService,
-    private broadcaster:  CollaborationBroadcaster,
-    private reviewBus:    ReviewEventBus,
-    private ydocStore:    YDocStore,
+    private jwt: JwtService,
+    private prisma: PrismaService,
+    private broadcaster: CollaborationBroadcaster,
+    private reviewBus: ReviewEventBus,
+    private ydocStore: YDocStore,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -80,7 +114,9 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
         const pub = new (Redis as any)(process.env.REDIS_URL);
         const sub = pub.duplicate();
         server.adapter(createAdapter(pub, sub));
-        this.logger.log(`Redis adapter wired to ${process.env.REDIS_URL.replace(/:[^@]*@/, ':***@')}`);
+        this.logger.log(
+          `Redis adapter wired to ${process.env.REDIS_URL.replace(/:[^@]*@/, ':***@')}`,
+        );
       } catch (e: any) {
         this.logger.warn(`Redis adapter init failed (${e?.message}); staying on in-memory adapter`);
       }
@@ -122,7 +158,9 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
     }
     const left = this.store.leave(client.id);
     if (left) {
-      this.server.to(roomName(left.deckId)).emit('presence.updated', { deckId: left.deckId, users: left.users });
+      this.server
+        .to(roomName(left.deckId))
+        .emit('presence.updated', { deckId: left.deckId, users: left.users });
     }
   }
 
@@ -133,7 +171,10 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
   @SubscribeMessage('presence.join')
   async onJoin(@ConnectedSocket() client: Socket, @MessageBody() body: JoinPayload) {
     const userId = (client.data as any).userId as string | undefined;
-    if (!userId || !body?.deckId) { client.disconnect(true); return; }
+    if (!userId || !body?.deckId) {
+      client.disconnect(true);
+      return;
+    }
 
     // Phase 34S — verify workspace membership for the deck. Any failure here
     // disconnects the socket so the client never even sees the room exist.
@@ -146,15 +187,15 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
 
     const presence: PresenceUser = {
       userId,
-      name:      access.user.name || access.user.email,
-      email:     access.user.email,
-      color:     pickColor(userId),
-      role:      access.role,
-      slideId:   body.slideId || null,
-      cursor:    null,
+      name: access.user.name || access.user.email,
+      email: access.user.email,
+      color: pickColor(userId),
+      role: access.role,
+      slideId: body.slideId || null,
+      cursor: null,
       selection: [],
-      editing:   null,
-      lastSeen:  Date.now(),
+      editing: null,
+      lastSeen: Date.now(),
     };
 
     const users = this.store.join(body.deckId, client.id, presence);
@@ -166,7 +207,11 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
 
   @SubscribeMessage('presence.slide')
   onSlideView(@ConnectedSocket() client: Socket, @MessageBody() body: SlideViewPayload) {
-    const users = this.store.patch(client.id, { slideId: body?.slideId || null, cursor: null, selection: [] });
+    const users = this.store.patch(client.id, {
+      slideId: body?.slideId || null,
+      cursor: null,
+      selection: [],
+    });
     const deckId = this.store.deckOfSocket(client.id);
     if (users && deckId) {
       this.server.to(roomName(deckId)).emit('presence.updated', { deckId, users });
@@ -191,10 +236,10 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
     // Don't echo back to sender — they already know where their cursor is.
     client.to(roomName(deckId)).emit('cursor.move', {
       deckId,
-      userId:   (client.data as any).userId,
-      slideId:  body.slideId,
-      x:        body.x,
-      y:        body.y,
+      userId: (client.data as any).userId,
+      slideId: body.slideId,
+      x: body.x,
+      y: body.y,
     });
   }
 
@@ -205,8 +250,8 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
     this.store.patch(client.id, { slideId: body.slideId, selection: body.elementIds || [] });
     client.to(roomName(deckId)).emit('selection.change', {
       deckId,
-      userId:     (client.data as any).userId,
-      slideId:    body.slideId,
+      userId: (client.data as any).userId,
+      slideId: body.slideId,
       elementIds: body.elementIds || [],
     });
   }
@@ -221,9 +266,9 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
     if (!deckId || !body?.slideId || !body?.elementId) return;
     this.editingEvents++;
     const editing = {
-      slideId:   body.slideId,
+      slideId: body.slideId,
       elementId: body.elementId,
-      field:     body.field,
+      field: body.field,
       startedAt: Date.now(),
     };
     const users = this.store.patch(client.id, { editing });
@@ -232,7 +277,7 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
     }
     client.to(roomName(deckId)).emit('editing.started', {
       deckId,
-      userId:    (client.data as any).userId,
+      userId: (client.data as any).userId,
       ...editing,
     });
   }
@@ -247,8 +292,8 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
     }
     client.to(roomName(deckId)).emit('editing.stopped', {
       deckId,
-      userId:    (client.data as any).userId,
-      slideId:   body?.slideId,
+      userId: (client.data as any).userId,
+      slideId: body?.slideId,
       elementId: body?.elementId,
     });
   }
@@ -285,14 +330,15 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
     try {
       const state = await this.ydocStore.encodeState(body.docId);
       client.emit('yjs.initial_state', {
-        docId:  body.docId,
+        docId: body.docId,
         update: Array.from(state),
       });
     } catch (e: any) {
       this.logger.warn(`Initial state ${body.docId} failed: ${e?.message}`);
     }
     client.to(`ydoc:${body.docId}`).emit('yjs.peer_joined', {
-      docId: body.docId, userId: (client.data as any).userId,
+      docId: body.docId,
+      userId: (client.data as any).userId,
     });
   }
 
@@ -341,7 +387,8 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
     // Comment events carry projectId — walk to a deck via the first slide.
     if ('projectId' in evt && evt.projectId) {
       const deck = await this.prisma.deck.findFirst({
-        where: { projectId: evt.projectId }, select: { id: true },
+        where: { projectId: evt.projectId },
+        select: { id: true },
       });
       return deck?.id || null;
     }
@@ -360,8 +407,8 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
   /** Phase 34.4D — cumulative event counters for Prometheus exporter. */
   eventCounters(): { cursorEvents: number; yjsUpdates: number; editingEvents: number } {
     return {
-      cursorEvents:  this.cursorEvents,
-      yjsUpdates:    this.yjsUpdates,
+      cursorEvents: this.cursorEvents,
+      yjsUpdates: this.yjsUpdates,
       editingEvents: this.editingEvents,
     };
   }
@@ -375,8 +422,12 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
    * membership) or null otherwise. Mirrors the WorkspaceRoleGuard logic but
    * runs at socket-connect time so unauthorized joiners never see the room.
    */
-  private async resolveAccess(deckId: string, userId: string): Promise<{
-    user: { name: string | null; email: string }; role: string;
+  private async resolveAccess(
+    deckId: string,
+    userId: string,
+  ): Promise<{
+    user: { name: string | null; email: string };
+    role: string;
   } | null> {
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },
@@ -386,7 +437,8 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
     });
     if (!deck?.project) return null;
     const user = await this.prisma.user.findUnique({
-      where: { id: userId }, select: { name: true, email: true },
+      where: { id: userId },
+      select: { name: true, email: true },
     });
     if (!user) return null;
 
@@ -397,7 +449,7 @@ export class CollaborationGateway implements OnGatewayInit, OnGatewayConnection,
     if (!deck.project.workspaceId) return null;
 
     const member = await this.prisma.workspaceMember.findUnique({
-      where:  { workspaceId_userId: { workspaceId: deck.project.workspaceId, userId } },
+      where: { workspaceId_userId: { workspaceId: deck.project.workspaceId, userId } },
       select: { role: true },
     });
     if (!member) return null;

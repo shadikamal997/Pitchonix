@@ -33,7 +33,11 @@ export class SmartArtController {
   }
 
   @Patch(':elementId/nodes/:nodeId')
-  update(@Param('elementId') id: string, @Param('nodeId') nodeId: string, @Body() body: { text?: string }) {
+  update(
+    @Param('elementId') id: string,
+    @Param('nodeId') nodeId: string,
+    @Body() body: { text?: string },
+  ) {
     return this.smartArt.updateNode(id, nodeId, body || {});
   }
 
@@ -43,7 +47,11 @@ export class SmartArtController {
   }
 
   @Post(':elementId/nodes/:nodeId/move')
-  move(@Param('elementId') id: string, @Param('nodeId') nodeId: string, @Body() body: { index: number }) {
+  move(
+    @Param('elementId') id: string,
+    @Param('nodeId') nodeId: string,
+    @Body() body: { index: number },
+  ) {
     return this.smartArt.reorderNode(id, nodeId, Math.max(0, Math.round(body?.index ?? 0)));
   }
 

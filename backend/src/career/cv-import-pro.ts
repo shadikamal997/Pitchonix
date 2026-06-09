@@ -17,183 +17,310 @@ import { CvProfileDto } from './cv-types';
 // -----------------------------------------------------------------------------
 
 export type SectionKey =
-  | 'experience' | 'education' | 'skills' | 'languages' | 'projects'
-  | 'certifications' | 'awards' | 'publications' | 'references' | 'summary';
+  | 'experience'
+  | 'education'
+  | 'skills'
+  | 'languages'
+  | 'projects'
+  | 'certifications'
+  | 'awards'
+  | 'publications'
+  | 'references'
+  | 'summary';
 
 const en: Record<string, SectionKey> = {
   // English (existing aliases preserved + a few extra)
-  'experience': 'experience', 'work experience': 'experience',
-  'professional experience': 'experience', 'employment': 'experience',
-  'employment history': 'experience', 'work history': 'experience',
-  'professional background': 'experience', 'career': 'experience',
-  'career history': 'experience', 'career highlights': 'experience',
-  'professional journey': 'experience', 'positions': 'experience',
-  'roles': 'experience', 'volunteer experience': 'experience',
+  experience: 'experience',
+  'work experience': 'experience',
+  'professional experience': 'experience',
+  employment: 'experience',
+  'employment history': 'experience',
+  'work history': 'experience',
+  'professional background': 'experience',
+  career: 'experience',
+  'career history': 'experience',
+  'career highlights': 'experience',
+  'professional journey': 'experience',
+  positions: 'experience',
+  roles: 'experience',
+  'volunteer experience': 'experience',
   'relevant experience': 'experience',
-  'education': 'education', 'academic background': 'education',
-  'academic': 'education', 'academic history': 'education',
-  'qualifications': 'certifications', 'training': 'certifications',
-  'courses': 'certifications',
-  'skills': 'skills', 'technical skills': 'skills', 'core skills': 'skills',
-  'core competencies': 'skills', 'competencies': 'skills',
-  'technical stack': 'skills', 'tech stack': 'skills', 'tools': 'skills',
-  'tools and technologies': 'skills', 'expertise': 'skills',
-  'my expertise': 'skills', 'key skills': 'skills', 'areas of expertise': 'skills',
-  'languages': 'languages', 'languages spoken': 'languages',
+  education: 'education',
+  'academic background': 'education',
+  academic: 'education',
+  'academic history': 'education',
+  qualifications: 'certifications',
+  training: 'certifications',
+  courses: 'certifications',
+  skills: 'skills',
+  'technical skills': 'skills',
+  'core skills': 'skills',
+  'core competencies': 'skills',
+  competencies: 'skills',
+  'technical stack': 'skills',
+  'tech stack': 'skills',
+  tools: 'skills',
+  'tools and technologies': 'skills',
+  expertise: 'skills',
+  'my expertise': 'skills',
+  'key skills': 'skills',
+  'areas of expertise': 'skills',
+  languages: 'languages',
+  'languages spoken': 'languages',
   'language proficiency': 'languages',
-  'projects': 'projects', 'side projects': 'projects', 'portfolio': 'projects',
-  'selected projects': 'projects', 'notable projects': 'projects',
+  projects: 'projects',
+  'side projects': 'projects',
+  portfolio: 'projects',
+  'selected projects': 'projects',
+  'notable projects': 'projects',
   'key projects': 'projects',
-  'certifications': 'certifications', 'certificates': 'certifications',
+  certifications: 'certifications',
+  certificates: 'certifications',
   'licenses and certifications': 'certifications',
   'professional certifications': 'certifications',
-  'awards': 'awards', 'awards and honors': 'awards',
-  'achievements': 'awards', 'honors': 'awards', 'recognition': 'awards',
-  'publications': 'publications', 'research': 'publications', 'papers': 'publications',
-  'references': 'references', 'referees': 'references',
+  awards: 'awards',
+  'awards and honors': 'awards',
+  achievements: 'awards',
+  honors: 'awards',
+  recognition: 'awards',
+  publications: 'publications',
+  research: 'publications',
+  papers: 'publications',
+  references: 'references',
+  referees: 'references',
   // Phase 43.1B — profile / about / summary aliases. Previously "PROFILE"
   // at the top of a CV was pushed into `unknownHeadings` because no entry
   // in the en dictionary mapped it to a SectionKey.
-  'profile': 'summary', 'professional profile': 'summary',
-  'about': 'summary', 'about me': 'summary', 'introduction': 'summary',
-  'summary': 'summary', 'professional summary': 'summary',
-  'career objective': 'summary', 'objective': 'summary',
-  'overview': 'summary', 'personal statement': 'summary',
+  profile: 'summary',
+  'professional profile': 'summary',
+  about: 'summary',
+  'about me': 'summary',
+  introduction: 'summary',
+  summary: 'summary',
+  'professional summary': 'summary',
+  'career objective': 'summary',
+  objective: 'summary',
+  overview: 'summary',
+  'personal statement': 'summary',
   'executive summary': 'summary',
 };
 const fr: Record<string, SectionKey> = {
-  'experience': 'experience', 'experience professionnelle': 'experience',
-  'experiences': 'experience', 'experiences professionnelles': 'experience',
-  'parcours professionnel': 'experience', 'emploi': 'experience',
+  experience: 'experience',
+  'experience professionnelle': 'experience',
+  experiences: 'experience',
+  'experiences professionnelles': 'experience',
+  'parcours professionnel': 'experience',
+  emploi: 'experience',
   'historique professionnel': 'experience',
-  'formation': 'education', 'education': 'education',
-  'parcours academique': 'education', 'etudes': 'education',
-  'competences': 'skills', 'competences techniques': 'skills',
-  'savoir faire': 'skills', 'outils': 'skills',
-  'langues': 'languages', 'langues parlees': 'languages',
-  'projets': 'projects', 'projets personnels': 'projects',
-  'certifications': 'certifications', 'certificats': 'certifications',
-  'qualifications': 'certifications',
-  'recompenses': 'awards', 'distinctions': 'awards',
-  'publications': 'publications', 'references': 'references',
-  'a propos': 'summary', 'profil': 'summary', 'resume': 'summary', 'sommaire': 'summary',
+  formation: 'education',
+  education: 'education',
+  'parcours academique': 'education',
+  etudes: 'education',
+  competences: 'skills',
+  'competences techniques': 'skills',
+  'savoir faire': 'skills',
+  outils: 'skills',
+  langues: 'languages',
+  'langues parlees': 'languages',
+  projets: 'projects',
+  'projets personnels': 'projects',
+  certifications: 'certifications',
+  certificats: 'certifications',
+  qualifications: 'certifications',
+  recompenses: 'awards',
+  distinctions: 'awards',
+  publications: 'publications',
+  references: 'references',
+  'a propos': 'summary',
+  profil: 'summary',
+  resume: 'summary',
+  sommaire: 'summary',
 };
 const de: Record<string, SectionKey> = {
-  'berufserfahrung': 'experience', 'berufliche erfahrung': 'experience',
-  'erfahrung': 'experience', 'beruflicher werdegang': 'experience',
-  'beschaftigung': 'experience',
-  'ausbildung': 'education', 'bildung': 'education', 'studium': 'education',
+  berufserfahrung: 'experience',
+  'berufliche erfahrung': 'experience',
+  erfahrung: 'experience',
+  'beruflicher werdegang': 'experience',
+  beschaftigung: 'experience',
+  ausbildung: 'education',
+  bildung: 'education',
+  studium: 'education',
   'akademische ausbildung': 'education',
-  'kenntnisse': 'skills', 'fahigkeiten': 'skills',
-  'fertigkeiten': 'skills', 'technische kenntnisse': 'skills',
-  'sprachen': 'languages', 'sprachkenntnisse': 'languages',
-  'projekte': 'projects', 'zertifikate': 'certifications',
-  'zertifizierungen': 'certifications', 'qualifikationen': 'certifications',
-  'auszeichnungen': 'awards', 'veroffentlichungen': 'publications',
-  'referenzen': 'references',
-  'uber mich': 'summary', 'profil': 'summary', 'zusammenfassung': 'summary',
+  kenntnisse: 'skills',
+  fahigkeiten: 'skills',
+  fertigkeiten: 'skills',
+  'technische kenntnisse': 'skills',
+  sprachen: 'languages',
+  sprachkenntnisse: 'languages',
+  projekte: 'projects',
+  zertifikate: 'certifications',
+  zertifizierungen: 'certifications',
+  qualifikationen: 'certifications',
+  auszeichnungen: 'awards',
+  veroffentlichungen: 'publications',
+  referenzen: 'references',
+  'uber mich': 'summary',
+  profil: 'summary',
+  zusammenfassung: 'summary',
 };
 const es: Record<string, SectionKey> = {
-  'experiencia': 'experience', 'experiencia profesional': 'experience',
-  'experiencia laboral': 'experience', 'trayectoria profesional': 'experience',
+  experiencia: 'experience',
+  'experiencia profesional': 'experience',
+  'experiencia laboral': 'experience',
+  'trayectoria profesional': 'experience',
   'historial laboral': 'experience',
-  'educacion': 'education', 'formacion': 'education',
-  'formacion academica': 'education', 'estudios': 'education',
-  'habilidades': 'skills', 'aptitudes': 'skills',
-  'competencias': 'skills', 'conocimientos': 'skills', 'herramientas': 'skills',
-  'idiomas': 'languages',
-  'proyectos': 'projects', 'certificaciones': 'certifications',
-  'certificados': 'certifications', 'cualificaciones': 'certifications',
-  'premios': 'awards', 'reconocimientos': 'awards',
-  'publicaciones': 'publications', 'referencias': 'references',
-  'sobre mi': 'summary', 'perfil': 'summary', 'resumen': 'summary',
+  educacion: 'education',
+  formacion: 'education',
+  'formacion academica': 'education',
+  estudios: 'education',
+  habilidades: 'skills',
+  aptitudes: 'skills',
+  competencias: 'skills',
+  conocimientos: 'skills',
+  herramientas: 'skills',
+  idiomas: 'languages',
+  proyectos: 'projects',
+  certificaciones: 'certifications',
+  certificados: 'certifications',
+  cualificaciones: 'certifications',
+  premios: 'awards',
+  reconocimientos: 'awards',
+  publicaciones: 'publications',
+  referencias: 'references',
+  'sobre mi': 'summary',
+  perfil: 'summary',
+  resumen: 'summary',
 };
 const ro: Record<string, SectionKey> = {
-  'experienta': 'experience', 'experienta profesionala': 'experience',
-  'cariera': 'experience', 'angajari': 'experience',
-  'educatie': 'education', 'studii': 'education', 'pregatire': 'education',
-  'competente': 'skills', 'abilitati': 'skills', 'cunostinte': 'skills',
-  'instrumente': 'skills',
-  'limbi': 'languages', 'limbi straine': 'languages',
-  'proiecte': 'projects', 'certificari': 'certifications',
-  'certificate': 'certifications', 'calificari': 'certifications',
-  'premii': 'awards', 'publicatii': 'publications',
-  'referinte': 'references',
-  'despre mine': 'summary', 'profil': 'summary', 'rezumat': 'summary',
+  experienta: 'experience',
+  'experienta profesionala': 'experience',
+  cariera: 'experience',
+  angajari: 'experience',
+  educatie: 'education',
+  studii: 'education',
+  pregatire: 'education',
+  competente: 'skills',
+  abilitati: 'skills',
+  cunostinte: 'skills',
+  instrumente: 'skills',
+  limbi: 'languages',
+  'limbi straine': 'languages',
+  proiecte: 'projects',
+  certificari: 'certifications',
+  certificate: 'certifications',
+  calificari: 'certifications',
+  premii: 'awards',
+  publicatii: 'publications',
+  referinte: 'references',
+  'despre mine': 'summary',
+  profil: 'summary',
+  rezumat: 'summary',
 };
 const it: Record<string, SectionKey> = {
-  'esperienza': 'experience', 'esperienza professionale': 'experience',
-  'esperienza lavorativa': 'experience', 'carriera': 'experience',
-  'istruzione': 'education', 'formazione': 'education', 'studi': 'education',
-  'competenze': 'skills', 'capacita': 'skills', 'abilita': 'skills',
-  'strumenti': 'skills',
-  'lingue': 'languages',
-  'progetti': 'projects', 'certificazioni': 'certifications',
-  'qualifiche': 'certifications',
-  'premi': 'awards', 'riconoscimenti': 'awards',
-  'pubblicazioni': 'publications', 'referenze': 'references',
-  'profilo': 'summary', 'sommario': 'summary', 'chi sono': 'summary',
+  esperienza: 'experience',
+  'esperienza professionale': 'experience',
+  'esperienza lavorativa': 'experience',
+  carriera: 'experience',
+  istruzione: 'education',
+  formazione: 'education',
+  studi: 'education',
+  competenze: 'skills',
+  capacita: 'skills',
+  abilita: 'skills',
+  strumenti: 'skills',
+  lingue: 'languages',
+  progetti: 'projects',
+  certificazioni: 'certifications',
+  qualifiche: 'certifications',
+  premi: 'awards',
+  riconoscimenti: 'awards',
+  pubblicazioni: 'publications',
+  referenze: 'references',
+  profilo: 'summary',
+  sommario: 'summary',
+  'chi sono': 'summary',
 };
 const nl: Record<string, SectionKey> = {
-  'ervaring': 'experience', 'werkervaring': 'experience',
-  'professionele ervaring': 'experience', 'loopbaan': 'experience',
-  'opleiding': 'education', 'studie': 'education',
-  'vaardigheden': 'skills', 'competenties': 'skills',
-  'kennis': 'skills', 'gereedschappen': 'skills',
-  'talen': 'languages',
-  'projecten': 'projects', 'certificaten': 'certifications',
-  'certificeringen': 'certifications', 'kwalificaties': 'certifications',
-  'onderscheidingen': 'awards', 'publicaties': 'publications',
-  'referenties': 'references',
-  'over mij': 'summary', 'profiel': 'summary', 'samenvatting': 'summary',
+  ervaring: 'experience',
+  werkervaring: 'experience',
+  'professionele ervaring': 'experience',
+  loopbaan: 'experience',
+  opleiding: 'education',
+  studie: 'education',
+  vaardigheden: 'skills',
+  competenties: 'skills',
+  kennis: 'skills',
+  gereedschappen: 'skills',
+  talen: 'languages',
+  projecten: 'projects',
+  certificaten: 'certifications',
+  certificeringen: 'certifications',
+  kwalificaties: 'certifications',
+  onderscheidingen: 'awards',
+  publicaties: 'publications',
+  referenties: 'references',
+  'over mij': 'summary',
+  profiel: 'summary',
+  samenvatting: 'summary',
 };
 const pt: Record<string, SectionKey> = {
-  'experiencia': 'experience', 'experiencia profissional': 'experience',
-  'experiencia de trabalho': 'experience', 'carreira': 'experience',
+  experiencia: 'experience',
+  'experiencia profissional': 'experience',
+  'experiencia de trabalho': 'experience',
+  carreira: 'experience',
   'historico profissional': 'experience',
-  'educacao': 'education', 'formacao': 'education',
-  'formacao academica': 'education', 'estudos': 'education',
-  'habilidades': 'skills', 'competencias': 'skills',
-  'conhecimentos': 'skills', 'ferramentas': 'skills',
-  'idiomas': 'languages',
-  'projetos': 'projects', 'certificacoes': 'certifications',
-  'certificados': 'certifications',
-  'premios': 'awards', 'reconhecimentos': 'awards',
-  'publicacoes': 'publications', 'referencias': 'references',
-  'sobre mim': 'summary', 'perfil': 'summary', 'resumo': 'summary',
+  educacao: 'education',
+  formacao: 'education',
+  'formacao academica': 'education',
+  estudos: 'education',
+  habilidades: 'skills',
+  competencias: 'skills',
+  conhecimentos: 'skills',
+  ferramentas: 'skills',
+  idiomas: 'languages',
+  projetos: 'projects',
+  certificacoes: 'certifications',
+  certificados: 'certifications',
+  premios: 'awards',
+  reconhecimentos: 'awards',
+  publicacoes: 'publications',
+  referencias: 'references',
+  'sobre mim': 'summary',
+  perfil: 'summary',
+  resumo: 'summary',
 };
 
 // Arabic — stored as-is. The comparator must NOT apply accent-stripping
 // to non-Latin code points; the normalise() function below guards that.
 const ar: Record<string, SectionKey> = {
-  'الخبرات': 'experience',
-  'الخبرة': 'experience',
-  'خبرة': 'experience',
+  الخبرات: 'experience',
+  الخبرة: 'experience',
+  خبرة: 'experience',
   'الخبرة العملية': 'experience',
   'الخبرات المهنية': 'experience',
   'المسار المهني': 'experience',
   'التاريخ المهني': 'experience',
-  'التعليم': 'education',
-  'الدراسة': 'education',
+  التعليم: 'education',
+  الدراسة: 'education',
   'المؤهلات الدراسية': 'education',
   'الخلفية الأكاديمية': 'education',
-  'المهارات': 'skills',
+  المهارات: 'skills',
   'المهارات التقنية': 'skills',
-  'الكفاءات': 'skills',
-  'الأدوات': 'skills',
-  'اللغات': 'languages',
-  'المشاريع': 'projects',
-  'الشهادات': 'certifications',
+  الكفاءات: 'skills',
+  الأدوات: 'skills',
+  اللغات: 'languages',
+  المشاريع: 'projects',
+  الشهادات: 'certifications',
   'الشهادات المهنية': 'certifications',
-  'الجوائز': 'awards',
-  'التقديرات': 'awards',
-  'المنشورات': 'publications',
-  'الأبحاث': 'publications',
-  'المراجع': 'references',
-  'نبذة': 'summary',
-  'الملخص': 'summary',
+  الجوائز: 'awards',
+  التقديرات: 'awards',
+  المنشورات: 'publications',
+  الأبحاث: 'publications',
+  المراجع: 'references',
+  نبذة: 'summary',
+  الملخص: 'summary',
   'الملخص المهني': 'summary',
-  'عني': 'summary',
+  عني: 'summary',
 };
 
 const ALL_DICTIONARIES = [en, fr, de, es, ro, it, nl, pt, ar];
@@ -236,38 +363,65 @@ export function classifyHeadingMultiLang(raw: string): SectionKey | null {
 // =============================================================================
 const SKILL_CANONICAL: Record<string, string> = {
   // JS ecosystem
-  'reactjs': 'React', 'react.js': 'React', 'react js': 'React',
-  'nodejs':  'Node.js', 'node js': 'Node.js', 'node.js': 'Node.js',
-  'nextjs':  'Next.js', 'next.js': 'Next.js', 'next js': 'Next.js',
-  'vuejs':   'Vue.js', 'vue.js': 'Vue.js',
-  'angularjs': 'Angular',
-  'js':      'JavaScript', 'javascript': 'JavaScript', 'java script': 'JavaScript',
-  'ts':      'TypeScript', 'typescript': 'TypeScript', 'type script': 'TypeScript',
+  reactjs: 'React',
+  'react.js': 'React',
+  'react js': 'React',
+  nodejs: 'Node.js',
+  'node js': 'Node.js',
+  'node.js': 'Node.js',
+  nextjs: 'Next.js',
+  'next.js': 'Next.js',
+  'next js': 'Next.js',
+  vuejs: 'Vue.js',
+  'vue.js': 'Vue.js',
+  angularjs: 'Angular',
+  js: 'JavaScript',
+  javascript: 'JavaScript',
+  'java script': 'JavaScript',
+  ts: 'TypeScript',
+  typescript: 'TypeScript',
+  'type script': 'TypeScript',
   // Backends + langs
-  'py':      'Python',  'python': 'Python', 'python 3': 'Python',
-  'golang':  'Go',
-  'rust':    'Rust',
+  py: 'Python',
+  python: 'Python',
+  'python 3': 'Python',
+  golang: 'Go',
+  rust: 'Rust',
   // Cloud
-  'aws':     'AWS',  'amazon web services': 'AWS',
-  'gcp':     'GCP',  'google cloud': 'GCP', 'google cloud platform': 'GCP',
-  'azure':   'Azure', 'microsoft azure': 'Azure',
+  aws: 'AWS',
+  'amazon web services': 'AWS',
+  gcp: 'GCP',
+  'google cloud': 'GCP',
+  'google cloud platform': 'GCP',
+  azure: 'Azure',
+  'microsoft azure': 'Azure',
   // DB
-  'postgresql': 'PostgreSQL', 'postgres': 'PostgreSQL',
-  'mysql':   'MySQL',
-  'mongodb': 'MongoDB', 'mongo': 'MongoDB',
+  postgresql: 'PostgreSQL',
+  postgres: 'PostgreSQL',
+  mysql: 'MySQL',
+  mongodb: 'MongoDB',
+  mongo: 'MongoDB',
   // CI/CD + infra
-  'kubernetes': 'Kubernetes', 'k8s': 'Kubernetes',
-  'docker':  'Docker',
-  'terraform': 'Terraform', 'tf': 'Terraform',
+  kubernetes: 'Kubernetes',
+  k8s: 'Kubernetes',
+  docker: 'Docker',
+  terraform: 'Terraform',
+  tf: 'Terraform',
   // Design
-  'figma':   'Figma',
-  'photoshop': 'Photoshop', 'adobe photoshop': 'Photoshop',
-  'illustrator': 'Illustrator', 'adobe illustrator': 'Illustrator',
+  figma: 'Figma',
+  photoshop: 'Photoshop',
+  'adobe photoshop': 'Photoshop',
+  illustrator: 'Illustrator',
+  'adobe illustrator': 'Illustrator',
   // Office
-  'excel':   'Excel', 'microsoft excel': 'Excel', 'ms excel': 'Excel',
-  'word':    'Word',  'microsoft word': 'Word',
+  excel: 'Excel',
+  'microsoft excel': 'Excel',
+  'ms excel': 'Excel',
+  word: 'Word',
+  'microsoft word': 'Word',
   // Methods
-  'agile':   'Agile', 'scrum': 'Scrum',
+  agile: 'Agile',
+  scrum: 'Scrum',
 };
 
 export function canonicalSkill(raw: string): string {
@@ -279,7 +433,9 @@ export function canonicalSkill(raw: string): string {
 // =============================================================================
 //  42.7H — Duplicate detection
 // =============================================================================
-export function findDuplicateSkills(skills: Array<{ name?: string }>): Array<{ canonical: string; variants: string[]; indices: number[] }> {
+export function findDuplicateSkills(
+  skills: Array<{ name?: string }>,
+): Array<{ canonical: string; variants: string[]; indices: number[] }> {
   const groups = new Map<string, { canonical: string; variants: string[]; indices: number[] }>();
   skills.forEach((s, i) => {
     const name = (s.name || '').trim();
@@ -294,12 +450,15 @@ export function findDuplicateSkills(skills: Array<{ name?: string }>): Array<{ c
   return [...groups.values()].filter((g) => g.indices.length > 1);
 }
 
-export function findDuplicateExperiences(items: Array<{ role?: string; company?: string }>): Array<{ rep: { role: string; company: string }; indices: number[] }> {
+export function findDuplicateExperiences(
+  items: Array<{ role?: string; company?: string }>,
+): Array<{ rep: { role: string; company: string }; indices: number[] }> {
   const groups = new Map<string, { rep: { role: string; company: string }; indices: number[] }>();
   items.forEach((e, i) => {
     const k = `${normaliseLatin(e.role || '')}|${normaliseLatin(e.company || '')}`;
     if (!k.replace('|', '').trim()) return;
-    if (!groups.has(k)) groups.set(k, { rep: { role: e.role || '', company: e.company || '' }, indices: [] });
+    if (!groups.has(k))
+      groups.set(k, { rep: { role: e.role || '', company: e.company || '' }, indices: [] });
     groups.get(k)!.indices.push(i);
   });
   return [...groups.values()].filter((g) => g.indices.length > 1);
@@ -309,11 +468,18 @@ export function findDuplicateExperiences(items: Array<{ role?: string; company?:
 //  42.7D — Import confidence engine
 // =============================================================================
 export interface ImportConfidence {
-  overall:    number;
-  bands:      { heading: number; sections: number; skills: number; languages: number; experience: number; education: number };
-  detected:   SectionKey[];
-  missing:    SectionKey[];
-  band:       'excellent' | 'good' | 'partial' | 'weak' | 'review';
+  overall: number;
+  bands: {
+    heading: number;
+    sections: number;
+    skills: number;
+    languages: number;
+    experience: number;
+    education: number;
+  };
+  detected: SectionKey[];
+  missing: SectionKey[];
+  band: 'excellent' | 'good' | 'partial' | 'weak' | 'review';
 }
 
 // =============================================================================
@@ -326,21 +492,27 @@ export interface ImportConfidence {
 //  Returns a 0–1 multiplier used to scale the education band.
 // =============================================================================
 function educationLevelWeight(eduEntry: any): number {
-  const text = `${eduEntry?.degree || ''} ${eduEntry?.institution || ''} ${eduEntry?.field || ''}`.toLowerCase();
-  if (!text.trim()) return 0.5;            // unknown — assume mid-level
-  if (/ph\.?d|doctor(?:ate|al)/i.test(text)) return 1.10;
-  if (/master|mba|m\.?sc|m\.?a|m\.?eng|m\.?phil/i.test(text)) return 1.00;
+  const text =
+    `${eduEntry?.degree || ''} ${eduEntry?.institution || ''} ${eduEntry?.field || ''}`.toLowerCase();
+  if (!text.trim()) return 0.5; // unknown — assume mid-level
+  if (/ph\.?d|doctor(?:ate|al)/i.test(text)) return 1.1;
+  if (/master|mba|m\.?sc|m\.?a|m\.?eng|m\.?phil/i.test(text)) return 1.0;
   if (/bachelor|b\.?sc|b\.?a|b\.?eng|undergraduate|licen[cs]e/i.test(text)) return 0.85;
-  if (/diploma|associate|h\.?n\.?d|foundation/i.test(text)) return 0.60;
-  if (/high\s*school|secondary\s*school|grammar\s*school|lyc[ée]e|gymnasium|prep[a]?ratory|college\s+(?:prep|preparatory)/i.test(text)) return 0.30;
+  if (/diploma|associate|h\.?n\.?d|foundation/i.test(text)) return 0.6;
+  if (
+    /high\s*school|secondary\s*school|grammar\s*school|lyc[ée]e|gymnasium|prep[a]?ratory|college\s+(?:prep|preparatory)/i.test(
+      text,
+    )
+  )
+    return 0.3;
   // Any "university" / "college" mention without explicit degree → assume in progress.
   if (/university|college|institute|academy/i.test(text)) return 0.65;
-  return 0.50;
+  return 0.5;
 }
 
 export function computeConfidence(
   profile: Partial<CvProfileDto>,
-  ctx:     { headingsDetected: number; headingsUnknown: number; usedFallback: boolean },
+  ctx: { headingsDetected: number; headingsUnknown: number; usedFallback: boolean },
 ): ImportConfidence {
   // Heading confidence: ratio of recognised vs total + penalty for fallback.
   // Phase 43.1: more generous baseline when ANY headings are recognised, so
@@ -349,8 +521,7 @@ export function computeConfidence(
   const totalHeadings = ctx.headingsDetected + ctx.headingsUnknown;
   const headingRatio = totalHeadings === 0 ? 0 : ctx.headingsDetected / totalHeadings;
   const headingScore = Math.round(
-    (ctx.usedFallback ? 45 : 75) +
-    (totalHeadings === 0 ? 0 : headingRatio * 25),
+    (ctx.usedFallback ? 45 : 75) + (totalHeadings === 0 ? 0 : headingRatio * 25),
   );
 
   const sectionCount = countNonEmptySections(profile);
@@ -366,11 +537,12 @@ export function computeConfidence(
   const languagesScore = Math.min(100, langs.length * 30);
 
   const exp = profile.experience || [];
-  const expScore = Math.min(100, (
+  const expScore = Math.min(
+    100,
     exp.length * 25 +
-    exp.filter((e: any) => e.bullets?.length > 0).length * 10 +
-    exp.filter((e: any) => e.start || e.end).length * 8
-  ));
+      exp.filter((e: any) => e.bullets?.length > 0).length * 10 +
+      exp.filter((e: any) => e.start || e.end).length * 8,
+  );
 
   // Phase 43.1 — education awareness.
   const edu = profile.education || [];
@@ -385,36 +557,52 @@ export function computeConfidence(
   // sections + reasonable skills/languages can clear 70 even without strong
   // experience-time-range signals (e.g. freelance entries).
   const overall = Math.round(
-    headingScore   * 0.15 +
-    sectionsScore  * 0.30 +
-    skillsScore    * 0.15 +
-    languagesScore * 0.10 +
-    expScore       * 0.20 +
-    eduScore       * 0.10,
+    headingScore * 0.15 +
+      sectionsScore * 0.3 +
+      skillsScore * 0.15 +
+      languagesScore * 0.1 +
+      expScore * 0.2 +
+      eduScore * 0.1,
   );
   const band: ImportConfidence['band'] =
-    overall >= 90 ? 'excellent' :
-    overall >= 75 ? 'good' :
-    overall >= 60 ? 'partial' :
-    overall >= 40 ? 'weak' : 'review';
+    overall >= 90
+      ? 'excellent'
+      : overall >= 75
+        ? 'good'
+        : overall >= 60
+          ? 'partial'
+          : overall >= 40
+            ? 'weak'
+            : 'review';
 
   return {
     overall,
     bands: {
-      heading:    clamp(headingScore),
-      sections:   clamp(sectionsScore),
-      skills:     clamp(skillsScore),
-      languages:  clamp(languagesScore),
+      heading: clamp(headingScore),
+      sections: clamp(sectionsScore),
+      skills: clamp(skillsScore),
+      languages: clamp(languagesScore),
       experience: clamp(expScore),
-      education:  clamp(eduScore),
+      education: clamp(eduScore),
     },
     detected: detectedSections(profile),
-    missing:  missingSections(profile),
+    missing: missingSections(profile),
     band,
   };
 }
 
-const SECTION_ORDER: SectionKey[] = ['experience','education','skills','languages','projects','certifications','awards','publications','references','summary'];
+const SECTION_ORDER: SectionKey[] = [
+  'experience',
+  'education',
+  'skills',
+  'languages',
+  'projects',
+  'certifications',
+  'awards',
+  'publications',
+  'references',
+  'summary',
+];
 
 function detectedSections(p: Partial<CvProfileDto>): SectionKey[] {
   return SECTION_ORDER.filter((k) => {
@@ -428,7 +616,9 @@ function missingSections(p: Partial<CvProfileDto>): SectionKey[] {
 function countNonEmptySections(p: Partial<CvProfileDto>) {
   return detectedSections(p).length;
 }
-function clamp(n: number) { return Math.max(0, Math.min(100, Math.round(n))); }
+function clamp(n: number) {
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
 
 // =============================================================================
 //  42.7A — OCR helper (lazy-loaded so the cost is paid only when called)
@@ -471,8 +661,11 @@ export async function warmupOcrPacks(langs?: string[]): Promise<{ ok: boolean; l
 
   warmupInFlight = (async () => {
     let recognize: any;
-    try { recognize = (await import('tesseract.js')).recognize; }
-    catch { return { ok: false, loaded: [] }; }
+    try {
+      recognize = (await import('tesseract.js')).recognize;
+    } catch {
+      return { ok: false, loaded: [] };
+    }
 
     // Use a known-good 1x1 transparent PNG (CRC-correct) as the dummy image
     // — tesseract still loads the language pack before failing to recognise
@@ -481,7 +674,7 @@ export async function warmupOcrPacks(langs?: string[]): Promise<{ ok: boolean; l
     // the backend (Phase 43.0A).
     const tiny = Buffer.from(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
-      'base64'
+      'base64',
     );
     const loaded: string[] = [];
     for (const lang of targets) {
@@ -498,7 +691,14 @@ export async function warmupOcrPacks(langs?: string[]): Promise<{ ok: boolean; l
   })();
 
   // Reset the in-flight slot once finished so a manual refresh works.
-  warmupInFlight.then(() => { warmupInFlight = null; }, () => { warmupInFlight = null; });
+  warmupInFlight.then(
+    () => {
+      warmupInFlight = null;
+    },
+    () => {
+      warmupInFlight = null;
+    },
+  );
   return warmupInFlight;
 }
 
@@ -516,12 +716,15 @@ export async function warmupOcrPacks(langs?: string[]): Promise<{ ok: boolean; l
 //  Portuguese, which is enough for the stopword sniff to disambiguate.
 //  Arabic is detected via codepoint presence even in noisy English OCR.
 // =============================================================================
-export async function sampleLanguageFromPdf(buffer: Buffer, opts: { onProgress?: OcrProgressCallback; cancelCheck?: () => boolean } = {}): Promise<{ langs: string[]; sampleText: string }> {
+export async function sampleLanguageFromPdf(
+  buffer: Buffer,
+  opts: { onProgress?: OcrProgressCallback; cancelCheck?: () => boolean } = {},
+): Promise<{ langs: string[]; sampleText: string }> {
   const { spawn } = await import('child_process');
-  const fs       = await import('fs');
-  const path     = await import('path');
-  const os       = await import('os');
-  const crypto   = await import('crypto');
+  const fs = await import('fs');
+  const path = await import('path');
+  const os = await import('os');
+  const crypto = await import('crypto');
 
   opts.onProgress?.({ phase: 'sampling-lang', percent: 8, message: 'Detecting CV language…' });
 
@@ -532,12 +735,13 @@ export async function sampleLanguageFromPdf(buffer: Buffer, opts: { onProgress?:
   try {
     // Rasterise only the first page at 100 DPI for speed.
     await new Promise<void>((resolve, reject) => {
-      const child = spawn('pdftoppm', [
-        '-png', '-r', '100', '-f', '1', '-l', '1',
-        pdfPath, path.join(dir, 'sample'),
-      ], { stdio: 'ignore' });
+      const child = spawn(
+        'pdftoppm',
+        ['-png', '-r', '100', '-f', '1', '-l', '1', pdfPath, path.join(dir, 'sample')],
+        { stdio: 'ignore' },
+      );
       child.on('error', reject);
-      child.on('exit', (c) => c === 0 ? resolve() : reject(new Error(`pdftoppm exited ${c}`)));
+      child.on('exit', (c) => (c === 0 ? resolve() : reject(new Error(`pdftoppm exited ${c}`))));
     });
     if (opts.cancelCheck?.()) return { langs: ['eng'], sampleText: '' };
 
@@ -546,17 +750,29 @@ export async function sampleLanguageFromPdf(buffer: Buffer, opts: { onProgress?:
 
     // Lazy-import tesseract for the sample.
     let recognize: any;
-    try { recognize = (await import('tesseract.js')).recognize; }
-    catch { return { langs: ['eng'], sampleText: '' }; }
+    try {
+      recognize = (await import('tesseract.js')).recognize;
+    } catch {
+      return { langs: ['eng'], sampleText: '' };
+    }
 
     const { data } = await recognize(path.join(dir, files[0]), 'eng');
     const text = data?.text || '';
     const langs = require('./cv-import-polish').detectOcrLanguages(text);
     const detected = langs[0] || 'eng';
-    opts.onProgress?.({ phase: 'sampling-lang', percent: 12, message: `Detected: ${detected}`, detectedLang: detected });
+    opts.onProgress?.({
+      phase: 'sampling-lang',
+      percent: 12,
+      message: `Detected: ${detected}`,
+      detectedLang: detected,
+    });
     return { langs, sampleText: text };
   } finally {
-    try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ }
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+    } catch {
+      /* */
+    }
   }
 }
 
@@ -574,14 +790,28 @@ export async function sampleLanguageFromPdf(buffer: Buffer, opts: { onProgress?:
  *
  * Returns the concatenated text + per-page confidence + langs used.
  */
-export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxPages?: number; onProgress?: OcrProgressCallback; cancelCheck?: () => boolean } = {}): Promise<{ text: string; pageConfidences: number[]; pagesRendered: number; langsUsed: string[]; cancelled?: boolean }> {
+export async function runOcrOnPdf(
+  buffer: Buffer,
+  opts: {
+    langs?: string[];
+    maxPages?: number;
+    onProgress?: OcrProgressCallback;
+    cancelCheck?: () => boolean;
+  } = {},
+): Promise<{
+  text: string;
+  pageConfidences: number[];
+  pagesRendered: number;
+  langsUsed: string[];
+  cancelled?: boolean;
+}> {
   const { spawn } = await import('child_process');
-  const fs       = await import('fs');
-  const path     = await import('path');
-  const os       = await import('os');
-  const crypto   = await import('crypto');
+  const fs = await import('fs');
+  const path = await import('path');
+  const os = await import('os');
+  const crypto = await import('crypto');
 
-  const dir   = fs.mkdtempSync(path.join(os.tmpdir(), 'cv-ocr-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cv-ocr-'));
   const pdfPath = path.join(dir, `${crypto.randomUUID()}.pdf`);
   fs.writeFileSync(pdfPath, buffer);
 
@@ -589,34 +819,60 @@ export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxP
 
   // Rasterise — first 5 pages by default (OCR is slow).
   await new Promise<void>((resolve, reject) => {
-    const child = spawn('pdftoppm', [
-      '-png', '-r', '150',
-      '-l', String(opts.maxPages ?? 5),
-      pdfPath, path.join(dir, 'p'),
-    ], { stdio: 'ignore' });
+    const child = spawn(
+      'pdftoppm',
+      ['-png', '-r', '150', '-l', String(opts.maxPages ?? 5), pdfPath, path.join(dir, 'p')],
+      { stdio: 'ignore' },
+    );
     child.on('error', reject);
-    child.on('exit',  (c) => c === 0 ? resolve() : reject(new Error(`pdftoppm exited ${c}`)));
+    child.on('exit', (c) => (c === 0 ? resolve() : reject(new Error(`pdftoppm exited ${c}`))));
   });
 
-  const pages = fs.readdirSync(dir).filter((f) => f.startsWith('p-') && f.endsWith('.png')).sort();
+  const pages = fs
+    .readdirSync(dir)
+    .filter((f) => f.startsWith('p-') && f.endsWith('.png'))
+    .sort();
   if (pages.length === 0) {
-    try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ }
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+    } catch {
+      /* */
+    }
     return { text: '', pageConfidences: [], pagesRendered: 0, langsUsed: opts.langs || ['eng'] };
   }
 
-  opts.onProgress?.({ phase: 'rendering', percent: 15, pagesTotal: pages.length, message: `Rendered ${pages.length} page(s).` });
+  opts.onProgress?.({
+    phase: 'rendering',
+    percent: 15,
+    pagesTotal: pages.length,
+    message: `Rendered ${pages.length} page(s).`,
+  });
 
   // Lazy-import tesseract.js so the cold start path stays cheap.
   let recognize: any;
-  try { recognize = (await import('tesseract.js')).recognize; }
-  catch (e) {
-    try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ }
+  try {
+    recognize = (await import('tesseract.js')).recognize;
+  } catch (e) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+    } catch {
+      /* */
+    }
     throw new Error('tesseract.js not installed — run `pnpm add tesseract.js` in backend.');
   }
 
   const langs = (opts.langs || ['eng']).join('+');
-  const out: { text: string; pageConfidences: number[]; pagesRendered: number; langsUsed: string[]; cancelled?: boolean } = {
-    text: '', pageConfidences: [], pagesRendered: 0, langsUsed: opts.langs || ['eng'],
+  const out: {
+    text: string;
+    pageConfidences: number[];
+    pagesRendered: number;
+    langsUsed: string[];
+    cancelled?: boolean;
+  } = {
+    text: '',
+    pageConfidences: [],
+    pagesRendered: 0,
+    langsUsed: opts.langs || ['eng'],
   };
   for (let i = 0; i < pages.length; i++) {
     if (opts.cancelCheck?.()) {
@@ -626,7 +882,10 @@ export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxP
     const page = pages[i];
     const base = 15 + Math.round((i / pages.length) * 75);
     opts.onProgress?.({
-      phase: 'recognising', page: i + 1, pagesTotal: pages.length, percent: base,
+      phase: 'recognising',
+      page: i + 1,
+      pagesTotal: pages.length,
+      percent: base,
       message: `Analyzing page ${i + 1} of ${pages.length}…`,
     });
     try {
@@ -638,23 +897,30 @@ export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxP
           const status = (m.status || '').toLowerCase();
           // tesseract.js emits "loading language traineddata", "downloading data"
           // for pack downloads on first use.
-          if (status.includes('loading') && (status.includes('language') || status.includes('traineddata') || status.includes('downloading'))) {
+          if (
+            status.includes('loading') &&
+            (status.includes('language') ||
+              status.includes('traineddata') ||
+              status.includes('downloading'))
+          ) {
             opts.onProgress?.({
-              phase:    'downloading-pack',
+              phase: 'downloading-pack',
               packLang: (opts.langs || ['eng'])[0],
               packPercent: Math.round(m.progress * 100),
-              percent:  Math.min(15, 5 + Math.round(m.progress * 10)),
-              message:  `Downloading ${(opts.langs || ['eng'])[0].toUpperCase()} OCR model…`,
+              percent: Math.min(15, 5 + Math.round(m.progress * 10)),
+              message: `Downloading ${(opts.langs || ['eng'])[0].toUpperCase()} OCR model…`,
             });
             return;
           }
           const pagePct = m.progress * (75 / pages.length);
           opts.onProgress?.({
-            phase:    'recognising',
-            page:     i + 1,
+            phase: 'recognising',
+            page: i + 1,
             pagesTotal: pages.length,
-            percent:  Math.min(90, Math.round(15 + (i / pages.length) * 75 + pagePct)),
-            message:  m.status ? `${m.status} (page ${i + 1}/${pages.length})` : `Analyzing page ${i + 1}…`,
+            percent: Math.min(90, Math.round(15 + (i / pages.length) * 75 + pagePct)),
+            message: m.status
+              ? `${m.status} (page ${i + 1}/${pages.length})`
+              : `Analyzing page ${i + 1}…`,
           });
         },
       });
@@ -667,6 +933,10 @@ export async function runOcrOnPdf(buffer: Buffer, opts: { langs?: string[]; maxP
   }
 
   opts.onProgress?.({ phase: 'done', percent: 95, message: 'Finalising extraction…' });
-  try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ }
+  try {
+    fs.rmSync(dir, { recursive: true, force: true });
+  } catch {
+    /* */
+  }
   return out;
 }

@@ -44,7 +44,7 @@ export class AutoLayoutEngineService {
       return this.createLayoutMetadata('single-column', 'single-column', 'Special page type');
     }
 
-    const blockTypes = blocks.map(b => b.type);
+    const blockTypes = blocks.map((b) => b.type);
     const hasLongText = this.hasLongTextContent(blocks);
     const hasMetrics = this.hasMetricsContent(blocks);
     const hasTimeline = this.hasTimelineContent(blocks);
@@ -58,17 +58,29 @@ export class AutoLayoutEngineService {
 
     // Timeline section → timeline layout
     if (hasTimeline) {
-      return this.createLayoutMetadata('timeline-layout', 'timeline-layout', 'Timeline structure detected');
+      return this.createLayoutMetadata(
+        'timeline-layout',
+        'timeline-layout',
+        'Timeline structure detected',
+      );
     }
 
     // Very dense text (450+ words) → two-column
     if (hasLongText && wordCount > 450) {
-      return this.createLayoutMetadata('two-column', 'two-column', 'Long text section with high density');
+      return this.createLayoutMetadata(
+        'two-column',
+        'two-column',
+        'Long text section with high density',
+      );
     }
 
     // Dense content with mix → editorial spread
     if (density === 'dense' && wordCount > 400 && blockTypes.length > 3) {
-      return this.createLayoutMetadata('editorial-spread', 'editorial-spread', 'Complex dense content mix');
+      return this.createLayoutMetadata(
+        'editorial-spread',
+        'editorial-spread',
+        'Complex dense content mix',
+      );
     }
 
     // Image-heavy with moderate text → sidebar
@@ -78,16 +90,28 @@ export class AutoLayoutEngineService {
 
     // Short content (< 250 words) → single-column with stronger typography
     if (wordCount < 250) {
-      return this.createLayoutMetadata('single-column', 'single-column', 'Short content, single column optimal');
+      return this.createLayoutMetadata(
+        'single-column',
+        'single-column',
+        'Short content, single column optimal',
+      );
     }
 
     // Moderate text (250-400 words) → single-column
     if (wordCount <= 400) {
-      return this.createLayoutMetadata('single-column', 'single-column', 'Moderate content fits single column');
+      return this.createLayoutMetadata(
+        'single-column',
+        'single-column',
+        'Moderate content fits single column',
+      );
     }
 
     // Default: two-column for remaining cases
-    return this.createLayoutMetadata('two-column', 'two-column', 'Default multi-column for content volume');
+    return this.createLayoutMetadata(
+      'two-column',
+      'two-column',
+      'Default multi-column for content volume',
+    );
   }
 
   private isSpecialPageType(sectionType: string): boolean {
@@ -95,20 +119,19 @@ export class AutoLayoutEngineService {
   }
 
   private hasLongTextContent(blocks: ContentBlock[]): boolean {
-    return blocks.some(b =>
-      b.type === 'paragraph' && b.wordCount > 200
-    );
+    return blocks.some((b) => b.type === 'paragraph' && b.wordCount > 200);
   }
 
   private hasMetricsContent(blocks: ContentBlock[]): boolean {
-    return blocks.some(b =>
-      (['table', 'metric'] as ContentBlock['type'][]).includes(b.type) ||
-      (b.type === 'paragraph' && (b.cleanText?.includes('$') || b.cleanText?.includes('%')))
+    return blocks.some(
+      (b) =>
+        (['table', 'metric'] as ContentBlock['type'][]).includes(b.type) ||
+        (b.type === 'paragraph' && (b.cleanText?.includes('$') || b.cleanText?.includes('%'))),
     );
   }
 
   private hasTimelineContent(blocks: ContentBlock[]): boolean {
-    return blocks.some(b => b.type === 'numbered_list');
+    return blocks.some((b) => b.type === 'numbered_list');
   }
 
   private hasSignificantImages(_blocks: ContentBlock[]): boolean {
@@ -133,7 +156,7 @@ export class AutoLayoutEngineService {
       'single-column': 1,
       'two-column': 2,
       'three-column': 3,
-      'sidebar': 2,
+      sidebar: 2,
       'editorial-spread': 2,
       'metric-grid': 3,
       'timeline-layout': 2,

@@ -62,7 +62,10 @@ export class PdfDocumentsController {
   }
 
   @Post('generate')
-  async generate(@Body() dto: { projectId: string; documentType: string; input: any }, @GetUser() user: any) {
+  async generate(
+    @Body() dto: { projectId: string; documentType: string; input: any },
+    @GetUser() user: any,
+  ) {
     await this.assertProjectAccess(dto.projectId, user);
     // Generate complete PDF document with pages
     const pdfDocument = await this.pdfDocumentGenerationService.generatePdfDocument({
@@ -121,7 +124,11 @@ export class PdfDocumentsController {
   }
 
   @Post(':id/quality-check')
-  async recordQualityCheck(@Param('id') id: string, @Body() qualityData: any, @GetUser() user: any) {
+  async recordQualityCheck(
+    @Param('id') id: string,
+    @Body() qualityData: any,
+    @GetUser() user: any,
+  ) {
     await this.assertDocumentAccess(id, user);
     return this.pdfDocumentsService.recordQualityCheck(id, qualityData);
   }

@@ -63,14 +63,14 @@ export class SuggestionsService {
     const templates = this.templateService.getAllTemplates();
 
     // Filter templates by industry or document type
-    const relevantTemplates = templates.filter(t => {
+    const relevantTemplates = templates.filter((t) => {
       if (context.industry && t.industry !== context.industry) return false;
       if (context.documentType && t.documentType !== context.documentType) return false;
       return true;
     });
 
     // Extract suggestions from template prefilled data
-    relevantTemplates.forEach(template => {
+    relevantTemplates.forEach((template) => {
       const value = this.getFieldFromTemplate(template, context.fieldName);
       if (value && value !== '[Your Company]' && value.length > 10) {
         suggestions.push({
@@ -103,7 +103,7 @@ export class SuggestionsService {
     switch (context.fieldName) {
       case 'targetCustomers':
         if (data.commonCustomers) {
-          data.commonCustomers.forEach(customer => {
+          data.commonCustomers.forEach((customer) => {
             suggestions.push({
               value: customer,
               label: `Common in ${industry}`,
@@ -116,7 +116,7 @@ export class SuggestionsService {
 
       case 'competitors':
         if (data.commonCompetitors) {
-          data.commonCompetitors.forEach(competitor => {
+          data.commonCompetitors.forEach((competitor) => {
             suggestions.push({
               value: competitor,
               label: `Industry competitor`,
@@ -129,7 +129,7 @@ export class SuggestionsService {
 
       case 'revenueModel':
         if (data.commonBusinessModels) {
-          data.commonBusinessModels.forEach(model => {
+          data.commonBusinessModels.forEach((model) => {
             suggestions.push({
               value: model,
               label: `Popular in ${industry}`,
@@ -261,7 +261,7 @@ export class SuggestionsService {
     // If problem is filled, suggest related solution
     if (fieldName === 'solution' && relatedFields?.problem) {
       const problem = relatedFields.problem.toLowerCase();
-      
+
       if (problem.includes('expensive') || problem.includes('cost')) {
         suggestions.push({
           value: 'Affordable solution with [X]% lower cost through [approach]',
@@ -270,16 +270,17 @@ export class SuggestionsService {
           source: 'pattern',
         });
       }
-      
+
       if (problem.includes('slow') || problem.includes('time')) {
         suggestions.push({
-          value: '[X]x faster processing using [technology], reducing time from [before] to [after]',
+          value:
+            '[X]x faster processing using [technology], reducing time from [before] to [after]',
           label: 'Based on your problem statement',
           confidence: 0.6,
           source: 'pattern',
         });
       }
-      
+
       if (problem.includes('complex') || problem.includes('difficult')) {
         suggestions.push({
           value: 'Simple, intuitive interface that [benefit], no training required',
@@ -293,16 +294,17 @@ export class SuggestionsService {
     // If target customers are filled, suggest related marketing channels
     if (fieldName === 'revenueModel' && relatedFields?.targetCustomers) {
       const customers = relatedFields.targetCustomers.toLowerCase();
-      
+
       if (customers.includes('enterprise') || customers.includes('b2b')) {
         suggestions.push({
-          value: 'Enterprise SaaS model: $[X]/user/month with annual contracts and volume discounts',
+          value:
+            'Enterprise SaaS model: $[X]/user/month with annual contracts and volume discounts',
           label: 'For B2B/Enterprise customers',
           confidence: 0.7,
           source: 'pattern',
         });
       }
-      
+
       if (customers.includes('consumer') || customers.includes('b2c')) {
         suggestions.push({
           value: 'Freemium model: Free tier to $[X]/month premium, with in-app upgrades',
@@ -348,7 +350,7 @@ export class SuggestionsService {
    */
   private deduplicate(suggestions: Suggestion[]): Suggestion[] {
     const seen = new Set<string>();
-    return suggestions.filter(s => {
+    return suggestions.filter((s) => {
       const key = s.value.toLowerCase().trim();
       if (seen.has(key)) return false;
       seen.add(key);
@@ -361,7 +363,7 @@ export class SuggestionsService {
    */
   private getIndustryKnowledgeBase(): Record<string, any> {
     return {
-      'Technology': {
+      Technology: {
         commonCustomers: [
           'Tech-savvy millennials (25-40 years old) in urban areas',
           'SMBs (50-500 employees) seeking digital transformation',
@@ -380,9 +382,10 @@ export class SuggestionsService {
           'Usage-based: Pay per API call, transaction, or compute hour',
           'Enterprise licenses: Custom pricing with SLA and support',
         ],
-        marketSize: 'TAM: $XB (Global market), SAM: $YB (Addressable segment), SOM: $ZM (Target capture)',
+        marketSize:
+          'TAM: $XB (Global market), SAM: $YB (Addressable segment), SOM: $ZM (Target capture)',
       },
-      'Finance': {
+      Finance: {
         commonCustomers: [
           'SMBs and freelancers ($50K-$2M annual revenue)',
           'Financial advisors and wealth managers',
@@ -401,7 +404,7 @@ export class SuggestionsService {
         ],
         marketSize: 'TAM: $XB (Financial services market), SAM: $YB (Digital fintech), SOM: $ZM',
       },
-      'Healthcare': {
+      Healthcare: {
         commonCustomers: [
           'Patients in underserved areas (rural, remote)',
           'Busy professionals seeking convenient care',

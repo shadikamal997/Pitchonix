@@ -41,7 +41,12 @@ export class CollaborationBroadcaster {
    * the originator already applied the change locally and shouldn't see it
    * echoed back as a remote update.
    */
-  toDeckExcept(deckId: string, exceptSocketId: string | null | undefined, event: string, payload: any): void {
+  toDeckExcept(
+    deckId: string,
+    exceptSocketId: string | null | undefined,
+    event: string,
+    payload: any,
+  ): void {
     if (!this.server || !deckId) return;
     try {
       const ns = this.server.to(roomName(deckId));

@@ -12,8 +12,7 @@ export class ProTemplateRendererService {
     const template = getProTemplate(proTemplateId);
     if (!template) return '';
 
-    const raw = (document.pages || []).filter((p: any) => p.pageType !== 'toc');
-    const pages = this.mergeSparsePagesForPro(raw);
+    const pages = (document.pages || []).filter((p: any) => p.pageType !== 'toc');
     const total = pages.length || 1;
 
     return pages
@@ -27,6 +26,7 @@ export class ProTemplateRendererService {
         if (placedImagesHtml) {
           html = html.replace('</section>', `${placedImagesHtml}</section>`);
         }
+        html = this.appendOverflowAppendix(html, content, template, index + 1, total);
 
         return mode === 'preview'
           ? `<div class="a4-page pro-page">${html}</div>`
@@ -41,11 +41,11 @@ export class ProTemplateRendererService {
     return imgs
       .filter((img: any) => img?.url)
       .map((img: any) => {
-        const x  = Math.max(0, Math.min(100, Number(img.x)       || 0));
-        const y  = Math.max(0, Math.min(100, Number(img.y)       || 0));
-        const w  = Math.max(5, Math.min(100, Number(img.width)   || 50));
-        const h  = Math.max(5, Math.min(100, Number(img.height)  || 30));
-        const z  = Math.max(1, Math.min(50,  Number(img.zIndex)  || 2));
+        const x = Math.max(0, Math.min(100, Number(img.x) || 0));
+        const y = Math.max(0, Math.min(100, Number(img.y) || 0));
+        const w = Math.max(5, Math.min(100, Number(img.width) || 50));
+        const h = Math.max(5, Math.min(100, Number(img.height) || 30));
+        const z = Math.max(1, Math.min(50, Number(img.zIndex) || 2));
         const op = Math.max(0.05, Math.min(1, Number(img.opacity) || 1));
         const fit = ['cover', 'contain', 'fill'].includes(img.fit) ? img.fit : 'cover';
         const safeUrl = this.escape(img.url);
@@ -56,54 +56,30 @@ export class ProTemplateRendererService {
       .join('');
   }
 
-  private mergeSparsePagesForPro(pages: any[]): any[] {
-    const SPARSE_THRESHOLD = 60;
-    const result: any[] = [];
-    for (let i = 0; i < pages.length; i++) {
-      const page = pages[i];
-      const type = String(page.pageType || '').toLowerCase();
-      const isCover = type === 'cover' || i === 0;
-      if (isCover) { result.push(page); continue; }
-      const rawText = String(page.content?.text || '');
-      const wordCount = rawText.split(/\s+/).filter(Boolean).length;
-      if (wordCount < SPARSE_THRESHOLD && i + 1 < pages.length) {
-        const next = pages[i + 1];
-        const nextType = String(next.pageType || '').toLowerCase();
-        if (nextType !== 'cover') {
-          const mergedText = rawText + '\n\n' + String(next.content?.text || '');
-          pages[i + 1] = { ...next, title: page.title || next.title, content: { ...next.content, text: mergedText } };
-          continue;
-        }
-      }
-      result.push(page);
-    }
-    return result;
-  }
-
   // ─── Design family lookup ─────────────────────────────────────────────────
 
   private getDesignFamily(templateId: string): string {
     const map: Record<string, string> = {
-      'modern-minimal-report':        'minimal',
-      'ultra-minimal-onepager':       'minimal',
-      'educational-course-guide':     'minimal',
-      'executive-board-brief':        'executive',
+      'modern-minimal-report': 'minimal',
+      'ultra-minimal-onepager': 'minimal',
+      'educational-course-guide': 'minimal',
+      'executive-board-brief': 'executive',
       'consulting-strategy-playbook': 'executive',
-      'case-study-storyline':         'executive',
-      'startup-investor-memo':        'startup',
-      'product-showcase-deckdoc':     'startup',
-      'fintech-operating-plan':       'fintech',
+      'case-study-storyline': 'executive',
+      'startup-investor-memo': 'startup',
+      'product-showcase-deckdoc': 'startup',
+      'fintech-operating-plan': 'fintech',
       'sustainability-impact-report': 'fintech',
-      'dark-luxury-proposal':         'luxury',
-      'editorial-whitepaper':         'editorial',
-      'premium-whitepaper-system':    'editorial',
-      'future-tech-brief':            'futuristic',
-      'ai-future-tech-report':        'futuristic',
-      'agency-campaign-book':         'agency',
-      'roadmap-execution-plan':       'agency',
+      'dark-luxury-proposal': 'luxury',
+      'editorial-whitepaper': 'editorial',
+      'premium-whitepaper-system': 'editorial',
+      'future-tech-brief': 'futuristic',
+      'ai-future-tech-report': 'futuristic',
+      'agency-campaign-book': 'agency',
+      'roadmap-execution-plan': 'agency',
       'analytics-performance-report': 'analytics',
-      'investor-diligence-pack':      'analytics',
-      'healthcare-program-brief':     'healthcare',
+      'investor-diligence-pack': 'analytics',
+      'healthcare-program-brief': 'healthcare',
     };
     return map[templateId] || 'minimal';
   }
@@ -111,27 +87,70 @@ export class ProTemplateRendererService {
   // ─── Archetype resolution ─────────────────────────────────────────────────
 
   private resolveArchetype(page: any, index: number, total: number): ProPageArchetype {
-    const type  = String(page.pageType || '').toLowerCase();
-    const title = String(page.title    || '').toLowerCase();
-    const text  = String(page.content?.text || '');
+    const type = String(page.pageType || '').toLowerCase();
+    const title = String(page.title || '').toLowerCase();
+    const text = String(page.content?.text || '');
     const isContinuation = !!(page.isContinuation ?? (page.content as any)?.isContinuation);
+    const explicitArchetype = String(
+      page.content?.archetype || page.styles?.archetype || '',
+    ).toLowerCase();
 
     if (index === 0 || type === 'cover') return 'cover';
+    if (explicitArchetype && this.isKnownArchetype(explicitArchetype))
+      return explicitArchetype as ProPageArchetype;
     if (index === total - 1 && total >= 4) return 'closing';
     if (isContinuation) return 'content';
     if (type === 'section' || type === 'divider') return 'section-divider';
     if (index === 1) return 'introduction';
 
-    if (this.titleMatch(title, ['swot', 'strengths', 'weaknesses', 'opportunities', 'threats'])) return 'swot-grid';
-    if (this.titleMatch(title, ['timeline', 'roadmap', 'phases', 'milestones', 'schedule', 'process', 'plan'])) return 'timeline';
-    if (this.titleMatch(title, ['team', 'features', 'services', 'benefits', 'advantages', 'offerings', 'capabilities'])) return 'feature-list';
-    if (this.titleMatch(title, ['metrics', 'kpis', 'performance', 'results', 'statistics', 'analytics', 'numbers'])) return 'stats';
-    if (this.titleMatch(title, ['overview', 'highlights', 'about', 'who we are'])) return 'image-text';
+    if (this.titleMatch(title, ['swot', 'strengths', 'weaknesses', 'opportunities', 'threats']))
+      return 'swot-grid';
+    if (
+      this.titleMatch(title, [
+        'timeline',
+        'roadmap',
+        'phases',
+        'milestones',
+        'schedule',
+        'process',
+        'plan',
+      ])
+    )
+      return 'timeline';
+    if (
+      this.titleMatch(title, [
+        'team',
+        'features',
+        'services',
+        'benefits',
+        'advantages',
+        'offerings',
+        'capabilities',
+      ])
+    )
+      return 'feature-list';
+    if (
+      this.titleMatch(title, [
+        'metrics',
+        'kpis',
+        'performance',
+        'results',
+        'statistics',
+        'analytics',
+        'numbers',
+      ])
+    )
+      return 'stats';
+    if (this.titleMatch(title, ['overview', 'highlights', 'about', 'who we are']))
+      return 'image-text';
 
     const metrics = this.extractMetrics(text);
     if (metrics.length >= 3) return 'stats';
 
-    const lines = text.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 8);
+    const lines = text
+      .split('\n')
+      .map((l: string) => l.trim())
+      .filter((l: string) => l.length > 8);
     const bulletLines = lines.filter((l: string) => /^[-*•·]/.test(l) || /^\d+[.)]\s/.test(l));
     if (lines.length >= 4 && bulletLines.length / lines.length > 0.45) return 'feature-list';
 
@@ -139,33 +158,40 @@ export class ProTemplateRendererService {
   }
 
   private titleMatch(title: string, keywords: string[]): boolean {
-    return keywords.some(k => title.includes(k));
+    return keywords.some((k) => title.includes(k));
   }
 
   // ─── Content extraction ───────────────────────────────────────────────────
 
   private mapPageContent(page: any, document: any) {
+    const structuredFeasibility = this.mapStructuredFeasibilityPage(page, document);
+    if (structuredFeasibility) return structuredFeasibility;
+
     const rawText = this.readText(page);
-    const allLines = rawText.split(/\n+/).map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+    const allLines = rawText
+      .split(/\n+/)
+      .map((l: string) => l.trim())
+      .filter((l: string) => l.length > 0);
 
     const paragraphs = allLines
       .filter((l: string) => l.length >= 30 && !/^[-*•·]/.test(l) && !/^\d+[.)]\s/.test(l))
       .map((l: string) => l.replace(/^#{1,6}\s+/, '').trim())
-      .filter((l: string) => l.length > 0)
-      .slice(0, 10);
-
+      .filter((l: string) => l.length > 0);
     const bullets = allLines
       .filter((l: string) => /^[-*•·]/.test(l) || /^\d+[.)]\s/.test(l))
-      .map((l: string) => l.replace(/^[-*•·\d.)]+\s*/, '').replace(/^#{1,6}\s+/, '').trim())
-      .filter((l: string) => l.length >= 5)
-      .slice(0, 12);
-
-    const derivedBullets = bullets.length >= 2 ? bullets
-      : allLines
-          .map((l: string) => l.replace(/^[-*•·#\d.)]+\s*/, '').trim())
-          .filter((l: string) => l.length >= 10 && l.length < 180)
-          .slice(0, 8);
-
+      .map((l: string) =>
+        l
+          .replace(/^[-*•·\d.)]+\s*/, '')
+          .replace(/^#{1,6}\s+/, '')
+          .trim(),
+      )
+      .filter((l: string) => l.length >= 5);
+    const derivedBullets =
+      bullets.length >= 2
+        ? bullets
+        : allLines
+            .map((l: string) => l.replace(/^[-*•·#\d.)]+\s*/, '').trim())
+            .filter((l: string) => l.length >= 10 && l.length < 180);
     const metrics = this.extractMetrics(rawText);
     const wordCount = rawText.split(/\s+/).filter(Boolean).length;
     const isContinuation = !!(page.isContinuation ?? (page.content as any)?.isContinuation);
@@ -173,17 +199,21 @@ export class ProTemplateRendererService {
     let title = page.title || document.title || 'Untitled';
     if (isContinuation) {
       const headingLine = allLines.find(
-        l => /^#{1,6}\s/.test(l) || (!l.startsWith('-') && !l.startsWith('*') && l.length >= 10 && l.length <= 80),
+        (l) =>
+          /^#{1,6}\s/.test(l) ||
+          (!l.startsWith('-') && !l.startsWith('*') && l.length >= 10 && l.length <= 80),
       );
       if (headingLine) {
         const derived = headingLine.replace(/^#{1,6}\s+/, '').trim();
         if (derived && derived !== title) title = derived;
       } else if (bullets.length > 0) {
-        const SKIP_STARTS = /^(ultimately|however|therefore|furthermore|moreover|additionally|in addition|in only|by using|through|with the|this means|as a result|for example|for instance)/i;
+        const SKIP_STARTS =
+          /^(ultimately|however|therefore|furthermore|moreover|additionally|in addition|in only|by using|through|with the|this means|as a result|for example|for instance)/i;
         const raw = bullets[0].replace(SKIP_STARTS, '').trim();
         const words = raw.split(/[\s,;:]+/).filter((w: string) => w.length > 1);
         if (words.length >= 2) {
-          const TRAILING_WEAK = /\b(in|the|a|an|to|of|for|and|or|but|can|will|may|this|that|with|by|is|are|was|were|have|has|be|it|its|their|our|your)\s*$/i;
+          const TRAILING_WEAK =
+            /\b(in|the|a|an|to|of|for|and|or|but|can|will|may|this|that|with|by|is|are|was|were|have|has|be|it|its|their|our|your)\s*$/i;
           const phrase = words.slice(0, 3).join(' ').replace(TRAILING_WEAK, '').trim();
           if (phrase.length > 3) title = phrase.charAt(0).toUpperCase() + phrase.slice(1);
         }
@@ -191,34 +221,140 @@ export class ProTemplateRendererService {
     }
 
     return {
-      title:         this.escape(title),
+      title: this.escape(title),
       documentTitle: this.escape(document.title || page.title || 'Untitled'),
-      label:         this.escape(page.pageType || 'Section'),
-      paragraphs:    paragraphs.map((p: string) => this.escape(p)),
-      bullets:       derivedBullets.map((b: string) => this.escape(b)),
+      label: this.escape(page.pageType || 'Section'),
+      paragraphs: paragraphs.map((p: string) => this.escape(p)),
+      bullets: derivedBullets.map((b: string) => this.escape(b)),
       metrics,
       wordCount,
       isContinuation,
     };
   }
 
+  private isKnownArchetype(value: string): boolean {
+    return [
+      'cover',
+      'introduction',
+      'section-divider',
+      'feature-list',
+      'stats',
+      'timeline',
+      'swot-grid',
+      'image-text',
+      'closing',
+      'content',
+    ].includes(value);
+  }
+
+  private mapStructuredFeasibilityPage(page: any, document: any) {
+    const report = page.content?.feasibilityReport;
+    if (!report || typeof report !== 'object') return null;
+
+    const metrics = Array.isArray(report.metrics)
+      ? report.metrics.map((metric: any) => this.metricValue(metric)).filter(Boolean)
+      : [];
+
+    const metricLabels = Array.isArray(report.metrics)
+      ? report.metrics.map((metric: any) => this.metricLabel(metric)).filter(Boolean)
+      : [];
+
+    const bullets = [
+      ...metricLabels,
+      ...(Array.isArray(report.bullets) ? report.bullets : []),
+      ...(Array.isArray(report.warnings) ? report.warnings : []),
+    ]
+      .map((item: any) => this.escape(this.compactLine(item, 150)))
+      .filter(Boolean);
+    const sectionBullets = Array.isArray(report.sections)
+      ? report.sections
+          .map(
+            (section: any) =>
+              `${section.title || 'Section'}: ${section.guidance || section.status || ''}`,
+          )
+          .map((item: string) => this.escape(this.compactLine(item, 150)))
+          .filter(Boolean)
+      : [];
+
+    const paragraphs = (Array.isArray(report.paragraphs) ? report.paragraphs : [])
+      .map((item: any) => this.escape(this.compactLine(item, 320)))
+      .filter(Boolean);
+    return {
+      title: this.escape(report.title || page.title || document.title || 'Feasibility Study'),
+      documentTitle: this.escape(
+        document.title || report.title || page.title || 'Feasibility Study',
+      ),
+      label: this.escape(report.subtitle || page.pageType || 'Feasibility Study'),
+      paragraphs,
+      bullets: sectionBullets.length ? sectionBullets : bullets,
+      metrics,
+      wordCount: this.readText(page).split(/\s+/).filter(Boolean).length,
+      isContinuation: false,
+    };
+  }
+
+  private metricValue(metric: any): string {
+    if (metric === null || metric === undefined) return '';
+    if (typeof metric === 'string' || typeof metric === 'number') return String(metric);
+    return String(metric.value || '').trim();
+  }
+
+  private metricLabel(metric: any): string {
+    if (!metric || typeof metric !== 'object') return '';
+    const label = String(metric.label || 'Key metric').trim();
+    const detail = String(metric.detail || '').trim();
+    return detail ? `${label}: ${detail}` : label;
+  }
+
+  private compactLine(value: any, _maxLength: number): string {
+    const normalized = String(value || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return normalized;
+  }
+
   private readText(page: any): string {
+    const report = page.content?.feasibilityReport;
+    if (report && typeof report === 'object') {
+      return [
+        report.title,
+        report.subtitle,
+        ...(Array.isArray(report.paragraphs) ? report.paragraphs : []),
+        ...(Array.isArray(report.bullets) ? report.bullets.map((item: string) => `- ${item}`) : []),
+        ...(Array.isArray(report.metrics)
+          ? report.metrics.map(
+              (metric: any) => `${metric.label}: ${metric.value} ${metric.detail || ''}`,
+            )
+          : []),
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }
     const raw = page.content?.text;
     if (raw === null || raw === undefined) return page.title ? String(page.title) : '';
     const parsed: any =
       typeof raw === 'object'
         ? raw
-        : (() => { try { return JSON.parse(String(raw)); } catch { return null; } })();
+        : (() => {
+            try {
+              return JSON.parse(String(raw));
+            } catch {
+              return null;
+            }
+          })();
     if (parsed && typeof parsed === 'object') {
       const listLines = [
         ...(parsed.overview || []).map((s: string) => `- ${s}`),
-        ...(parsed.bullets  || []).map((s: string) => `- ${s}`),
-        ...(parsed.points   || []).map((s: string) => `- ${s}`),
+        ...(parsed.bullets || []).map((s: string) => `- ${s}`),
+        ...(parsed.points || []).map((s: string) => `- ${s}`),
       ];
       const textLines = [parsed.subtitle, parsed.description, parsed.body].filter(Boolean);
       return [...listLines, ...textLines].join('\n');
     }
-    return String(raw).replace(/<[^>]+>/g, ' ').replace(/[ \t]{2,}/g, ' ').trim();
+    return String(raw)
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/[ \t]{2,}/g, ' ')
+      .trim();
   }
 
   // ─── Archetype dispatcher ─────────────────────────────────────────────────
@@ -230,21 +366,31 @@ export class ProTemplateRendererService {
     page: number,
     total: number,
   ): string {
-    const c      = template.tokens.colors;
+    const c = template.tokens.colors;
     const family = this.getDesignFamily(template.id);
     const footer = this.footer(c, page, total);
 
     switch (archetype) {
-      case 'cover':           return this.renderCover(content, c, footer, family);
-      case 'introduction':    return this.renderIntro(content, c, footer, family);
-      case 'section-divider': return this.renderDivider(content, c, footer, family);
-      case 'feature-list':    return this.renderFeatureList(content, c, footer, family, page);
-      case 'stats':           return this.renderStats(content, c, footer, family);
-      case 'timeline':        return this.renderTimeline(content, c, footer, family);
-      case 'swot-grid':       return this.renderSwot(content, c, footer, family);
-      case 'image-text':      return this.renderImageText(content, c, footer, family);
-      case 'closing':         return this.renderClosing(content, c, footer, family);
-      default:                return this.renderContent(content, c, footer, family, page);
+      case 'cover':
+        return this.renderCover(content, c, footer, family);
+      case 'introduction':
+        return this.renderIntro(content, c, footer, family);
+      case 'section-divider':
+        return this.renderDivider(content, c, footer, family);
+      case 'feature-list':
+        return this.renderFeatureList(content, c, footer, family, page);
+      case 'stats':
+        return this.renderStats(content, c, footer, family);
+      case 'timeline':
+        return this.renderTimeline(content, c, footer, family);
+      case 'swot-grid':
+        return this.renderSwot(content, c, footer, family);
+      case 'image-text':
+        return this.renderImageText(content, c, footer, family);
+      case 'closing':
+        return this.renderClosing(content, c, footer, family);
+      default:
+        return this.renderContent(content, c, footer, family, page);
     }
   }
 
@@ -267,8 +413,11 @@ export class ProTemplateRendererService {
 
     // editorial: magazine-style cover with oversized title
     if (family === 'editorial') {
-      const chips = content.bullets.slice(0, 4)
-        .map((b: string) => `<span class="fam-ed-chip">${b.split(/\s+/).slice(0, 4).join(' ')}</span>`)
+      const chips = content.bullets
+        .slice(0, 4)
+        .map(
+          (b: string) => `<span class="fam-ed-chip">${b.split(/\s+/).slice(0, 4).join(' ')}</span>`,
+        )
         .join('');
       return `<section class="pro-sheet pro-cover fam-ed-cover">
         <div class="fam-ed-cover-top">
@@ -292,11 +441,16 @@ export class ProTemplateRendererService {
           <h1>${content.documentTitle}</h1>
           ${content.paragraphs[0] ? `<p class="pro-cover-lead">${content.paragraphs[0]}</p>` : ''}
           <div class="fam-fut-cover-grid">
-            ${content.bullets.slice(0, 4).map((b: string, i: number) =>
-              `<div class="fam-fut-cover-block">
+            ${content.bullets
+              .slice(0, 4)
+              .map(
+                (b: string, i: number) =>
+                  `<div class="fam-fut-cover-block">
                 <span class="fam-fut-num">${String(i + 1).padStart(2, '0')}</span>
                 <span>${b.split(/\s+/).slice(0, 5).join(' ')}</span>
-              </div>`).join('')}
+              </div>`,
+              )
+              .join('')}
           </div>
         </div>
         ${footer}
@@ -317,7 +471,8 @@ export class ProTemplateRendererService {
     }
 
     // default: 2-col cover
-    const chips = content.bullets.slice(0, 4)
+    const chips = content.bullets
+      .slice(0, 4)
       .map((b: string) => `<span>${b.split(/\s+/).slice(0, 3).join(' ')}</span>`)
       .join('');
     return `<section class="pro-sheet pro-cover pro-stationery-cover">
@@ -351,7 +506,10 @@ export class ProTemplateRendererService {
 
     // luxury: centered editorial intro
     if (family === 'luxury') {
-      const paras = content.paragraphs.slice(0, 4).map((p: string) => `<p>${p}</p>`).join('');
+      const paras = content.paragraphs
+        .slice(0, 4)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
       return `<section class="pro-sheet pro-intro fam-lux-page">
         <div class="fam-lux-rule" style="margin-bottom:10mm"></div>
         <div class="pro-label"><span></span>${content.label}</div>
@@ -363,12 +521,20 @@ export class ProTemplateRendererService {
 
     // futuristic: band + content
     if (family === 'futuristic') {
-      const paras = content.paragraphs.slice(0, 5).map((p: string) => `<p>${p}</p>`).join('');
-      const bulletHtml = content.bullets.slice(0, 6).map((b: string, i: number) =>
-        `<div class="fam-fut-block">
+      const paras = content.paragraphs
+        .slice(0, 5)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const bulletHtml = content.bullets
+        .slice(0, 6)
+        .map(
+          (b: string, i: number) =>
+            `<div class="fam-fut-block">
           <div class="fam-fut-num">${String(i + 1).padStart(2, '0')}</div>
           <div class="fam-fut-text">${b}</div>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-intro">
         <div class="fam-fut-band">
           <span class="fam-fut-band-label">// ${content.label}</span>
@@ -383,7 +549,10 @@ export class ProTemplateRendererService {
     // editorial: pull-quote intro
     if (family === 'editorial') {
       const pullQuote = content.paragraphs[0] || '';
-      const rest = content.paragraphs.slice(1, 5).map((p: string) => `<p>${p}</p>`).join('');
+      const rest = content.paragraphs
+        .slice(1, 5)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
       return `<section class="pro-sheet pro-intro">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -395,9 +564,14 @@ export class ProTemplateRendererService {
 
     // minimal: clean text no sidebar
     if (family === 'minimal') {
-      const paras = content.paragraphs.slice(0, 6).map((p: string) => `<p>${p}</p>`).join('');
-      const bullets = content.bullets.slice(0, 8).map((b: string) =>
-        `<div class="fam-min-item">&#8212; ${b}</div>`).join('');
+      const paras = content.paragraphs
+        .slice(0, 6)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const bullets = content.bullets
+        .slice(0, 8)
+        .map((b: string) => `<div class="fam-min-item">&#8212; ${b}</div>`)
+        .join('');
       return `<section class="pro-sheet pro-intro">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -409,12 +583,21 @@ export class ProTemplateRendererService {
     }
 
     // default: dark sidebar intro
-    const paras = content.paragraphs.slice(0, 5).map((p: string) => `<p>${p}</p>`).join('');
+    const paras = content.paragraphs
+      .slice(0, 5)
+      .map((p: string) => `<p>${p}</p>`)
+      .join('');
     const hasBullets = content.bullets.length >= 2;
     const bulletHtml = hasBullets
-      ? `<div class="pro-callout-list">${content.bullets.slice(0, 6).map((b: string) =>
-          `<div class="pro-callout-item"><span class="pro-dot"></span>${b}</div>`).join('')}</div>`
-      : (content.paragraphs[2] ? `<div class="pro-callout">${content.paragraphs[2]}</div>` : '');
+      ? `<div class="pro-callout-list">${content.bullets
+          .slice(0, 6)
+          .map(
+            (b: string) => `<div class="pro-callout-item"><span class="pro-dot"></span>${b}</div>`,
+          )
+          .join('')}</div>`
+      : content.paragraphs[2]
+        ? `<div class="pro-callout">${content.paragraphs[2]}</div>`
+        : '';
     return `<section class="pro-sheet pro-intro">
       <div class="pro-label"><span></span>${content.label}</div>
       <div class="pro-two-col">
@@ -469,21 +652,36 @@ export class ProTemplateRendererService {
 
   // ─── Feature list ─────────────────────────────────────────────────────────
 
-  private renderFeatureList(content: any, c: any, footer: string, family: string, page: number): string {
-    const items = content.bullets.length >= 2 ? content.bullets.slice(0, 10) : content.paragraphs.slice(0, 8);
+  private renderFeatureList(
+    content: any,
+    c: any,
+    footer: string,
+    family: string,
+    page: number,
+  ): string {
+    const items =
+      content.bullets.length >= 2 ? content.bullets.slice(0, 10) : content.paragraphs.slice(0, 8);
     if (items.length === 0) return this.renderContent(content, c, footer, family, page);
 
-    const leadPara = content.bullets.length >= 2
-      ? content.paragraphs.slice(0, 2).map((p: string) => `<p class="pro-feature-lead">${p}</p>`).join('')
-      : '';
+    const leadPara =
+      content.bullets.length >= 2
+        ? content.paragraphs
+            .slice(0, 2)
+            .map((p: string) => `<p class="pro-feature-lead">${p}</p>`)
+            .join('')
+        : '';
 
     // ── MINIMAL: plain numbered list ────────────────────────────────────────
     if (family === 'minimal') {
-      const list = items.map((item: string, i: number) =>
-        `<div class="fam-min-numbered-item">
+      const list = items
+        .map(
+          (item: string, i: number) =>
+            `<div class="fam-min-numbered-item">
           <span class="fam-min-li-num">${i + 1}.</span>
           <span class="fam-min-li-text">${item}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-features">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -496,11 +694,15 @@ export class ProTemplateRendererService {
 
     // ── EXECUTIVE: two-col with separator lines ──────────────────────────────
     if (family === 'executive') {
-      const list = items.map((item: string, i: number) =>
-        `<div class="fam-exec-feat-item">
+      const list = items
+        .map(
+          (item: string, i: number) =>
+            `<div class="fam-exec-feat-item">
           <span class="fam-exec-feat-num">${String(i + 1).padStart(2, '0')}</span>
           <span class="fam-exec-feat-text">${item}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-features fam-exec-page">
         <div class="fam-exec-bar"></div>
         <div class="fam-exec-inner">
@@ -515,11 +717,15 @@ export class ProTemplateRendererService {
 
     // ── STARTUP: bold full-width items with accent left border ──────────────
     if (family === 'startup') {
-      const list = items.map((item: string, i: number) =>
-        `<div class="fam-st-feat-item">
+      const list = items
+        .map(
+          (item: string, i: number) =>
+            `<div class="fam-st-feat-item">
           <span class="fam-st-feat-num">${String(i + 1).padStart(2, '0')}</span>
           <span class="fam-st-feat-text">${item}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-features">
         <div class="fam-st-top-strip"></div>
         <div class="pro-label"><span></span>${content.label}</div>
@@ -532,11 +738,15 @@ export class ProTemplateRendererService {
 
     // ── FINTECH: striped table rows ──────────────────────────────────────────
     if (family === 'fintech') {
-      const list = items.map((item: string, i: number) =>
-        `<div class="fam-fin-row ${i % 2 === 0 ? 'alt' : ''}">
+      const list = items
+        .map(
+          (item: string, i: number) =>
+            `<div class="fam-fin-row ${i % 2 === 0 ? 'alt' : ''}">
           <span class="fam-fin-idx">${String(i + 1).padStart(2, '0')}</span>
           <span class="fam-fin-cell">${item}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-features">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -549,11 +759,15 @@ export class ProTemplateRendererService {
 
     // ── LUXURY: centered em-dash list ────────────────────────────────────────
     if (family === 'luxury') {
-      const list = items.map((item: string) =>
-        `<div class="fam-lux-item">
+      const list = items
+        .map(
+          (item: string) =>
+            `<div class="fam-lux-item">
           <span class="fam-lux-dash">&#8212;</span>
           <span>${item}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-features fam-lux-page">
         <div class="fam-lux-rule" style="margin-bottom:10mm"></div>
         <div class="pro-label"><span></span>${content.label}</div>
@@ -567,11 +781,15 @@ export class ProTemplateRendererService {
 
     // ── EDITORIAL: text-only with diamond bullets ────────────────────────────
     if (family === 'editorial') {
-      const list = items.map((item: string) =>
-        `<div class="fam-ed-feat-item">
+      const list = items
+        .map(
+          (item: string) =>
+            `<div class="fam-ed-feat-item">
           <span class="fam-ed-diamond">&#9670;</span>
           <span>${item}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-features">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -584,11 +802,15 @@ export class ProTemplateRendererService {
 
     // ── FUTURISTIC: modular tech blocks ─────────────────────────────────────
     if (family === 'futuristic') {
-      const blocks = items.map((item: string, i: number) =>
-        `<div class="fam-fut-block">
+      const blocks = items
+        .map(
+          (item: string, i: number) =>
+            `<div class="fam-fut-block">
           <div class="fam-fut-num">${String(i + 1).padStart(2, '0')}</div>
           <div class="fam-fut-text">${item}</div>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-features">
         <div class="fam-fut-band">
           <span class="fam-fut-band-label">// ${content.label}</span>
@@ -602,11 +824,15 @@ export class ProTemplateRendererService {
 
     // ── AGENCY: bold arrow list ──────────────────────────────────────────────
     if (family === 'agency') {
-      const list = items.map((item: string) =>
-        `<div class="fam-ag-item">
+      const list = items
+        .map(
+          (item: string) =>
+            `<div class="fam-ag-item">
           <b>&#8594;</b>
           <span>${item}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-features fam-ag-page">
         <div class="fam-ag-stripe"></div>
         <div class="fam-ag-inner">
@@ -623,12 +849,16 @@ export class ProTemplateRendererService {
     // ── ANALYTICS: data rows ─────────────────────────────────────────────────
     if (family === 'analytics') {
       const BARS = [92, 78, 85, 71, 88, 65, 75, 82, 68, 79];
-      const list = items.map((item: string, i: number) =>
-        `<div class="fam-ana-row">
+      const list = items
+        .map(
+          (item: string, i: number) =>
+            `<div class="fam-ana-row">
           <span class="fam-ana-num">${String(i + 1).padStart(2, '0')}</span>
           <span class="fam-ana-text">${item}</span>
           <span class="fam-ana-bar" style="width:${BARS[i % BARS.length]}%"></span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-features">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -641,11 +871,15 @@ export class ProTemplateRendererService {
 
     // ── HEALTHCARE: card per item with left stripe ────────────────────────────
     if (family === 'healthcare') {
-      const cards = items.map((item: string) =>
-        `<div class="fam-hc-card">
+      const cards = items
+        .map(
+          (item: string) =>
+            `<div class="fam-hc-card">
           <div class="fam-hc-stripe"></div>
           <span>${item}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-features">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -656,8 +890,12 @@ export class ProTemplateRendererService {
     }
 
     // fallback: original numbered-card grid
-    const grid = items.map((item: string, i: number) =>
-      `<div class="pro-list-item"><b>${i + 1}</b><span>${item}</span></div>`).join('');
+    const grid = items
+      .map(
+        (item: string, i: number) =>
+          `<div class="pro-list-item"><b>${i + 1}</b><span>${item}</span></div>`,
+      )
+      .join('');
     return `<section class="pro-sheet pro-features">
       <div class="pro-section-head">
         <div class="pro-label"><span></span>${content.label}</div>
@@ -677,12 +915,20 @@ export class ProTemplateRendererService {
 
     // analytics: data-table metrics display
     if (family === 'analytics') {
-      const cards = realMetrics.slice(0, 4).map((m: string, i: number) =>
-        `<div class="fam-ana-metric">
+      const cards = realMetrics
+        .slice(0, 4)
+        .map(
+          (m: string, i: number) =>
+            `<div class="fam-ana-metric">
           <strong>${this.escape(m)}</strong>
           <span>${content.bullets[i] || 'Key metric'}</span>
-        </div>`).join('');
-      const paras = content.paragraphs.slice(0, 3).map((p: string) => `<p>${p}</p>`).join('');
+        </div>`,
+        )
+        .join('');
+      const paras = content.paragraphs
+        .slice(0, 3)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
       return `<section class="pro-sheet pro-stats">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -695,12 +941,20 @@ export class ProTemplateRendererService {
 
     // startup: big energy metric cards
     if (family === 'startup') {
-      const cards = realMetrics.slice(0, 3).map((m: string, i: number) =>
-        `<div class="fam-st-metric">
+      const cards = realMetrics
+        .slice(0, 3)
+        .map(
+          (m: string, i: number) =>
+            `<div class="fam-st-metric">
           <strong>${this.escape(m)}</strong>
           <span>${content.bullets[i] || 'Key metric'}</span>
-        </div>`).join('');
-      const paras = content.paragraphs.slice(0, 3).map((p: string) => `<p>${p}</p>`).join('');
+        </div>`,
+        )
+        .join('');
+      const paras = content.paragraphs
+        .slice(0, 3)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
       return `<section class="pro-sheet pro-stats">
         <div class="fam-st-top-strip"></div>
         <div class="pro-label"><span></span>${content.label}</div>
@@ -713,12 +967,20 @@ export class ProTemplateRendererService {
 
     // luxury: centered dark metrics
     if (family === 'luxury') {
-      const cards = realMetrics.slice(0, 3).map((m: string, i: number) =>
-        `<div class="fam-lux-metric">
+      const cards = realMetrics
+        .slice(0, 3)
+        .map(
+          (m: string, i: number) =>
+            `<div class="fam-lux-metric">
           <strong>${this.escape(m)}</strong>
           <span>${content.bullets[i] || 'Key metric'}</span>
-        </div>`).join('');
-      const paras = content.paragraphs.slice(0, 2).map((p: string) => `<p>${p}</p>`).join('');
+        </div>`,
+        )
+        .join('');
+      const paras = content.paragraphs
+        .slice(0, 2)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
       return `<section class="pro-sheet pro-stats fam-lux-page">
         <div class="fam-lux-rule" style="margin-bottom:8mm"></div>
         <div class="pro-label"><span></span>${content.label}</div>
@@ -731,12 +993,20 @@ export class ProTemplateRendererService {
 
     // default stats
     const labels = content.bullets.slice(0, realMetrics.length);
-    const cards = realMetrics.slice(0, 3).map((m: string, i: number) =>
-      `<div class="pro-metric ${i === 1 ? 'dark' : ''}">
+    const cards = realMetrics
+      .slice(0, 3)
+      .map(
+        (m: string, i: number) =>
+          `<div class="pro-metric ${i === 1 ? 'dark' : ''}">
         <strong>${this.escape(m)}</strong>
         <span>${labels[i] || 'Key metric'}</span>
-      </div>`).join('');
-    const paras = content.paragraphs.slice(0, 3).map((p: string) => `<p>${p}</p>`).join('');
+      </div>`,
+      )
+      .join('');
+    const paras = content.paragraphs
+      .slice(0, 3)
+      .map((p: string) => `<p>${p}</p>`)
+      .join('');
     return `<section class="pro-sheet pro-stats">
       <div class="pro-label"><span></span>${content.label}</div>
       <h2>${content.title}</h2>
@@ -750,16 +1020,21 @@ export class ProTemplateRendererService {
   // ─── Timeline ─────────────────────────────────────────────────────────────
 
   private renderTimeline(content: any, c: any, footer: string, family: string): string {
-    const steps = content.bullets.length >= 2 ? content.bullets.slice(0, 8) : content.paragraphs.slice(0, 6);
+    const steps =
+      content.bullets.length >= 2 ? content.bullets.slice(0, 8) : content.paragraphs.slice(0, 6);
     if (steps.length === 0) return this.renderContent(content, c, footer, family, 0);
 
     // agency: big numbered bold steps
     if (family === 'agency') {
-      const stepHtml = steps.map((step: string, i: number) =>
-        `<div class="fam-ag-step">
+      const stepHtml = steps
+        .map(
+          (step: string, i: number) =>
+            `<div class="fam-ag-step">
           <b>${String(i + 1).padStart(2, '0')}</b>
           <span>${step}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-timeline fam-ag-page">
         <div class="fam-ag-stripe"></div>
         <div class="fam-ag-inner">
@@ -773,11 +1048,15 @@ export class ProTemplateRendererService {
 
     // futuristic: glowing step blocks
     if (family === 'futuristic') {
-      const stepHtml = steps.map((step: string, i: number) =>
-        `<div class="fam-fut-block">
+      const stepHtml = steps
+        .map(
+          (step: string, i: number) =>
+            `<div class="fam-fut-block">
           <div class="fam-fut-num">${String(i + 1).padStart(2, '0')}</div>
           <div class="fam-fut-text">${step}</div>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-timeline">
         <div class="fam-fut-band">
           <span class="fam-fut-band-label">// ${content.label}</span>
@@ -790,13 +1069,19 @@ export class ProTemplateRendererService {
 
     // minimal: simple numbered steps
     if (family === 'minimal') {
-      const stepHtml = steps.map((step: string, i: number) =>
-        `<div class="fam-min-step">
+      const stepHtml = steps
+        .map(
+          (step: string, i: number) =>
+            `<div class="fam-min-step">
           <span class="fam-min-step-num">${i + 1}</span>
           <span>${step}</span>
-        </div>`).join('');
-      const leadPara = content.paragraphs[0] && content.bullets.length >= 2
-        ? `<p class="pro-timeline-lead">${content.paragraphs[0]}</p>` : '';
+        </div>`,
+        )
+        .join('');
+      const leadPara =
+        content.paragraphs[0] && content.bullets.length >= 2
+          ? `<p class="pro-timeline-lead">${content.paragraphs[0]}</p>`
+          : '';
       return `<section class="pro-sheet pro-timeline">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -808,10 +1093,16 @@ export class ProTemplateRendererService {
     }
 
     // default: card-step list
-    const stepHtml = steps.map((step: string, i: number) =>
-      `<div class="pro-step"><b>${i + 1}</b><span>${step}</span></div>`).join('');
-    const leadPara = content.paragraphs[0] && content.bullets.length >= 2
-      ? `<p class="pro-timeline-lead">${content.paragraphs[0]}</p>` : '';
+    const stepHtml = steps
+      .map(
+        (step: string, i: number) =>
+          `<div class="pro-step"><b>${i + 1}</b><span>${step}</span></div>`,
+      )
+      .join('');
+    const leadPara =
+      content.paragraphs[0] && content.bullets.length >= 2
+        ? `<p class="pro-timeline-lead">${content.paragraphs[0]}</p>`
+        : '';
     return `<section class="pro-sheet pro-timeline">
       <div class="pro-label"><span></span>${content.label}</div>
       <h2>${content.title}</h2>
@@ -825,10 +1116,12 @@ export class ProTemplateRendererService {
 
   private renderSwot(content: any, c: any, footer: string, family: string): string {
     const quadrants = ['Strengths', 'Weaknesses', 'Opportunities', 'Threats'];
-    const cells = quadrants.map((label, i) => {
-      const body = content.bullets[i] || content.paragraphs[i] || '';
-      return `<div class="pro-swot-cell"><b>${label}</b><p>${body || 'Add details here'}</p></div>`;
-    }).join('');
+    const cells = quadrants
+      .map((label, i) => {
+        const body = content.bullets[i] || content.paragraphs[i] || '';
+        return `<div class="pro-swot-cell"><b>${label}</b><p>${body || 'Add details here'}</p></div>`;
+      })
+      .join('');
     const leadPara = content.paragraphs[4] || content.paragraphs[0];
     if (family === 'luxury') {
       return `<section class="pro-sheet pro-grid fam-lux-page">
@@ -851,7 +1144,10 @@ export class ProTemplateRendererService {
   // ─── Image-text ───────────────────────────────────────────────────────────
 
   private renderImageText(content: any, c: any, footer: string, family: string): string {
-    const paras = content.paragraphs.slice(0, 4).map((p: string) => `<p>${p}</p>`).join('');
+    const paras = content.paragraphs
+      .slice(0, 4)
+      .map((p: string) => `<p>${p}</p>`)
+      .join('');
     const callout = content.bullets[0] || content.paragraphs[4] || '';
     return `<section class="pro-sheet pro-image-text">
       <div class="pro-label"><span></span>${content.label}</div>
@@ -873,7 +1169,10 @@ export class ProTemplateRendererService {
   // ─── Closing ─────────────────────────────────────────────────────────────
 
   private renderClosing(content: any, c: any, footer: string, family: string): string {
-    const paras = content.paragraphs.slice(0, 2).map((p: string) => `<p>${p}</p>`).join('');
+    const paras = content.paragraphs
+      .slice(0, 2)
+      .map((p: string) => `<p>${p}</p>`)
+      .join('');
 
     if (family === 'luxury') {
       return `<section class="pro-sheet pro-closing fam-lux-page">
@@ -912,8 +1211,13 @@ export class ProTemplateRendererService {
       <h2>${content.title || 'Thank You'}</h2>
       ${paras}
       <div class="pro-closing-bullets">
-        ${content.bullets.slice(0, 3).map((b: string) =>
-          `<div class="pro-closing-item"><span class="pro-dot accent"></span>${b}</div>`).join('')}
+        ${content.bullets
+          .slice(0, 3)
+          .map(
+            (b: string) =>
+              `<div class="pro-closing-item"><span class="pro-dot accent"></span>${b}</div>`,
+          )
+          .join('')}
       </div>
       ${footer}
     </section>`;
@@ -921,8 +1225,14 @@ export class ProTemplateRendererService {
 
   // ─── Content (family-aware adaptive layout) ───────────────────────────────
 
-  private renderContent(content: any, c: any, footer: string, family: string, page: number): string {
-    const paraCount   = content.paragraphs.length;
+  private renderContent(
+    content: any,
+    c: any,
+    footer: string,
+    family: string,
+    page: number,
+  ): string {
+    const paraCount = content.paragraphs.length;
     const bulletCount = content.bullets.length;
 
     if (paraCount === 0 && bulletCount === 0) {
@@ -935,9 +1245,14 @@ export class ProTemplateRendererService {
 
     // ── MINIMAL: clean text flow, em-dash bullets ────────────────────────────
     if (family === 'minimal') {
-      const paras = content.paragraphs.slice(0, 8).map((p: string) => `<p>${p}</p>`).join('');
-      const bullets = content.bullets.slice(0, 10).map((b: string) =>
-        `<div class="fam-min-item">&#8212; ${b}</div>`).join('');
+      const paras = content.paragraphs
+        .slice(0, 8)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const bullets = content.bullets
+        .slice(0, 10)
+        .map((b: string) => `<div class="fam-min-item">&#8212; ${b}</div>`)
+        .join('');
       return `<section class="pro-sheet pro-content">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -952,12 +1267,20 @@ export class ProTemplateRendererService {
 
     // ── EXECUTIVE: left accent bar + check bullets ───────────────────────────
     if (family === 'executive') {
-      const paras = content.paragraphs.slice(0, 6).map((p: string) => `<p>${p}</p>`).join('');
-      const checks = content.bullets.slice(0, 8).map((b: string) =>
-        `<div class="fam-exec-item">
+      const paras = content.paragraphs
+        .slice(0, 6)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const checks = content.bullets
+        .slice(0, 8)
+        .map(
+          (b: string) =>
+            `<div class="fam-exec-item">
           <span class="fam-exec-check">&#10003;</span>
           <span>${b}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-content fam-exec-page pro-letterhead-page">
         <div class="pro-letterhead-logo"><span class="pro-brand-mark"></span><b>${content.documentTitle}</b></div>
         <div class="fam-exec-bar"></div>
@@ -973,12 +1296,20 @@ export class ProTemplateRendererService {
 
     // ── STARTUP: accent strip + bold numbered items ──────────────────────────
     if (family === 'startup') {
-      const paras = content.paragraphs.slice(0, 4).map((p: string) => `<p>${p}</p>`).join('');
-      const items = content.bullets.slice(0, 8).map((b: string, i: number) =>
-        `<div class="fam-st-item">
+      const paras = content.paragraphs
+        .slice(0, 4)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const items = content.bullets
+        .slice(0, 8)
+        .map(
+          (b: string, i: number) =>
+            `<div class="fam-st-item">
           <div class="fam-st-num">${String(i + 1).padStart(2, '0')}</div>
           <div class="fam-st-text">${b}</div>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-content pro-letterhead-page">
         <div class="pro-letterhead-logo"><span class="pro-brand-mark"></span><b>${content.documentTitle}</b></div>
         <div class="fam-st-top-strip"></div>
@@ -992,12 +1323,20 @@ export class ProTemplateRendererService {
 
     // ── FINTECH: table rows ──────────────────────────────────────────────────
     if (family === 'fintech') {
-      const paras = content.paragraphs.slice(0, 3).map((p: string) => `<p>${p}</p>`).join('');
-      const rows = content.bullets.slice(0, 10).map((b: string, i: number) =>
-        `<div class="fam-fin-row ${i % 2 === 0 ? 'alt' : ''}">
+      const paras = content.paragraphs
+        .slice(0, 3)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const rows = content.bullets
+        .slice(0, 10)
+        .map(
+          (b: string, i: number) =>
+            `<div class="fam-fin-row ${i % 2 === 0 ? 'alt' : ''}">
           <span class="fam-fin-idx">${String(i + 1).padStart(2, '0')}</span>
           <span class="fam-fin-cell">${b}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-content pro-letterhead-page">
         <div class="pro-letterhead-logo"><span class="pro-brand-mark"></span><b>${content.documentTitle}</b></div>
         <div class="pro-label"><span></span>${content.label}</div>
@@ -1011,12 +1350,20 @@ export class ProTemplateRendererService {
 
     // ── LUXURY: dark paper, gold rules, em-dash list ─────────────────────────
     if (family === 'luxury') {
-      const paras = content.paragraphs.slice(0, 5).map((p: string) => `<p>${p}</p>`).join('');
-      const items = content.bullets.slice(0, 8).map((b: string) =>
-        `<div class="fam-lux-item">
+      const paras = content.paragraphs
+        .slice(0, 5)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const items = content.bullets
+        .slice(0, 8)
+        .map(
+          (b: string) =>
+            `<div class="fam-lux-item">
           <span class="fam-lux-dash">&#8212;</span>
           <span>${b}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-content fam-lux-page">
         <div class="fam-lux-rule" style="margin-bottom:8mm"></div>
         <div class="pro-label"><span></span>${content.label}</div>
@@ -1030,12 +1377,20 @@ export class ProTemplateRendererService {
     // ── EDITORIAL: pull quote + 2-col text + diamond bullets ────────────────
     if (family === 'editorial') {
       const pullQuote = content.paragraphs[0] || '';
-      const rest = content.paragraphs.slice(1, 6).map((p: string) => `<p>${p}</p>`).join('');
-      const items = content.bullets.slice(0, 8).map((b: string) =>
-        `<div class="fam-ed-bullet-item">
+      const rest = content.paragraphs
+        .slice(1, 6)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const items = content.bullets
+        .slice(0, 8)
+        .map(
+          (b: string) =>
+            `<div class="fam-ed-bullet-item">
           <span class="fam-ed-diamond">&#9670;</span>
           <span>${b}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-content">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -1048,12 +1403,20 @@ export class ProTemplateRendererService {
 
     // ── FUTURISTIC: dark band header + glowing blocks ───────────────────────
     if (family === 'futuristic') {
-      const paras = content.paragraphs.slice(0, 4).map((p: string) => `<p>${p}</p>`).join('');
-      const blocks = content.bullets.slice(0, 8).map((b: string, i: number) =>
-        `<div class="fam-fut-block">
+      const paras = content.paragraphs
+        .slice(0, 4)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const blocks = content.bullets
+        .slice(0, 8)
+        .map(
+          (b: string, i: number) =>
+            `<div class="fam-fut-block">
           <div class="fam-fut-num">${String(i + 1).padStart(2, '0')}</div>
           <div class="fam-fut-text">${b}</div>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-content">
         <div class="fam-fut-band">
           <span class="fam-fut-band-label">// ${content.label}</span>
@@ -1068,12 +1431,20 @@ export class ProTemplateRendererService {
 
     // ── AGENCY: left stripe + oversized page number + arrow list ────────────
     if (family === 'agency') {
-      const paras = content.paragraphs.slice(0, 4).map((p: string) => `<p>${p}</p>`).join('');
-      const items = content.bullets.slice(0, 8).map((b: string) =>
-        `<div class="fam-ag-item">
+      const paras = content.paragraphs
+        .slice(0, 4)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const items = content.bullets
+        .slice(0, 8)
+        .map(
+          (b: string) =>
+            `<div class="fam-ag-item">
           <b>&#8594;</b>
           <span>${b}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-content fam-ag-page">
         <div class="fam-ag-stripe"></div>
         <div class="fam-ag-inner">
@@ -1089,14 +1460,22 @@ export class ProTemplateRendererService {
 
     // ── ANALYTICS: blue header bar + data rows ───────────────────────────────
     if (family === 'analytics') {
-      const paras = content.paragraphs.slice(0, 4).map((p: string) => `<p>${p}</p>`).join('');
+      const paras = content.paragraphs
+        .slice(0, 4)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
       const BARS = [92, 78, 85, 71, 88, 65, 75, 82, 68, 79];
-      const rows = content.bullets.slice(0, 10).map((b: string, i: number) =>
-        `<div class="fam-ana-row">
+      const rows = content.bullets
+        .slice(0, 10)
+        .map(
+          (b: string, i: number) =>
+            `<div class="fam-ana-row">
           <span class="fam-ana-num">${String(i + 1).padStart(2, '0')}</span>
           <span class="fam-ana-text">${b}</span>
           <span class="fam-ana-bar" style="width:${BARS[i % BARS.length]}%"></span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-content">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -1109,12 +1488,20 @@ export class ProTemplateRendererService {
 
     // ── HEALTHCARE: soft cards with left teal stripe ─────────────────────────
     if (family === 'healthcare') {
-      const paras = content.paragraphs.slice(0, 4).map((p: string) => `<p>${p}</p>`).join('');
-      const cards = content.bullets.slice(0, 8).map((b: string) =>
-        `<div class="fam-hc-card">
+      const paras = content.paragraphs
+        .slice(0, 4)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const cards = content.bullets
+        .slice(0, 8)
+        .map(
+          (b: string) =>
+            `<div class="fam-hc-card">
           <div class="fam-hc-stripe"></div>
           <span>${b}</span>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-content">
         <div class="pro-label"><span></span>${content.label}</div>
         <h2>${content.title}</h2>
@@ -1127,9 +1514,15 @@ export class ProTemplateRendererService {
     // ── FALLBACK: original adaptive 3-mode layout ────────────────────────────
     if (bulletCount >= 4 && paraCount <= 2) {
       const lead = content.paragraphs[0] ? `<p class="pro-lead">${content.paragraphs[0]}</p>` : '';
-      const extraPara = content.paragraphs[1] ? `<p class="pro-lead">${content.paragraphs[1]}</p>` : '';
-      const grid = content.bullets.map((b: string, i: number) =>
-        `<div class="pro-list-item"><b>${i + 1}</b><span>${b}</span></div>`).join('');
+      const extraPara = content.paragraphs[1]
+        ? `<p class="pro-lead">${content.paragraphs[1]}</p>`
+        : '';
+      const grid = content.bullets
+        .map(
+          (b: string, i: number) =>
+            `<div class="pro-list-item"><b>${i + 1}</b><span>${b}</span></div>`,
+        )
+        .join('');
       return `<section class="pro-sheet pro-content">
         <div class="pro-label"><span></span>${content.label}</div>
         <div class="pro-content-single"><h2>${content.title}</h2>${lead}${extraPara}</div>
@@ -1138,10 +1531,20 @@ export class ProTemplateRendererService {
       </section>`;
     }
     if (paraCount >= 3) {
-      const paras = content.paragraphs.slice(0, 8).map((p: string) => `<p>${p}</p>`).join('');
-      const inlineBullets = bulletCount >= 2
-        ? `<div class="pro-callout-list">${content.bullets.slice(0, 6).map((b: string) =>
-            `<div class="pro-callout-item"><span class="pro-dot"></span>${b}</div>`).join('')}</div>` : '';
+      const paras = content.paragraphs
+        .slice(0, 8)
+        .map((p: string) => `<p>${p}</p>`)
+        .join('');
+      const inlineBullets =
+        bulletCount >= 2
+          ? `<div class="pro-callout-list">${content.bullets
+              .slice(0, 6)
+              .map(
+                (b: string) =>
+                  `<div class="pro-callout-item"><span class="pro-dot"></span>${b}</div>`,
+              )
+              .join('')}</div>`
+          : '';
       return `<section class="pro-sheet pro-content">
         <div class="pro-label"><span></span>${content.label}</div>
         <div class="pro-content-single"><h2>${content.title}</h2>${paras}${inlineBullets}</div>
@@ -1149,8 +1552,12 @@ export class ProTemplateRendererService {
       </section>`;
     }
     const paras = content.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
-    const sideItems = content.bullets.map((b: string, i: number) =>
-      `<div class="pro-list-item compact"><b>${i + 1}</b><span>${b}</span></div>`).join('');
+    const sideItems = content.bullets
+      .map(
+        (b: string, i: number) =>
+          `<div class="pro-list-item compact"><b>${i + 1}</b><span>${b}</span></div>`,
+      )
+      .join('');
     return `<section class="pro-sheet pro-content">
       <div class="pro-label"><span></span>${content.label}</div>
       <div class="pro-content-wide">
@@ -1159,6 +1566,69 @@ export class ProTemplateRendererService {
       </div>
       ${footer}
     </section>`;
+  }
+
+  private appendOverflowAppendix(
+    html: string,
+    content: any,
+    template: ProTemplateDefinition,
+    page: number,
+    total: number,
+  ): string {
+    const missing = this.collectMissingNodes(html, content);
+    if (missing.length === 0) return html;
+
+    const c = template.tokens.colors;
+    const footer = this.footer(c, page, total);
+    const paragraphs = missing
+      .filter((node) => node.type === 'paragraph')
+      .map((node) => `<p>${node.value}</p>`)
+      .join('');
+    const bullets = missing
+      .filter((node) => node.type === 'bullet')
+      .map(
+        (node, index) =>
+          `<div class="pro-overflow-item"><b>${index + 1}</b><span>${node.value}</span></div>`,
+      )
+      .join('');
+    const metrics = missing
+      .filter((node) => node.type === 'metric')
+      .map((node) => `<div class="pro-overflow-metric">${node.value}</div>`)
+      .join('');
+
+    const appendix = `<section class="pro-sheet pro-content pro-overflow-appendix" data-overflow-nodes="${missing.length}">
+      <div class="pro-label"><span></span>Preserved overflow content</div>
+      <h2>${content.title} · Continued Details</h2>
+      ${paragraphs ? `<div class="pro-overflow-paragraphs">${paragraphs}</div>` : ''}
+      ${bullets ? `<div class="pro-overflow-list">${bullets}</div>` : ''}
+      ${metrics ? `<div class="pro-overflow-metrics">${metrics}</div>` : ''}
+      ${footer}
+    </section>`;
+
+    return `${html}<div class="page-break"></div>${appendix}`;
+  }
+
+  private collectMissingNodes(
+    html: string,
+    content: any,
+  ): Array<{ type: 'paragraph' | 'bullet' | 'metric'; value: string }> {
+    const nodes = [
+      ...(content.paragraphs || []).map((value: string) => ({ type: 'paragraph' as const, value })),
+      ...(content.bullets || []).map((value: string) => ({ type: 'bullet' as const, value })),
+      ...(content.metrics || []).map((value: string) => ({
+        type: 'metric' as const,
+        value: this.escape(value),
+      })),
+    ];
+    const seen = new Set<string>();
+    return nodes.filter((node) => {
+      const value = String(node.value || '').trim();
+      if (!value) return false;
+      const key = `${node.type}:${value}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return !html.includes(value);
+    });
   }
 
   // ─── Footer ───────────────────────────────────────────────────────────────
@@ -1174,22 +1644,22 @@ export class ProTemplateRendererService {
 
   private getFontImport(display: string, body: string): string {
     const GOOGLE_FONTS: Record<string, string> = {
-      'Inter':               'Inter:wght@400;500;600;700;900',
-      'Libre Baskerville':   'Libre+Baskerville:wght@400;700',
-      'Manrope':             'Manrope:wght@400;600;700;800',
-      'Space Grotesk':       'Space+Grotesk:wght@400;500;600;700',
-      'DM Sans':             'DM+Sans:wght@400;500;600;700;900',
-      'Playfair Display':    'Playfair+Display:wght@400;700;900',
-      'Lora':                'Lora:wght@400;600;700',
-      'Cormorant Garamond':  'Cormorant+Garamond:wght@400;600;700',
-      'Syne':                'Syne:wght@400;600;700;800',
-      'Outfit':              'Outfit:wght@400;500;600;700;900',
-      'Nunito':              'Nunito:wght@400;600;700;800;900',
-      'IBM Plex Sans':       'IBM+Plex+Sans:wght@400;500;600;700',
+      Inter: 'Inter:wght@400;500;600;700;900',
+      'Libre Baskerville': 'Libre+Baskerville:wght@400;700',
+      Manrope: 'Manrope:wght@400;600;700;800',
+      'Space Grotesk': 'Space+Grotesk:wght@400;500;600;700',
+      'DM Sans': 'DM+Sans:wght@400;500;600;700;900',
+      'Playfair Display': 'Playfair+Display:wght@400;700;900',
+      Lora: 'Lora:wght@400;600;700',
+      'Cormorant Garamond': 'Cormorant+Garamond:wght@400;600;700',
+      Syne: 'Syne:wght@400;600;700;800',
+      Outfit: 'Outfit:wght@400;500;600;700;900',
+      Nunito: 'Nunito:wght@400;600;700;800;900',
+      'IBM Plex Sans': 'IBM+Plex+Sans:wght@400;500;600;700',
     };
     const families = [...new Set([display, body])]
-      .filter(f => GOOGLE_FONTS[f])
-      .map(f => `family=${GOOGLE_FONTS[f]}`)
+      .filter((f) => GOOGLE_FONTS[f])
+      .map((f) => `family=${GOOGLE_FONTS[f]}`)
       .join('&');
     return families
       ? `@import url('https://fonts.googleapis.com/css2?${families}&display=swap');`
@@ -1200,7 +1670,7 @@ export class ProTemplateRendererService {
     const template = getProTemplate(templateId);
     const c = template?.tokens.colors;
     const display = template?.tokens.typography?.display || 'Inter';
-    const body    = template?.tokens.typography?.body    || 'Inter';
+    const body = template?.tokens.typography?.body || 'Inter';
     if (!c) return '';
 
     return `
@@ -1853,7 +2323,7 @@ export class ProTemplateRendererService {
   private extractMetrics(text: string): string[] {
     const matches = Array.from(
       text.matchAll(/\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s?(?:%|x|k|m|b|million|billion)\b/gi),
-    ).map(m => m[0].trim());
+    ).map((m) => m[0].trim());
     return [...new Set(matches)].slice(0, 6);
   }
 

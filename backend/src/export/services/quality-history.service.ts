@@ -113,11 +113,7 @@ export class QualityHistoryService {
   /**
    * Get quality history within date range
    */
-  async getByDateRange(
-    deckId: string,
-    startDate: Date,
-    endDate: Date
-  ): Promise<QualityHistory[]> {
+  async getByDateRange(deckId: string, startDate: Date, endDate: Date): Promise<QualityHistory[]> {
     return this.prisma.qualityHistory.findMany({
       where: {
         deckId,
@@ -152,7 +148,7 @@ export class QualityHistoryService {
   async compareVersions(
     deckId: string,
     version1: number,
-    version2: number
+    version2: number,
   ): Promise<ComparisonResult> {
     const [v1, v2] = await Promise.all([
       this.prisma.qualityHistory.findFirst({
@@ -316,7 +312,10 @@ export class QualityHistoryService {
   /**
    * Get dimension trends (breakdown by dimension over time)
    */
-  async getDimensionTrends(deckId: string, days: number = 30): Promise<{
+  async getDimensionTrends(
+    deckId: string,
+    days: number = 30,
+  ): Promise<{
     content: TrendData[];
     visual: TrendData[];
     ai: TrendData[];

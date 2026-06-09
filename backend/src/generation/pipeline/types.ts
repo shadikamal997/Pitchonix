@@ -21,13 +21,13 @@ export type GenerationCommandType =
 
 /** What a caller submits to the pipeline. */
 export interface GenerationCommand {
-  type:        GenerationCommandType;
+  type: GenerationCommandType;
   /** Required for every command except GENERATE (which creates the project). */
-  projectId?:  string;
+  projectId?: string;
   /** Required for REFRESH / FAMILY_SWITCH / TEMPLATE_SWITCH. */
-  deckId?:     string;
+  deckId?: string;
   /** New family to apply (FAMILY_SWITCH, optional for others as override). */
-  familyId?:   SmartFamilyId;
+  familyId?: SmartFamilyId;
   /** New template (TEMPLATE_SWITCH). */
   templateId?: string;
   /** Wizard input override (GENERATE / WIZARD_UPDATE). */
@@ -67,7 +67,7 @@ export type PipelineStage =
   | 'build-context'
   | 'slide-planning'
   | 'generator-execution'
-  | 'enhancement'                 // Phase 31.5 — optional AI pass
+  | 'enhancement' // Phase 31.5 — optional AI pass
   | 'smart-component-attachment'
   | 'quality-analysis'
   | 'migration'
@@ -91,15 +91,17 @@ export const PIPELINE_STAGES: PipelineStage[] = [
 /** Which stages each command runs. The pipeline iterates this list. */
 export const STAGES_FOR_COMMAND: Record<GenerationCommandType, PipelineStage[]> = {
   // Full pipelines (enhancement stage gated by options.useEnhancement at runtime)
-  GENERATE:           PIPELINE_STAGES.slice(),
-  REGENERATE:         PIPELINE_STAGES.slice(),
-  REBUILD:            PIPELINE_STAGES.slice(),
-  // Switching family/template re-runs the back half from planning onward
-  FAMILY_SWITCH:      PIPELINE_STAGES.slice(),
-  TEMPLATE_SWITCH:    PIPELINE_STAGES.slice(),
+  GENERATE: PIPELINE_STAGES.slice(),
+  REGENERATE: PIPELINE_STAGES.slice(),
+  REBUILD: PIPELINE_STAGES.slice(),
+  // Switching composition family still rebuilds smart components. Template
+  // switching is metadata-only; visual application happens through
+  // SlidesService.applyTemplate so existing slide content is preserved.
+  FAMILY_SWITCH: PIPELINE_STAGES.slice(),
+  TEMPLATE_SWITCH: ['load-context', 'persistence', 'post-processing'],
   // Input-update commands also run the full pipeline (they affect generators)
-  WIZARD_UPDATE:      PIPELINE_STAGES.slice(),
-  STRUCTURED_UPDATE:  PIPELINE_STAGES.slice(),
+  WIZARD_UPDATE: PIPELINE_STAGES.slice(),
+  STRUCTURED_UPDATE: PIPELINE_STAGES.slice(),
   // Refresh skips planning + generator + smart-component attachment;
   // it just re-runs quality + persistence + post-processing on existing slides
   REFRESH: ['load-context', 'quality-analysis', 'persistence', 'post-processing'],
@@ -107,44 +109,44 @@ export const STAGES_FOR_COMMAND: Record<GenerationCommandType, PipelineStage[]> 
 
 /** Built up by the pipeline as stages run; the result is returned to the caller. */
 export interface GenerationContext {
-  command:      GenerationCommand;
-  projectId?:   string;
-  deckId?:      string;
+  command: GenerationCommand;
+  projectId?: string;
+  deckId?: string;
   wizardInput?: WizardInput;
-  familyId?:    SmartFamilyId;
-  templateId?:  string;
+  familyId?: SmartFamilyId;
+  templateId?: string;
   /** Generated SlideContent[] (output of slide-factory). */
-  slides?:      SlideContent[];
+  slides?: SlideContent[];
   /** Persisted slide ids (output of persistence stage). */
   persistedSlideIds?: string[];
   /** Tallies from later stages. */
   metrics?: {
-    slidesGenerated:    number;
+    slidesGenerated: number;
     smartComponentsAttached: number;
-    elementsCreated:    number;
-    qualityScore:       number;
-    narrativeScore?:    number;
+    elementsCreated: number;
+    qualityScore: number;
+    narrativeScore?: number;
   };
 }
 
 /** Per-stage outcome captured for telemetry. */
 export interface StageResult {
-  stage:    PipelineStage;
-  ok:       boolean;
-  ms:       number;
+  stage: PipelineStage;
+  ok: boolean;
+  ms: number;
   message?: string;
 }
 
 /** What `pipeline.execute(command)` returns. */
 export interface PipelineResult {
-  ok:        boolean;
-  command:   GenerationCommandType;
+  ok: boolean;
+  command: GenerationCommandType;
   durationMs: number;
-  stages:    StageResult[];
-  context:   GenerationContext;
+  stages: StageResult[];
+  context: GenerationContext;
   error?: {
-    stage:   PipelineStage;
-    reason:  string;
+    stage: PipelineStage;
+    reason: string;
   };
 }
 
@@ -155,8 +157,8 @@ export interface PipelineResult {
  */
 export class PipelineError extends Error {
   constructor(
-    public readonly stage:   PipelineStage,
-    public readonly reason:  string,
+    public readonly stage: PipelineStage,
+    public readonly reason: string,
     public readonly context: Record<string, unknown> = {},
   ) {
     super(`PipelineError [${stage}]: ${reason}`);

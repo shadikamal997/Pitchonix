@@ -69,7 +69,7 @@ export class MigrationService {
     };
 
     this.logger.log(
-      `Migration complete: ${blocks.length} blocks created from ${document.pages?.length || 0} pages`
+      `Migration complete: ${blocks.length} blocks created from ${document.pages?.length || 0} pages`,
     );
 
     return blockDocument;
@@ -78,12 +78,9 @@ export class MigrationService {
   /**
    * Convert a single v1 page to v2 blocks
    */
-  private async convertPageToBlocks(
-    page: LegacyPage,
-    startingOrder: number
-  ): Promise<Block[]> {
+  private async convertPageToBlocks(page: LegacyPage, startingOrder: number): Promise<Block[]> {
     const blocks: Block[] = [];
-    let order = startingOrder;
+    const order = startingOrder;
 
     try {
       // Handle different page types
@@ -258,7 +255,9 @@ export class MigrationService {
         title: kpi.title || kpi.label || '',
         value: kpi.value || kpi.metric || '',
         change: kpi.change || kpi.delta,
-        trend: kpi.trend || (kpi.change?.startsWith('+') ? 'up' : kpi.change?.startsWith('-') ? 'down' : 'neutral'),
+        trend:
+          kpi.trend ||
+          (kpi.change?.startsWith('+') ? 'up' : kpi.change?.startsWith('-') ? 'down' : 'neutral'),
         icon: kpi.icon,
       })) ||
       page.content?.metrics?.map((metric: any) => ({

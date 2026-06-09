@@ -775,7 +775,21 @@ export default function PdfEditorPage() {
         enhancementType: type,
         targetId: currentPage.id,
       });
-      const { enhancedContent } = response.data.data;
+      const payload = response.data?.data || {};
+      const { enhancedContent, aiUsed, changed, note } = payload;
+
+      // Honest outcomes: AI unavailable → no fake success; no change → say so.
+      if (aiUsed === false) {
+        const msg = note || 'AI enhancement is not available, so no changes were made.';
+        setError(msg);
+        toast.warning(msg);
+        setTimeout(() => setError(''), 5000);
+        return;
+      }
+      if (changed === false) {
+        toast.info(note || 'No changes were needed.');
+        return;
+      }
       if (!enhancedContent?.trim()) throw new Error('Enhancement returned empty content');
 
       handlePageContentChange(currentPage.id, enhancedContent);
@@ -1251,6 +1265,7 @@ export default function PdfEditorPage() {
                     // in this file at lines 591/613/629).
                     try { await api.post(`/pdf-studio/export/preview/${documentId}/invalidate`); }
                     catch { /* preview will refresh on next edit */ }
+                    triggerPreviewRefresh();
                   } catch (e) {
                     setDocument(prev);
                   }

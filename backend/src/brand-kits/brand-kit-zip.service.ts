@@ -43,8 +43,11 @@ export class BrandKitZipService {
 
   constructor(private kits: BrandKitsService) {
     if (!fs.existsSync(UPLOAD_DIR)) {
-      try { fs.mkdirSync(UPLOAD_DIR, { recursive: true }); }
-      catch { /* logged on first write attempt */ }
+      try {
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+      } catch {
+        /* logged on first write attempt */
+      }
     }
   }
 
@@ -60,7 +63,7 @@ export class BrandKitZipService {
     archive.on('data', (c: Buffer) => chunks.push(c));
 
     const done = new Promise<void>((resolve, reject) => {
-      archive.on('end',   () => resolve());
+      archive.on('end', () => resolve());
       archive.on('error', (e: Error) => reject(e));
     });
 
@@ -71,12 +74,12 @@ export class BrandKitZipService {
     for (const asset of json.assets || []) {
       const local = this.tryReadLocal(asset.url);
       if (local) {
-        const ext  = path.extname(asset.url) || guessExt(asset.mimeType);
+        const ext = path.extname(asset.url) || guessExt(asset.mimeType);
         const safe = sanitizeName(`${asset.kind}-${shortHash(asset.url)}${ext}`);
         archive.append(local, { name: `assets/${safe}` });
         remappedAssets.push({ ...asset, url: `assets/${safe}` });
       } else {
-        remappedAssets.push(asset);   // remote URL or missing on disk
+        remappedAssets.push(asset); // remote URL or missing on disk
       }
     }
 
@@ -86,7 +89,7 @@ export class BrandKitZipService {
     if (json.logo) {
       const local = this.tryReadLocal(json.logo);
       if (local) {
-        const ext  = path.extname(json.logo) || '.png';
+        const ext = path.extname(json.logo) || '.png';
         const safe = sanitizeName(`logo_primary-${shortHash(json.logo)}${ext}`);
         archive.append(local, { name: `assets/${safe}` });
         logoEntry = `assets/${safe}`;
@@ -95,7 +98,7 @@ export class BrandKitZipService {
 
     const rewritten: BrandKitExportV1 = {
       ...json,
-      logo:   logoEntry ?? json.logo,
+      logo: logoEntry ?? json.logo,
       assets: remappedAssets,
     };
     archive.append(JSON.stringify(rewritten, null, 2), { name: 'brand-kit.json' });
@@ -110,18 +113,24 @@ export class BrandKitZipService {
 
   async importZip(userId: string, zipBuffer: Buffer, workspaceId?: string) {
     let zip: AdmZip;
-    try { zip = new AdmZip(zipBuffer); }
-    catch (e: any) { throw new BadRequestException(`Invalid ZIP: ${e?.message}`); }
+    try {
+      zip = new AdmZip(zipBuffer);
+    } catch (e: any) {
+      throw new BadRequestException(`Invalid ZIP: ${e?.message}`);
+    }
 
     const jsonEntry = zip.getEntry('brand-kit.json');
     if (!jsonEntry) throw new BadRequestException('Archive missing brand-kit.json');
     let payload: BrandKitExportV1;
-    try { payload = JSON.parse(zip.readAsText(jsonEntry)); }
-    catch (e: any) { throw new BadRequestException(`brand-kit.json is not valid JSON: ${e?.message}`); }
+    try {
+      payload = JSON.parse(zip.readAsText(jsonEntry));
+    } catch (e: any) {
+      throw new BadRequestException(`brand-kit.json is not valid JSON: ${e?.message}`);
+    }
 
     // Extract every asset under assets/ into the uploads folder, capturing
     // the public URLs. Then rewrite the payload's URL references in-place.
-    const remap = new Map<string, string>();   // zip path → public URL
+    const remap = new Map<string, string>(); // zip path → public URL
     for (const entry of zip.getEntries()) {
       if (entry.isDirectory) continue;
       if (!entry.entryName.startsWith('assets/')) continue;
@@ -150,11 +159,15 @@ export class BrandKitZipService {
    *  for remote URLs or files missing on disk. */
   private tryReadLocal(url: string): Buffer | null {
     if (!url) return null;
-    if (!url.startsWith(PUBLIC_PREFIX) && !url.startsWith(PUBLIC_PREFIX.replace(/^\//, ''))) return null;
+    if (!url.startsWith(PUBLIC_PREFIX) && !url.startsWith(PUBLIC_PREFIX.replace(/^\//, '')))
+      return null;
     const fname = path.basename(url);
-    const full  = path.join(UPLOAD_DIR, fname);
-    try { return fs.readFileSync(full); }
-    catch { return null; }
+    const full = path.join(UPLOAD_DIR, fname);
+    try {
+      return fs.readFileSync(full);
+    } catch {
+      return null;
+    }
   }
 
   private writeAsset(zipEntryName: string, data: Buffer): string {
@@ -172,7 +185,9 @@ export class BrandKitZipService {
 }
 
 async function getArchiverFactory(): Promise<any> {
-  const nativeImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+  const nativeImport = new Function('specifier', 'return import(specifier)') as (
+    specifier: string,
+  ) => Promise<any>;
   const mod: any = await nativeImport('archiver');
   return mod.default || mod;
 }
@@ -189,10 +204,10 @@ function sanitizeName(s: string): string {
 }
 function guessExt(mime?: string | null): string {
   if (!mime) return '';
-  if (mime.includes('png'))  return '.png';
+  if (mime.includes('png')) return '.png';
   if (mime.includes('jpeg')) return '.jpg';
-  if (mime.includes('jpg'))  return '.jpg';
+  if (mime.includes('jpg')) return '.jpg';
   if (mime.includes('webp')) return '.webp';
-  if (mime.includes('svg'))  return '.svg';
+  if (mime.includes('svg')) return '.svg';
   return '';
 }

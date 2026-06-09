@@ -7,10 +7,10 @@ export class ValidationIssueDto {
   @ApiProperty({ example: 'chart-data', description: 'Rule that triggered this issue' })
   rule: string;
 
-  @ApiProperty({ 
-    example: 'ERROR', 
+  @ApiProperty({
+    example: 'ERROR',
     description: 'Issue severity',
-    enum: ['ERROR', 'WARNING', 'INFO']
+    enum: ['ERROR', 'WARNING', 'INFO'],
   })
   severity: 'ERROR' | 'WARNING' | 'INFO';
 
@@ -20,7 +20,11 @@ export class ValidationIssueDto {
   @ApiProperty({ example: 5, required: false, description: 'Slide index where issue was found' })
   slideIndex?: number;
 
-  @ApiProperty({ example: 'Add data to the chart or remove it', required: false, description: 'Suggested fix' })
+  @ApiProperty({
+    example: 'Add data to the chart or remove it',
+    required: false,
+    description: 'Suggested fix',
+  })
   suggestion?: string;
 }
 
@@ -60,7 +64,10 @@ export class ValidationResultDto {
   @ApiProperty({ type: ValidationResultSummaryDto, description: 'Validation summary' })
   summary: ValidationResultSummaryDto;
 
-  @ApiProperty({ example: '2024-05-05T12:34:56.789Z', description: 'When validation was performed' })
+  @ApiProperty({
+    example: '2024-05-05T12:34:56.789Z',
+    description: 'When validation was performed',
+  })
   validatedAt: Date;
 }
 
@@ -74,11 +81,11 @@ export class ExportReadinessDto {
   @ApiProperty({ example: true, description: 'Whether deck is ready for export' })
   ready: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     type: [String],
     example: ['Deck has validation errors', 'Quality score too low (45/100)'],
     required: false,
-    description: 'Reasons why deck is not ready (if ready is false)'
+    description: 'Reasons why deck is not ready (if ready is false)',
   })
   blockers?: string[];
 

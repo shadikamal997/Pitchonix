@@ -65,6 +65,8 @@ import { VersionHistoryModule } from '../version-history/version-history.module'
     VersionHistoryModule,
     // Import PDF documents module for PDF generation
     require('../pdf-documents/pdf-documents.module').PdfDocumentsModule,
+    // Phase Ω.CONTENT.2D — presentation content ledger
+    require('../content-ledger/presentation-ledger.module').PresentationLedgerModule,
   ],
   controllers: [GenerationController],
   providers: [
@@ -105,7 +107,10 @@ import { VersionHistoryModule } from '../version-history/version-history.module'
     GenerationProgressBridge,
   ],
   exports: [
-    GenerationService, VisualGenerationService, ExportService, AIEnhancementService,
+    GenerationService,
+    VisualGenerationService,
+    ExportService,
+    AIEnhancementService,
     ContentStructureService,
     DocumentScorecardService,
     DocumentFrameworkEngine,

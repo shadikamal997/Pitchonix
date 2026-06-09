@@ -1,0 +1,3 @@
+family,template,reviewerId,reviewerRole,visualQuality,readability,professionalism,hierarchy,trustworthiness,distinctiveness,usability,exportQuality,comments
+# One row per (reviewer × template). Scores 1-10. reviewerRole one of: founder|investor|recruiter|designer|consultant|operations
+# Example: Presentation,Crimson Dark Business,rev01,investor,9,9,9,8,9,8,9,9,"Strong exec presence; slightly tight footer"

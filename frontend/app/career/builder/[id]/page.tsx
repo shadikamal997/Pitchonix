@@ -1473,6 +1473,14 @@ const CertificationsEditor: React.FC<{
 }> = ({ profile, addItem, updateItem, removeItem }) => {
   const list: any[] = profile.certifications || [];
   const [busy, setBusy] = useState(false);
+  const addCertification = async () => {
+    setBusy(true);
+    try {
+      await addItem('certifications', { name: 'Certification', issuer: '', date: '' });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Collapsible title="Certifications" badge={list.length}>
@@ -1489,7 +1497,7 @@ const CertificationsEditor: React.FC<{
             </div>
           </div>
         ))}
-        <button onClick={async () => { setBusy(true); await addItem('certifications', { name: 'Certification', issuer: '', date: '' }); setBusy(false); }}
+        <button onClick={addCertification}
           disabled={busy}
           className="w-full h-7 text-[11px] font-semibold border border-dashed border-[#C9C6BD] rounded hover:border-[#4F7563] hover:text-[#4F7563] flex items-center justify-center gap-1 text-[#9A9A9A] disabled:opacity-40">
           {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add Certification
@@ -1511,6 +1519,14 @@ const AwardsEditor: React.FC<{
 }> = ({ profile, addItem, updateItem, removeItem }) => {
   const list: any[] = profile.awards || [];
   const [busy, setBusy] = useState(false);
+  const addAward = async () => {
+    setBusy(true);
+    try {
+      await addItem('awards', { title: 'Award', issuer: '', date: '' });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Collapsible title="Awards" badge={list.length}>
@@ -1527,7 +1543,7 @@ const AwardsEditor: React.FC<{
             </div>
           </div>
         ))}
-        <button onClick={async () => { setBusy(true); await addItem('awards', { title: 'Award', issuer: '', date: '' }); setBusy(false); }}
+        <button onClick={addAward}
           disabled={busy}
           className="w-full h-7 text-[11px] font-semibold border border-dashed border-[#C9C6BD] rounded hover:border-[#4F7563] hover:text-[#4F7563] flex items-center justify-center gap-1 text-[#9A9A9A] disabled:opacity-40">
           {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add Award
@@ -1550,6 +1566,14 @@ const ProjectsEditor: React.FC<{
   const list: any[] = profile.projects || [];
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const addProject = async () => {
+    setBusy(true);
+    try {
+      await addItem('projects', { name: 'Project', description: '', technologies: [] });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Collapsible title="Projects" badge={list.length}>
@@ -1575,7 +1599,7 @@ const ProjectsEditor: React.FC<{
             )}
           </div>
         ))}
-        <button onClick={async () => { setBusy(true); await addItem('projects', { name: 'Project', description: '', technologies: [] }); setBusy(false); }}
+        <button onClick={addProject}
           disabled={busy}
           className="w-full h-7 text-[11px] font-semibold border border-dashed border-[#C9C6BD] rounded hover:border-[#4F7563] hover:text-[#4F7563] flex items-center justify-center gap-1 text-[#9A9A9A] disabled:opacity-40">
           {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add Project
@@ -1597,6 +1621,14 @@ const PublicationsEditor: React.FC<{
 }> = ({ profile, addItem, updateItem, removeItem }) => {
   const list: any[] = profile.publications || [];
   const [busy, setBusy] = useState(false);
+  const addPublication = async () => {
+    setBusy(true);
+    try {
+      await addItem('publications', { title: 'Publication', venue: '', date: '' });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Collapsible title="Publications" badge={list.length}>
@@ -1614,7 +1646,7 @@ const PublicationsEditor: React.FC<{
             <Field label="URL" defaultValue={p.url || ''} onBlur={(v) => updateItem('publications', p.id, { url: v })} placeholder="https://…" />
           </div>
         ))}
-        <button onClick={async () => { setBusy(true); await addItem('publications', { title: 'Publication', venue: '', date: '' }); setBusy(false); }}
+        <button onClick={addPublication}
           disabled={busy}
           className="w-full h-7 text-[11px] font-semibold border border-dashed border-[#C9C6BD] rounded hover:border-[#4F7563] hover:text-[#4F7563] flex items-center justify-center gap-1 text-[#9A9A9A] disabled:opacity-40">
           {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add Publication
@@ -1636,6 +1668,14 @@ const ReferencesEditor: React.FC<{
 }> = ({ profile, addItem, updateItem, removeItem }) => {
   const list: any[] = profile.references || [];
   const [busy, setBusy] = useState(false);
+  const addReference = async () => {
+    setBusy(true);
+    try {
+      await addItem('references', { name: 'Reference Name', title: '', company: '' });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Collapsible title="References" badge={list.length}>
@@ -1656,7 +1696,7 @@ const ReferencesEditor: React.FC<{
             </div>
           </div>
         ))}
-        <button onClick={async () => { setBusy(true); await addItem('references', { name: 'Reference Name', title: '', company: '' }); setBusy(false); }}
+        <button onClick={addReference}
           disabled={busy}
           className="w-full h-7 text-[11px] font-semibold border border-dashed border-[#C9C6BD] rounded hover:border-[#4F7563] hover:text-[#4F7563] flex items-center justify-center gap-1 text-[#9A9A9A] disabled:opacity-40">
           {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add Reference

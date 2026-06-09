@@ -21,17 +21,17 @@
 
 export interface SavedFile {
   /** Stable handle to retrieve the binary later (`read(handle)`). */
-  handle:   string;
+  handle: string;
   /** Public URL the editor + dashboard can embed. */
-  url:      string;
-  bytes:    number;
+  url: string;
+  bytes: number;
 }
 
 export interface StorageHealth {
-  ok:         boolean;
-  provider:   string;
-  bucket?:    string;
-  error?:     string;
+  ok: boolean;
+  provider: string;
+  bucket?: string;
+  error?: string;
   latencyMs?: number;
 }
 

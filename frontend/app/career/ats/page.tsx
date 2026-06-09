@@ -150,6 +150,29 @@ export default function AtsOptimizationCenter() {
   const [jobMatchResult, setJobMatchResult] = useState<JobMatchResult | null>(null);
   const [activeTab, setActiveTab] = useState<'ats' | 'match' | 'fixes' | 'simulator'>('ats');
 
+  const openSelectedDocument = useCallback(() => {
+    if (selectedDocumentId) router.push(`/career/builder/${selectedDocumentId}`);
+  }, [router, selectedDocumentId]);
+
+  const exportReport = useCallback(() => {
+    if (!atsResult) return;
+    const report = {
+      exportedAt: new Date().toISOString(),
+      documentId: selectedDocumentId,
+      ats: atsResult,
+      jobMatch: jobMatchResult,
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ats-report-${selectedDocumentId || 'cv'}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, [atsResult, jobMatchResult, selectedDocumentId]);
+
   // Handle analysis
   const handleAnalyze = useCallback(async () => {
     if (!selectedDocumentId) {
@@ -207,7 +230,7 @@ export default function AtsOptimizationCenter() {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-[#1A1A1A] flex items-center gap-2">
-                  <Shield className="w-6 h-6 text-emerald-600" />
+                  <Shield className="w-6 h-6 text-[#4F7563]" />
                   ATS Optimization Center
                 </h1>
                 <p className="text-sm text-[#6B6B6B]">Get your CV past applicant tracking systems</p>
@@ -255,14 +278,14 @@ export default function AtsOptimizationCenter() {
                     onClick={() => setSelectedDocumentId(doc.id)}
                     className={`p-4 rounded-xl border-2 transition-all text-left ${
                       selectedDocumentId === doc.id
-                        ? 'border-emerald-500 bg-emerald-50'
+                        ? 'border-[#4F7563] bg-[#EEF5F1]'
                         : 'border-[#D1CFC8] hover:border-[#1A1A1A] bg-white'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <FileText className="w-5 h-5 text-[#4A4A4A]" />
                       {selectedDocumentId === doc.id && (
-                        <CheckCircle className="w-5 h-5 text-emerald-600" />
+                        <CheckCircle className="w-5 h-5 text-[#4F7563]" />
                       )}
                     </div>
                     <h3 className="font-semibold text-[#1A1A1A] mb-1">{doc.title}</h3>
@@ -319,7 +342,7 @@ export default function AtsOptimizationCenter() {
             <button
               onClick={handleAnalyze}
               disabled={!selectedDocumentId || analyzing}
-              className="w-full py-4 bg-emerald-600 text-white rounded-xl font-semibold text-lg hover:bg-emerald-700 transition-colors disabled:bg-[#9B9B9B] disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-4 bg-[#4F7563] text-white rounded-xl font-semibold text-lg hover:bg-[#355846] transition-colors disabled:bg-[#9B9B9B] disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {analyzing ? (
                 <>
@@ -394,12 +417,12 @@ export default function AtsOptimizationCenter() {
 
             {/* Job Match Tab */}
             {activeTab === 'match' && jobMatchResult && (
-              <JobMatchView result={jobMatchResult} />
+              <JobMatchView result={jobMatchResult} onOpenBuilder={openSelectedDocument} />
             )}
 
             {/* Quick Fixes Tab */}
             {activeTab === 'fixes' && atsResult && (
-              <QuickFixesView recommendations={atsResult.recommendations} />
+              <QuickFixesView recommendations={atsResult.recommendations} onOpenBuilder={openSelectedDocument} />
             )}
 
             {/* ATS Simulator Tab */}
@@ -417,11 +440,19 @@ export default function AtsOptimizationCenter() {
               </button>
               
               <div className="flex gap-3">
-                <button className="px-6 py-3 bg-white border border-[#D1CFC8] text-[#1A1A1A] rounded-lg font-medium hover:bg-[#EDEBE6] transition-colors flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={exportReport}
+                  className="px-6 py-3 bg-white border border-[#D1CFC8] text-[#1A1A1A] rounded-lg font-medium hover:bg-[#EDEBE6] transition-colors flex items-center gap-2"
+                >
                   <Download className="w-4 h-4" />
                   Export Report
                 </button>
-                <button className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('fixes')}
+                  className="px-6 py-3 bg-[#4F7563] text-white rounded-lg font-medium hover:bg-[#355846] transition-colors flex items-center gap-2"
+                >
                   <ArrowRight className="w-4 h-4" />
                   Apply All Fixes
                 </button>
@@ -444,7 +475,7 @@ function AtsScoreView({ result }: { result: AtsAnalysisResult }) {
   return (
     <div className="space-y-6">
       {/* Overall Score Card */}
-      <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-8 text-white">
+      <div className="bg-[#4F7563] rounded-2xl p-8 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-medium opacity-90 mb-2">Overall ATS Score</h2>
@@ -572,7 +603,7 @@ function ScoreCategoryCard({ name, category }: { name: string; category: AtsScor
 // JOB MATCH VIEW
 // =============================================================================
 
-function JobMatchView({ result }: { result: JobMatchResult }) {
+function JobMatchView({ result, onOpenBuilder }: { result: JobMatchResult; onOpenBuilder: () => void }) {
   return (
     <div className="space-y-6">
       {/* Overall Match */}
@@ -646,7 +677,11 @@ function JobMatchView({ result }: { result: JobMatchResult }) {
                   <h4 className="font-semibold text-[#1A1A1A]">{gap.item}</h4>
                   <p className="text-sm text-[#6B6B6B] mt-1">{gap.description}</p>
                 </div>
-                <button className="shrink-0 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors">
+                <button
+                  type="button"
+                  onClick={onOpenBuilder}
+                  className="shrink-0 px-4 py-2 bg-[#4F7563] text-white rounded-lg text-sm font-medium hover:bg-[#355846] transition-colors"
+                >
                   Add
                 </button>
               </div>
@@ -680,7 +715,7 @@ function JobMatchView({ result }: { result: JobMatchResult }) {
 // QUICK FIXES VIEW
 // =============================================================================
 
-function QuickFixesView({ recommendations }: { recommendations: AtsRecommendation[] }) {
+function QuickFixesView({ recommendations, onOpenBuilder }: { recommendations: AtsRecommendation[]; onOpenBuilder: () => void }) {
   const critical = recommendations.filter(r => r.type === 'critical');
   const important = recommendations.filter(r => r.type === 'important');
   const suggested = recommendations.filter(r => r.type === 'suggested');
@@ -693,6 +728,7 @@ function QuickFixesView({ recommendations }: { recommendations: AtsRecommendatio
           icon={<AlertTriangle className="w-6 h-6 text-red-600" />}
           color="red"
           recommendations={critical}
+          onOpenBuilder={onOpenBuilder}
         />
       )}
       
@@ -702,6 +738,7 @@ function QuickFixesView({ recommendations }: { recommendations: AtsRecommendatio
           icon={<TrendingUp className="w-6 h-6 text-orange-600" />}
           color="orange"
           recommendations={important}
+          onOpenBuilder={onOpenBuilder}
         />
       )}
       
@@ -711,6 +748,7 @@ function QuickFixesView({ recommendations }: { recommendations: AtsRecommendatio
           icon={<Sparkles className="w-6 h-6 text-blue-600" />}
           color="blue"
           recommendations={suggested}
+          onOpenBuilder={onOpenBuilder}
         />
       )}
     </div>
@@ -721,12 +759,14 @@ function RecommendationSection({
   title, 
   icon, 
   color, 
-  recommendations 
+  recommendations,
+  onOpenBuilder,
 }: { 
   title: string; 
   icon: React.ReactNode; 
   color: string; 
   recommendations: AtsRecommendation[];
+  onOpenBuilder: () => void;
 }) {
   return (
     <div className="bg-white rounded-2xl p-8 border border-[#D1CFC8]">
@@ -748,7 +788,11 @@ function RecommendationSection({
               </span>
             </div>
             <p className="text-sm text-[#6B6B6B] mb-4">{rec.description}</p>
-            <button className="w-full py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={onOpenBuilder}
+              className="w-full py-2 bg-[#4F7563] text-white rounded-lg font-medium hover:bg-[#355846] transition-colors flex items-center justify-center gap-2"
+            >
               <Zap className="w-4 h-4" />
               Apply Fix
             </button>
@@ -814,7 +858,7 @@ function AtsSimulatorView({ parsedData }: { parsedData: AtsParsedData }) {
               <h4 className="font-semibold text-[#1A1A1A] mb-3">Parsed Skills ({parsedData.skills.length})</h4>
               <div className="flex flex-wrap gap-2">
                 {parsedData.skills.map((skill, i) => (
-                  <span key={i} className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-sm">
+                  <span key={i} className="px-3 py-1 bg-[#EEF5F1] text-[#355846] rounded-lg text-sm">
                     {skill}
                   </span>
                 ))}

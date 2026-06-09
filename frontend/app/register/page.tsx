@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuthStore } from '@/lib/store';
 import api from '@/lib/api';
-import { ArrowRight, TrendingUp } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { PasswordStrengthMeter } from '@/components/PasswordStrengthMeter';
 
 const registerSchema = z.object({
@@ -176,23 +176,6 @@ export default function RegisterPage() {
               <p className="text-lg text-white/90">Transform your ideas into powerful presentations.</p>
             </div>
 
-            {/* Floating Stat Card */}
-            <div className="absolute top-12 right-12 bg-white rounded-3xl p-6 shadow-xl z-10 w-[220px]">
-              <div className="flex items-center space-x-3 mb-4">
-                <TrendingUp className="w-6 h-6 text-black" />
-                <div>
-                  <div className="text-4xl font-bold text-black">5k+</div>
-                  <div className="text-sm text-gray-600 mt-1">Decks created daily</div>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => document.getElementById('register-form')?.scrollIntoView({ behavior: 'smooth' })}
-                className="w-full bg-black text-white py-2.5 px-4 rounded-xl text-sm font-semibold hover:bg-gray-900 transition-colors"
-              >
-                Get Started
-              </button>
-            </div>
           </div>
         </div>
       </div>

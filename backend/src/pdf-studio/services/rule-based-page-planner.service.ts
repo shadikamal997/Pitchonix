@@ -39,14 +39,14 @@ export class RuleBasedPagePlannerService {
 
   // Ideal words-per-page by section type
   private readonly TARGETS: Record<string, number> = {
-    cover:      0,
-    toc:        0,
-    summary:    420,
-    intro:      440,
-    content:    460,
-    financial:  380,
-    chart:      280,
-    timeline:   380,
+    cover: 0,
+    toc: 0,
+    summary: 420,
+    intro: 440,
+    content: 460,
+    financial: 380,
+    chart: 280,
+    timeline: 380,
     conclusion: 420,
     references: 460,
   };
@@ -90,17 +90,17 @@ export class RuleBasedPagePlannerService {
     // ── Populate TOC with non-continuation section titles ───────────────────
     if (tocIdx >= 0) {
       const entries = pages
-        .filter(p => p.sectionType !== 'cover' && p.sectionType !== 'toc' && !p.isContinuation)
+        .filter((p) => p.sectionType !== 'cover' && p.sectionType !== 'toc' && !p.isContinuation)
         .map((p) => `${p.sectionTitle} ..... ${p.globalOrder + 1}`);
       pages[tocIdx].contentText = entries.join('\n');
     }
 
     let validatedPages = this.validatePageQuality(pages);
     const validatedTocEntries = validatedPages.filter(
-      p => p.sectionType !== 'cover' && p.sectionType !== 'toc' && !p.isContinuation,
+      (p) => p.sectionType !== 'cover' && p.sectionType !== 'toc' && !p.isContinuation,
     );
     if (tocIdx >= 0 && validatedTocEntries.length < 5) {
-      validatedPages = validatedPages.filter(p => p.sectionType !== 'toc');
+      validatedPages = validatedPages.filter((p) => p.sectionType !== 'toc');
     }
 
     this.logger.log(
@@ -134,7 +134,7 @@ export class RuleBasedPagePlannerService {
       if (block.type === 'separator') continue; // visual breaks don't take space
 
       const wouldExceed = currentWords + block.wordCount > target;
-      const hasMin      = currentWords >= this.MIN_WORDS;
+      const hasMin = currentWords >= this.MIN_WORDS;
 
       // ── Hard split needed ──────────────────────────────────────────────────
       if (wouldExceed && hasMin) {
@@ -159,7 +159,9 @@ export class RuleBasedPagePlannerService {
           pages.push(...this.splitList(block, section, startOrder + pages.length, target, pageIdx));
           pageIdx += pages.length - pageIdx; // re-align
         } else {
-          pages.push(...this.splitParagraph(block, section, startOrder + pages.length, target, pageIdx));
+          pages.push(
+            ...this.splitParagraph(block, section, startOrder + pages.length, target, pageIdx),
+          );
           pageIdx += pages.length - pageIdx;
         }
         continue;
@@ -172,7 +174,9 @@ export class RuleBasedPagePlannerService {
     flush();
 
     // Mark continuations (only pages 2+ in a section)
-    pages.forEach((p, i) => { p.isContinuation = i > 0; });
+    pages.forEach((p, i) => {
+      p.isContinuation = i > 0;
+    });
 
     return pages;
   }
@@ -203,18 +207,22 @@ export class RuleBasedPagePlannerService {
 
       const last = result[result.length - 1];
       const shouldMerge =
-        this.isHeadingOnly(page) ||
-        this.isMetadataOnly(page) ||
-        page.wordCount < this.MIN_WORDS;
+        this.isHeadingOnly(page) || this.isMetadataOnly(page) || page.wordCount < this.MIN_WORDS;
 
       if (shouldMerge && last && !this.isSpecialPage(last)) {
         // Same-section merge — always allowed when under MAX_WORDS
-        if (last.sectionId === page.sectionId && last.wordCount + page.wordCount <= this.MAX_WORDS) {
+        if (
+          last.sectionId === page.sectionId &&
+          last.wordCount + page.wordCount <= this.MAX_WORDS
+        ) {
           result[result.length - 1] = this.mergePlannedPages(last, page);
           continue;
         }
         // Cross-section merge — allowed for very sparse pages (under half MIN_WORDS)
-        if (page.wordCount < this.MIN_WORDS / 2 && last.wordCount + page.wordCount <= this.MAX_WORDS) {
+        if (
+          page.wordCount < this.MIN_WORDS / 2 &&
+          last.wordCount + page.wordCount <= this.MAX_WORDS
+        ) {
           result[result.length - 1] = this.mergePlannedPages(last, page);
           continue;
         }
@@ -245,7 +253,7 @@ export class RuleBasedPagePlannerService {
       }
     }
 
-    return result.filter(page => {
+    return result.filter((page) => {
       if (this.isSpecialPage(page)) return true;
       return page.wordCount > 0 && !this.isHeadingOnly(page);
     });
@@ -265,7 +273,11 @@ export class RuleBasedPagePlannerService {
     };
 
     for (const block of page.blocks) {
-      if (block.wordCount > this.MAX_WORDS && block.type !== 'bullet_list' && block.type !== 'numbered_list') {
+      if (
+        block.wordCount > this.MAX_WORDS &&
+        block.type !== 'bullet_list' &&
+        block.type !== 'numbered_list'
+      ) {
         flush();
         const sentences = block.cleanText.split(/(?<=[.!?])\s+/).filter(Boolean);
         let sentenceChunk: string[] = [];
@@ -322,13 +334,18 @@ export class RuleBasedPagePlannerService {
   }
 
   private isHeadingOnly(page: PlannedPage): boolean {
-    const contentBlocks = page.blocks.filter(b => b.type !== 'separator');
-    return contentBlocks.length === 1 && ['title', 'heading', 'subheading'].includes(contentBlocks[0].type);
+    const contentBlocks = page.blocks.filter((b) => b.type !== 'separator');
+    return (
+      contentBlocks.length === 1 &&
+      ['title', 'heading', 'subheading'].includes(contentBlocks[0].type)
+    );
   }
 
   private isMetadataOnly(page: PlannedPage): boolean {
     if (page.wordCount > 80) return false;
-    return /^(date|author|prepared|overview|table of contents|metadata)/i.test(page.contentText.trim());
+    return /^(date|author|prepared|overview|table of contents|metadata)/i.test(
+      page.contentText.trim(),
+    );
   }
 
   private mergePlannedPages(page1: PlannedPage, page2: PlannedPage): PlannedPage {
@@ -347,7 +364,7 @@ export class RuleBasedPagePlannerService {
     const seen = new Set<string>();
     const blocked = new Set(['cover', 'table of contents', 'toc']);
 
-    return sections.filter(section => {
+    return sections.filter((section) => {
       const rawTitle = String(section.title || section.sectionTitle || '').trim();
       const title = rawTitle.replace(/\s*\(continued\)\s*$/i, '');
       const key = title.toLowerCase();
@@ -374,7 +391,8 @@ export class RuleBasedPagePlannerService {
     target: number,
     pageIdxStart: number,
   ): PlannedPage[] {
-    const items = block.items ?? block.rawText.split('\n').map(l => l.replace(/^[-*•\d.)]\s*/, ''));
+    const items =
+      block.items ?? block.rawText.split('\n').map((l) => l.replace(/^[-*•\d.)]\s*/, ''));
     const pages: PlannedPage[] = [];
     let current: string[] = [];
     let currentW = 0;
@@ -386,7 +404,7 @@ export class RuleBasedPagePlannerService {
         ...block,
         id: `${block.id}-p${pIdx}`,
         items: current,
-        rawText: current.map(i => `- ${i}`).join('\n'),
+        rawText: current.map((i) => `- ${i}`).join('\n'),
         cleanText: current.join('\n'),
         wordCount: currentW,
       };
@@ -413,7 +431,7 @@ export class RuleBasedPagePlannerService {
     pageIdxStart: number,
   ): PlannedPage[] {
     // Split on sentence boundaries
-    const sentences = block.cleanText.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+    const sentences = block.cleanText.split(/(?<=[.!?])\s+/).filter((s) => s.trim());
     const pages: PlannedPage[] = [];
     let current: string[] = [];
     let currentW = 0;
@@ -422,7 +440,13 @@ export class RuleBasedPagePlannerService {
     const flush = () => {
       if (!current.length) return;
       const text = current.join(' ');
-      const sub: ContentBlock = { ...block, id: `${block.id}-p${pIdx}`, cleanText: text, rawText: text, wordCount: currentW };
+      const sub: ContentBlock = {
+        ...block,
+        id: `${block.id}-p${pIdx}`,
+        cleanText: text,
+        rawText: text,
+        wordCount: currentW,
+      };
       pages.push(this.makeContentPage(section, [sub], pIdx++, startOrder + pages.length));
       current = [];
       currentW = 0;
@@ -440,45 +464,56 @@ export class RuleBasedPagePlannerService {
 
   // ── Page factories ─────────────────────────────────────────────────────────
 
-  private makeCoverPage(outline: DocumentOutline, titleOverride: string | undefined, order: number): PlannedPage {
-    const title    = titleOverride || outline.title;
+  private makeCoverPage(
+    outline: DocumentOutline,
+    titleOverride: string | undefined,
+    order: number,
+  ): PlannedPage {
+    const title = titleOverride || outline.title;
     const subtitle = outline.sections.length > 0 ? outline.sections[0].title : '';
-    const date     = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const date = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
 
     // Build more substantial cover content
     const lines = [title];
-    
+
     if (subtitle && subtitle !== title) {
       lines.push(subtitle);
     }
-    
+
     // Add a brief overview line if available
     if (outline.sections.length > 1) {
-      const sectionTitles = outline.sections.slice(0, 3).map(s => s.title).join(', ');
+      const sectionTitles = outline.sections
+        .slice(0, 3)
+        .map((s) => s.title)
+        .join(', ');
       lines.push(`Overview: ${sectionTitles}`);
     }
-    
+
     lines.push(date);
 
     return {
-      sectionId:          'cover',
-      sectionTitle:       title,
-      pageTitle:          title,
-      sectionType:        'cover',
-      pageTemplate:       'CoverPage',
-      blocks:             [],
-      contentText:        lines.join('\n\n'),
-      wordCount:          lines.join(' ').split(/\s+/).length,
-      isContinuation:     false,
+      sectionId: 'cover',
+      sectionTitle: title,
+      pageTitle: title,
+      sectionType: 'cover',
+      pageTemplate: 'CoverPage',
+      blocks: [],
+      contentText: lines.join('\n\n'),
+      wordCount: lines.join(' ').split(/\s+/).length,
+      isContinuation: false,
       pageIndexInSection: 0,
-      globalOrder:        order,
+      globalOrder: order,
     };
   }
 
   private makeTOCPage(order: number, sections: any[]): PlannedPage {
     // Generate TOC content from sections
     const tocLines: string[] = ['# Table of Contents', ''];
-    
+
     sections.forEach((section, index) => {
       if (section.title && section.title !== 'Cover' && section.title !== 'Table of Contents') {
         const pageNum = index + 2; // Approximate page numbers (after cover + TOC)
@@ -489,17 +524,17 @@ export class RuleBasedPagePlannerService {
     const contentText = tocLines.join('\n');
 
     return {
-      sectionId:          'toc',
-      sectionTitle:       'Table of Contents',
-      pageTitle:          'Table of Contents',
-      sectionType:        'toc',
-      pageTemplate:       'TableOfContentsPage',
-      blocks:             [],
+      sectionId: 'toc',
+      sectionTitle: 'Table of Contents',
+      pageTitle: 'Table of Contents',
+      sectionType: 'toc',
+      pageTemplate: 'TableOfContentsPage',
+      blocks: [],
       contentText,
-      wordCount:          contentText.split(/\s+/).length,
-      isContinuation:     false,
+      wordCount: contentText.split(/\s+/).length,
+      isContinuation: false,
       pageIndexInSection: 0,
-      globalOrder:        order,
+      globalOrder: order,
     };
   }
 
@@ -510,10 +545,10 @@ export class RuleBasedPagePlannerService {
     order: number,
   ): PlannedPage {
     const contentText = this.renderBlocks(blocks);
-    const wordCount   = this.countWords(contentText);
+    const wordCount = this.countWords(contentText);
 
     const headingBlock = blocks.find(
-      b => b.type === 'title' || b.type === 'heading' || b.type === 'subheading',
+      (b) => b.type === 'title' || b.type === 'heading' || b.type === 'subheading',
     );
     const pageTitle = headingBlock?.cleanText?.trim() || section.title;
 
@@ -526,17 +561,17 @@ export class RuleBasedPagePlannerService {
     );
 
     return {
-      sectionId:          section.id,
-      sectionTitle:       section.title,
+      sectionId: section.id,
+      sectionTitle: section.title,
       pageTitle,
-      sectionType:        section.sectionType,
-      pageTemplate:       this.selectTemplate(section.sectionType, blocks),
+      sectionType: section.sectionType,
+      pageTemplate: this.selectTemplate(section.sectionType, blocks),
       blocks,
       contentText,
       wordCount,
-      isContinuation:     pageIdx > 0,
+      isContinuation: pageIdx > 0,
       pageIndexInSection: pageIdx,
-      globalOrder:        order,
+      globalOrder: order,
       layout,
     };
   }
@@ -545,44 +580,51 @@ export class RuleBasedPagePlannerService {
 
   renderBlocks(blocks: ContentBlock[]): string {
     return blocks
-      .filter(b => b.type !== 'separator')
-      .map(b => {
+      .filter((b) => b.type !== 'separator')
+      .map((b) => {
         switch (b.type) {
-          case 'title':        return `# ${b.cleanText}`;
-          case 'heading':      return `## ${b.cleanText}`;
-          case 'subheading':   return `### ${b.cleanText}`;
+          case 'title':
+            return `# ${b.cleanText}`;
+          case 'heading':
+            return `## ${b.cleanText}`;
+          case 'subheading':
+            return `### ${b.cleanText}`;
           case 'bullet_list':
             return (b.items ?? b.rawText.split('\n'))
-              .map(item => `- ${item.replace(/^[-*•]\s*/, '')}`)
+              .map((item) => `- ${item.replace(/^[-*•]\s*/, '')}`)
               .join('\n');
           case 'numbered_list':
             return (b.items ?? b.rawText.split('\n'))
               .map((item, n) => `${n + 1}. ${item.replace(/^\d+[.)]\s*/, '')}`)
               .join('\n');
-          case 'quote':      return `> ${b.cleanText}`;
-          case 'table':      return b.rawText;
-          case 'code_block': return `\`\`\`\n${b.rawText}\n\`\`\``;
-          default:           return b.cleanText;
+          case 'quote':
+            return `> ${b.cleanText}`;
+          case 'table':
+            return b.rawText;
+          case 'code_block':
+            return `\`\`\`\n${b.rawText}\n\`\`\``;
+          default:
+            return b.cleanText;
         }
       })
       .join('\n\n');
   }
 
   private selectTemplate(sectionType: string, blocks: ContentBlock[]): string {
-    const hasTable   = blocks.some(b => b.type === 'table');
-    const hasBullets = blocks.some(b => b.type === 'bullet_list' || b.type === 'numbered_list');
+    const hasTable = blocks.some((b) => b.type === 'table');
+    const hasBullets = blocks.some((b) => b.type === 'bullet_list' || b.type === 'numbered_list');
 
     if (hasTable) return 'TablePage';
 
     const map: Record<string, string> = {
-      cover:      'CoverPage',
-      toc:        'TableOfContentsPage',
-      summary:    'SectionPage',
-      intro:      'SectionPage',
-      content:    hasBullets ? 'BulletPage' : 'TextPage',
-      financial:  'TablePage',
-      chart:      'ChartPage',
-      timeline:   'TimelinePage',
+      cover: 'CoverPage',
+      toc: 'TableOfContentsPage',
+      summary: 'SectionPage',
+      intro: 'SectionPage',
+      content: hasBullets ? 'BulletPage' : 'TextPage',
+      financial: 'TablePage',
+      chart: 'ChartPage',
+      timeline: 'TimelinePage',
       conclusion: 'ConclusionPage',
       references: 'TextPage',
     };

@@ -1,0 +1,92 @@
+{
+  "generatedAt": "2026-06-09T09:41:01.113Z",
+  "source": "frontend/.next app-build-manifest + build-manifest",
+  "routes": [
+    {
+      "route": "/dashboard",
+      "budgetKb": 720,
+      "measuredKb": 645,
+      "status": "pass",
+      "assets": 17
+    },
+    {
+      "route": "/projects",
+      "budgetKb": 500,
+      "measuredKb": 433,
+      "status": "pass",
+      "assets": 11
+    },
+    {
+      "route": "/projects/[id]",
+      "budgetKb": 1800,
+      "measuredKb": 1637,
+      "status": "pass",
+      "assets": 21
+    },
+    {
+      "route": "/projects/[id]/edit/[slideId]",
+      "budgetKb": 2800,
+      "measuredKb": 2535,
+      "status": "pass",
+      "assets": 24
+    },
+    {
+      "route": "/pdf-studio",
+      "budgetKb": 560,
+      "measuredKb": 494,
+      "status": "pass",
+      "assets": 9
+    },
+    {
+      "route": "/pdf-studio/editor/[id]",
+      "budgetKb": 950,
+      "measuredKb": 831,
+      "status": "pass",
+      "assets": 19
+    },
+    {
+      "route": "/career",
+      "budgetKb": 520,
+      "measuredKb": 456,
+      "status": "pass",
+      "assets": 10
+    },
+    {
+      "route": "/career/builder/[id]",
+      "budgetKb": 720,
+      "measuredKb": 626,
+      "status": "pass",
+      "assets": 12
+    },
+    {
+      "route": "/excel-studio",
+      "budgetKb": 450,
+      "measuredKb": 390,
+      "status": "pass",
+      "assets": 8
+    },
+    {
+      "route": "/excel-studio/editor/[id]",
+      "budgetKb": 470,
+      "measuredKb": 403,
+      "status": "pass",
+      "assets": 7
+    },
+    {
+      "route": "/feasibility-studio",
+      "budgetKb": 610,
+      "measuredKb": 534,
+      "status": "pass",
+      "assets": 11
+    },
+    {
+      "route": "/feasibility-studio/editor/[id]",
+      "budgetKb": 470,
+      "measuredKb": 404,
+      "status": "pass",
+      "assets": 7
+    }
+  ],
+  "failures": [],
+  "status": "pass"
+}

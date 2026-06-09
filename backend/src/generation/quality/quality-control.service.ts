@@ -2,12 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ScoringService } from './scoring.service';
 import { ValidationService } from './validation.service';
 import { MonitoringService } from './monitoring.service';
-import {
-  QualityReport,
-  QualityScore,
-  ValidationResult,
-  GenerationStatus,
-} from './types';
+import { QualityReport, QualityScore, ValidationResult, GenerationStatus } from './types';
 import { VisualSlideContent } from '../visual/types';
 import { WizardInput } from '../slide-types/types';
 
@@ -41,11 +36,9 @@ export class QualityControlService {
 
     try {
       // Calculate quality score
-      const qualityScore = this.scoringService.calculateQualityScore(
-        slides,
-        input,
-        { aiUsed: options?.aiUsed },
-      );
+      const qualityScore = this.scoringService.calculateQualityScore(slides, input, {
+        aiUsed: options?.aiUsed,
+      });
 
       // Run validation
       const validation = this.validationService.validate(slides, input);
@@ -72,11 +65,7 @@ export class QualityControlService {
       };
 
       // Generate recommendations
-      const recommendations = this.generateRecommendations(
-        qualityScore,
-        validation,
-        slides,
-      );
+      const recommendations = this.generateRecommendations(qualityScore, validation, slides);
 
       const report: QualityReport = {
         deckId,
@@ -90,7 +79,7 @@ export class QualityControlService {
 
       this.logger.log(
         `Quality report generated: Score ${qualityScore.overall}/100 (${qualityScore.grade}), ` +
-        `${validation.summary.errorCount} errors, ${validation.summary.warningCount} warnings`,
+          `${validation.summary.errorCount} errors, ${validation.summary.warningCount} warnings`,
       );
 
       return report;
@@ -114,10 +103,7 @@ export class QualityControlService {
   /**
    * Quick validation check (validation only, no score)
    */
-  quickValidation(
-    slides: VisualSlideContent[],
-    input?: WizardInput,
-  ): ValidationResult {
+  quickValidation(slides: VisualSlideContent[], input?: WizardInput): ValidationResult {
     return this.validationService.validate(slides, input);
   }
 
@@ -138,7 +124,7 @@ export class QualityControlService {
       return {
         ready: false,
         reason: 'Validation errors must be fixed before export',
-        issues: validation.errors.map(e => e.message),
+        issues: validation.errors.map((e) => e.message),
       };
     }
 
@@ -154,12 +140,12 @@ export class QualityControlService {
 
     // Check for critical issues
     const criticalIssues: string[] = [];
-    
+
     if (slides.length === 0) {
       criticalIssues.push('No slides to export');
     }
 
-    if (!slides.some(s => s.type === 'title')) {
+    if (!slides.some((s) => s.type === 'title')) {
       criticalIssues.push('No title slide found');
     }
 
@@ -180,7 +166,10 @@ export class QualityControlService {
   /**
    * Get quality summary (for dashboard)
    */
-  getQualitySummary(qualityScore: QualityScore, validation: ValidationResult): {
+  getQualitySummary(
+    qualityScore: QualityScore,
+    validation: ValidationResult,
+  ): {
     overall: number;
     grade: string;
     status: 'excellent' | 'good' | 'fair' | 'poor';
@@ -188,7 +177,7 @@ export class QualityControlService {
     exportReady: boolean;
   } {
     let status: 'excellent' | 'good' | 'fair' | 'poor';
-    
+
     if (qualityScore.overall >= 90) status = 'excellent';
     else if (qualityScore.overall >= 75) status = 'good';
     else if (qualityScore.overall >= 60) status = 'fair';
@@ -218,53 +207,40 @@ export class QualityControlService {
 
     // Add validation recommendations
     if (validation.errors.length > 0) {
-      recommendations.push(
-        `Fix ${validation.errors.length} validation error(s) before exporting`,
-      );
+      recommendations.push(`Fix ${validation.errors.length} validation error(s) before exporting`);
     }
 
     if (validation.warnings.length > 0) {
-      recommendations.push(
-        `Address ${validation.warnings.length} warning(s) to improve quality`,
-      );
+      recommendations.push(`Address ${validation.warnings.length} warning(s) to improve quality`);
     }
 
     // Add dimension-specific recommendations
     if (qualityScore.dimensions.content < 75) {
-      recommendations.push(
-        'Improve content quality by adding more detail to key slides',
-      );
+      recommendations.push('Improve content quality by adding more detail to key slides');
     }
 
     if (qualityScore.dimensions.visual < 75) {
-      recommendations.push(
-        'Enhance visual presentation with consistent layouts and themes',
-      );
+      recommendations.push('Enhance visual presentation with consistent layouts and themes');
     }
 
     if (qualityScore.dimensions.exportReadiness < 90) {
-      recommendations.push(
-        'Ensure all required slides are present before exporting',
-      );
+      recommendations.push('Ensure all required slides are present before exporting');
     }
 
     // Check for specific issues
-    const hasCharts = slides.some(s => s.charts && s.charts.length > 0);
+    const hasCharts = slides.some((s) => s.charts && s.charts.length > 0);
     if (!hasCharts && slides.length > 5) {
-      recommendations.push(
-        'Consider adding charts or visualizations to make data more engaging',
-      );
+      recommendations.push('Consider adding charts or visualizations to make data more engaging');
     }
 
-    const hasContact = slides.some(s => 
-      s.type === 'contact' || 
-      s.type === 'closing' ||
-      JSON.stringify(s.content).match(/@|contact|email/i)
+    const hasContact = slides.some(
+      (s) =>
+        s.type === 'contact' ||
+        s.type === 'closing' ||
+        JSON.stringify(s.content).match(/@|contact|email/i),
     );
     if (!hasContact) {
-      recommendations.push(
-        'Add contact information to the closing slide',
-      );
+      recommendations.push('Add contact information to the closing slide');
     }
 
     // Deduplicate and limit recommendations
@@ -289,7 +265,11 @@ export class QualityControlService {
   /**
    * Update slide progress
    */
-  updateSlideProgress(deckId: string, currentSlide: number, message?: string): GenerationStatus | null {
+  updateSlideProgress(
+    deckId: string,
+    currentSlide: number,
+    message?: string,
+  ): GenerationStatus | null {
     return this.monitoringService.updateSlideProgress(deckId, currentSlide, message);
   }
 

@@ -12,12 +12,12 @@
  */
 
 export interface MentionMeta {
-  userId:      string;
+  userId: string;
   displayName: string;
 }
 
 const BRACKET_RE = /@\[([^\]]+)\]\(([0-9a-fA-F-]{8,})\)/g;
-const BARE_RE    = /(^|[^a-zA-Z0-9_])@([a-zA-Z][a-zA-Z0-9_.\-]{1,40})/g;
+const BARE_RE = /(^|[^a-zA-Z0-9_])@([a-zA-Z][a-zA-Z0-9_.\-]{1,40})/g;
 
 /**
  * Extract bracketed mentions from content. Bare mentions are *not* resolved
@@ -36,7 +36,7 @@ export function parseMentions(
   BRACKET_RE.lastIndex = 0;
   while ((m = BRACKET_RE.exec(content))) {
     const displayName = m[1].trim();
-    const userId      = m[2].trim();
+    const userId = m[2].trim();
     if (!seen.has(userId)) {
       out.push({ userId, displayName });
       seen.add(userId);
@@ -61,7 +61,7 @@ export function parseMentions(
 
 /** Convenience for the panel renderer: yield text/mention tokens in order. */
 export type MentionToken =
-  | { kind: 'text';    text: string }
+  | { kind: 'text'; text: string }
   | { kind: 'mention'; userId: string; displayName: string };
 
 export function tokenizeMentions(content: string): MentionToken[] {

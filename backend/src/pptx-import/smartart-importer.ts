@@ -23,8 +23,16 @@ import { OoxmlPackage, asArray, extractText, readBox } from './ooxml-parser';
 // =============================================================================
 
 export type SmartArtKind =
-  | 'process' | 'cycle' | 'hierarchy' | 'pyramid' | 'relationship'
-  | 'matrix'  | 'orgchart' | 'list' | 'picture' | 'custom';
+  | 'process'
+  | 'cycle'
+  | 'hierarchy'
+  | 'pyramid'
+  | 'relationship'
+  | 'matrix'
+  | 'orgchart'
+  | 'list'
+  | 'picture'
+  | 'custom';
 
 export interface SmartArtNode {
   text: string;
@@ -33,26 +41,29 @@ export interface SmartArtNode {
 }
 
 export interface ImportedSmartArt {
-  source:        string;     // drawing.xml path
-  dataSource?:   string;     // data.xml path
-  kind:          SmartArtKind;
-  nodeCount:     number;
-  nodes:         SmartArtNode[];
+  source: string; // drawing.xml path
+  dataSource?: string; // data.xml path
+  kind: SmartArtKind;
+  nodeCount: number;
+  nodes: SmartArtNode[];
   /** Flattened shapes for direct render. Coordinates already in % of slide. */
-  shapes:        Array<{
-    kind:    'text' | 'shape' | 'image';
-    x: number; y: number; w: number; h: number;
-    text?:   string;
-    fill?:   string;
+  shapes: Array<{
+    kind: 'text' | 'shape' | 'image';
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    text?: string;
+    fill?: string;
   }>;
   /** Phase 38.3D — preserved raw OOXML for lossless round-trip. */
   preserved?: {
     /** Raw drawing.xml content. */
     drawingXml?: string;
     /** Raw data.xml content. */
-    dataXml?:    string;
+    dataXml?: string;
     /** Raw layout.xml content (if discoverable). */
-    layoutXml?:  string;
+    layoutXml?: string;
   };
 }
 
@@ -86,11 +97,13 @@ export function importSmartArt(pkg: OoxmlPackage, drawingPath: string): Imported
       const box = readBox(sp['dsp:spPr'] || sp['p:spPr']);
       if (!box) continue;
       const text = extractText(sp['dsp:txBody'] || sp['p:txBody']);
-      const fill = (sp['dsp:spPr'] || sp['p:spPr'])
-        ?.['a:solidFill']?.['a:srgbClr']?.['@val'];
+      const fill = (sp['dsp:spPr'] || sp['p:spPr'])?.['a:solidFill']?.['a:srgbClr']?.['@val'];
       shapes.push({
         kind: text ? 'text' : 'shape',
-        x: box.x, y: box.y, w: box.w, h: box.h,
+        x: box.x,
+        y: box.y,
+        w: box.w,
+        h: box.h,
         text: text || undefined,
         fill: fill ? `#${String(fill).toUpperCase()}` : undefined,
       });
@@ -113,7 +126,7 @@ export function importSmartArt(pkg: OoxmlPackage, drawingPath: string): Imported
       const map = new Map<string, SmartArtNode>();
       for (const pt of pts) {
         if (pt['@type'] !== 'node') continue;
-        const id  = pt['@modelId'];
+        const id = pt['@modelId'];
         const txt = extractText(pt['dgm:t']);
         if (id) map.set(id, { text: txt, level: 0 });
       }
@@ -122,7 +135,8 @@ export function importSmartArt(pkg: OoxmlPackage, drawingPath: string): Imported
       const parentOf = new Map<string, string>();
       for (const cxn of cxns) {
         if (cxn['@type'] !== 'parOf') continue;
-        const src = cxn['@srcId']; const dest = cxn['@destId'];
+        const src = cxn['@srcId'];
+        const dest = cxn['@destId'];
         if (src && dest) parentOf.set(dest, src);
       }
       // Build forest.
@@ -197,13 +211,13 @@ function findId(map: Map<string, SmartArtNode>, node: SmartArtNode): string | nu
 }
 
 function kindFromLayoutName(name: string): SmartArtKind {
-  if (name.includes('process'))      return 'process';
-  if (name.includes('cycle'))        return 'cycle';
+  if (name.includes('process')) return 'process';
+  if (name.includes('cycle')) return 'cycle';
   if (name.includes('hierarch') || name.includes('orgchart')) return 'orgchart';
-  if (name.includes('pyramid'))      return 'pyramid';
-  if (name.includes('relat'))        return 'relationship';
-  if (name.includes('matrix'))       return 'matrix';
-  if (name.includes('list'))         return 'list';
-  if (name.includes('picture'))      return 'picture';
+  if (name.includes('pyramid')) return 'pyramid';
+  if (name.includes('relat')) return 'relationship';
+  if (name.includes('matrix')) return 'matrix';
+  if (name.includes('list')) return 'list';
+  if (name.includes('picture')) return 'picture';
   return 'custom';
 }

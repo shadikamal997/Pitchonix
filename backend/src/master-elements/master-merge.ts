@@ -23,27 +23,29 @@
 
 import type { SlideElementDTO, ElementType } from '../slides/element-types';
 import type {
-  MasterElementDTO, MasterElementType, DeckMasterSettings,
+  MasterElementDTO,
+  MasterElementType,
+  DeckMasterSettings,
 } from './master-element-types';
 import { MASTER_SETTING_FOR_TYPE } from './master-element-types';
 import { mergeSettings } from './master-elements.service';
 
 /** Translation table: master family → renderer-friendly element type. */
 const TYPE_MAP: Record<MasterElementType, ElementType> = {
-  logo:            'logo',
-  companyName:     'paragraph',
-  header:          'paragraph',
-  footer:          'footer',
-  pageNumber:      'pageNumber',
-  date:            'paragraph',
-  copyright:       'footer',
-  watermark:       'paragraph',
+  logo: 'logo',
+  companyName: 'paragraph',
+  header: 'paragraph',
+  footer: 'footer',
+  pageNumber: 'pageNumber',
+  date: 'paragraph',
+  copyright: 'footer',
+  watermark: 'paragraph',
   backgroundShape: 'shape',
   backgroundImage: 'image',
-  brandBanner:     'paragraph',
-  contact:         'paragraph',
-  confidential:    'paragraph',
-  custom:          'paragraph',
+  brandBanner: 'paragraph',
+  contact: 'paragraph',
+  confidential: 'paragraph',
+  custom: 'paragraph',
 };
 
 /**
@@ -74,16 +76,25 @@ function masterZIndex(m: MasterElementDTO): number {
 /** Default content fillers when the user hasn't supplied any. */
 function defaultContent(type: MasterElementType): Record<string, any> {
   switch (type) {
-    case 'pageNumber':   return { format: 'pageOfTotal' };
-    case 'confidential': return { text: 'CONFIDENTIAL' };
-    case 'date':         return { format: 'short' };
-    case 'watermark':    return { text: 'DRAFT', opacity: 0.08 };
-    default:             return {};
+    case 'pageNumber':
+      return { format: 'pageOfTotal' };
+    case 'confidential':
+      return { text: 'CONFIDENTIAL' };
+    case 'date':
+      return { format: 'short' };
+    case 'watermark':
+      return { text: 'DRAFT', opacity: 0.08 };
+    default:
+      return {};
   }
 }
 
 /** Build the SlideElement-shaped content payload from a master row. */
-function buildContent(m: MasterElementDTO, slideIndex: number, slideTotal: number): Record<string, any> {
+function buildContent(
+  m: MasterElementDTO,
+  slideIndex: number,
+  slideTotal: number,
+): Record<string, any> {
   const base = (m.elementData || {}) as Record<string, any>;
   const filled = { ...defaultContent(m.type), ...base };
 
@@ -125,10 +136,25 @@ function buildContent(m: MasterElementDTO, slideIndex: number, slideTotal: numbe
 function buildStyle(m: MasterElementDTO): any {
   if (m.type === 'watermark') {
     const userOpacity = (m.elementData as any)?.opacity;
-    return { opacity: userOpacity ?? 0.08, color: '#94a3b8', fontWeight: 700, fontSize: 72, textAlign: 'center', ...(m.style || {}) };
+    return {
+      opacity: userOpacity ?? 0.08,
+      color: '#94a3b8',
+      fontWeight: 700,
+      fontSize: 72,
+      textAlign: 'center',
+      ...(m.style || {}),
+    };
   }
   if (m.type === 'confidential') {
-    return { opacity: 0.6, color: '#dc2626', fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', ...(m.style || {}) };
+    return {
+      opacity: 0.6,
+      color: '#dc2626',
+      fontWeight: 700,
+      fontSize: 11,
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+      ...(m.style || {}),
+    };
   }
   return m.style || null;
 }
@@ -175,28 +201,30 @@ export function buildMasterElementsForSlide(
 
   return masters
     .filter((m) => isVisibleOnSlide(m, ctx.slideId, settings))
-    .map((m): SlideElementDTO => ({
-      id:        `master:${m.id}:${ctx.slideId}`,
-      slideId:   ctx.slideId,
-      type:      TYPE_MAP[m.type],
-      name:      m.name || `Master ${m.type}`,
-      order:     0,
-      x:         m.x,
-      y:         m.y,
-      width:     m.width,
-      height:    m.height,
-      rotation:  m.rotation,
-      zIndex:    masterZIndex(m),
-      locked:    true,
-      visible:   true,
-      content:   buildContent(m, ctx.slideIndex, ctx.slideTotal) as any,
-      data:      null,
-      style:     buildStyle(m),
-      animations: null,
-      accessibility: null,
-      createdAt: now,
-      updatedAt: now,
-    }));
+    .map(
+      (m): SlideElementDTO => ({
+        id: `master:${m.id}:${ctx.slideId}`,
+        slideId: ctx.slideId,
+        type: TYPE_MAP[m.type],
+        name: m.name || `Master ${m.type}`,
+        order: 0,
+        x: m.x,
+        y: m.y,
+        width: m.width,
+        height: m.height,
+        rotation: m.rotation,
+        zIndex: masterZIndex(m),
+        locked: true,
+        visible: true,
+        content: buildContent(m, ctx.slideIndex, ctx.slideTotal) as any,
+        data: null,
+        style: buildStyle(m),
+        animations: null,
+        accessibility: null,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
 }
 
 // =============================================================================
@@ -213,7 +241,8 @@ function expandTokens(text: string, slideIndex: number, slideTotal: number): str
 
 function formatDate(format: string): string {
   const d = new Date();
-  if (format === 'iso')  return d.toISOString().slice(0, 10);
-  if (format === 'long') return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  if (format === 'iso') return d.toISOString().slice(0, 10);
+  if (format === 'long')
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   return d.toLocaleDateString();
 }

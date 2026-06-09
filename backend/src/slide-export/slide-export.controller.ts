@@ -1,5 +1,13 @@
 import {
-  Controller, Get, Post, Param, Query, Req, Res, UseGuards, Logger,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+  Logger,
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
@@ -19,8 +27,8 @@ export class SlideExportController {
   private readonly logger = new Logger(SlideExportController.name);
 
   constructor(
-    private readonly exportService:  SlideExportService,
-    private readonly compatReport:   ExportCompatReportService,
+    private readonly exportService: SlideExportService,
+    private readonly compatReport: ExportCompatReportService,
   ) {}
 
   // ---------- Phase 38.2I — Export compatibility report (pre-export) ----------
@@ -70,10 +78,16 @@ export class SlideExportController {
       res.setHeader('Content-Type', result.mime);
       res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
       res.setHeader('Content-Length', String(result.buffer.length));
-      res.setHeader('X-Export-Manifest', encodeURIComponent(JSON.stringify(result.manifest).slice(0, 4000)));
+      res.setHeader(
+        'X-Export-Manifest',
+        encodeURIComponent(JSON.stringify(result.manifest).slice(0, 4000)),
+      );
       res.send(result.buffer);
     } catch (err) {
-      this.logger.error(`Export failed for deck ${deckId} (${fmt}): ${(err as Error).message}`, (err as Error).stack);
+      this.logger.error(
+        `Export failed for deck ${deckId} (${fmt}): ${(err as Error).message}`,
+        (err as Error).stack,
+      );
       res.status(500).json({ message: 'Export failed', error: (err as Error).message });
     }
   }

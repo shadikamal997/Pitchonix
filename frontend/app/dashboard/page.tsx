@@ -48,6 +48,7 @@ import {
   ArchiveRestore,
   CheckSquare,
   Square,
+  TableProperties,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -73,6 +74,10 @@ interface Project {
   lastEditedAt: string;
   createdAt: string;
   decks: any[];
+  documentFormat?: string;
+  pdfDocuments?: { id: string }[];
+  businessInfo?: any;
+  exportCount?: number;
   archivedAt?: string | null;
 }
 
@@ -93,6 +98,7 @@ const DOCUMENT_TYPES = {
   partnership_proposal: { label: 'Partnership', icon: Layers, color: 'text-[#4F7563] bg-[#DDE8E1]' },
   internal_report: { label: 'Internal Report', icon: FileText, color: 'text-[#6B6B6B] bg-[#F1F0EC]' },
   board_meeting_deck: { label: 'Board Meeting', icon: Briefcase, color: 'text-[#9a3737] bg-[#F7E3E3]' },
+  feasibility_study: { label: 'Feasibility Study', icon: Briefcase, color: 'text-[#263F34] bg-[#DDE8E1]' },
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -104,6 +110,26 @@ const STATUS_COLORS: Record<string, string> = {
   exported:   'bg-[#DDE8E1] text-[#263F34]',
   failed:     'bg-[#F7E3E3] text-[#9a3737]',
 };
+
+// PDF Studio projects live in the same Project table (documentFormat==='pdf')
+// but have pdfDocuments, not decks. Route them to the PDF editor instead of the
+// deck-only /projects/[id] page (which would dead-end at "No decks yet").
+function projectViewHref(project: any): string {
+  const feasibilityId = project?.businessInfo?.feasibility?.feasibilityProjectId;
+  if (project?.documentType === 'feasibility_study' && feasibilityId) {
+    return `/feasibility-studio/editor/${feasibilityId}`;
+  }
+  if (project?.documentFormat === 'pdf') {
+    const pdfId = project?.pdfDocuments?.[0]?.id;
+    return pdfId ? `/pdf-studio/editor/${pdfId}` : '/pdf-studio';
+  }
+  return `/projects/${project.id}`;
+}
+function projectEditHref(project: any): string {
+  if (project?.documentFormat === 'pdf') return projectViewHref(project);
+  const deckId = project?.decks?.[0]?.id;
+  return deckId ? `/editor/${deckId}` : `/projects/${project.id}`;
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -307,7 +333,9 @@ export default function DashboardPage() {
     ? Math.round(projectsWithScores.reduce((sum, p) => sum + (p.qualityScore || 0), 0) / projectsWithScores.length)
     : null;
   
-  const totalExports = projects.filter(p => p.status === 'exported').length;
+  // Real export count from the backend exportCount column (incremented on each
+  // successful export), not the never-written 'exported' project status.
+  const totalExports = projects.reduce((sum, p) => sum + (p.exportCount ?? 0), 0);
 
   // Show nothing while Zustand is rehydrating to avoid flash of unauthenticated state
   if (!_hasHydrated) {
@@ -493,6 +521,76 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Product Suites — quick links to the other Pitchonix tools */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="pn-h2">Product Suites</h3>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-4">
+            {[
+              {
+                href:  '/excel-studio',
+                icon:  TableProperties,
+                label: 'Excel Studio',
+                desc:  'Analyze, audit, fix, and modernize spreadsheets',
+                badge: 'New',
+                bg:    'bg-[#EEF5F1]',
+                color: 'text-[#4F7563]',
+              },
+              {
+                href:  '/feasibility-studio',
+                icon:  Briefcase,
+                label: 'Feasibility Studio',
+                desc:  'Analyze, validate, template, and export feasibility studies',
+                badge: 'New',
+                bg:    'bg-[#EEF5F1]',
+                color: 'text-[#4F7563]',
+              },
+              {
+                href:  '/pdf-studio',
+                icon:  FileText,
+                label: 'PDF Studio',
+                desc:  'Build professional PDFs from raw content',
+                badge: null,
+                bg:    'bg-[#EEF5F1]',
+                color: 'text-[#4F7563]',
+              },
+              {
+                href:  '/career',
+                icon:  Briefcase,
+                label: 'Career Docs',
+                desc:  'CVs, resumes, and cover letters',
+                badge: null,
+                bg:    'bg-[#EEF5F1]',
+                color: 'text-[#4F7563]',
+              },
+            ].map((suite) => {
+              const SuiteIcon = suite.icon;
+              return (
+                <Link
+                  key={suite.href}
+                  href={suite.href}
+                  className="group pn-card p-5 flex items-start gap-4 transition-all hover:-translate-y-0.5 hover:shadow-lifted"
+                >
+                  <div className={`w-11 h-11 rounded-2xl ${suite.bg} ${suite.color} flex items-center justify-center group-hover:bg-[#DDE8E1] transition-colors flex-shrink-0`}>
+                    <SuiteIcon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-semibold text-[#111111] text-[14.5px]">{suite.label}</h4>
+                      {suite.badge && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#263F34] text-white">{suite.badge}</span>
+                      )}
+                    </div>
+                    <p className="text-[12.5px] text-[#6B6B6B] leading-relaxed">{suite.desc}</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-[#9A9A9A] group-hover:text-[#4F7563] group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1" />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Search and Filters — Phase Δ pill style */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
@@ -510,8 +608,8 @@ export default function DashboardPage() {
             {[
               { id: 'all',       label: 'All' },
               { id: 'draft',     label: 'Draft' },
-              { id: 'generated', label: 'Generated' },
-              { id: 'exported',  label: 'Exported',  hideOnMobile: true },
+              { id: 'completed', label: 'Completed' },
+              { id: 'failed',    label: 'Failed',    hideOnMobile: true },
             ].map((chip) => (
               <button
                 key={chip.id}
@@ -709,7 +807,7 @@ export default function DashboardPage() {
                           <DropdownMenuContent align="end" className="rounded-2xl">
                             {!showArchived && (
                               <>
-                                <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}`)}>
+                                <DropdownMenuItem onClick={() => router.push(projectEditHref(project))}>
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
@@ -773,14 +871,14 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="flex gap-2 pt-1">
-                        <Link href={`/projects/${project.id}`} className="flex-1">
+                        <Link href={projectViewHref(project)} className="flex-1">
                           <Button variant="outline" size="sm" className="w-full">
                             <Eye className="h-4 w-4 mr-2" />
                             View
                           </Button>
                         </Link>
-                        {(project.decks?.length ?? 0) > 0 && (
-                          <Link href={`/editor/${project.decks?.[0]?.id}`} className="flex-1">
+                        {((project.decks?.length ?? 0) > 0 || project.documentFormat === 'pdf') && (
+                          <Link href={projectEditHref(project)} className="flex-1">
                             <Button size="sm" className="w-full">
                               <Edit className="h-4 w-4 mr-2" />
                               Edit

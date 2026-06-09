@@ -112,7 +112,9 @@ export class JpegExportService {
 }
 
 async function getArchiverFactory(): Promise<any> {
-  const nativeImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+  const nativeImport = new Function('specifier', 'return import(specifier)') as (
+    specifier: string,
+  ) => Promise<any>;
   const mod: any = await nativeImport('archiver');
   return mod.default || mod;
 }

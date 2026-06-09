@@ -7,7 +7,14 @@ import { TopicSegment } from './topic-segmentation.service';
 export interface SemanticSection {
   sectionId: number;
   title: string;
-  sectionType: 'introduction' | 'body' | 'conclusion' | 'methodology' | 'analysis' | 'discussion' | 'summary';
+  sectionType:
+    | 'introduction'
+    | 'body'
+    | 'conclusion'
+    | 'methodology'
+    | 'analysis'
+    | 'discussion'
+    | 'summary';
   startParagraphId: number;
   endParagraphId: number;
   paragraphCount: number;
@@ -29,7 +36,7 @@ export interface InferredStructure {
 
 /**
  * SectionInferenceService
- * 
+ *
  * Infers logical document sections from semantic analysis.
  * NO AI - uses deterministic rules based on:
  * - Position in document
@@ -44,10 +51,7 @@ export class SectionInferenceService {
   /**
    * Infer document structure from topic segments
    */
-  inferStructure(
-    segments: TopicSegment[],
-    totalParagraphs: number,
-  ): InferredStructure {
+  inferStructure(segments: TopicSegment[], totalParagraphs: number): InferredStructure {
     this.logger.log(`Inferring document structure from ${segments.length} segments...`);
 
     // Detect document type
@@ -63,7 +67,12 @@ export class SectionInferenceService {
     const narrativeFlow = this.calculateNarrativeFlow(segments);
 
     // Generate suggestions
-    const suggestions = this.generateSuggestions(sections, segments, structureQuality, narrativeFlow);
+    const suggestions = this.generateSuggestions(
+      sections,
+      segments,
+      structureQuality,
+      narrativeFlow,
+    );
 
     const hasImplicitStructure = sections.length > 2 && structureQuality > 0.5;
 
@@ -83,25 +92,54 @@ export class SectionInferenceService {
    * Detect document type from semantic patterns
    */
   private detectDocumentType(segments: TopicSegment[]): InferredStructure['documentType'] {
-    const allKeywords = segments.flatMap(s => s.dominantKeywords).map(k => k.toLowerCase());
+    const allKeywords = segments.flatMap((s) => s.dominantKeywords).map((k) => k.toLowerCase());
 
     // Research paper
-    if (this.hasPattern(allKeywords, ['research', 'study', 'methodology', 'findings', 'results', 'analysis'])) {
+    if (
+      this.hasPattern(allKeywords, [
+        'research',
+        'study',
+        'methodology',
+        'findings',
+        'results',
+        'analysis',
+      ])
+    ) {
       return 'research';
     }
 
     // Business proposal
-    if (this.hasPattern(allKeywords, ['proposal', 'solution', 'pricing', 'implementation', 'benefits', 'timeline'])) {
+    if (
+      this.hasPattern(allKeywords, [
+        'proposal',
+        'solution',
+        'pricing',
+        'implementation',
+        'benefits',
+        'timeline',
+      ])
+    ) {
       return 'proposal';
     }
 
     // Technical report
-    if (this.hasPattern(allKeywords, ['report', 'analysis', 'metrics', 'performance', 'system', 'evaluation'])) {
+    if (
+      this.hasPattern(allKeywords, [
+        'report',
+        'analysis',
+        'metrics',
+        'performance',
+        'system',
+        'evaluation',
+      ])
+    ) {
       return 'report';
     }
 
     // Guide/Tutorial
-    if (this.hasPattern(allKeywords, ['guide', 'steps', 'tutorial', 'instructions', 'process', 'how'])) {
+    if (
+      this.hasPattern(allKeywords, ['guide', 'steps', 'tutorial', 'instructions', 'process', 'how'])
+    ) {
       return 'guide';
     }
 
@@ -152,13 +190,16 @@ export class SectionInferenceService {
     let sectionId = 0;
 
     for (const segment of segments) {
-      const keywords = segment.dominantKeywords.map(k => k.toLowerCase());
+      const keywords = segment.dominantKeywords.map((k) => k.toLowerCase());
 
       let sectionType: SemanticSection['sectionType'] = 'body';
       let title = segment.topicLabel;
 
       // Introduction
-      if (this.hasPattern(keywords, ['introduction', 'background', 'overview']) || segment.segmentId === 0) {
+      if (
+        this.hasPattern(keywords, ['introduction', 'background', 'overview']) ||
+        segment.segmentId === 0
+      ) {
         sectionType = 'introduction';
         title = 'Introduction';
       }
@@ -178,7 +219,10 @@ export class SectionInferenceService {
         title = 'Discussion';
       }
       // Conclusion
-      else if (this.hasPattern(keywords, ['conclusion', 'summary', 'future']) || segment.segmentId === segments.length - 1) {
+      else if (
+        this.hasPattern(keywords, ['conclusion', 'summary', 'future']) ||
+        segment.segmentId === segments.length - 1
+      ) {
         sectionType = 'conclusion';
         title = 'Conclusion';
       }
@@ -203,12 +247,19 @@ export class SectionInferenceService {
    */
   private inferProposalSections(segments: TopicSegment[]): SemanticSection[] {
     const sections: SemanticSection[] = [];
-    const commonStructure = ['Overview', 'Problem', 'Solution', 'Implementation', 'Pricing', 'Conclusion'];
+    const commonStructure = [
+      'Overview',
+      'Problem',
+      'Solution',
+      'Implementation',
+      'Pricing',
+      'Conclusion',
+    ];
 
     segments.forEach((segment, index) => {
       const title = index < commonStructure.length ? commonStructure[index] : segment.topicLabel;
-      const sectionType: SemanticSection['sectionType'] = index === 0 ? 'introduction' : 
-        index === segments.length - 1 ? 'conclusion' : 'body';
+      const sectionType: SemanticSection['sectionType'] =
+        index === 0 ? 'introduction' : index === segments.length - 1 ? 'conclusion' : 'body';
 
       sections.push({
         sectionId: index,
@@ -228,7 +279,10 @@ export class SectionInferenceService {
   /**
    * Infer sections for articles/essays
    */
-  private inferArticleSections(segments: TopicSegment[], totalParagraphs: number): SemanticSection[] {
+  private inferArticleSections(
+    segments: TopicSegment[],
+    totalParagraphs: number,
+  ): SemanticSection[] {
     const sections: SemanticSection[] = [];
 
     segments.forEach((segment, index) => {
@@ -246,7 +300,12 @@ export class SectionInferenceService {
         title = 'Conclusion';
       }
       // Check for summary patterns
-      else if (this.hasPattern(segment.dominantKeywords.map(k => k.toLowerCase()), ['summary', 'overview'])) {
+      else if (
+        this.hasPattern(
+          segment.dominantKeywords.map((k) => k.toLowerCase()),
+          ['summary', 'overview'],
+        )
+      ) {
         sectionType = 'summary';
       }
 
@@ -269,19 +328,24 @@ export class SectionInferenceService {
    * Infer sections for reports
    */
   private inferReportSections(segments: TopicSegment[]): SemanticSection[] {
-    return this.inferGenericSections(segments, segments.reduce((sum, s) => sum + s.paragraphCount, 0));
+    return this.inferGenericSections(
+      segments,
+      segments.reduce((sum, s) => sum + s.paragraphCount, 0),
+    );
   }
 
   /**
    * Infer sections for generic documents
    */
-  private inferGenericSections(segments: TopicSegment[], totalParagraphs: number): SemanticSection[] {
+  private inferGenericSections(
+    segments: TopicSegment[],
+    totalParagraphs: number,
+  ): SemanticSection[] {
     const sections: SemanticSection[] = [];
 
     segments.forEach((segment, index) => {
-      const sectionType: SemanticSection['sectionType'] = 
-        index === 0 ? 'introduction' :
-        index === segments.length - 1 ? 'conclusion' : 'body';
+      const sectionType: SemanticSection['sectionType'] =
+        index === 0 ? 'introduction' : index === segments.length - 1 ? 'conclusion' : 'body';
 
       sections.push({
         sectionId: index,
@@ -309,8 +373,8 @@ export class SectionInferenceService {
     if (sections.length >= 5) score += 0.1;
 
     // Has introduction and conclusion
-    const hasIntro = sections.some(s => s.sectionType === 'introduction');
-    const hasConclusion = sections.some(s => s.sectionType === 'conclusion');
+    const hasIntro = sections.some((s) => s.sectionType === 'introduction');
+    const hasConclusion = sections.some((s) => s.sectionType === 'conclusion');
     if (hasIntro) score += 0.1;
     if (hasConclusion) score += 0.1;
 
@@ -328,9 +392,10 @@ export class SectionInferenceService {
     if (segments.length < 2) return 1.0;
 
     // Check for balanced segment sizes
-    const sizes = segments.map(s => s.paragraphCount);
+    const sizes = segments.map((s) => s.paragraphCount);
     const avgSize = sizes.reduce((a, b) => a + b, 0) / sizes.length;
-    const sizeVariance = sizes.reduce((sum, size) => sum + Math.abs(size - avgSize), 0) / sizes.length;
+    const sizeVariance =
+      sizes.reduce((sum, size) => sum + Math.abs(size - avgSize), 0) / sizes.length;
     const balanceScore = Math.max(0, 1 - sizeVariance / avgSize);
 
     // Check cohesion scores
@@ -351,14 +416,16 @@ export class SectionInferenceService {
     const suggestions: string[] = [];
 
     if (sections.length < 3) {
-      suggestions.push('Consider organizing content into more distinct sections for better readability');
+      suggestions.push(
+        'Consider organizing content into more distinct sections for better readability',
+      );
     }
 
-    if (!sections.some(s => s.sectionType === 'introduction')) {
+    if (!sections.some((s) => s.sectionType === 'introduction')) {
       suggestions.push('Add an introduction section to provide context');
     }
 
-    if (!sections.some(s => s.sectionType === 'conclusion')) {
+    if (!sections.some((s) => s.sectionType === 'conclusion')) {
       suggestions.push('Add a conclusion section to summarize key points');
     }
 
@@ -377,6 +444,6 @@ export class SectionInferenceService {
    * Check if keywords match a pattern
    */
   private hasPattern(keywords: string[], pattern: string[]): boolean {
-    return pattern.some(p => keywords.some(k => k.includes(p)));
+    return pattern.some((p) => keywords.some((k) => k.includes(p)));
   }
 }

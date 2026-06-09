@@ -11,14 +11,17 @@ export function exportText(doc: UniversalDocument): Buffer {
 
 /** Minimal RTF (escapes braces + backslashes, paragraphs joined with \par). */
 export function exportRtf(doc: UniversalDocument): Buffer {
-  const escapeRtf = (s: string) => s.replace(/\\/g, '\\\\').replace(/{/g, '\\{').replace(/}/g, '\\}');
+  const escapeRtf = (s: string) =>
+    s.replace(/\\/g, '\\\\').replace(/{/g, '\\{').replace(/}/g, '\\}');
   const lines: string[] = ['{\\rtf1\\ansi\\deff0'];
   for (const page of doc.pages) {
     if (page.title) lines.push(`\\b ${escapeRtf(page.title)}\\b0\\par`);
     for (const node of page.nodes) {
       switch (node.type) {
         case 'heading':
-          lines.push(`\\b\\fs${28 - Math.min(12, (node.level || 2) * 2)} ${escapeRtf(node.text || '')}\\b0\\fs24\\par`);
+          lines.push(
+            `\\b\\fs${28 - Math.min(12, (node.level || 2) * 2)} ${escapeRtf(node.text || '')}\\b0\\fs24\\par`,
+          );
           break;
         case 'paragraph':
           lines.push(`${escapeRtf(node.text || '')}\\par`);

@@ -1,10 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  ValidationResult,
-  ValidationIssue,
-  ValidationSeverity,
-  ValidationRule,
-} from './types';
+import { ValidationResult, ValidationIssue, ValidationSeverity, ValidationRule } from './types';
 import { VisualSlideContent, LayoutType } from '../visual/types';
 import { WizardInput } from '../slide-types/types';
 
@@ -24,16 +19,13 @@ export class ValidationService {
   /**
    * Validate slides against all rules
    */
-  validate(
-    slides: VisualSlideContent[],
-    input?: WizardInput,
-  ): ValidationResult {
+  validate(slides: VisualSlideContent[], input?: WizardInput): ValidationResult {
     this.logger.log(`Validating ${slides.length} slides against ${this.rules.length} rules`);
 
     const allIssues: ValidationIssue[] = [];
 
     // Run all validation rules
-    this.rules.forEach(rule => {
+    this.rules.forEach((rule) => {
       try {
         const issues = rule.validate(slides, input);
         allIssues.push(...issues);
@@ -43,9 +35,9 @@ export class ValidationService {
     });
 
     // Categorize issues by severity
-    const errors = allIssues.filter(i => i.severity === ValidationSeverity.ERROR);
-    const warnings = allIssues.filter(i => i.severity === ValidationSeverity.WARNING);
-    const info = allIssues.filter(i => i.severity === ValidationSeverity.INFO);
+    const errors = allIssues.filter((i) => i.severity === ValidationSeverity.ERROR);
+    const warnings = allIssues.filter((i) => i.severity === ValidationSeverity.WARNING);
+    const info = allIssues.filter((i) => i.severity === ValidationSeverity.INFO);
 
     const result: ValidationResult = {
       isValid: errors.length === 0,
@@ -107,7 +99,7 @@ export class ValidationService {
       category: 'content',
       validate: (slides: VisualSlideContent[]) => {
         const issues: ValidationIssue[] = [];
-        const titleSlide = slides.find(s => s.type === 'title');
+        const titleSlide = slides.find((s) => s.type === 'title');
 
         if (titleSlide) {
           if (!titleSlide.title || titleSlide.title.length < 2) {
@@ -267,11 +259,12 @@ export class ValidationService {
       category: 'content',
       validate: (slides: VisualSlideContent[]) => {
         const issues: ValidationIssue[] = [];
-        
-        const hasContactSlide = slides.some(s => 
-          s.type === 'contact' || 
-          s.type === 'closing' ||
-          (s.content && JSON.stringify(s.content).match(/@|contact|email|phone/i))
+
+        const hasContactSlide = slides.some(
+          (s) =>
+            s.type === 'contact' ||
+            s.type === 'closing' ||
+            (s.content && JSON.stringify(s.content).match(/@|contact|email|phone/i)),
         );
 
         if (!hasContactSlide) {
@@ -317,8 +310,8 @@ export class ValidationService {
             // Check for non-numeric data where numeric is expected
             chart.data?.forEach((series, seriesIndex) => {
               if (series.values) {
-                const invalidValues = series.values.filter(v => 
-                  typeof v !== 'number' && v !== null && v !== undefined
+                const invalidValues = series.values.filter(
+                  (v) => typeof v !== 'number' && v !== null && v !== undefined,
                 );
                 if (invalidValues.length > 0) {
                   issues.push({
@@ -403,7 +396,7 @@ export class ValidationService {
 
         if (slides.length > 0) {
           const firstTheme = slides[0].theme;
-          
+
           slides.forEach((slide, index) => {
             if (slide.theme?.name !== firstTheme?.name) {
               issues.push({
@@ -449,7 +442,11 @@ export class ValidationService {
 
         slides.forEach((slide, index) => {
           // Title slide should use title layout
-          if (slide.type === 'title' && slide.layout.type !== LayoutType.TITLE_SLIDE && slide.layout.type !== LayoutType.TITLE_CONTENT) {
+          if (
+            slide.type === 'title' &&
+            slide.layout.type !== LayoutType.TITLE_SLIDE &&
+            slide.layout.type !== LayoutType.TITLE_CONTENT
+          ) {
             issues.push({
               severity: ValidationSeverity.INFO,
               rule: 'layout-appropriate',
@@ -590,7 +587,7 @@ export class ValidationService {
 
         slides.forEach((slide, index) => {
           let contentElements = 0;
-          
+
           if (slide.title) contentElements++;
           if (slide.subtitle) contentElements++;
           if (slide.content) contentElements++;
@@ -635,17 +632,24 @@ export class ValidationService {
       category: 'best-practice',
       validate: (slides: VisualSlideContent[], input?: WizardInput) => {
         const issues: ValidationIssue[] = [];
-        const slideTypes = slides.map(s => s.type);
+        const slideTypes = slides.map((s) => s.type);
 
         let requiredSlides: string[] = ['title', 'problem', 'solution'];
 
         if (input?.documentType === 'pitch_deck') {
           requiredSlides = ['title', 'problem', 'solution', 'market', 'team', 'ask'];
         } else if (input?.documentType === 'business_plan') {
-          requiredSlides = ['title', 'executive_summary', 'problem', 'solution', 'market', 'business_model'];
+          requiredSlides = [
+            'title',
+            'executive_summary',
+            'problem',
+            'solution',
+            'market',
+            'business_model',
+          ];
         }
 
-        requiredSlides.forEach(requiredType => {
+        requiredSlides.forEach((requiredType) => {
           if (!slideTypes.includes(requiredType)) {
             issues.push({
               severity: ValidationSeverity.WARNING,

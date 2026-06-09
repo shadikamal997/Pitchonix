@@ -44,7 +44,11 @@ export class GenerationProcessor {
     // Pre-pipeline: monitoring + status flip.
     const estimatedSlideCount = this.estimateSlideCount(input.documentType);
     this.qualityControlService.startMonitoring(deckId, projectId, estimatedSlideCount);
-    this.qualityControlService.updateStage(deckId, GenerationStage.BASE_GENERATION, 'Pipeline starting…');
+    this.qualityControlService.updateStage(
+      deckId,
+      GenerationStage.BASE_GENERATION,
+      'Pipeline starting…',
+    );
 
     await this.prisma.deck.update({ where: { id: deckId }, data: { status: 'generating' } });
 
@@ -70,9 +74,17 @@ export class GenerationProcessor {
       // Map pipeline stage transitions to quality-monitor stages so the
       // existing telemetry dashboards stay populated.
       if (useAI) {
-        this.qualityControlService.updateStage(deckId, GenerationStage.AI_ENHANCEMENT, 'AI enhancement complete');
+        this.qualityControlService.updateStage(
+          deckId,
+          GenerationStage.AI_ENHANCEMENT,
+          'AI enhancement complete',
+        );
       }
-      this.qualityControlService.updateStage(deckId, GenerationStage.QUALITY_CHECK, 'Quality scored');
+      this.qualityControlService.updateStage(
+        deckId,
+        GenerationStage.QUALITY_CHECK,
+        'Quality scored',
+      );
 
       const metrics = result.context.metrics;
       this.qualityControlService.updateSlideProgress(
@@ -92,24 +104,24 @@ export class GenerationProcessor {
 
       this.logger.log(
         `Pipeline completed for deck ${deckId} in ${result.durationMs}ms ` +
-        `(${metrics?.slidesGenerated} slides, ${metrics?.elementsCreated} elements, quality ${metrics?.qualityScore})`,
+          `(${metrics?.slidesGenerated} slides, ${metrics?.elementsCreated} elements, quality ${metrics?.qualityScore})`,
       );
 
       return {
         success: true,
         deckId,
-        slidesCount:    metrics?.slidesGenerated ?? 0,
+        slidesCount: metrics?.slidesGenerated ?? 0,
         // Smart Components carry charts/images in their element trees; the
         // legacy `chartsCount`/`imagesCount` aggregates are no longer
         // meaningful on the slide-content layer — reported as 0 for backwards
         // compatibility with consumers that read these fields.
-        chartsCount:    0,
-        imagesCount:    0,
-        qualityScore:   metrics?.qualityScore ?? 0,
-        qualityGrade:   gradeFor(metrics?.qualityScore ?? 0),
-        exportReady:    (metrics?.qualityScore ?? 0) >= 70,
+        chartsCount: 0,
+        imagesCount: 0,
+        qualityScore: metrics?.qualityScore ?? 0,
+        qualityGrade: gradeFor(metrics?.qualityScore ?? 0),
+        exportReady: (metrics?.qualityScore ?? 0) >= 70,
         smartComponentsAttached: metrics?.smartComponentsAttached ?? 0,
-        elementsCreated:         metrics?.elementsCreated ?? 0,
+        elementsCreated: metrics?.elementsCreated ?? 0,
         pipelineStages: result.stages.map((s) => ({ stage: s.stage, ms: s.ms })),
       };
     } catch (error: any) {
@@ -123,10 +135,16 @@ export class GenerationProcessor {
   }
 
   private estimateSlideCount(documentType: string): number {
-    return {
-      pitch_deck: 10, business_plan: 20, sales_deck: 12,
-      one_pager: 1, company_profile: 8, marketing_plan: 15,
-    }[documentType] ?? 10;
+    return (
+      {
+        pitch_deck: 10,
+        business_plan: 20,
+        sales_deck: 12,
+        one_pager: 1,
+        company_profile: 8,
+        marketing_plan: 15,
+      }[documentType] ?? 10
+    );
   }
 }
 

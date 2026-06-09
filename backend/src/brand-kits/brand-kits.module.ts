@@ -7,9 +7,9 @@ import { BrandKitsController } from './brand-kits.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  imports:     [PrismaModule],
+  imports: [PrismaModule],
   controllers: [BrandKitsController],
-  providers:   [BrandKitsService, BrandAuditService, BrandAutofixService, BrandKitZipService],
-  exports:     [BrandKitsService, BrandAuditService, BrandAutofixService, BrandKitZipService],
+  providers: [BrandKitsService, BrandAuditService, BrandAutofixService, BrandKitZipService],
+  exports: [BrandKitsService, BrandAuditService, BrandAutofixService, BrandKitZipService],
 })
 export class BrandKitsModule {}

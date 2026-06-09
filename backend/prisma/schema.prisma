@@ -65,6 +65,12 @@ model User {
   deckSharesCreated       DeckShare[]         @relation("DeckShareCreator")
   // Phase 42 — Career documents
   cvProfiles              CvProfile[]
+  excelProjects           ExcelProject[]
+  excelWorkbookVersions   ExcelWorkbookVersion[]
+  excelWorkbookSnapshots  ExcelWorkbookSnapshot[]
+  excelWorkbookOperations ExcelWorkbookOperation[]
+  feasibilityProjects     FeasibilityProject[]
+  uploadedAssets          UploadedAsset[]
 
   @@map("users")
 }
@@ -116,6 +122,8 @@ model Project {
 
   decks          Deck[]
   pdfDocuments   PdfDocument[] // PDF Studio documents
+  feasibilityProjects FeasibilityProject[]
+  uploadedAssets UploadedAsset[] // Phase Ω.1D — owned uploaded files
   generationJobs GenerationJob[]
   qualityReports QualityReport[]
   shares         ProjectShare[]
@@ -123,6 +131,8 @@ model Project {
   comments       Comment[]
 
   @@index([workspaceId])
+  // Hot path: list/dashboard queries filter by userId + archivedAt.
+  @@index([userId, archivedAt])
   @@map("projects")
 }
 
@@ -727,12 +737,71 @@ model PdfDocument {
   smartBuilderConfig  SmartBuilderConfig?
   contentEnhancements ContentEnhancement[]
   versions            DocumentVersion[]
+  feasibilityProjects FeasibilityProject[]
 
   @@index([projectId])
   @@index([documentType])
   @@index([status])
   @@index([exportReady])
   @@map("pdf_documents")
+}
+
+// ===== FEASIBILITY STUDIO MODELS =====
+
+model FeasibilityProject {
+  id          String  @id @default(uuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  pdfDocumentId String?
+  pdfDocument   PdfDocument? @relation(fields: [pdfDocumentId], references: [id], onDelete: SetNull)
+
+  title       String
+  description String?
+  industry    String?
+  studyType   String
+  score       Float?
+  status      String @default("draft")
+
+  analysis        Json?
+  recommendations Json?
+  sourceMetadata  Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assessments FeasibilityAssessment[]
+
+  @@index([userId, updatedAt])
+  @@index([projectId])
+  @@index([pdfDocumentId])
+  @@index([studyType])
+  @@index([status])
+  @@map("feasibility_projects")
+}
+
+model FeasibilityAssessment {
+  id                   String @id @default(uuid())
+  feasibilityProjectId String
+  feasibilityProject   FeasibilityProject @relation(fields: [feasibilityProjectId], references: [id], onDelete: Cascade)
+
+  marketScore      Float
+  financialScore   Float
+  technicalScore   Float
+  operationalScore Float
+  riskScore        Float
+  overallScore     Float
+
+  missingSections Json
+  warnings        Json
+  recommendations Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([feasibilityProjectId])
+  @@map("feasibility_assessments")
 }
 
 // Individual PDF Pages
@@ -1793,3 +1862,215 @@ model CvTemplate {
   @@map("cv_templates")
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Excel Studio
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ExcelProject {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title            String
+  filename         String
+  originalFilePath String?
+  mimeType         String   @default("application/octet-stream")
+  fileSize         Int      @default(0)
+
+  // "analyzed" | "enhanced" | "archived"
+  status           String   @default("analyzed")
+  activeTemplateId String   @default("executive-emerald")
+
+  // Serialised ExcelStudioAnalysis
+  analysis         Json
+
+  // string[]
+  enhancementPlan  Json     @default("[]")
+
+  // ExcelAction[]  { id, action, label, createdAt }
+  appliedActions   Json     @default("[]")
+
+  // ExcelExport[]  { id, format, createdAt }
+  exports          Json     @default("[]")
+
+  // Preserved so we can regenerate / re-enhance from the original prompt
+  sourceScript     String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  versions         ExcelWorkbookVersion[]
+  snapshots        ExcelWorkbookSnapshot[]
+  operations       ExcelWorkbookOperation[]
+
+  @@index([userId])
+  @@index([userId, status])
+  @@map("excel_projects")
+}
+
+model ExcelWorkbookVersion {
+  id             String       @id @default(uuid())
+  projectId      String
+  project        ExcelProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  versionNumber  Int
+  label          String?
+  beforeState    Json?
+  afterState     Json?
+  operationIds   Json         @default("[]")
+  snapshotPath   String?
+
+  createdAt      DateTime     @default(now())
+
+  snapshots      ExcelWorkbookSnapshot[]
+  operations     ExcelWorkbookOperation[]
+
+  @@unique([projectId, versionNumber])
+  @@index([projectId])
+  @@index([userId])
+  @@map("excel_workbook_versions")
+}
+
+model ExcelWorkbookSnapshot {
+  id             String                @id @default(uuid())
+  projectId      String
+  project        ExcelProject          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versionId      String?
+  version        ExcelWorkbookVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
+
+  label          String?
+  workbookPath   String
+  analysis       Json
+  operationIds   Json                  @default("[]")
+
+  createdAt      DateTime              @default(now())
+  restoredAt     DateTime?
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([versionId])
+  @@map("excel_workbook_snapshots")
+}
+
+model ExcelWorkbookOperation {
+  id             String                @id @default(uuid())
+  projectId      String
+  project        ExcelProject          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versionId      String?
+  version        ExcelWorkbookVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
+
+  sequence       Int
+  type           String
+  sheetName      String?
+  target         Json
+  payload        Json
+  beforeState    Json?
+  afterState     Json?
+  status         String                @default("approved") // approved | undone
+  source         String                @default("user") // user | enhancement | system
+
+  createdAt      DateTime              @default(now())
+  undoneAt       DateTime?
+  redoneAt       DateTime?
+
+  @@unique([projectId, sequence])
+  @@index([projectId, status])
+  @@index([userId])
+  @@index([versionId])
+  @@map("excel_workbook_operations")
+}
+
+// =============================================================================
+//  Phase Ω.1D — Per-file ownership for uploaded assets.
+//
+//  Every uploaded file under /uploads gets a row here so the /uploads gate can
+//  enforce true ownership (not just "any authenticated user"). `module`
+//  disambiguates the source; `documentId` is a soft reference (no FK) because
+//  it may point at a PdfDocument, CvDocument, or ExcelProject depending on
+//  module. `publicPath` is the served URL the gate matches on.
+// =============================================================================
+model UploadedAsset {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId  String?
+  projectId    String?
+  project      Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  documentId   String? // soft ref (PdfDocument | CvDocument | ExcelProject) — module disambiguates
+  module       String // brand_kit | career_photo | cv_document | pdf_studio | presentation | pptx_import | excel | convert | generic
+  storagePath  String    @unique // path on disk
+  publicPath   String    @unique // served URL, e.g. /uploads/images/<uuid>.png
+  originalName String?
+  mimeType     String?
+  sizeBytes    Int?
+  checksum     String?
+  visibility   String    @default("private") // private | shared | public
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([documentId])
+  @@index([module])
+  @@map("uploaded_assets")
+}
+
+// ============================================================================
+// Phase Ω.CONTENT.2 — Universal Content Ledger
+// Every piece of user content (heading, paragraph, bullet, table, metric,
+// image, chart label, CV entry, KPI, risk, recommendation, formula, slide
+// element, …) receives a traceable identity and a lifecycle that proves
+// Imported = Rendered = Exported = Reopened. The ledger is intentionally
+// standalone (no hard FK to a single owner table) because sourceDocumentId
+// spans many entity types across modules (PDF docs, projects, workbooks, …).
+// ============================================================================
+model ContentNode {
+  id               String  @id @default(uuid())
+  module           String  // feasibility | pdf | presentation | excel | career | convert | pptx
+  sourceDocumentId String  // ledger grouping key — the document/project the node belongs to
+  sourceType       String? // e.g. feasibility_study | pdf_document | workbook | cv | deck
+  sectionId        String?
+  parentId         String?
+  type             String  // heading | paragraph | bullet | table | metric | image | chart_label | experience | education | skill | certification | kpi | risk | recommendation | formula | slide_element | ...
+  content          String? // textual value/snapshot
+  contentHash      String? // stable hash of content for mutation detection on reopen
+  metadata         Json?
+
+  // Lifecycle flags — the proof chain
+  imported Boolean @default(true)
+  rendered Boolean @default(false)
+  exported Boolean @default(false)
+  reopened Boolean @default(false)
+
+  importedAt DateTime  @default(now())
+  renderedAt DateTime?
+  exportedAt DateTime?
+  reopenedAt DateTime?
+
+  // Render tracking
+  renderer    String? // feasibility-report | pdf-export | pptx | ...
+  template    String?
+  destination String? // page_3 | slide_5 | appendix | speaker_notes | overflow_table | chart_appendix
+
+  // Loss / mutation tracking
+  mutated    Boolean @default(false) // reopened content differs from exported snapshot
+  rejected   Boolean @default(false) // import-time sanitizer/parser dropped it
+  lossReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sourceDocumentId])
+  @@index([module, sourceDocumentId])
+  @@index([sourceDocumentId, type])
+  @@index([sourceDocumentId, contentHash])
+  @@map("content_nodes")
+}

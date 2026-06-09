@@ -101,10 +101,13 @@ describe('Career Job Match (E2E)', () => {
   });
 
   // ── 7. Wrong document owner → 404 ────────────────────────────────────────
-  it('Another user\'s documentId → 404', async () => {
+  it("Another user's documentId → 404", async () => {
     const s2 = await createSession('jm-other');
     try {
-      const doc2 = await s.req.post('/career/documents').set(auth(s.token)).send({ doctype: 'cv', title: 'Private JM' });
+      const doc2 = await s.req
+        .post('/career/documents')
+        .set(auth(s.token))
+        .send({ doctype: 'cv', title: 'Private JM' });
       await s.req
         .post('/career/ats/match-job')
         .set(auth(s2.token))

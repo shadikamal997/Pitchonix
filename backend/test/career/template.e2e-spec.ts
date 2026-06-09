@@ -20,7 +20,10 @@ describe('Career Templates (E2E)', () => {
 
   beforeAll(async () => {
     s = await createSession('template');
-    const doc = await s.req.post('/career/documents').set(auth(s.token)).send({ doctype: 'cv', title: 'Template Test CV' });
+    const doc = await s.req
+      .post('/career/documents')
+      .set(auth(s.token))
+      .send({ doctype: 'cv', title: 'Template Test CV' });
     docId = doc.body.id;
   }, 60_000);
 
@@ -72,7 +75,10 @@ describe('Career Templates (E2E)', () => {
 
   // ── 6. Switch template ────────────────────────────────────────────────────
   it('POST /career/documents/:id/template → switches templateId', async () => {
-    const templates = await s.req.get('/career/templates?doctype=cv').set(auth(s.token)).expect(200);
+    const templates = await s.req
+      .get('/career/templates?doctype=cv')
+      .set(auth(s.token))
+      .expect(200);
     const list = Array.isArray(templates.body) ? templates.body : templates.body.items;
     if (list.length === 0) return;
     const templateId = list[0].id;
@@ -87,7 +93,10 @@ describe('Career Templates (E2E)', () => {
 
   // ── 7. Template switch < 300 ms (performance gate) ────────────────────────
   it('Template switch completes in under 300 ms', async () => {
-    const templates = await s.req.get('/career/templates?doctype=cv').set(auth(s.token)).expect(200);
+    const templates = await s.req
+      .get('/career/templates?doctype=cv')
+      .set(auth(s.token))
+      .expect(200);
     const list = Array.isArray(templates.body) ? templates.body : templates.body.items;
     if (list.length < 2) return;
     const templateId = list[1].id;

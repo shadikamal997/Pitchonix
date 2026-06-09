@@ -14,7 +14,7 @@ import { UniversalDocument, emptyDocument, newPage, DocumentNode } from '../docu
 export function importMarkdown(buffer: Buffer, filename = 'document.md'): UniversalDocument {
   const md = buffer.toString('utf8');
   const tokens = lexMarkdown(md);
-  const doc    = emptyDocument('md', filename.replace(/\.[a-z]+$/i, ''));
+  const doc = emptyDocument('md', filename.replace(/\.[a-z]+$/i, ''));
 
   let page = newPage();
   doc.pages.push(page);
@@ -46,7 +46,9 @@ export function importMarkdown(buffer: Buffer, filename = 'document.md'): Univer
 }
 
 function lexMarkdown(markdown: string): any[] {
-  const lines = String(markdown || '').replace(/\r\n?/g, '\n').split('\n');
+  const lines = String(markdown || '')
+    .replace(/\r\n?/g, '\n')
+    .split('\n');
   const tokens: any[] = [];
   let paragraph: string[] = [];
   let list: { ordered: boolean; items: string[] } | null = null;
@@ -61,7 +63,11 @@ function lexMarkdown(markdown: string): any[] {
   };
   const flushList = () => {
     if (!list) return;
-    tokens.push({ type: 'list', ordered: list.ordered, items: list.items.map((text) => ({ text })) });
+    tokens.push({
+      type: 'list',
+      ordered: list.ordered,
+      items: list.items.map((text) => ({ text })),
+    });
     list = null;
   };
 
@@ -129,7 +135,8 @@ function lexMarkdown(markdown: string): any[] {
     paragraph.push(trimmed);
   }
 
-  if (inCode) tokens.push({ type: 'code', text: codeLines.join('\n'), lang: codeLang || undefined });
+  if (inCode)
+    tokens.push({ type: 'code', text: codeLines.join('\n'), lang: codeLang || undefined });
   flushParagraph();
   flushList();
   return tokens;
@@ -146,7 +153,10 @@ function mapToken(tok: any): DocumentNode | null {
       return { type: 'list', ordered: !!tok.ordered, items };
     }
     case 'blockquote': {
-      const text = (tok.tokens || []).map((t: any) => t.text || '').join('\n').trim();
+      const text = (tok.tokens || [])
+        .map((t: any) => t.text || '')
+        .join('\n')
+        .trim();
       return text ? { type: 'quote', text } : null;
     }
     case 'code':
@@ -154,9 +164,12 @@ function mapToken(tok: any): DocumentNode | null {
     case 'table': {
       const headerRow = true;
       const rows: any[] = [];
-      const hdr = (tok.header || []).map((h: any) => ({ text: h.text || String(h || ''), bold: true }));
+      const hdr = (tok.header || []).map((h: any) => ({
+        text: h.text || String(h || ''),
+        bold: true,
+      }));
       rows.push(hdr);
-      for (const r of (tok.rows || [])) {
+      for (const r of tok.rows || []) {
         rows.push((r || []).map((c: any) => ({ text: c.text || String(c || '') })));
       }
       return { type: 'table', rows, headerRow };

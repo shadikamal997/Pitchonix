@@ -30,10 +30,7 @@ export class ImageUploadController {
    */
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadImage(
-    @GetUser() user: any,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async uploadImage(@GetUser() user: any, @UploadedFile() file: Express.Multer.File) {
     const userId = user?.id;
     this.logger.log('Image upload request received');
 

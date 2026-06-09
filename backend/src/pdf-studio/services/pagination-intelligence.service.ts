@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ComposedSection, PageComposition } from './document-composition.service';
 import { PlannedPage } from './rule-based-page-planner.service';
-import { PublishingIssue, VisualEstimate, pageWords, sectionWords } from './publishing-intelligence.types';
+import {
+  PublishingIssue,
+  VisualEstimate,
+  pageWords,
+  sectionWords,
+} from './publishing-intelligence.types';
 
 @Injectable()
 export class PaginationIntelligenceService {
@@ -11,7 +16,7 @@ export class PaginationIntelligenceService {
   private readonly idealOccupancy = 0.72;
 
   estimatePage(page: PageComposition): VisualEstimate {
-    const sectionHeights = page.sections.map(section => this.estimateSectionHeight(section));
+    const sectionHeights = page.sections.map((section) => this.estimateSectionHeight(section));
     const contentHeight = sectionHeights.reduce((sum, height) => sum + height, 0);
     const occupancy = Math.max(0, Math.min(1.2, contentHeight / this.pageContentHeight));
     const wordCount = pageWords(page);
@@ -24,7 +29,10 @@ export class PaginationIntelligenceService {
       wordCount,
       hasOverflow: occupancy > this.maxOccupancy,
       isUnderfilled: !isCover && occupancy < this.minOccupancy && wordCount < 160,
-      isHeadingOnly: !isCover && page.sections.length > 0 && page.sections.every(section => section.type === 'heading' || sectionWords(section) < 4),
+      isHeadingOnly:
+        !isCover &&
+        page.sections.length > 0 &&
+        page.sections.every((section) => section.type === 'heading' || sectionWords(section) < 4),
       hasOrphanHeading: !isCover && this.hasOrphanHeading(page.sections),
     };
   }
@@ -70,7 +78,9 @@ export class PaginationIntelligenceService {
       metrics: {
         ...page.metrics,
         densityScore: Math.round(this.estimatePage(page).occupancy * 100),
-        whitespaceScore: Math.round((1 - Math.abs(this.idealOccupancy - this.estimatePage(page).occupancy)) * 100),
+        whitespaceScore: Math.round(
+          (1 - Math.abs(this.idealOccupancy - this.estimatePage(page).occupancy)) * 100,
+        ),
         overallQuality: Math.round((page.metrics.overallQuality + this.scorePage(page)) / 2),
       },
     }));
@@ -84,7 +94,13 @@ export class PaginationIntelligenceService {
     for (let i = 1; i < pages.length; i++) {
       const prev = metadata[i - 1];
       const current = metadata[i];
-      if (prev?.sectionId && current?.sectionId && prev.sectionId === current.sectionId && !current.isContinuation) penalties += 8;
+      if (
+        prev?.sectionId &&
+        current?.sectionId &&
+        prev.sectionId === current.sectionId &&
+        !current.isContinuation
+      )
+        penalties += 8;
       if (this.estimatePage(pages[i]).hasOrphanHeading) penalties += 12;
     }
     return Math.max(0, 100 - penalties);
@@ -103,7 +119,7 @@ export class PaginationIntelligenceService {
     let current: ComposedSection[] = [];
     let currentHeight = 0;
 
-    page.sections.forEach(section => {
+    page.sections.forEach((section) => {
       const height = this.estimateSectionHeight(section);
       const wouldOverflow = currentHeight + height > this.pageContentHeight * this.maxOccupancy;
       const canSplit = current.length > 0 && !this.endsWithOrphanHeading(current);
@@ -121,7 +137,11 @@ export class PaginationIntelligenceService {
         }
       }
 
-      if (currentHeight + height > this.pageContentHeight * this.maxOccupancy && current.length > 0 && !this.endsWithOrphanHeading(current)) {
+      if (
+        currentHeight + height > this.pageContentHeight * this.maxOccupancy &&
+        current.length > 0 &&
+        !this.endsWithOrphanHeading(current)
+      ) {
         pages.push(this.cloneWithSections(page, current, pages.length));
         current = [];
         currentHeight = 0;
@@ -151,10 +171,15 @@ export class PaginationIntelligenceService {
     const maxSectionHeight = this.pageContentHeight * 0.62;
     const result: ComposedSection[] = [];
 
-    sections.forEach(section => {
+    sections.forEach((section) => {
       const height = this.estimateSectionHeight(section);
-      const words = String(section.content || '').split(/\s+/).filter(Boolean);
-      const canSplit = ['paragraph', 'list', 'quote'].includes(section.type) && height > maxSectionHeight && words.length > 120;
+      const words = String(section.content || '')
+        .split(/\s+/)
+        .filter(Boolean);
+      const canSplit =
+        ['paragraph', 'list', 'quote'].includes(section.type) &&
+        height > maxSectionHeight &&
+        words.length > 120;
 
       if (!canSplit) {
         result.push(section);
@@ -195,9 +220,16 @@ export class PaginationIntelligenceService {
       const previousMeta = resultMeta[resultMeta.length - 1];
 
       if (!this.isSpecial(page, meta) && previous && !this.isSpecial(previous, previousMeta)) {
-        const merged = this.cloneWithSections(previous, [...previous.sections, ...page.sections], resultPages.length - 1);
+        const merged = this.cloneWithSections(
+          previous,
+          [...previous.sections, ...page.sections],
+          resultPages.length - 1,
+        );
         const mergedEstimate = this.estimatePage(merged);
-        if ((estimate.isUnderfilled || estimate.isHeadingOnly || estimate.hasOrphanHeading) && mergedEstimate.occupancy <= this.maxOccupancy) {
+        if (
+          (estimate.isUnderfilled || estimate.isHeadingOnly || estimate.hasOrphanHeading) &&
+          mergedEstimate.occupancy <= this.maxOccupancy
+        ) {
           resultPages[resultPages.length - 1] = merged;
           resultMeta[resultMeta.length - 1] = this.mergeMeta(previousMeta, meta, merged);
           issues.push({
@@ -259,7 +291,9 @@ export class PaginationIntelligenceService {
       }
 
       resultPages.push(this.cloneWithSections(page, sections, index));
-      resultMeta.push(this.mergeMeta(metadata[index], null, this.cloneWithSections(page, sections, index)));
+      resultMeta.push(
+        this.mergeMeta(metadata[index], null, this.cloneWithSections(page, sections, index)),
+      );
       issues.push({
         code: 'AUTO_REMOVE_ORPHAN_HEADING',
         severity: 'warning',
@@ -289,10 +323,17 @@ export class PaginationIntelligenceService {
     return baseSpacing + textHeight;
   }
 
-  private cloneWithSections(page: PageComposition, sections: ComposedSection[], splitIndex: number): PageComposition {
+  private cloneWithSections(
+    page: PageComposition,
+    sections: ComposedSection[],
+    splitIndex: number,
+  ): PageComposition {
     return {
       ...page,
-      sections: sections.map((section, index) => ({ ...section, id: `${page.pageNumber}-${splitIndex}-section-${index}` })),
+      sections: sections.map((section, index) => ({
+        ...section,
+        id: `${page.pageNumber}-${splitIndex}-section-${index}`,
+      })),
       layout: page.layout,
       metrics: { ...page.metrics },
     };
@@ -312,29 +353,57 @@ export class PaginationIntelligenceService {
     return page.layout === 'cover' || meta?.sectionType === 'cover' || meta?.sectionType === 'toc';
   }
 
-  private metaForSplit(meta: PlannedPage | null, page: PageComposition, splitIndex: number): PlannedPage | null {
+  private metaForSplit(
+    meta: PlannedPage | null,
+    page: PageComposition,
+    splitIndex: number,
+  ): PlannedPage | null {
     if (!meta) return null;
-    const contentText = page.sections.map(section => section.content).filter(Boolean).join('\n\n');
+    const contentText = page.sections
+      .map((section) => section.content)
+      .filter(Boolean)
+      .join('\n\n');
     return {
       ...meta,
       contentText,
       wordCount: contentText.split(/\s+/).filter(Boolean).length,
       isContinuation: meta.isContinuation || splitIndex > 0,
       pageIndexInSection: meta.pageIndexInSection + splitIndex,
-      pageTitle: splitIndex > 0 ? `${meta.sectionTitle} (continued)` : meta.pageTitle,
+      pageTitle:
+        splitIndex > 0
+          ? this.continuationTitle(meta.pageTitle || meta.sectionTitle)
+          : this.stripContinuation(meta.pageTitle || meta.sectionTitle),
     };
   }
 
-  private mergeMeta(a: PlannedPage | null, b: PlannedPage | null, page: PageComposition): PlannedPage | null {
+  private mergeMeta(
+    a: PlannedPage | null,
+    b: PlannedPage | null,
+    page: PageComposition,
+  ): PlannedPage | null {
     if (!a && !b) return null;
     const base = a || b!;
-    const contentText = page.sections.map(section => section.content).filter(Boolean).join('\n\n');
+    const contentText = page.sections
+      .map((section) => section.content)
+      .filter(Boolean)
+      .join('\n\n');
     return {
       ...base,
       contentText,
       wordCount: contentText.split(/\s+/).filter(Boolean).length,
-      pageTitle: base.pageTitle || base.sectionTitle,
+      pageTitle: this.stripContinuation(base.pageTitle || base.sectionTitle),
     };
+  }
+
+  private continuationTitle(title: string | undefined): string {
+    const clean = this.stripContinuation(title);
+    return clean ? `${clean} (continued)` : 'Continued';
+  }
+
+  private stripContinuation(title: string | undefined): string {
+    return String(title || '')
+      .replace(/\s*\(continued\)\s*$/i, '')
+      .trim();
   }
 
   private scorePage(page: PageComposition): number {

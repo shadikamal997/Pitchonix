@@ -57,13 +57,8 @@ export class ExportService {
   /**
    * Export presentation in specified format
    */
-  async export(
-    slides: VisualSlideContent[],
-    options: ExportOptions,
-  ): Promise<ExportResult> {
-    this.logger.log(
-      `Exporting ${slides.length} slides to ${options.format}`,
-    );
+  async export(slides: VisualSlideContent[], options: ExportOptions): Promise<ExportResult> {
+    this.logger.log(`Exporting ${slides.length} slides to ${options.format}`);
 
     try {
       let buffer: Buffer;
@@ -97,16 +92,11 @@ export class ExportService {
         slideCount: slides.length,
       };
 
-      this.logger.log(
-        `Export complete: ${fileName} (${this.formatBytes(result.size)})`,
-      );
+      this.logger.log(`Export complete: ${fileName} (${this.formatBytes(result.size)})`);
 
       return result;
     } catch (error) {
-      this.logger.error(
-        `Export failed: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Export failed: ${error.message}`, error.stack);
       throw new Error(`Export failed: ${error.message}`);
     }
   }
@@ -128,10 +118,7 @@ export class ExportService {
   /**
    * Export to PDF
    */
-  private async exportPDF(
-    slides: VisualSlideContent[],
-    options: ExportOptions,
-  ): Promise<Buffer> {
+  private async exportPDF(slides: VisualSlideContent[], options: ExportOptions): Promise<Buffer> {
     return this.pdfExportService.exportToPDF(slides, {
       title: options.title,
       pageSize: options.pageSize,
@@ -142,10 +129,7 @@ export class ExportService {
   /**
    * Export to HTML
    */
-  private async exportHTML(
-    slides: VisualSlideContent[],
-    options: ExportOptions,
-  ): Promise<Buffer> {
+  private async exportHTML(slides: VisualSlideContent[], options: ExportOptions): Promise<Buffer> {
     const html = await this.htmlPreviewService.generateHTML(slides, {
       title: options.title,
       includeControls: options.includeControls ?? true,
@@ -187,15 +171,11 @@ export class ExportService {
 
     switch (options.format) {
       case ExportFormat.PPTX:
-        await this.powerPointExportService.exportToFile(
-          slides,
-          filePath,
-          {
-            title: options.title,
-            author: options.author,
-            company: options.company,
-          },
-        );
+        await this.powerPointExportService.exportToFile(slides, filePath, {
+          title: options.title,
+          author: options.author,
+          company: options.company,
+        });
         break;
 
       case ExportFormat.PDF:
@@ -229,14 +209,8 @@ export class ExportService {
     imagesCount: number;
     estimatedSizes: Record<ExportFormat, string>;
   } {
-    const chartsCount = slides.reduce(
-      (sum, s) => sum + (s.charts?.length || 0),
-      0,
-    );
-    const imagesCount = slides.reduce(
-      (sum, s) => sum + (s.images?.length || 0),
-      0,
-    );
+    const chartsCount = slides.reduce((sum, s) => sum + (s.charts?.length || 0), 0);
+    const imagesCount = slides.reduce((sum, s) => sum + (s.images?.length || 0), 0);
 
     // Rough estimates
     const baseSize = slides.length * 50 * 1024; // 50KB per slide
@@ -248,15 +222,9 @@ export class ExportService {
       chartsCount,
       imagesCount,
       estimatedSizes: {
-        [ExportFormat.PPTX]: this.formatBytes(
-          baseSize + chartSize + imageSize,
-        ),
-        [ExportFormat.PDF]: this.formatBytes(
-          baseSize * 0.8 + chartSize * 0.6 + imageSize * 0.5,
-        ),
-        [ExportFormat.HTML]: this.formatBytes(
-          baseSize * 0.3 + chartSize * 0.8 + imageSize * 0.2,
-        ),
+        [ExportFormat.PPTX]: this.formatBytes(baseSize + chartSize + imageSize),
+        [ExportFormat.PDF]: this.formatBytes(baseSize * 0.8 + chartSize * 0.6 + imageSize * 0.5),
+        [ExportFormat.HTML]: this.formatBytes(baseSize * 0.3 + chartSize * 0.8 + imageSize * 0.2),
       },
     };
   }
@@ -271,7 +239,7 @@ export class ExportService {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   }
 
   /**

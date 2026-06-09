@@ -23,46 +23,46 @@ import { spawn } from 'child_process';
 //  surface the diagnostic so an operator can act on it.
 // =============================================================================
 
-const SOFFICE_BIN  = process.env.LIBREOFFICE_BIN || 'soffice';
-const PDFTOPPM_BIN = process.env.PDFTOPPM_BIN    || 'pdftoppm';
+const SOFFICE_BIN = process.env.LIBREOFFICE_BIN || 'soffice';
+const PDFTOPPM_BIN = process.env.PDFTOPPM_BIN || 'pdftoppm';
 
 const CONVERT_TIMEOUT_MS = Number(process.env.LIBREOFFICE_TIMEOUT_MS || 30_000);
 
 export interface BinaryStatus {
-  bin:       string;
+  bin: string;
   available: boolean;
-  version?:  string;
-  error?:    string;
+  version?: string;
+  error?: string;
 }
 
 export interface RendererDiagnostics {
-  platform:        string;
-  arch:            string;
-  nodeVersion:     string;
-  soffice:         BinaryStatus;
-  pdftoppm:        BinaryStatus;
-  tmpDir:          string;
-  tmpDirWritable:  boolean;
+  platform: string;
+  arch: string;
+  nodeVersion: string;
+  soffice: BinaryStatus;
+  pdftoppm: BinaryStatus;
+  tmpDir: string;
+  tmpDirWritable: boolean;
   endToEnd: {
-    attempted:  boolean;
-    succeeded:  boolean;
-    pngBytes?:  number;
+    attempted: boolean;
+    succeeded: boolean;
+    pngBytes?: number;
     latencyMs?: number;
-    error?:     string;
+    error?: string;
   };
   /** Suggested install command for this platform. */
-  installHint:     string;
+  installHint: string;
   /** When everything works, true. */
-  ready:           boolean;
+  ready: boolean;
 }
 
 export async function runRendererDiagnostics(): Promise<RendererDiagnostics> {
   const platform = process.platform;
-  const arch     = process.arch;
+  const arch = process.arch;
 
   const [soffice, pdftoppm] = await Promise.all([
-    probe(SOFFICE_BIN,  ['--version'], /LibreOffice\s+([0-9.]+)/i),
-    probe(PDFTOPPM_BIN, ['-v'],        /pdftoppm version ([0-9.]+)/i, true),
+    probe(SOFFICE_BIN, ['--version'], /LibreOffice\s+([0-9.]+)/i),
+    probe(PDFTOPPM_BIN, ['-v'], /pdftoppm version ([0-9.]+)/i, true),
   ]);
 
   const tmpDir = os.tmpdir();
@@ -75,9 +75,9 @@ export async function runRendererDiagnostics(): Promise<RendererDiagnostics> {
     const t0 = Date.now();
     try {
       const pngBytes = await convertProbe();
-      endToEnd.succeeded  = pngBytes > 0;
-      endToEnd.pngBytes   = pngBytes;
-      endToEnd.latencyMs  = Date.now() - t0;
+      endToEnd.succeeded = pngBytes > 0;
+      endToEnd.pngBytes = pngBytes;
+      endToEnd.latencyMs = Date.now() - t0;
     } catch (e: any) {
       endToEnd.error = e?.message || String(e);
       endToEnd.latencyMs = Date.now() - t0;
@@ -88,9 +88,13 @@ export async function runRendererDiagnostics(): Promise<RendererDiagnostics> {
   const ready = soffice.available && pdftoppm.available && endToEnd.succeeded;
 
   return {
-    platform, arch, nodeVersion: process.version,
-    soffice, pdftoppm,
-    tmpDir, tmpDirWritable,
+    platform,
+    arch,
+    nodeVersion: process.version,
+    soffice,
+    pdftoppm,
+    tmpDir,
+    tmpDirWritable,
     endToEnd,
     installHint,
     ready,
@@ -112,18 +116,31 @@ function installHintFor(platform: string): string {
   }
 }
 
-function probe(bin: string, args: string[], versionRegex: RegExp, allowExit1 = false): Promise<BinaryStatus> {
+function probe(
+  bin: string,
+  args: string[],
+  versionRegex: RegExp,
+  allowExit1 = false,
+): Promise<BinaryStatus> {
   return new Promise((resolve) => {
     let stdout = '';
     let stderr = '';
     const timer = setTimeout(() => {
-      try { child.kill(); } catch { /* */ }
+      try {
+        child.kill();
+      } catch {
+        /* */
+      }
       resolve({ bin, available: false, error: 'probe timed out (>5s)' });
     }, 5_000);
 
     const child = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    child.stdout?.on('data', (b) => { stdout += b.toString(); });
-    child.stderr?.on('data', (b) => { stderr += b.toString(); });
+    child.stdout?.on('data', (b) => {
+      stdout += b.toString();
+    });
+    child.stderr?.on('data', (b) => {
+      stderr += b.toString();
+    });
     child.on('error', (e) => {
       clearTimeout(timer);
       resolve({ bin, available: false, error: e?.message || 'not found' });
@@ -136,8 +153,8 @@ function probe(bin: string, args: string[], versionRegex: RegExp, allowExit1 = f
       resolve({
         bin,
         available: ok,
-        version:   m?.[1],
-        error:     ok ? undefined : `exit ${code}; stderr=${stderr.trim().slice(0, 200)}`,
+        version: m?.[1],
+        error: ok ? undefined : `exit ${code}; stderr=${stderr.trim().slice(0, 200)}`,
       });
     });
   });
@@ -149,7 +166,9 @@ async function isWritable(dir: string): Promise<boolean> {
     fs.writeFileSync(probeFile, 'ok');
     fs.unlinkSync(probeFile);
     return true;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 async function convertProbe(): Promise<number> {
@@ -158,14 +177,25 @@ async function convertProbe(): Promise<number> {
   const p = new PptxGenJS();
   p.layout = 'LAYOUT_WIDE';
   const slide = p.addSlide();
-  slide.addText('Renderer diagnostic probe', { x: 0.5, y: 0.5, w: 12, h: 1, fontSize: 24, bold: true });
+  slide.addText('Renderer diagnostic probe', {
+    x: 0.5,
+    y: 0.5,
+    w: 12,
+    h: 1,
+    fontSize: 24,
+    bold: true,
+  });
   const pptxBuf = (await p.write({ outputType: 'nodebuffer' })) as Buffer;
 
-  const dir   = fs.mkdtempSync(path.join(os.tmpdir(), 'pptx-renderer-probe-'));
-  const pptx  = path.join(dir, `probe-${crypto.randomUUID()}.pptx`);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pptx-renderer-probe-'));
+  const pptx = path.join(dir, `probe-${crypto.randomUUID()}.pptx`);
   fs.writeFileSync(pptx, pptxBuf);
 
-  await runShell(SOFFICE_BIN, ['--headless', '--convert-to', 'pdf', '--outdir', dir, pptx], CONVERT_TIMEOUT_MS);
+  await runShell(
+    SOFFICE_BIN,
+    ['--headless', '--convert-to', 'pdf', '--outdir', dir, pptx],
+    CONVERT_TIMEOUT_MS,
+  );
   const pdf = pptx.replace(/\.pptx$/, '.pdf');
   if (!fs.existsSync(pdf)) throw new Error('soffice produced no PDF');
 
@@ -176,7 +206,11 @@ async function convertProbe(): Promise<number> {
   if (pngs.length === 0) throw new Error('pdftoppm produced no PNG');
   const stat = fs.statSync(path.join(dir, pngs[0]));
   // Best-effort cleanup; ignore errors.
-  try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ }
+  try {
+    fs.rmSync(dir, { recursive: true, force: true });
+  } catch {
+    /* */
+  }
   return stat.size;
 }
 
@@ -184,13 +218,22 @@ function runShell(bin: string, args: string[], timeoutMs: number): Promise<void>
   return new Promise((resolve, reject) => {
     let stderr = '';
     const timer = setTimeout(() => {
-      try { child.kill('SIGKILL'); } catch { /* */ }
+      try {
+        child.kill('SIGKILL');
+      } catch {
+        /* */
+      }
       reject(new Error(`${bin} timed out after ${timeoutMs}ms`));
     }, timeoutMs);
     const child = spawn(bin, args, { stdio: ['ignore', 'ignore', 'pipe'] });
-    child.stderr?.on('data', (b) => { stderr += b.toString(); });
-    child.on('error', (e) => { clearTimeout(timer); reject(e); });
-    child.on('exit',  (code) => {
+    child.stderr?.on('data', (b) => {
+      stderr += b.toString();
+    });
+    child.on('error', (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+    child.on('exit', (code) => {
       clearTimeout(timer);
       if (code === 0) resolve();
       else reject(new Error(`${bin} exit ${code}; stderr=${stderr.trim().slice(0, 200)}`));

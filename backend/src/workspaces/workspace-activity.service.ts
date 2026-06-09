@@ -29,7 +29,7 @@ export type WorkspaceActivityType =
 
 export interface ActivityEntity {
   kind: 'deck' | 'project' | 'comment' | 'review' | 'member' | 'version';
-  id:   string;
+  id: string;
   name?: string;
 }
 
@@ -50,9 +50,9 @@ export class WorkspaceActivityService {
       await this.prisma.workspaceActivity.create({
         data: {
           workspaceId,
-          actorId:  actorId || null,
+          actorId: actorId || null,
           type,
-          entity:   entity ? (entity as any) : undefined,
+          entity: entity ? (entity as any) : undefined,
           metadata: metadata ? (metadata as any) : undefined,
         },
       });

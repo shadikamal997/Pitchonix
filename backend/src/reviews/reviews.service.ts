@@ -1,5 +1,9 @@
 import {
-  Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger,
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { VersionHistoryService } from '../version-history/version-history.service';
@@ -27,24 +31,20 @@ export type ReviewRequestStatus =
   | 'changes_requested'
   | 'withdrawn';
 
-export type DeckReviewStatus =
-  | 'draft'
-  | 'in_review'
-  | 'approved'
-  | 'changes_requested';
+export type DeckReviewStatus = 'draft' | 'in_review' | 'approved' | 'changes_requested';
 
 export interface CreateReviewRequestInput {
   /** Provide either reviewerId or reviewerEmail. Email path mirrors the
    *  project-sharing invite flow (resolve via prisma.user.findUnique). */
-  reviewerId?:    string;
+  reviewerId?: string;
   reviewerEmail?: string;
-  message?:       string;
-  dueDate?:       string | Date | null;
+  message?: string;
+  dueDate?: string | Date | null;
 }
 
 const REVIEW_INCLUDE = {
   requestedBy: { select: { id: true, name: true, email: true } },
-  reviewer:    { select: { id: true, name: true, email: true } },
+  reviewer: { select: { id: true, name: true, email: true } },
 };
 
 @Injectable()
@@ -54,7 +54,7 @@ export class ReviewsService {
   constructor(
     private prisma: PrismaService,
     private versions: VersionHistoryService,
-    private events:   ReviewEventBus,
+    private events: ReviewEventBus,
   ) {}
 
   /**
@@ -90,15 +90,21 @@ export class ReviewsService {
     const review = await this.prisma.reviewRequest.findUnique({
       where: { id: reviewId },
       select: {
-        id: true, deckId: true, requestedById: true, reviewerId: true, status: true,
+        id: true,
+        deckId: true,
+        requestedById: true,
+        reviewerId: true,
+        status: true,
         deck: { select: { project: { select: { userId: true } } } },
       },
     });
     if (!review) throw new NotFoundException('Review request not found');
-    const isOwner    = review.deck.project.userId === userId;
+    const isOwner = review.deck.project.userId === userId;
     const isReviewer = review.reviewerId === userId;
     if (!isOwner && !isReviewer) {
-      throw new ForbiddenException('Only the deck owner or assigned reviewer can act on this request');
+      throw new ForbiddenException(
+        'Only the deck owner or assigned reviewer can act on this request',
+      );
     }
     return { review, isOwner, isReviewer };
   }
@@ -130,7 +136,7 @@ export class ReviewsService {
     });
     return {
       deckReviewStatus: (deck?.reviewStatus || 'draft') as DeckReviewStatus,
-      activeRequest:    active,
+      activeRequest: active,
     };
   }
 
@@ -157,10 +163,12 @@ export class ReviewsService {
     // ProjectSharingService.inviteByEmail.
     const reviewer = input.reviewerId
       ? await this.prisma.user.findUnique({
-          where: { id: input.reviewerId }, select: { id: true },
+          where: { id: input.reviewerId },
+          select: { id: true },
         })
       : await this.prisma.user.findUnique({
-          where: { email: input.reviewerEmail! }, select: { id: true },
+          where: { email: input.reviewerEmail! },
+          select: { id: true },
         });
     if (!reviewer) throw new BadRequestException('Reviewer user not found');
     if (reviewer.id === userId) {
@@ -194,24 +202,24 @@ export class ReviewsService {
         data: {
           deckId,
           requestedById: userId,
-          reviewerId:    reviewer.id,
-          status:        'requested',
-          message:       input.message?.trim() || null,
-          dueDate:       due,
+          reviewerId: reviewer.id,
+          status: 'requested',
+          message: input.message?.trim() || null,
+          dueDate: due,
         },
         include: REVIEW_INCLUDE,
       }),
       this.prisma.deck.update({
         where: { id: deckId },
-        data:  { reviewStatus: 'in_review' },
+        data: { reviewStatus: 'in_review' },
       }),
     ]);
     this.events.emit({
-      type:          'review.requested',
-      reviewId:      request.id,
+      type: 'review.requested',
+      reviewId: request.id,
       deckId,
       requestedById: userId,
-      reviewerId:    reviewer.id,
+      reviewerId: reviewer.id,
     });
     return request;
   }
@@ -220,14 +228,19 @@ export class ReviewsService {
   async open(reviewId: string, userId: string) {
     const { review, isReviewer } = await this.assertRequesterOrReviewer(reviewId, userId);
     if (!isReviewer) throw new ForbiddenException('Only the reviewer can open a request');
-    if (review.status !== 'requested') return review;  // idempotent
+    if (review.status !== 'requested') return review; // idempotent
     await this.snapshot(review.deckId, userId, 'REVIEW_STARTED', 'Review started');
     const updated = await this.prisma.reviewRequest.update({
       where: { id: reviewId },
-      data:  { status: 'in_review', openedAt: new Date() },
+      data: { status: 'in_review', openedAt: new Date() },
       include: REVIEW_INCLUDE,
     });
-    this.events.emit({ type: 'review.started', reviewId, deckId: review.deckId, reviewerId: userId });
+    this.events.emit({
+      type: 'review.started',
+      reviewId,
+      deckId: review.deckId,
+      reviewerId: userId,
+    });
     return updated;
   }
 
@@ -243,15 +256,20 @@ export class ReviewsService {
     const [updated] = await this.prisma.$transaction([
       this.prisma.reviewRequest.update({
         where: { id: reviewId },
-        data:  { status: 'approved', decidedAt: now },
+        data: { status: 'approved', decidedAt: now },
         include: REVIEW_INCLUDE,
       }),
       this.prisma.deck.update({
         where: { id: review.deckId },
-        data:  { reviewStatus: 'approved' },
+        data: { reviewStatus: 'approved' },
       }),
     ]);
-    this.events.emit({ type: 'review.approved', reviewId, deckId: review.deckId, reviewerId: userId });
+    this.events.emit({
+      type: 'review.approved',
+      reviewId,
+      deckId: review.deckId,
+      reviewerId: userId,
+    });
     return updated;
   }
 
@@ -267,15 +285,20 @@ export class ReviewsService {
     const [updated] = await this.prisma.$transaction([
       this.prisma.reviewRequest.update({
         where: { id: reviewId },
-        data:  { status: 'changes_requested', decidedAt: now },
+        data: { status: 'changes_requested', decidedAt: now },
         include: REVIEW_INCLUDE,
       }),
       this.prisma.deck.update({
         where: { id: review.deckId },
-        data:  { reviewStatus: 'changes_requested' },
+        data: { reviewStatus: 'changes_requested' },
       }),
     ]);
-    this.events.emit({ type: 'review.changes_requested', reviewId, deckId: review.deckId, reviewerId: userId });
+    this.events.emit({
+      type: 'review.changes_requested',
+      reviewId,
+      deckId: review.deckId,
+      reviewerId: userId,
+    });
     return updated;
   }
 
@@ -293,15 +316,20 @@ export class ReviewsService {
     const [updated] = await this.prisma.$transaction([
       this.prisma.reviewRequest.update({
         where: { id: reviewId },
-        data:  { status: 'in_review', decidedAt: null },
+        data: { status: 'in_review', decidedAt: null },
         include: REVIEW_INCLUDE,
       }),
       this.prisma.deck.update({
         where: { id: review.deckId },
-        data:  { reviewStatus: 'in_review' },
+        data: { reviewStatus: 'in_review' },
       }),
     ]);
-    this.events.emit({ type: 'review.reopened', reviewId, deckId: review.deckId, reviewerId: userId });
+    this.events.emit({
+      type: 'review.reopened',
+      reviewId,
+      deckId: review.deckId,
+      reviewerId: userId,
+    });
     return updated;
   }
 
@@ -314,7 +342,7 @@ export class ReviewsService {
     }
     const updated = await this.prisma.reviewRequest.update({
       where: { id: reviewId },
-      data:  { status: 'withdrawn', decidedAt: new Date() },
+      data: { status: 'withdrawn', decidedAt: new Date() },
       include: REVIEW_INCLUDE,
     });
     // If this was the last active request, demote deck status back to draft.
@@ -324,13 +352,13 @@ export class ReviewsService {
     if (stillActive === 0) {
       await this.prisma.deck.update({
         where: { id: review.deckId },
-        data:  { reviewStatus: 'draft' },
+        data: { reviewStatus: 'draft' },
       });
     }
     this.events.emit({
       type: 'review.withdrawn',
       reviewId,
-      deckId:        review.deckId,
+      deckId: review.deckId,
       requestedById: userId,
     });
     return updated;

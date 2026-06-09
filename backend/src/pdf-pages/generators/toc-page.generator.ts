@@ -22,9 +22,7 @@ export class TableOfContentsGenerator extends BasePageGenerator {
   }
 
   private generateDefaultSections(input: WizardInput): TableOfContentsEntry[] {
-    const sections: TableOfContentsEntry[] = [
-      { section: 'Executive Summary', pageNumber: 3 },
-    ];
+    const sections: TableOfContentsEntry[] = [{ section: 'Executive Summary', pageNumber: 3 }];
 
     if (input.companyName || input.shortDescription) {
       sections.push({ section: 'Company Overview', pageNumber: sections.length + 3 });

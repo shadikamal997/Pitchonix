@@ -1,8 +1,12 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  SavedComponentDTO, ComponentInstanceDTO, CreateComponentInput, ListComponentsQuery,
-  ComponentCategory, ComponentElementTree,
+  SavedComponentDTO,
+  ComponentInstanceDTO,
+  CreateComponentInput,
+  ListComponentsQuery,
+  ComponentCategory,
+  ComponentElementTree,
 } from './component-types';
 
 /**
@@ -42,7 +46,7 @@ export class ComponentsService {
     const where: any = { userId };
     if (query.category) where.category = query.category;
     if (query.favorite) where.favorite = true;
-    if (query.tag)      where.tags     = { has: query.tag };
+    if (query.tag) where.tags = { has: query.tag };
     if (query.search) {
       where.OR = [
         { name: { contains: query.search, mode: 'insensitive' } },
@@ -54,8 +58,8 @@ export class ComponentsService {
     const rows = await this.prisma.savedComponent.findMany({
       where,
       orderBy: [{ updatedAt: 'desc' }],
-      take:    query.limit  ?? 200,
-      skip:    query.offset ?? 0,
+      take: query.limit ?? 200,
+      skip: query.offset ?? 0,
     });
     return rows.map(toComponentDTO);
   }
@@ -86,33 +90,37 @@ export class ComponentsService {
     const row = await this.prisma.savedComponent.create({
       data: {
         userId,
-        name:        input.name,
+        name: input.name,
         description: input.description ?? null,
-        category:    input.category,
-        familyId:    input.familyId   ?? null,
-        thumbnail:   input.thumbnail  ?? null,
-        tags:        input.tags ?? [],
+        category: input.category,
+        familyId: input.familyId ?? null,
+        thumbnail: input.thumbnail ?? null,
+        tags: input.tags ?? [],
         elementTree: input.elementTree as any,
       },
     });
     return toComponentDTO(row);
   }
 
-  async update(userId: string, id: string, patch: Partial<SavedComponentDTO>): Promise<SavedComponentDTO> {
+  async update(
+    userId: string,
+    id: string,
+    patch: Partial<SavedComponentDTO>,
+  ): Promise<SavedComponentDTO> {
     await this.assertComponentOwnership(id, userId);
 
     // If elementTree changes, bump version so instances can detect drift.
     const treeChanged = patch.elementTree !== undefined;
     const data: any = {
-      name:        patch.name        ?? undefined,
+      name: patch.name ?? undefined,
       description: patch.description ?? undefined,
-      category:    patch.category    ?? undefined,
-      thumbnail:   patch.thumbnail   ?? undefined,
-      familyId:    patch.familyId    ?? undefined,
-      tags:        patch.tags        ?? undefined,
-      favorite:    patch.favorite    ?? undefined,
+      category: patch.category ?? undefined,
+      thumbnail: patch.thumbnail ?? undefined,
+      familyId: patch.familyId ?? undefined,
+      tags: patch.tags ?? undefined,
+      favorite: patch.favorite ?? undefined,
       elementTree: treeChanged ? (patch.elementTree as any) : undefined,
-      version:     treeChanged ? { increment: 1 } : undefined,
+      version: treeChanged ? { increment: 1 } : undefined,
     };
     const row = await this.prisma.savedComponent.update({ where: { id }, data });
     return toComponentDTO(row);
@@ -134,12 +142,12 @@ export class ComponentsService {
     const copy = await this.prisma.savedComponent.create({
       data: {
         userId,
-        name:        `${source.name} (copy)`,
+        name: `${source.name} (copy)`,
         description: source.description,
-        category:    source.category,
-        familyId:    source.familyId,
-        thumbnail:   source.thumbnail,
-        tags:        source.tags,
+        category: source.category,
+        familyId: source.familyId,
+        thumbnail: source.thumbnail,
+        tags: source.tags,
         elementTree: source.elementTree as any,
       },
     });
@@ -192,7 +200,7 @@ export class ComponentsService {
           slideId,
           anchorX: anchor.x,
           anchorY: anchor.y,
-          scale:   anchor.scale ?? 1,
+          scale: anchor.scale ?? 1,
           version: component.version,
         },
       });
@@ -226,7 +234,7 @@ export class ComponentsService {
     if (!component) throw new NotFoundException('Component not found');
     const res = await this.prisma.componentInstance.updateMany({
       where: { componentId },
-      data:  { version: component.version },
+      data: { version: component.version },
     });
     return { updated: res.count };
   }
@@ -249,33 +257,33 @@ export class ComponentsService {
 
 function toComponentDTO(row: any): SavedComponentDTO {
   return {
-    id:          row.id,
-    userId:      row.userId,
+    id: row.id,
+    userId: row.userId,
     workspaceId: row.workspaceId,
-    name:        row.name,
+    name: row.name,
     description: row.description,
-    category:    row.category as ComponentCategory,
-    thumbnail:   row.thumbnail,
-    familyId:    row.familyId,
-    tags:        row.tags || [],
-    favorite:    !!row.favorite,
-    usageCount:  row.usageCount,
-    version:     row.version,
+    category: row.category as ComponentCategory,
+    thumbnail: row.thumbnail,
+    familyId: row.familyId,
+    tags: row.tags || [],
+    favorite: !!row.favorite,
+    usageCount: row.usageCount,
+    version: row.version,
     elementTree: (row.elementTree as ComponentElementTree) || [],
-    createdAt:   row.createdAt.toISOString(),
-    updatedAt:   row.updatedAt.toISOString(),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 
 function toInstanceDTO(row: any): ComponentInstanceDTO {
   return {
-    id:          row.id,
+    id: row.id,
     componentId: row.componentId,
-    slideId:     row.slideId,
-    anchorX:     row.anchorX,
-    anchorY:     row.anchorY,
-    scale:       row.scale,
-    version:     row.version,
-    createdAt:   row.createdAt.toISOString(),
+    slideId: row.slideId,
+    anchorX: row.anchorX,
+    anchorY: row.anchorY,
+    scale: row.scale,
+    version: row.version,
+    createdAt: row.createdAt.toISOString(),
   };
 }

@@ -106,17 +106,17 @@ const PRODUCT_LAUNCH_ARC: SlideType[] = [
 ];
 
 const ARC_BY_DOC_TYPE: Record<string, SlideType[]> = {
-  pitch_deck:             PITCH_ARC,
-  investor_deck:          PITCH_ARC,
-  business_plan:          BUSINESS_PLAN_ARC,
-  sales_deck:             SALES_ARC,
-  board_meeting_deck:     BOARD_ARC,
-  board_meeting:          BOARD_ARC,
-  board_deck:             BOARD_ARC,
-  strategy_presentation:  BUSINESS_PLAN_ARC,
-  strategy_deck:          BUSINESS_PLAN_ARC,
-  company_profile:        COMPANY_PROFILE_ARC,
-  product_launch:         PRODUCT_LAUNCH_ARC,
+  pitch_deck: PITCH_ARC,
+  investor_deck: PITCH_ARC,
+  business_plan: BUSINESS_PLAN_ARC,
+  sales_deck: SALES_ARC,
+  board_meeting_deck: BOARD_ARC,
+  board_meeting: BOARD_ARC,
+  board_deck: BOARD_ARC,
+  strategy_presentation: BUSINESS_PLAN_ARC,
+  strategy_deck: BUSINESS_PLAN_ARC,
+  company_profile: COMPANY_PROFILE_ARC,
+  product_launch: PRODUCT_LAUNCH_ARC,
 };
 
 function getArc(documentType?: string): SlideType[] {
@@ -163,43 +163,52 @@ export interface NarrativeGap {
 }
 
 export interface NarrativeFlowAnalysis {
-  narrativeScore:  number;        // 0–100
-  gaps:            NarrativeGap[];
-  outOfOrder:      SlideType[];   // types that violate arc sequence
-  recommendedArc:  SlideType[];   // arc filtered to present types
+  narrativeScore: number; // 0–100
+  gaps: NarrativeGap[];
+  outOfOrder: SlideType[]; // types that violate arc sequence
+  recommendedArc: SlideType[]; // arc filtered to present types
 }
 
 // Minimum required slides per document type
 const CRITICAL_SLIDES: Record<string, Array<{ type: SlideType; reason: string }>> = {
   pitch_deck: [
-    { type: SlideType.PROBLEM,           reason: 'Investors must understand the pain before the solution' },
-    { type: SlideType.SOLUTION,          reason: 'The solution anchors the entire investment thesis' },
-    { type: SlideType.MARKET_OPPORTUNITY,reason: 'Market size justifies why this is worth funding' },
-    { type: SlideType.TEAM,              reason: 'Investors back teams, not just ideas' },
-    { type: SlideType.ASK,               reason: 'Every pitch deck needs a clear funding ask' },
+    { type: SlideType.PROBLEM, reason: 'Investors must understand the pain before the solution' },
+    { type: SlideType.SOLUTION, reason: 'The solution anchors the entire investment thesis' },
+    {
+      type: SlideType.MARKET_OPPORTUNITY,
+      reason: 'Market size justifies why this is worth funding',
+    },
+    { type: SlideType.TEAM, reason: 'Investors back teams, not just ideas' },
+    { type: SlideType.ASK, reason: 'Every pitch deck needs a clear funding ask' },
   ],
   investor_deck: [
-    { type: SlideType.PROBLEM,           reason: 'Investors must understand the pain before the solution' },
-    { type: SlideType.SOLUTION,          reason: 'The solution anchors the entire investment thesis' },
-    { type: SlideType.MARKET_OPPORTUNITY,reason: 'Market size justifies why this is worth funding' },
-    { type: SlideType.TEAM,              reason: 'Investors back teams, not just ideas' },
-    { type: SlideType.ASK,               reason: 'Every pitch deck needs a clear funding ask' },
+    { type: SlideType.PROBLEM, reason: 'Investors must understand the pain before the solution' },
+    { type: SlideType.SOLUTION, reason: 'The solution anchors the entire investment thesis' },
+    {
+      type: SlideType.MARKET_OPPORTUNITY,
+      reason: 'Market size justifies why this is worth funding',
+    },
+    { type: SlideType.TEAM, reason: 'Investors back teams, not just ideas' },
+    { type: SlideType.ASK, reason: 'Every pitch deck needs a clear funding ask' },
   ],
   business_plan: [
     { type: SlideType.EXECUTIVE_SUMMARY, reason: 'Business plans require an executive summary' },
-    { type: SlideType.MARKET_OPPORTUNITY,reason: 'Market sizing is mandatory for business plans' },
-    { type: SlideType.FINANCIALS,        reason: 'Financial projections are the backbone of a business plan' },
+    { type: SlideType.MARKET_OPPORTUNITY, reason: 'Market sizing is mandatory for business plans' },
+    {
+      type: SlideType.FINANCIALS,
+      reason: 'Financial projections are the backbone of a business plan',
+    },
   ],
   sales_deck: [
-    { type: SlideType.PROBLEM,           reason: 'Start with the customer\'s pain' },
-    { type: SlideType.SOLUTION,          reason: 'Show how you solve it' },
-    { type: SlideType.PRICING,           reason: 'Sales decks must address pricing' },
+    { type: SlideType.PROBLEM, reason: "Start with the customer's pain" },
+    { type: SlideType.SOLUTION, reason: 'Show how you solve it' },
+    { type: SlideType.PRICING, reason: 'Sales decks must address pricing' },
   ],
 };
 
 // Pairs that must appear in a specific order
 const ORDER_DEPENDENCIES: Array<{ before: SlideType; after: SlideType }> = [
-  { before: SlideType.PROBLEM,  after: SlideType.SOLUTION },
+  { before: SlideType.PROBLEM, after: SlideType.SOLUTION },
   { before: SlideType.SOLUTION, after: SlideType.MARKET_OPPORTUNITY },
   { before: SlideType.TRACTION, after: SlideType.ASK },
   { before: SlideType.BUSINESS_MODEL, after: SlideType.FINANCIALS },
@@ -209,8 +218,8 @@ export function analyzeNarrativeFlow(
   slideTypes: SlideType[],
   documentType?: string,
 ): NarrativeFlowAnalysis {
-  const typeSet   = new Set(slideTypes);
-  const arc       = getArc(documentType);
+  const typeSet = new Set(slideTypes);
+  const arc = getArc(documentType);
   const gaps: NarrativeGap[] = [];
 
   // Missing critical slides
@@ -220,11 +229,25 @@ export function analyzeNarrativeFlow(
   }
 
   // Suggested narrative additions (warning-level)
-  if (!typeSet.has(SlideType.TRACTION) && (documentType === 'pitch_deck' || documentType === 'investor_deck')) {
-    gaps.push({ type: SlideType.TRACTION, reason: 'Traction evidence de-risks the investment', severity: 'warning' });
+  if (
+    !typeSet.has(SlideType.TRACTION) &&
+    (documentType === 'pitch_deck' || documentType === 'investor_deck')
+  ) {
+    gaps.push({
+      type: SlideType.TRACTION,
+      reason: 'Traction evidence de-risks the investment',
+      severity: 'warning',
+    });
   }
-  if (!typeSet.has(SlideType.COMPETITION) && (documentType === 'pitch_deck' || documentType === 'investor_deck')) {
-    gaps.push({ type: SlideType.COMPETITION, reason: 'Competitive differentiation strengthens the thesis', severity: 'suggestion' });
+  if (
+    !typeSet.has(SlideType.COMPETITION) &&
+    (documentType === 'pitch_deck' || documentType === 'investor_deck')
+  ) {
+    gaps.push({
+      type: SlideType.COMPETITION,
+      reason: 'Competitive differentiation strengthens the thesis',
+      severity: 'suggestion',
+    });
   }
 
   // Out-of-order detection
@@ -239,8 +262,8 @@ export function analyzeNarrativeFlow(
 
   // Score: 100 − critical×20 − warning×7 − out-of-order×5
   const criticalCount = gaps.filter((g) => g.severity === 'critical').length;
-  const warningCount  = gaps.filter((g) => g.severity === 'warning').length;
-  const orderPenalty  = outOfOrder.length * 5;
+  const warningCount = gaps.filter((g) => g.severity === 'warning').length;
+  const orderPenalty = outOfOrder.length * 5;
   const narrativeScore = Math.max(0, 100 - criticalCount * 20 - warningCount * 7 - orderPenalty);
 
   const recommendedArc = arc.filter((t) => typeSet.has(t));

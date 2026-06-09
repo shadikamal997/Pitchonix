@@ -4,7 +4,7 @@ import { DeckSharesController } from './deck-shares.controller';
 
 @Module({
   controllers: [DeckSharesController],
-  providers:   [DeckSharesService],
-  exports:     [DeckSharesService],
+  providers: [DeckSharesService],
+  exports: [DeckSharesService],
 })
 export class SharingModule {}

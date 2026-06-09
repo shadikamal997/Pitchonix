@@ -3,7 +3,7 @@ import { PageComposition } from './document-composition.service';
 
 /**
  * Semantic Continuation System
- * 
+ *
  * Makes continuation pages feel intentional and elegant:
  * - Inherit semantic context from parent
  * - Visually connect to parent section
@@ -67,7 +67,7 @@ export class SemanticContinuationService {
 
       // Look for primary heading (H1 or H2)
       const primaryHeading = page.sections.find(
-        s => s.type === 'heading' && (s.level === 1 || s.level === 2),
+        (s) => s.type === 'heading' && (s.level === 1 || s.level === 2),
       );
 
       if (primaryHeading) {
@@ -120,7 +120,7 @@ export class SemanticContinuationService {
   ): ContinuationMetadata | null {
     // Find which section this page belongs to
     const section = sections.find(
-      s => pageNumber >= s.pageRange.start && pageNumber <= s.pageRange.end,
+      (s) => pageNumber >= s.pageRange.start && pageNumber <= s.pageRange.end,
     );
 
     if (!section) return null;
@@ -135,7 +135,7 @@ export class SemanticContinuationService {
     const continuationIndex = currentPageInSection - 1;
 
     // Generate context preview (first 50 chars of first paragraph)
-    const firstParagraph = page.sections.find(s => s.type === 'paragraph');
+    const firstParagraph = page.sections.find((s) => s.type === 'paragraph');
     const contextPreview = firstParagraph
       ? firstParagraph.content.substring(0, 50) + '...'
       : 'Continued content';
@@ -252,10 +252,7 @@ export class SemanticContinuationService {
   /**
    * Add visual continuity indicators to page
    */
-  addVisualContinuity(
-    page: PageComposition,
-    metadata: ContinuationMetadata,
-  ): PageComposition {
+  addVisualContinuity(page: PageComposition, metadata: ContinuationMetadata): PageComposition {
     // Add subtle header with context
     const headerSection = {
       id: 'continuation-header',
@@ -277,13 +274,10 @@ export class SemanticContinuationService {
   /**
    * Detect if continuation is necessary
    */
-  shouldContinue(
-    currentPage: PageComposition,
-    nextContent: string,
-  ): boolean {
+  shouldContinue(currentPage: PageComposition, nextContent: string): boolean {
     // Check if next content semantically belongs to current section
     const mainHeading = currentPage.sections.find(
-      s => s.type === 'heading' && (s.level === 1 || s.level === 2),
+      (s) => s.type === 'heading' && (s.level === 1 || s.level === 2),
     );
 
     if (!mainHeading) return false;
@@ -353,7 +347,7 @@ export class SemanticContinuationService {
     nextSection?: string;
   } {
     const currentSection = sections.find(
-      s => pageNumber >= s.pageRange.start && pageNumber <= s.pageRange.end,
+      (s) => pageNumber >= s.pageRange.start && pageNumber <= s.pageRange.end,
     );
 
     if (!currentSection) {

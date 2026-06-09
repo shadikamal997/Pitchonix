@@ -15,7 +15,14 @@ export interface VisualEstimate {
 }
 
 export interface EditorialGridPlan {
-  gridType: 'single-column' | 'two-column' | 'three-column' | 'asymmetric' | 'sidebar' | 'feature' | 'image-heavy';
+  gridType:
+    | 'single-column'
+    | 'two-column'
+    | 'three-column'
+    | 'asymmetric'
+    | 'sidebar'
+    | 'feature'
+    | 'image-heavy';
   columns: number;
   baseline: number;
   margins: { top: number; right: number; bottom: number; left: number };
@@ -74,7 +81,9 @@ export interface PublishingOptimizationResult {
 }
 
 export function sectionWords(section: ComposedSection): number {
-  return String(section.content || '').split(/\s+/).filter(Boolean).length;
+  return String(section.content || '')
+    .split(/\s+/)
+    .filter(Boolean).length;
 }
 
 export function pageWords(page: PageComposition): number {

@@ -11,19 +11,19 @@ import type { DeckSnapshot, VersionDiff } from './version-types';
 
 export function diffSnapshots(a: DeckSnapshot, b: DeckSnapshot): VersionDiff {
   const summary: VersionDiff['summary'] = {
-    slidesAdded:      0,
-    slidesRemoved:    0,
-    slidesReordered:  0,
-    elementsAdded:    0,
-    elementsRemoved:  0,
-    textEdits:        0,
-    familyChanged:    false,
-    templateChanged:  false,
+    slidesAdded: 0,
+    slidesRemoved: 0,
+    slidesReordered: 0,
+    elementsAdded: 0,
+    elementsRemoved: 0,
+    textEdits: 0,
+    familyChanged: false,
+    templateChanged: false,
     masterCountDelta: 0,
   };
   const details: VersionDiff['details'] = {
-    addedSlides:     [],
-    removedSlides:   [],
+    addedSlides: [],
+    removedSlides: [],
     reorderedSlides: [],
   };
 
@@ -63,12 +63,18 @@ export function diffSnapshots(a: DeckSnapshot, b: DeckSnapshot): VersionDiff {
     if (!bv) continue;
     const aCount = av.slide.elements.length;
     const bCount = bv.slide.elements.length;
-    if (bCount > aCount) summary.elementsAdded   += bCount - aCount;
+    if (bCount > aCount) summary.elementsAdded += bCount - aCount;
     if (bCount < aCount) summary.elementsRemoved += aCount - bCount;
 
     // Cheap text-edit detection: hash(content.text) for paragraph/heading/caption.
-    const aHash = av.slide.elements.filter((e) => textyType(e.type)).map((e) => textOf(e.content)).join('|');
-    const bHash = bv.slide.elements.filter((e) => textyType(e.type)).map((e) => textOf(e.content)).join('|');
+    const aHash = av.slide.elements
+      .filter((e) => textyType(e.type))
+      .map((e) => textOf(e.content))
+      .join('|');
+    const bHash = bv.slide.elements
+      .filter((e) => textyType(e.type))
+      .map((e) => textOf(e.content))
+      .join('|');
     if (aHash !== bHash) {
       // Count differing positions as edits (rough but bounded)
       const aArr = aHash.split('|');
@@ -81,12 +87,12 @@ export function diffSnapshots(a: DeckSnapshot, b: DeckSnapshot): VersionDiff {
   }
 
   // Family / template / master count
-  const aFamily = (a.deck as any).familyId ?? (a.slides[0]?.themeKey) ?? null;
-  const bFamily = (b.deck as any).familyId ?? (b.slides[0]?.themeKey) ?? null;
+  const aFamily = (a.deck as any).familyId ?? a.slides[0]?.themeKey ?? null;
+  const bFamily = (b.deck as any).familyId ?? b.slides[0]?.themeKey ?? null;
   if (aFamily !== bFamily) {
     summary.familyChanged = true;
     details.fromFamily = aFamily;
-    details.toFamily   = bFamily;
+    details.toFamily = bFamily;
   }
   summary.masterCountDelta = (b.masters?.length || 0) - (a.masters?.length || 0);
 
@@ -94,7 +100,14 @@ export function diffSnapshots(a: DeckSnapshot, b: DeckSnapshot): VersionDiff {
 }
 
 function textyType(t: string): boolean {
-  return t === 'heading' || t === 'subheading' || t === 'paragraph' || t === 'caption' || t === 'label' || t === 'quote';
+  return (
+    t === 'heading' ||
+    t === 'subheading' ||
+    t === 'paragraph' ||
+    t === 'caption' ||
+    t === 'label' ||
+    t === 'quote'
+  );
 }
 
 function textOf(content: any): string {

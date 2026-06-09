@@ -21,43 +21,50 @@ import { OoxmlPackage, asArray, walk } from './ooxml-parser';
 
 export interface DetectedExtension {
   /** Vendor URI extracted from @uri or our internal label. */
-  uri:       string;
+  uri: string;
   /** Human-readable name from EXTENSION_REGISTRY when known. */
-  name:      string;
+  name: string;
   /** Where this extension lived. */
-  scope:     'chart' | 'shape3d' | 'ink' | 'customXml' | 'drawing' | 'unknown';
+  scope: 'chart' | 'shape3d' | 'ink' | 'customXml' | 'drawing' | 'unknown';
   /** Path inside the OOXML package. */
-  source:    string;
+  source: string;
   /** Raw serialised subtree (best-effort JSON for round-trip). */
-  rawXml:    string;
+  rawXml: string;
   /** Optional shape ID when extension belonged to a single shape. */
-  spId?:     string;
+  spId?: string;
 }
 
 /**
  * Curated registry of vendor URIs we know about. Keys are URI substrings
  * (case-insensitive contains-match). Unknown URIs still preserve.
  */
-export const EXTENSION_REGISTRY: Array<{ pattern: RegExp; name: string; scope: DetectedExtension['scope'] }> = [
+export const EXTENSION_REGISTRY: Array<{
+  pattern: RegExp;
+  name: string;
+  scope: DetectedExtension['scope'];
+}> = [
   // Chart-side
-  { pattern: /chartExtensibility/i,  name: 'Chart Extensibility (c14)',        scope: 'chart' },
-  { pattern: /\/chart\/.*c15/i,      name: 'Chart Extensibility (c15)',        scope: 'chart' },
-  { pattern: /chart3D/i,             name: '3D Chart View',                    scope: 'chart' },
-  { pattern: /trendline/i,           name: 'Chart Trendline',                  scope: 'chart' },
-  { pattern: /errorBar/i,            name: 'Chart Error Bars',                 scope: 'chart' },
-  { pattern: /dispBlanksAs/i,        name: 'Display Blanks',                   scope: 'chart' },
+  { pattern: /chartExtensibility/i, name: 'Chart Extensibility (c14)', scope: 'chart' },
+  { pattern: /\/chart\/.*c15/i, name: 'Chart Extensibility (c15)', scope: 'chart' },
+  { pattern: /chart3D/i, name: '3D Chart View', scope: 'chart' },
+  { pattern: /trendline/i, name: 'Chart Trendline', scope: 'chart' },
+  { pattern: /errorBar/i, name: 'Chart Error Bars', scope: 'chart' },
+  { pattern: /dispBlanksAs/i, name: 'Display Blanks', scope: 'chart' },
   // 3D shape
   { pattern: /sp3d|scene3d|bevelT|bevelB|lightRig/i, name: '3D Shape Effects', scope: 'shape3d' },
   // Ink
-  { pattern: /ink|contentPart/i,     name: 'Ink Annotation',                   scope: 'ink' },
+  { pattern: /ink|contentPart/i, name: 'Ink Annotation', scope: 'ink' },
   // Custom XML parts
-  { pattern: /customXml/i,           name: 'CustomXml Tagging',                scope: 'customXml' },
+  { pattern: /customXml/i, name: 'CustomXml Tagging', scope: 'customXml' },
   // Drawing
-  { pattern: /a14|a15|a16|drawml/i,  name: 'DrawingML Extension',              scope: 'drawing' },
+  { pattern: /a14|a15|a16|drawml/i, name: 'DrawingML Extension', scope: 'drawing' },
 ];
 
 /** Map any URI to a name + scope using the registry; fallback = unknown. */
-export function classifyExtensionUri(uri: string, ownScope?: DetectedExtension['scope']): { name: string; scope: DetectedExtension['scope'] } {
+export function classifyExtensionUri(
+  uri: string,
+  ownScope?: DetectedExtension['scope'],
+): { name: string; scope: DetectedExtension['scope'] } {
   for (const entry of EXTENSION_REGISTRY) {
     if (entry.pattern.test(uri)) return { name: entry.name, scope: ownScope || entry.scope };
   }
@@ -90,8 +97,11 @@ export function scanChartExtensions(pkg: OoxmlPackage): DetectedExtension[] {
     const view3D = doc?.['c:chartSpace']?.['c:chart']?.['c:view3D'];
     if (view3D) {
       out.push({
-        uri: 'c:view3D', name: '3D Chart View', scope: 'chart',
-        source: chartPath, rawXml: safeStringify(view3D),
+        uri: 'c:view3D',
+        name: '3D Chart View',
+        scope: 'chart',
+        source: chartPath,
+        rawXml: safeStringify(view3D),
       });
     }
 
@@ -99,10 +109,22 @@ export function scanChartExtensions(pkg: OoxmlPackage): DetectedExtension[] {
     const ser = doc?.['c:chartSpace']?.['c:chart']?.['c:plotArea'];
     walk(ser, (k, v) => {
       if (k === 'c:trendline') {
-        out.push({ uri: 'c:trendline', name: 'Chart Trendline', scope: 'chart', source: chartPath, rawXml: safeStringify(v) });
+        out.push({
+          uri: 'c:trendline',
+          name: 'Chart Trendline',
+          scope: 'chart',
+          source: chartPath,
+          rawXml: safeStringify(v),
+        });
       }
       if (k === 'c:errBars') {
-        out.push({ uri: 'c:errBars',   name: 'Chart Error Bars', scope: 'chart', source: chartPath, rawXml: safeStringify(v) });
+        out.push({
+          uri: 'c:errBars',
+          name: 'Chart Error Bars',
+          scope: 'chart',
+          source: chartPath,
+          rawXml: safeStringify(v),
+        });
       }
     });
   }
@@ -118,10 +140,19 @@ export function scanShapeAndDrawingExtensions(pkg: OoxmlPackage): DetectedExtens
     if (!doc) continue;
     walk(doc, (k, v) => {
       // 3D shape effects.
-      if (k === 'a:sp3d' || k === 'a:scene3d' || k === 'a:bevelT' || k === 'a:bevelB' || k === 'a:lightRig') {
+      if (
+        k === 'a:sp3d' ||
+        k === 'a:scene3d' ||
+        k === 'a:bevelT' ||
+        k === 'a:bevelB' ||
+        k === 'a:lightRig'
+      ) {
         out.push({
-          uri: k, name: '3D Shape Effects', scope: 'shape3d',
-          source: slidePath, rawXml: safeStringify(v),
+          uri: k,
+          name: '3D Shape Effects',
+          scope: 'shape3d',
+          source: slidePath,
+          rawXml: safeStringify(v),
         });
       }
       // Drawing extensions on shape properties.
@@ -145,8 +176,11 @@ export function scanInkAnnotations(pkg: OoxmlPackage): DetectedExtension[] {
     const xml = pkg.read(inkPath);
     if (!xml) continue;
     out.push({
-      uri: 'ppt/ink', name: 'Ink Annotation', scope: 'ink',
-      source: inkPath, rawXml: safeStringify({ length: xml.length, head: xml.slice(0, 200) }),
+      uri: 'ppt/ink',
+      name: 'Ink Annotation',
+      scope: 'ink',
+      source: inkPath,
+      rawXml: safeStringify({ length: xml.length, head: xml.slice(0, 200) }),
     });
   }
   // <a:contentPart> referencing ink ids on slides.
@@ -155,8 +189,11 @@ export function scanInkAnnotations(pkg: OoxmlPackage): DetectedExtension[] {
     walk(doc, (k, v) => {
       if (k === 'a:contentPart') {
         out.push({
-          uri: 'a:contentPart', name: 'Ink Annotation (slide reference)', scope: 'ink',
-          source: slidePath, rawXml: safeStringify(v),
+          uri: 'a:contentPart',
+          name: 'Ink Annotation (slide reference)',
+          scope: 'ink',
+          source: slidePath,
+          rawXml: safeStringify(v),
         });
       }
     });
@@ -171,8 +208,11 @@ export function scanCustomXml(pkg: OoxmlPackage): DetectedExtension[] {
     const xml = pkg.read(xmlPath);
     if (!xml) continue;
     out.push({
-      uri: 'customXml/item', name: 'CustomXml Item', scope: 'customXml',
-      source: xmlPath, rawXml: safeStringify({ length: xml.length, head: xml.slice(0, 200) }),
+      uri: 'customXml/item',
+      name: 'CustomXml Item',
+      scope: 'customXml',
+      source: xmlPath,
+      rawXml: safeStringify({ length: xml.length, head: xml.slice(0, 200) }),
     });
   }
   return out;
@@ -180,37 +220,37 @@ export function scanCustomXml(pkg: OoxmlPackage): DetectedExtension[] {
 
 /** One-shot orchestration — used by the importer + the validation script. */
 export interface LongTailReport {
-  chartExt:    number;
-  shape3D:     number;
-  drawing:     number;
-  ink:         number;
-  customXml:   number;
-  total:       number;
+  chartExt: number;
+  shape3D: number;
+  drawing: number;
+  ink: number;
+  customXml: number;
+  total: number;
   /** Top-10 individual extension records (for the UI). */
-  sample:      DetectedExtension[];
+  sample: DetectedExtension[];
 }
 
 export function scanLongTailExtensions(pkg: OoxmlPackage): LongTailReport {
-  const chart   = scanChartExtensions(pkg);
-  const shapes  = scanShapeAndDrawingExtensions(pkg);
-  const ink     = scanInkAnnotations(pkg);
-  const custom  = scanCustomXml(pkg);
+  const chart = scanChartExtensions(pkg);
+  const shapes = scanShapeAndDrawingExtensions(pkg);
+  const ink = scanInkAnnotations(pkg);
+  const custom = scanCustomXml(pkg);
 
   const all = [...chart, ...shapes, ...ink, ...custom];
   const chartExt = chart.length;
-  const shape3D  = shapes.filter((e) => e.scope === 'shape3d').length;
-  const drawing  = shapes.filter((e) => e.scope === 'drawing' || e.scope === 'unknown').length;
-  const inkN     = ink.length;
-  const customN  = custom.length;
+  const shape3D = shapes.filter((e) => e.scope === 'shape3d').length;
+  const drawing = shapes.filter((e) => e.scope === 'drawing' || e.scope === 'unknown').length;
+  const inkN = ink.length;
+  const customN = custom.length;
 
   return {
     chartExt,
     shape3D,
     drawing,
-    ink:       inkN,
+    ink: inkN,
     customXml: customN,
-    total:     all.length,
-    sample:    all.slice(0, 10),
+    total: all.length,
+    sample: all.slice(0, 10),
   };
 }
 
@@ -225,9 +265,9 @@ export function scanLongTailExtensions(pkg: OoxmlPackage): LongTailReport {
 // =============================================================================
 
 export interface PreservedExtensionPayload {
-  perSlide:  Record<string, DetectedExtension[]>;
-  perChart:  Record<string, DetectedExtension[]>;
-  perOther:  DetectedExtension[];
+  perSlide: Record<string, DetectedExtension[]>;
+  perChart: Record<string, DetectedExtension[]>;
+  perOther: DetectedExtension[];
 }
 
 export function bucketForExport(all: DetectedExtension[]): PreservedExtensionPayload {
@@ -235,9 +275,9 @@ export function bucketForExport(all: DetectedExtension[]): PreservedExtensionPay
   const perChart: Record<string, DetectedExtension[]> = {};
   const perOther: DetectedExtension[] = [];
   for (const e of all) {
-    if (e.source.startsWith('ppt/slides/'))      (perSlide[e.source] ||= []).push(e);
+    if (e.source.startsWith('ppt/slides/')) (perSlide[e.source] ||= []).push(e);
     else if (e.source.startsWith('ppt/charts/')) (perChart[e.source] ||= []).push(e);
-    else                                          perOther.push(e);
+    else perOther.push(e);
   }
   return { perSlide, perChart, perOther };
 }
@@ -245,6 +285,9 @@ export function bucketForExport(all: DetectedExtension[]): PreservedExtensionPay
 // -----------------------------------------------------------------------------
 
 function safeStringify(v: any): string {
-  try { return JSON.stringify(v); }
-  catch { return '[unserialisable extension subtree]'; }
+  try {
+    return JSON.stringify(v);
+  } catch {
+    return '[unserialisable extension subtree]';
+  }
 }

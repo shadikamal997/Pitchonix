@@ -48,13 +48,14 @@ export class VisualIntelligenceService {
       });
 
       const result = JSON.parse(completion.choices[0].message.content);
-      
+
       return {
         slideType: dto.slideType || 'general',
         charts: result.charts || [],
         layouts: result.layouts || [],
         images: result.images || [],
-        colorSuggestions: result.colorSuggestions || this.getDefaultColors(dto.context?.designStyle),
+        colorSuggestions:
+          result.colorSuggestions || this.getDefaultColors(dto.context?.designStyle),
         overallGuidance: result.overallGuidance || [],
         dosDonts: result.dosDonts || { dos: [], donts: [] },
       };
@@ -102,7 +103,8 @@ Return JSON with this structure:
         messages: [
           {
             role: 'system',
-            content: 'You are a data visualization expert who generates realistic, compelling chart data.',
+            content:
+              'You are a data visualization expert who generates realistic, compelling chart data.',
           },
           {
             role: 'user',

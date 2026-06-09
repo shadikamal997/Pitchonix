@@ -199,27 +199,27 @@ export interface QualityScoringWeights {
 export const DEFAULT_QUALITY_WEIGHTS: Record<string, QualityScoringWeights> = {
   pitch_deck: {
     content: 0.35,
-    visual: 0.30,
+    visual: 0.3,
     aiEnhancement: 0.15,
-    exportReadiness: 0.20,
+    exportReadiness: 0.2,
   },
   business_plan: {
     content: 0.45,
-    visual: 0.20,
+    visual: 0.2,
     aiEnhancement: 0.15,
-    exportReadiness: 0.20,
+    exportReadiness: 0.2,
   },
   sales_deck: {
-    content: 0.30,
+    content: 0.3,
     visual: 0.35,
     aiEnhancement: 0.15,
-    exportReadiness: 0.20,
+    exportReadiness: 0.2,
   },
   default: {
     content: 0.35,
-    visual: 0.30,
+    visual: 0.3,
     aiEnhancement: 0.15,
-    exportReadiness: 0.20,
+    exportReadiness: 0.2,
   },
 };
 

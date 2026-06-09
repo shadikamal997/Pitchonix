@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SlidesService } from './slides.service';
@@ -96,9 +87,10 @@ export class SlidesController {
   @ApiOperation({ summary: 'Apply a visual template to all slides in a deck in one request' })
   async applyTemplate(
     @Param('deckId') deckId: string,
-    @Body() body: {
+    @Body()
+    body: {
       templateId: string;
-      theme: any;
+      theme?: any;
       blueprint?: { background?: Record<string, any> };
     },
     @GetUser() user: any,

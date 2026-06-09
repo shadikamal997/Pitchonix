@@ -7,9 +7,20 @@ import {
 import { isCvSectionHeading, sanitizeCvSummaryText } from './cv-profile-sanitizer';
 
 const VALID_SECTION_KEYS = new Set<CvSectionKey>([
-  'header', 'summary', 'experience', 'education', 'skills', 'languages',
-  'projects', 'certifications', 'awards', 'publications', 'references',
-  'testimonials', 'caseStudies', 'achievements',
+  'header',
+  'summary',
+  'experience',
+  'education',
+  'skills',
+  'languages',
+  'projects',
+  'certifications',
+  'awards',
+  'publications',
+  'references',
+  'testimonials',
+  'caseStudies',
+  'achievements',
 ]);
 
 const DEFAULT_BY_DOCTYPE: Record<string, CvSectionKey[]> = {
@@ -43,7 +54,7 @@ export function sanitizeCvDocumentContent(
     issues: [],
   };
 
-  const source = (content && typeof content === 'object') ? content : {};
+  const source = content && typeof content === 'object' ? content : {};
   const next: any = { ...source };
   const defaults = DEFAULT_BY_DOCTYPE[doctype] || DEFAULT_CV_SECTION_ORDER;
 
@@ -108,7 +119,8 @@ export function sanitizeCvDocumentContent(
     }
   }
 
-  report.anyChange = report.sectionOrderFixed || report.summaryFixed || report.headerFixed || report.overridesFixed;
+  report.anyChange =
+    report.sectionOrderFixed || report.summaryFixed || report.headerFixed || report.overridesFixed;
   return { content: next as CvDocumentContent_CV, report };
 }
 

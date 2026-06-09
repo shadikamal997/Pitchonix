@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { VisualCompositionService } from './visual-composition.service';
 import { LAYOUT_RENDERERS, LayoutComponentType } from '../templates/layout-components';
 import { getTemplateConfig } from '../templates/template-configs';
+import { BrandKitService } from './brand-kit.service';
 import { ProTemplateRendererService } from '../pro-templates/renderers/pro-template-renderer.service';
 
 interface PreviewCache {
@@ -20,22 +21,19 @@ interface PreviewCache {
 
 /** Standard built-in templates that allow editorial multi-column flow */
 const EDITORIAL_STANDARD_TEMPLATES = new Set<string>([
-  'whitepaper',                 // long-form research / journal style
-  'market_research_report',     // research publication
+  'whitepaper', // long-form research / journal style
+  'market_research_report', // research publication
 ]);
 
 /** Pro templates that allow editorial multi-column flow */
 const EDITORIAL_PRO_TEMPLATES = new Set<string>([
-  'editorial-whitepaper',       // magazine-inspired long-form publishing
-  'premium-whitepaper-system',  // long-form research / technical publishing
+  'editorial-whitepaper', // magazine-inspired long-form publishing
+  'premium-whitepaper-system', // long-form research / technical publishing
 ]);
 
-function isEditorialTemplate(
-  templateType?: string,
-  proTemplateId?: string | null,
-): boolean {
+function isEditorialTemplate(templateType?: string, proTemplateId?: string | null): boolean {
   if (proTemplateId && EDITORIAL_PRO_TEMPLATES.has(proTemplateId)) return true;
-  if (templateType && EDITORIAL_STANDARD_TEMPLATES.has(templateType))  return true;
+  if (templateType && EDITORIAL_STANDARD_TEMPLATES.has(templateType)) return true;
   return false;
 }
 
@@ -49,6 +47,7 @@ export class PreviewService {
     private prisma: PrismaService,
     private visualCompositionService: VisualCompositionService,
     private proTemplateRendererService: ProTemplateRendererService,
+    private brandKitService: BrandKitService,
   ) {
     // Clean cache every minute
     setInterval(() => this.cleanCache(), 60000);
@@ -57,24 +56,14 @@ export class PreviewService {
   /**
    * Generate live preview HTML for a document (no Puppeteer)
    */
-  async generatePreview(documentId: string, useCache = true, colorScheme?: string, templateTypeOverride?: string, proTemplateId?: string | null): Promise<string> {
+  async generatePreview(
+    documentId: string,
+    useCache = true,
+    colorScheme?: string,
+    templateTypeOverride?: string,
+    proTemplateId?: string | null,
+  ): Promise<string> {
     try {
-      const cacheKey = [
-        documentId,
-        colorScheme || 'default-color',
-        templateTypeOverride || 'stored-template',
-        proTemplateId || 'basic-template',
-      ].join(':');
-
-      // Check cache first
-      if (useCache) {
-        const cached = this.getFromCache(cacheKey);
-        if (cached) {
-          this.logger.log(`Preview cache hit for document ${documentId}`);
-          return cached;
-        }
-      }
-
       this.logger.log(`Generating preview for document ${documentId}`);
 
       // Fetch document with pages
@@ -91,8 +80,31 @@ export class PreviewService {
         throw new NotFoundException('Document not found');
       }
 
+      const cacheKey = this.previewCacheKey(
+        document,
+        colorScheme,
+        templateTypeOverride,
+        proTemplateId,
+      );
+
+      // Check cache after loading document so page/content/template versions are
+      // included in the key. This prevents stale previews when an edit path
+      // forgets explicit invalidation.
+      if (useCache) {
+        const cached = this.getFromCache(cacheKey);
+        if (cached) {
+          this.logger.log(`Preview cache hit for document ${documentId}`);
+          return cached;
+        }
+      }
+
       // Generate HTML (same as export but without Puppeteer)
-      const html = await this.generatePreviewHTML(document, colorScheme, templateTypeOverride, proTemplateId);
+      const html = await this.generatePreviewHTML(
+        document,
+        colorScheme,
+        templateTypeOverride,
+        proTemplateId,
+      );
 
       // Store in cache
       this.setCache(cacheKey, html);
@@ -104,10 +116,41 @@ export class PreviewService {
     }
   }
 
+  private previewCacheKey(
+    document: any,
+    colorScheme?: string,
+    templateTypeOverride?: string,
+    proTemplateId?: string | null,
+  ): string {
+    const pageVersion = (document.pages || [])
+      .map((page: any) => `${page.id}:${new Date(page.updatedAt || 0).getTime()}`)
+      .join('|');
+    return [
+      document.id,
+      new Date(document.updatedAt || 0).getTime(),
+      pageVersion || 'no-pages',
+      colorScheme || 'default-color',
+      templateTypeOverride ||
+        document.metadata?.templateType ||
+        document.templateType ||
+        'stored-template',
+      proTemplateId ||
+        document.metadata?.proTemplateId ||
+        document.proTemplateId ||
+        'basic-template',
+      document.brandKitId || 'no-brand-kit',
+    ].join(':');
+  }
+
   /**
    * Generate preview HTML (similar to PDF export but optimized for browser)
    */
-  private async generatePreviewHTML(document: any, colorScheme?: string, templateTypeOverride?: string, proTemplateId?: string | null): Promise<string> {
+  private async generatePreviewHTML(
+    document: any,
+    colorScheme?: string,
+    templateTypeOverride?: string,
+    proTemplateId?: string | null,
+  ): Promise<string> {
     const { pages } = document;
 
     // Load the sanitizer lazily so importing the Nest app does not pull ESM
@@ -117,12 +160,26 @@ export class PreviewService {
     const safeTitle = purify.sanitize(document.title || 'Untitled Document');
 
     // Determine template and style
-    const templateType = templateTypeOverride || document.metadata?.templateType || 'modern_one_pager';
+    const templateType =
+      templateTypeOverride || document.metadata?.templateType || 'modern_one_pager';
     const templateConfig = getTemplateConfig(templateType as any);
-    const style = {
+    let style: any = {
       ...templateConfig.style,
       ...(colorScheme ? { colorScheme } : {}),
     };
+
+    // Phase Ω.2 (P1#8) — apply the brand kit so the editor preview matches the
+    // branded export. Explicit colorScheme override still wins.
+    if (document.brandKitId && !colorScheme) {
+      try {
+        const kit = await this.brandKitService.getBrandKit(undefined, document.brandKitId);
+        style = this.brandKitService.applyBrandKitToStyle(style, kit);
+      } catch (e: any) {
+        this.logger.warn?.(
+          `Brand kit ${document.brandKitId} could not be applied to preview: ${e?.message}`,
+        );
+      }
+    }
 
     // Check if visual document
     const isVisualDocument = this.isVisualDocumentType(document.documentType);
@@ -132,12 +189,23 @@ export class PreviewService {
     const useProTemplate = this.proTemplateRendererService.canRender(proTemplateId);
 
     if (useProTemplate) {
-      pagesHTML = this.proTemplateRendererService.renderDocument(document, proTemplateId!, 'preview');
+      pagesHTML = this.proTemplateRendererService.renderDocument(
+        document,
+        proTemplateId!,
+        'preview',
+      );
     } else if (isVisualDocument) {
       pagesHTML = await this.generateVisualPages(pages, style, purify, document.metadata);
     } else {
       const allowEditorial = isEditorialTemplate(templateType, proTemplateId);
-      pagesHTML = this.generateStructuredPages(pages, style, purify, document, allowEditorial);
+      pagesHTML = this.generateStructuredPages(
+        pages,
+        style,
+        purify,
+        document,
+        allowEditorial,
+        templateConfig,
+      );
     }
 
     // Complete HTML with preview-optimized styles — each page is its own A4 container
@@ -337,13 +405,18 @@ export class PreviewService {
   /**
    * Generate visual pages using visual composition service
    */
-  private async generateVisualPages(pages: any[], style: any, purify: any, metadata: any): Promise<string> {
+  private async generateVisualPages(
+    pages: any[],
+    style: any,
+    purify: any,
+    metadata: any,
+  ): Promise<string> {
     let html = '';
 
     for (let i = 0; i < pages.length; i++) {
       const page = pages[i];
       const content = page.content as any;
-      
+
       // Determine composition config
       const compositionConfig = {
         layoutType: content.layoutType || metadata?.layoutType || 'hero',
@@ -355,7 +428,7 @@ export class PreviewService {
 
       // Convert markdown to HTML and sanitize
       const bodyHtml = this.convertMarkdownToHtml(content.text || '');
-      
+
       // Generate visual layout
       const visualLayout = this.visualCompositionService.generateVisualLayout(
         {
@@ -392,21 +465,89 @@ export class PreviewService {
    *                       For ALL other templates this is forced false → every
    *                       bucket renders as a single vertically-stacked column.
    */
-  private generateStructuredPages(pages: any[], style: any, purify: any, document?: any, allowEditorial: boolean = false): string {
+  // Phase Ω.2 — same template-driven prose body selection as the exporter, so
+  // the editor preview and the exported PDF use the same body composition.
+  private pickProseBody(templateConfig?: any): 'two_column' | 'text' | 'card' {
+    const layouts: LayoutComponentType[] = templateConfig?.layouts || [];
+    if (layouts.includes(LayoutComponentType.TWO_COLUMN_LAYOUT)) return 'two_column';
+    if (
+      layouts.includes(LayoutComponentType.TEXT_BLOCK) &&
+      !layouts.includes(LayoutComponentType.SECTION_CARD)
+    )
+      return 'text';
+    return 'card';
+  }
+
+  private splitHtmlForColumns(html: string): [string, string] {
+    const blocks = html
+      .split(/(?<=<\/(?:p|div|h[1-6]|ul|ol|table|blockquote)>)/i)
+      .filter((b) => b.trim());
+    if (blocks.length <= 1) return [html, ''];
+    const mid = Math.ceil(blocks.length / 2);
+    return [blocks.slice(0, mid).join(''), blocks.slice(mid).join('')];
+  }
+
+  private composeContentBody(
+    proseBody: 'two_column' | 'text' | 'card',
+    title: string,
+    innerHtml: string,
+    style: any,
+  ): string {
+    if (proseBody === 'two_column') {
+      const [left, right] = this.splitHtmlForColumns(innerHtml);
+      const heading = title
+        ? `<h2 style="font-size:22px;font-weight:700;color:${style.primaryColor || '#111827'};margin:0 0 16px;">${title}</h2>`
+        : '';
+      return (
+        heading +
+        LAYOUT_RENDERERS[LayoutComponentType.TWO_COLUMN_LAYOUT].render({ left, right }, style)
+      );
+    }
+    if (proseBody === 'text') {
+      const heading = title
+        ? `<h2 style="font-size:22px;font-weight:700;color:${style.primaryColor || '#111827'};margin:0 0 16px;border-bottom:2px solid ${style.primaryColor || '#2563EB'};padding-bottom:8px;">${title}</h2>`
+        : '';
+      return (
+        heading +
+        LAYOUT_RENDERERS[LayoutComponentType.TEXT_BLOCK].render({ content: innerHtml }, style)
+      );
+    }
+    return LAYOUT_RENDERERS[LayoutComponentType.SECTION_CARD].render(
+      { title, content: innerHtml },
+      style,
+    );
+  }
+
+  private generateStructuredPages(
+    pages: any[],
+    style: any,
+    purify: any,
+    document?: any,
+    allowEditorial: boolean = false,
+    templateConfig?: any,
+  ): string {
     const hasCoverPage = pages.some((p: any) => p.pageType === 'cover');
     const parts: string[] = [];
     let firstContentPage = true;
+    const proseBody = this.pickProseBody(templateConfig);
 
     const TARGET_WORDS = 420; // desired words per A4 content page
-    const MIN_WORDS    = 40;  // pages below this are skipped (blank-page guard)
-    const primary      = style?.primaryColor || '#2563EB';
+    const MIN_WORDS = 40; // used for bucket sizing only; short pages still render
+    const primary = style?.primaryColor || '#2563EB';
 
     // ── Step 1: bin pages into display buckets ──────────────────────────────
     // Cover / TOC → one special bucket each (order preserved).
     // Content pages → accumulated into content buckets until TARGET_WORDS.
 
-    interface SpecialBucket { kind: 'special'; page: any }
-    interface ContentBucket { kind: 'content'; pages: any[]; words: number }
+    interface SpecialBucket {
+      kind: 'special';
+      page: any;
+    }
+    interface ContentBucket {
+      kind: 'content';
+      pages: any[];
+      words: number;
+    }
     type Bucket = SpecialBucket | ContentBucket;
 
     const buckets: Bucket[] = [];
@@ -430,9 +571,13 @@ export class PreviewService {
 
       const rawText: string = String(page.content?.text || '');
       const wordCount = rawText.split(/\s+/).filter(Boolean).length;
-      const hasVisual = !!(page.content?.charts?.length || page.content?.heroImage || page.content?.image);
+      const hasVisual = !!(
+        page.content?.charts?.length ||
+        page.content?.heroImage ||
+        page.content?.image
+      );
 
-      if (wordCount < MIN_WORDS && !hasVisual) continue; // skip near-empty pages
+      if (wordCount === 0 && !hasVisual) continue; // skip only truly empty pages
 
       if (!current) current = { kind: 'content', pages: [], words: 0 };
 
@@ -451,13 +596,12 @@ export class PreviewService {
 
     // ── Step 2: count total display pages for footer ────────────────────────
     const totalDisplayPages = buckets.filter(
-      b => b.kind !== 'special' || (b as SpecialBucket).page.pageType !== 'toc',
+      (b) => b.kind !== 'special' || (b as SpecialBucket).page.pageType !== 'toc',
     ).length;
     let displayIndex = 0;
 
     // ── Step 3: render each bucket as one A4 page ───────────────────────────
     for (const bucket of buckets) {
-
       // ── Special pages (cover / TOC) ───────────────────────────────────────
       if (bucket.kind === 'special') {
         const page = (bucket as SpecialBucket).page;
@@ -469,12 +613,20 @@ export class PreviewService {
           const tocHtml = tocContent
             .split('\n')
             .filter((l: string) => l.trim())
-            .map((l: string) => `<div style="padding:6px 0;border-bottom:1px dotted #E5E7EB;font-size:14px;color:#374151;">${purify.sanitize(l)}</div>`)
+            .map(
+              (l: string) =>
+                `<div style="padding:6px 0;border-bottom:1px dotted #E5E7EB;font-size:14px;color:#374151;">${purify.sanitize(l)}</div>`,
+            )
             .join('');
 
           const footerHTML = document
             ? LAYOUT_RENDERERS[LayoutComponentType.FOOTER_BLOCK].render(
-                { companyName: document.metadata?.companyName || '', contact: document.metadata?.contact || '', pageNumber: displayIndex + 1, totalPages: totalDisplayPages },
+                {
+                  companyName: document.metadata?.companyName || '',
+                  contact: document.metadata?.contact || '',
+                  pageNumber: displayIndex + 1,
+                  totalPages: totalDisplayPages,
+                },
                 style,
               )
             : '';
@@ -490,37 +642,51 @@ export class PreviewService {
 
         if (page.pageType === 'cover') {
           let coverData: any = {};
-          try { coverData = JSON.parse(String(page.content?.text || '{}')); } catch (_) {
+          try {
+            coverData = JSON.parse(String(page.content?.text || '{}'));
+          } catch (_) {
             coverData = { title: page.title || document?.title || '' };
           }
           const coverHtml = LAYOUT_RENDERERS[LayoutComponentType.COVER_PAGE].render(
             {
-              title:       purify.sanitize(document?.title || coverData.title || page.title || ''),
-              subtitle:    purify.sanitize(coverData.subtitle || document?.outline?.detectedType || ''),
+              title: purify.sanitize(document?.title || coverData.title || page.title || ''),
+              subtitle: purify.sanitize(
+                coverData.subtitle || document?.outline?.detectedType || '',
+              ),
               description: purify.sanitize(coverData.description || coverData.summary || ''),
-              overview:    Array.isArray(coverData.overview)
+              overview: Array.isArray(coverData.overview)
                 ? coverData.overview.map((item: string) => purify.sanitize(item))
                 : [],
-              date: purify.sanitize(coverData.date || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })),
+              date: purify.sanitize(
+                coverData.date ||
+                  new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  }),
+              ),
             },
             style,
           );
           const coverPlacedImgs = ((page.content?.placedImages as any[] | undefined) || [])
             .filter((img: any) => img?.url)
             .map((img: any) => {
-              const x  = Math.max(0, Math.min(100, Number(img.x)  || 0));
-              const y  = Math.max(0, Math.min(100, Number(img.y)  || 0));
-              const w  = Math.max(5, Math.min(100, Number(img.width)  || 50));
-              const h  = Math.max(5, Math.min(100, Number(img.height) || 30));
-              const z  = Math.max(1, Math.min(50,  Number(img.zIndex) || 2));
+              const x = Math.max(0, Math.min(100, Number(img.x) || 0));
+              const y = Math.max(0, Math.min(100, Number(img.y) || 0));
+              const w = Math.max(5, Math.min(100, Number(img.width) || 50));
+              const h = Math.max(5, Math.min(100, Number(img.height) || 30));
+              const z = Math.max(1, Math.min(50, Number(img.zIndex) || 2));
               const op = Math.max(0.05, Math.min(1, Number(img.opacity) || 1));
               const fit = ['cover', 'contain', 'fill'].includes(img.fit) ? img.fit : 'cover';
               const safeUrl = purify.sanitize(String(img.url));
               return `<div style="position:absolute;left:${x}%;top:${y}%;width:${w}%;height:${h}%;z-index:${z};pointer-events:none;overflow:hidden;border-radius:3px;">
                 <img src="${safeUrl}" alt="" style="width:100%;height:100%;object-fit:${fit};opacity:${op};display:block;" />
               </div>`;
-            }).join('');
-          parts.push(`<div class="a4-page" style="padding:0;position:relative;">${coverHtml}${coverPlacedImgs}</div>`);
+            })
+            .join('');
+          parts.push(
+            `<div class="a4-page" style="padding:0;position:relative;">${coverHtml}${coverPlacedImgs}</div>`,
+          );
           displayIndex++;
           continue;
         }
@@ -532,15 +698,16 @@ export class PreviewService {
 
       for (let i = 0; i < cb.pages.length; i++) {
         const pg = cb.pages[i];
-        const htmlContent = pg.content?.html || this.convertMarkdownToHtml(String(pg.content?.text || ''));
+        const htmlContent =
+          pg.content?.html || this.convertMarkdownToHtml(String(pg.content?.text || ''));
         const safeContent = purify.sanitize(htmlContent);
-        const pgTitle     = purify.sanitize(pg.title || '');
-        const textStyles  = this.buildTextStyle(pg.content?.styles || {});
-        const imageUrl    = pg.content?.heroImage || pg.content?.image || '';
-        const imageHtml   = imageUrl
+        const pgTitle = purify.sanitize(pg.title || '');
+        const textStyles = this.buildTextStyle(pg.content?.styles || {});
+        const imageUrl = pg.content?.heroImage || pg.content?.image || '';
+        const imageHtml = imageUrl
           ? `<div style="margin:12px 0;border-radius:8px;overflow:hidden;max-height:180px;"><img src="${purify.sanitize(imageUrl)}" alt="" style="width:100%;height:180px;object-fit:cover;display:block;" /></div>`
           : '';
-        const chartsHtml  = this.renderChartsHtml(pg.content?.charts || [], style);
+        const chartsHtml = this.renderChartsHtml(pg.content?.charts || [], style);
 
         // When multiple DB pages are merged into one A4, show each page's title
         // as a section sub-header (except the first page, whose title becomes the card title)
@@ -553,20 +720,21 @@ export class PreviewService {
 
       const primaryTitle = purify.sanitize(cb.pages[0]?.title || '');
 
-      const headerHTML = firstContentPage && document && !hasCoverPage
-        ? LAYOUT_RENDERERS[LayoutComponentType.HERO_HEADER].render(
-            { title: document.title, description: document.outline?.detectedType || '' },
-            style,
-          )
-        : '';
+      const headerHTML =
+        firstContentPage && document && !hasCoverPage
+          ? LAYOUT_RENDERERS[LayoutComponentType.HERO_HEADER].render(
+              { title: document.title, description: document.outline?.detectedType || '' },
+              style,
+            )
+          : '';
 
       const footerHTML = document
         ? LAYOUT_RENDERERS[LayoutComponentType.FOOTER_BLOCK].render(
             {
               companyName: document.metadata?.companyName || '',
-              contact:     document.metadata?.contact || '',
-              pageNumber:  displayIndex + 1,
-              totalPages:  totalDisplayPages,
+              contact: document.metadata?.contact || '',
+              pageNumber: displayIndex + 1,
+              totalPages: totalDisplayPages,
             },
             style,
           )
@@ -578,25 +746,27 @@ export class PreviewService {
       const bucketLayout = allowEditorial
         ? this.detectBucketLayout(combinedContent, cb.words)
         : 'single';
-      const layoutContent = bucketLayout === 'two-column'
-        ? `<div class="layout-two-col">${combinedContent}</div>`
-        : combinedContent;
+      const layoutContent =
+        bucketLayout === 'two-column'
+          ? `<div class="layout-two-col">${combinedContent}</div>`
+          : combinedContent;
 
-      const sectionCard = LAYOUT_RENDERERS[LayoutComponentType.SECTION_CARD].render(
-        { title: primaryTitle, content: layoutContent },
-        style,
-      );
+      // Template's two-column wins; otherwise honour the editorial detection.
+      const sectionCard =
+        proseBody === 'two_column'
+          ? this.composeContentBody('two_column', primaryTitle, combinedContent, style)
+          : this.composeContentBody(proseBody, primaryTitle, layoutContent, style);
 
       // Render placed images from all pages in this content bucket as absolute overlays
       const placedImagesHtml = cb.pages
         .flatMap((pg: any) => (pg.content?.placedImages as any[] | undefined) || [])
         .filter((img: any) => img?.url)
         .map((img: any) => {
-          const x  = Math.max(0, Math.min(100, Number(img.x)      || 0));
-          const y  = Math.max(0, Math.min(100, Number(img.y)      || 0));
-          const w  = Math.max(5, Math.min(100, Number(img.width)  || 50));
-          const h  = Math.max(5, Math.min(100, Number(img.height) || 30));
-          const z  = Math.max(1, Math.min(50,  Number(img.zIndex) || 2));
+          const x = Math.max(0, Math.min(100, Number(img.x) || 0));
+          const y = Math.max(0, Math.min(100, Number(img.y) || 0));
+          const w = Math.max(5, Math.min(100, Number(img.width) || 50));
+          const h = Math.max(5, Math.min(100, Number(img.height) || 30));
+          const z = Math.max(1, Math.min(50, Number(img.zIndex) || 2));
           const op = Math.max(0.05, Math.min(1, Number(img.opacity) || 1));
           const fit = ['cover', 'contain', 'fill'].includes(img.fit) ? img.fit : 'cover';
           const safeUrl = purify.sanitize(String(img.url));
@@ -606,7 +776,9 @@ export class PreviewService {
         })
         .join('');
 
-      parts.push(`<div class="a4-page" style="position:relative;">${headerHTML}${sectionCard}${footerHTML}${placedImagesHtml}</div>`);
+      parts.push(
+        `<div class="a4-page" style="position:relative;">${headerHTML}${sectionCard}${footerHTML}${placedImagesHtml}</div>`,
+      );
       displayIndex++;
       firstContentPage = false;
     }
@@ -618,11 +790,11 @@ export class PreviewService {
    * Detect optimal layout for a content bucket based on its HTML and word count.
    */
   private detectBucketLayout(html: string, wordCount: number): 'single' | 'two-column' {
-    const liCount       = (html.match(/<li\b/gi)  || []).length;
-    const paraCount     = (html.match(/<p\b/gi)   || []).length;
-    const headingCount  = (html.match(/<h[2-4]\b/gi) || []).length;
-    const hasTable      = /<table\b/i.test(html);
-    const hasChart      = /chart-block|<svg\b/i.test(html);
+    const liCount = (html.match(/<li\b/gi) || []).length;
+    const paraCount = (html.match(/<p\b/gi) || []).length;
+    const headingCount = (html.match(/<h[2-4]\b/gi) || []).length;
+    const hasTable = /<table\b/i.test(html);
+    const hasChart = /chart-block|<svg\b/i.test(html);
 
     // Don't split pages that contain tables or charts across columns — they render badly
     if (hasTable || hasChart) return 'single';
@@ -638,12 +810,17 @@ export class PreviewService {
 
   private buildTextStyle(styles: Record<string, any>): string {
     const rules: string[] = [];
-    if (styles.fontFamily) rules.push(`font-family:${String(styles.fontFamily).replace(/[;"<>]/g, '')}`);
-    if (styles.fontSize) rules.push(`font-size:${Math.max(10, Math.min(32, Number(styles.fontSize) || 16))}px`);
-    if (styles.lineHeight) rules.push(`line-height:${Math.max(1.1, Math.min(2.2, Number(styles.lineHeight) || 1.6))}`);
+    if (styles.fontFamily)
+      rules.push(`font-family:${String(styles.fontFamily).replace(/[;"<>]/g, '')}`);
+    if (styles.fontSize)
+      rules.push(`font-size:${Math.max(10, Math.min(32, Number(styles.fontSize) || 16))}px`);
+    if (styles.lineHeight)
+      rules.push(`line-height:${Math.max(1.1, Math.min(2.2, Number(styles.lineHeight) || 1.6))}`);
     if (styles.color && /^#[0-9a-f]{6}$/i.test(styles.color)) rules.push(`color:${styles.color}`);
-    if (['left', 'center', 'right', 'justify'].includes(styles.textAlign)) rules.push(`text-align:${styles.textAlign}`);
-    if (['400', '500', '600', '700', 400, 500, 600, 700].includes(styles.fontWeight)) rules.push(`font-weight:${styles.fontWeight}`);
+    if (['left', 'center', 'right', 'justify'].includes(styles.textAlign))
+      rules.push(`text-align:${styles.textAlign}`);
+    if (['400', '500', '600', '700', 400, 500, 600, 700].includes(styles.fontWeight))
+      rules.push(`font-weight:${styles.fontWeight}`);
     if (styles.fontStyle === 'italic') rules.push('font-style:italic');
     if (styles.textDecoration === 'underline') rules.push('text-decoration:underline');
     return rules.join(';');
@@ -655,7 +832,7 @@ export class PreviewService {
   private renderChartsHtml(charts: any[], style: any): string {
     if (!charts || charts.length === 0) return '';
     const primary = style?.primaryColor || '#2563EB';
-    const chartHtmlList = charts.map(chart => {
+    const chartHtmlList = charts.map((chart) => {
       if (!chart || !chart.data?.length) return '';
       const title = chart.title || '';
       const color = chart.color || primary;
@@ -663,38 +840,50 @@ export class PreviewService {
       const max = Math.max(...data.map((d: any) => Number(d.value) || 0), 1);
 
       if (chart.type === 'kpi') {
-        const cells = data.slice(0, 6).map(d =>
-          `<div style="background:${color}15;border-radius:8px;padding:10px 14px;text-align:center;min-width:80px;">
+        const cells = data
+          .map(
+            (d) =>
+              `<div style="background:${color}15;border-radius:8px;padding:10px 14px;text-align:center;min-width:80px;">
             <div style="font-size:22px;font-weight:800;color:${color};">${d.value}</div>
             <div style="font-size:10px;color:#6B7280;margin-top:2px;">${d.label}</div>
-          </div>`
-        ).join('');
+          </div>`,
+          )
+          .join('');
         return `<div style="margin:16px 0;">
           ${title ? `<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;">${title}</div>` : ''}
           <div style="display:flex;flex-wrap:wrap;gap:8px;">${cells}</div>
+          ${this.renderChartDataAppendix(data, 'KPI data')}
         </div>`;
       }
 
       if (chart.type === 'pie') {
-        const COLORS = ['#2563EB','#7C3AED','#059669','#EA580C','#DB2777','#0D9488'];
+        const COLORS = ['#2563EB', '#7C3AED', '#059669', '#EA580C', '#DB2777', '#0D9488'];
         const total = data.reduce((s: number, d: any) => s + (Number(d.value) || 0), 0) || 1;
         let angle = 0;
-        const slices = data.map((d: any, i: number) => {
-          const slice = (Number(d.value) / total) * 360;
-          const start = angle; angle += slice;
-          const startR = (start * Math.PI) / 180;
-          const endR = ((start + slice) * Math.PI) / 180;
-          const x1 = 50 + 40 * Math.cos(startR); const y1 = 50 + 40 * Math.sin(startR);
-          const x2 = 50 + 40 * Math.cos(endR);   const y2 = 50 + 40 * Math.sin(endR);
-          const large = slice > 180 ? 1 : 0;
-          return `<path d="M50 50 L${x1} ${y1} A40 40 0 ${large} 1 ${x2} ${y2} Z" fill="${COLORS[i % COLORS.length]}" opacity="0.85"/>`;
-        }).join('');
-        const legend = data.slice(0, 6).map((d: any, i: number) =>
-          `<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#374151;">
+        const slices = data
+          .map((d: any, i: number) => {
+            const slice = (Number(d.value) / total) * 360;
+            const start = angle;
+            angle += slice;
+            const startR = (start * Math.PI) / 180;
+            const endR = ((start + slice) * Math.PI) / 180;
+            const x1 = 50 + 40 * Math.cos(startR);
+            const y1 = 50 + 40 * Math.sin(startR);
+            const x2 = 50 + 40 * Math.cos(endR);
+            const y2 = 50 + 40 * Math.sin(endR);
+            const large = slice > 180 ? 1 : 0;
+            return `<path d="M50 50 L${x1} ${y1} A40 40 0 ${large} 1 ${x2} ${y2} Z" fill="${COLORS[i % COLORS.length]}" opacity="0.85"/>`;
+          })
+          .join('');
+        const legend = data
+          .map(
+            (d: any, i: number) =>
+              `<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#374151;">
             <div style="width:8px;height:8px;border-radius:2px;background:${COLORS[i % COLORS.length]};flex-shrink:0;"></div>
             ${d.label} (${d.value})
-          </div>`
-        ).join('');
+          </div>`,
+          )
+          .join('');
         return `<div style="margin:16px 0;">
           ${title ? `<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;">${title}</div>` : ''}
           <div style="display:flex;align-items:center;gap:20px;">
@@ -702,30 +891,62 @@ export class PreviewService {
               ${slices}
               <circle cx="50" cy="50" r="18" fill="white"/>
             </svg>
-            <div style="display:flex;flex-direction:column;gap:4px;">${legend}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:4px 10px;flex:1;">${legend}</div>
           </div>
+          ${this.renderChartDataAppendix(data, 'Pie chart data')}
         </div>`;
       }
 
       // Bar or Line — render as bar chart SVG
       const barW = Math.max(12, Math.floor(280 / data.length) - 4);
       const chartH = 80;
-      const bars = data.map((d: any, i: number) => {
-        const h = Math.round((Number(d.value) / max) * chartH);
-        const x = i * (barW + 4);
-        const y = chartH - h;
-        return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="${color}" opacity="0.82"/>
+      const bars = data
+        .map((d: any, i: number) => {
+          const h = Math.round((Number(d.value) / max) * chartH);
+          const x = i * (barW + 4);
+          const y = chartH - h;
+          return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="${color}" opacity="0.82"/>
           <text x="${x + barW / 2}" y="${chartH + 12}" text-anchor="middle" font-size="8" fill="#6B7280">${d.label}</text>
           <text x="${x + barW / 2}" y="${y - 3}" text-anchor="middle" font-size="8" fill="${color}" font-weight="600">${d.value}</text>`;
-      }).join('');
+        })
+        .join('');
       const svgW = data.length * (barW + 4);
 
       return `<div style="margin:16px 0;">
         ${title ? `<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;">${title}</div>` : ''}
         <svg viewBox="0 0 ${svgW} ${chartH + 20}" width="${Math.min(svgW, 380)}" height="${chartH + 20}" style="overflow:visible;">${bars}</svg>
+        ${this.renderChartDataAppendix(data, 'Chart data')}
       </div>`;
     });
     return chartHtmlList.join('');
+  }
+
+  private renderChartDataAppendix(
+    data: Array<{ label: string; value: number }>,
+    heading: string,
+  ): string {
+    if (!Array.isArray(data) || data.length === 0) return '';
+    const rows = data
+      .map(
+        (d, index) => `
+      <tr>
+        <td style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;color:#374151;">${index + 1}</td>
+        <td style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;color:#374151;">${d.label}</td>
+        <td style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;color:#374151;">${d.value}</td>
+      </tr>`,
+      )
+      .join('');
+    return `<div class="chart-overflow-data" data-overflow-nodes="${data.length}" style="margin-top:10px;break-inside:avoid;">
+      <div style="font-size:9px;font-weight:700;color:#6B7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;">${heading}</div>
+      <table style="width:100%;border-collapse:collapse;table-layout:auto;">
+        <thead><tr>
+          <th style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;text-align:left;">#</th>
+          <th style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;text-align:left;">Label</th>
+          <th style="padding:4px 6px;border:1px solid #E5E7EB;font-size:9px;text-align:left;">Value</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
   }
 
   /**
@@ -819,7 +1040,9 @@ export class PreviewService {
 }
 
 async function createPurifier(): Promise<{ sanitize: (value: any) => string }> {
-  const nativeImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+  const nativeImport = new Function('specifier', 'return import(specifier)') as (
+    specifier: string,
+  ) => Promise<any>;
   const [domPurifyModule, jsdomModule] = await Promise.all([
     nativeImport('dompurify'),
     nativeImport('jsdom'),
@@ -843,7 +1066,10 @@ function basicMarkdownToHtml(markdown: string): string {
   return escaped
     .split(/\n{2,}/)
     .map((block) => {
-      const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+      const lines = block
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
       if (!lines.length) return '';
       if (lines.every((line) => /^[-*]\s+/.test(line))) {
         return `<ul>${lines.map((line) => `<li>${line.replace(/^[-*]\s+/, '')}</li>`).join('')}</ul>`;

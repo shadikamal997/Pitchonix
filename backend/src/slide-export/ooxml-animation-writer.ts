@@ -31,18 +31,18 @@ import type { SlideElementDTO } from '../slides/element-types';
 // =============================================================================
 
 interface AnimDef {
-  id:        string;
-  effect:    string;
-  duration:  number;
-  delay:     number;
-  order:     number;
+  id: string;
+  effect: string;
+  duration: number;
+  delay: number;
+  order: number;
   direction?: string;
-  trigger?:   string;
+  trigger?: string;
   // Phase 38.2D additions
   /** 'entr' (entry), 'exit', 'emph' (emphasis), 'path' (motion). */
-  class?:    'entr' | 'exit' | 'emph' | 'path';
+  class?: 'entr' | 'exit' | 'emph' | 'path';
   /** Repeat count (0 = once). For "until-end-of-slide" use 'indefinite'. */
-  repeat?:   number | 'indefinite';
+  repeat?: number | 'indefinite';
   /** Paragraph-level mask (true → animate text by paragraph). */
   byParagraph?: boolean;
   /** Motion path SVG-like commands: 'M0,0 L50,30 …' in percent of slide. */
@@ -51,7 +51,7 @@ interface AnimDef {
 
 interface InjectedSlide {
   /** 1-based numbering — matches `ppt/slides/slideN.xml`. */
-  number:     number;
+  number: number;
   animations: { spId: string; def: AnimDef }[];
   transition?: NonNullable<RenderSlideInput['transition']>;
 }
@@ -69,10 +69,14 @@ interface InjectedSlide {
  */
 export function postProcessAnimations(buffer: Buffer, slides: RenderSlideInput[]): Buffer {
   let zip: AdmZip;
-  try { zip = new AdmZip(buffer); }
-  catch { return buffer; }
+  try {
+    zip = new AdmZip(buffer);
+  } catch {
+    return buffer;
+  }
 
-  const slideEntries = zip.getEntries()
+  const slideEntries = zip
+    .getEntries()
     .filter((e) => /^ppt\/slides\/slide\d+\.xml$/.test(e.entryName))
     .sort((a, b) => numFor(a.entryName) - numFor(b.entryName));
 
@@ -82,14 +86,14 @@ export function postProcessAnimations(buffer: Buffer, slides: RenderSlideInput[]
     const xml0 = entry.getData().toString('utf8');
 
     const job: InjectedSlide = {
-      number:     i + 1,
+      number: i + 1,
       animations: collectAnimations(slide.elements || []),
       transition: slide.transition || undefined,
     };
 
     let xml = xml0;
     if (job.animations.length > 0) xml = injectTiming(xml, job);
-    if (job.transition)            xml = replaceTransition(xml, job.transition);
+    if (job.transition) xml = replaceTransition(xml, job.transition);
     // Phase 38.4C — re-emit preserved long-tail extensions so the imported
     // deck round-trips lossless. We append an HTML comment marker each blob
     // so debugging is easy; PowerPoint ignores XML comments inside extLst.
@@ -101,8 +105,9 @@ export function postProcessAnimations(buffer: Buffer, slides: RenderSlideInput[]
     }
 
     if (xml !== xml0) {
-      try { zip.updateFile(entry.entryName, Buffer.from(xml, 'utf8')); }
-      catch (e: any) {
+      try {
+        zip.updateFile(entry.entryName, Buffer.from(xml, 'utf8'));
+      } catch (e: any) {
         // eslint-disable-next-line no-console
         console.warn(`[ooxml-anim] failed to patch ${entry.entryName}: ${e?.message}`);
       }
@@ -140,7 +145,9 @@ function collectAnimations(elements: SlideElementDTO[]): { spId: string; def: An
 /** Synthesise a spid we can target in <p:tgtEl><p:spTgt spid="…">. */
 function shapeIdFor(el: SlideElementDTO, fallback: number): string {
   // pptxgenjs uses numeric ids; we re-derive a stable one from element id.
-  const m = String(el.id || '').replace(/\D/g, '').slice(0, 6);
+  const m = String(el.id || '')
+    .replace(/\D/g, '')
+    .slice(0, 6);
   return m ? String(parseInt(m, 10)) : String(fallback);
 }
 
@@ -177,13 +184,21 @@ function buildTiming(job: InjectedSlide): string {
 }
 
 function buildPar(spId: string, def: AnimDef): string {
-  const cls    = def.class || 'entr';
+  const cls = def.class || 'entr';
   const preset = pickPreset(def.effect, def.direction, cls);
-  const dur    = Math.max(1, Math.round(def.duration || 500));
-  const delay  = Math.max(0, Math.round(def.delay || 0));
-  const click  = def.trigger === 'with_previous' || def.trigger === 'after_previous' ? 'withEffect' : 'clickEffect';
-  const rcAttr = def.repeat === 'indefinite' ? ` repeatCount="indefinite"` : (def.repeat && def.repeat > 0 ? ` repeatCount="${Math.round(def.repeat * 1000)}"` : '');
-  const tgt    = def.byParagraph
+  const dur = Math.max(1, Math.round(def.duration || 500));
+  const delay = Math.max(0, Math.round(def.delay || 0));
+  const click =
+    def.trigger === 'with_previous' || def.trigger === 'after_previous'
+      ? 'withEffect'
+      : 'clickEffect';
+  const rcAttr =
+    def.repeat === 'indefinite'
+      ? ` repeatCount="indefinite"`
+      : def.repeat && def.repeat > 0
+        ? ` repeatCount="${Math.round(def.repeat * 1000)}"`
+        : '';
+  const tgt = def.byParagraph
     ? `<p:tgtEl><p:spTgt spid="${spId}"><p:txEl><p:pRg st="0" end="9999" /></p:txEl></p:spTgt></p:tgtEl>`
     : `<p:tgtEl><p:spTgt spid="${spId}" /></p:tgtEl>`;
 
@@ -295,47 +310,71 @@ function buildPar(spId: string, def: AnimDef): string {
 }
 
 function escapeAttr(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
-function pickPreset(effect: string, direction?: string, cls?: 'entr' | 'exit' | 'emph' | 'path'): { id: number; subtype: number } {
+function pickPreset(
+  effect: string,
+  direction?: string,
+  cls?: 'entr' | 'exit' | 'emph' | 'path',
+): { id: number; subtype: number } {
   const dirSub = direction === 'top' ? 1 : direction === 'right' ? 8 : direction === 'left' ? 4 : 2;
 
   // Phase 38.2D — exit presets share IDs with their entry counterparts in PowerPoint.
   if (cls === 'exit') {
     switch (effect) {
-      case 'fade':    return { id: 10, subtype: 0 };
-      case 'flyOut':  return { id: 2,  subtype: dirSub };
-      case 'zoomOut': return { id: 23, subtype: 0 };
-      case 'wipeOut': return { id: 22, subtype: dirSub };
-      default:        return { id: 10, subtype: 0 };
+      case 'fade':
+        return { id: 10, subtype: 0 };
+      case 'flyOut':
+        return { id: 2, subtype: dirSub };
+      case 'zoomOut':
+        return { id: 23, subtype: 0 };
+      case 'wipeOut':
+        return { id: 22, subtype: dirSub };
+      default:
+        return { id: 10, subtype: 0 };
     }
   }
 
   // Phase 38.2D — emphasis presets.
   if (cls === 'emph') {
     switch (effect) {
-      case 'pulse':       return { id: 9,  subtype: 0 };
-      case 'colorChange': return { id: 32, subtype: 0 };
-      case 'spin':        return { id: 8,  subtype: 0 };
-      default:            return { id: 9,  subtype: 0 };
+      case 'pulse':
+        return { id: 9, subtype: 0 };
+      case 'colorChange':
+        return { id: 32, subtype: 0 };
+      case 'spin':
+        return { id: 8, subtype: 0 };
+      default:
+        return { id: 9, subtype: 0 };
     }
   }
 
   // Phase 38.2D — motion-path presets (custom uses ID 64).
   if (cls === 'path') {
-    return { id: 64, subtype: 0 };   // custom path
+    return { id: 64, subtype: 0 }; // custom path
   }
 
   // Entry (default).
   switch (effect) {
-    case 'fade':   return { id: 10, subtype: 0 };
-    case 'appear': return { id: 1,  subtype: 0 };
-    case 'flyIn':  return { id: 2,  subtype: dirSub };
-    case 'zoom':   return { id: 23, subtype: 0 };
-    case 'grow':   return { id: 6,  subtype: 0 };
-    case 'wipe':   return { id: 22, subtype: dirSub };
-    default:       return { id: 10, subtype: 0 };
+    case 'fade':
+      return { id: 10, subtype: 0 };
+    case 'appear':
+      return { id: 1, subtype: 0 };
+    case 'flyIn':
+      return { id: 2, subtype: dirSub };
+    case 'zoom':
+      return { id: 23, subtype: 0 };
+    case 'grow':
+      return { id: 6, subtype: 0 };
+    case 'wipe':
+      return { id: 22, subtype: dirSub };
+    default:
+      return { id: 10, subtype: 0 };
   }
 }
 
@@ -363,12 +402,23 @@ function buildTransition(t: NonNullable<RenderSlideInput['transition']>): string
   //   <p:morph option="byObject"/>  — morph (PowerPoint 2016+)
   let inner = '';
   switch (t.effect) {
-    case 'fade':   inner = '<p:fade />'; break;
-    case 'push':   inner = `<p:push dir="${dir}" />`; break;
-    case 'cover':  inner = `<p:cover dir="${dir}" />`; break;
-    case 'reveal': inner = `<p:wipe dir="${dir}" />`; break;
-    case 'morph':  inner = '<p:morph option="byObject" />'; break;
-    default:       inner = '<p:fade />';
+    case 'fade':
+      inner = '<p:fade />';
+      break;
+    case 'push':
+      inner = `<p:push dir="${dir}" />`;
+      break;
+    case 'cover':
+      inner = `<p:cover dir="${dir}" />`;
+      break;
+    case 'reveal':
+      inner = `<p:wipe dir="${dir}" />`;
+      break;
+    case 'morph':
+      inner = '<p:morph option="byObject" />';
+      break;
+    default:
+      inner = '<p:fade />';
   }
   return `<p:transition spd="${spd}">${inner}</p:transition>`;
 }
@@ -391,9 +441,11 @@ function numFor(name: string): number {
  * If you later swap pptxgenjs for a proper OOXML writer, replace this with
  * actual extLst splicing per @uri.
  */
-function preservedExtensionsBlob(exts: Array<{ uri: string; scope: string; rawXml: string }>): string {
+function preservedExtensionsBlob(
+  exts: Array<{ uri: string; scope: string; rawXml: string }>,
+): string {
   try {
-    const safe = JSON.stringify(exts).replace(/--/g, '-_-');   // comments can't contain "--"
+    const safe = JSON.stringify(exts).replace(/--/g, '-_-'); // comments can't contain "--"
     return `<!-- pitchonix:preserved ${safe} pitchonix:end -->`;
   } catch {
     return '';

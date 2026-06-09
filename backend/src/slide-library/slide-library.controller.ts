@@ -29,7 +29,7 @@ export class SlideLibraryController {
     @Query('workspaceId') workspaceId?: string,
   ) {
     return this.library.list({
-      userId:      user?.id ?? null,
+      userId: user?.id ?? null,
       workspaceId: workspaceId || null,
       kind,
     });
@@ -44,9 +44,14 @@ export class SlideLibraryController {
   @ApiOperation({ summary: 'Save a slide to the library (Phase 38O)' })
   fromSlide(
     @GetUser() user: any,
-    @Body() body: {
-      slideId: string; name: string; description?: string;
-      tags?: string[]; thumbnail?: string | null; workspaceId?: string;
+    @Body()
+    body: {
+      slideId: string;
+      name: string;
+      description?: string;
+      tags?: string[];
+      thumbnail?: string | null;
+      workspaceId?: string;
     },
   ) {
     return this.library.saveSlide({
@@ -59,9 +64,14 @@ export class SlideLibraryController {
   @ApiOperation({ summary: 'Save a section to the library' })
   fromSection(
     @GetUser() user: any,
-    @Body() body: {
-      sectionId: string; name: string; description?: string;
-      tags?: string[]; thumbnail?: string | null; workspaceId?: string;
+    @Body()
+    body: {
+      sectionId: string;
+      name: string;
+      description?: string;
+      tags?: string[];
+      thumbnail?: string | null;
+      workspaceId?: string;
     },
   ) {
     return this.library.saveSection({

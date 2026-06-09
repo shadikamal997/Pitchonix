@@ -23,7 +23,7 @@ import { ConversionStorageProvider, SavedFile, StorageHealth } from './storage-p
 // =============================================================================
 
 interface S3Sdk {
-  S3Client:        any;
+  S3Client: any;
   PutObjectCommand: any;
   GetObjectCommand: any;
   DeleteObjectCommand: any;
@@ -33,8 +33,8 @@ interface S3Sdk {
 
 export class S3StorageProvider implements ConversionStorageProvider {
   readonly name = 's3' as const;
-  private client?:  any;
-  private sdk?:     S3Sdk;
+  private client?: any;
+  private sdk?: S3Sdk;
   private presigner?: any;
 
   constructor(
@@ -50,58 +50,76 @@ export class S3StorageProvider implements ConversionStorageProvider {
   }
 
   private async ensure(): Promise<{ client: any; sdk: S3Sdk; presigner: any }> {
-    if (this.client && this.sdk && this.presigner) return { client: this.client, sdk: this.sdk, presigner: this.presigner };
+    if (this.client && this.sdk && this.presigner)
+      return { client: this.client, sdk: this.sdk, presigner: this.presigner };
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       this.sdk = require('@aws-sdk/client-s3');
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       this.presigner = require('@aws-sdk/s3-request-presigner');
     } catch (e: any) {
-      throw new Error(`[s3-storage] @aws-sdk/client-s3 not installed (pnpm add @aws-sdk/client-s3 @aws-sdk/s3-request-presigner): ${e?.message}`);
+      throw new Error(
+        `[s3-storage] @aws-sdk/client-s3 not installed (pnpm add @aws-sdk/client-s3 @aws-sdk/s3-request-presigner): ${e?.message}`,
+      );
     }
     if (!this.bucket) throw new Error('[s3-storage] CONVERSION_S3_BUCKET not set');
     this.client = new this.sdk!.S3Client({ region: this.region });
     return { client: this.client, sdk: this.sdk!, presigner: this.presigner };
   }
 
-  async save(buffer: Buffer, originalFilename: string, mimetype = 'application/octet-stream'): Promise<SavedFile> {
+  async save(
+    buffer: Buffer,
+    originalFilename: string,
+    mimetype = 'application/octet-stream',
+  ): Promise<SavedFile> {
     const { client, sdk } = await this.ensure();
     const key = this.prefix + crypto.randomUUID() + pickExt(originalFilename);
-    await client.send(new sdk.PutObjectCommand({
-      Bucket:      this.bucket,
-      Key:         key,
-      Body:        buffer,
-      ContentType: mimetype,
-    }));
+    await client.send(
+      new sdk.PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: mimetype,
+      }),
+    );
     const url = await this.urlFor(key);
     return { handle: key, url, bytes: buffer.length };
   }
 
   async read(handle: string): Promise<Buffer> {
     const { client, sdk } = await this.ensure();
-    const res: any = await client.send(new sdk.GetObjectCommand({ Bucket: this.bucket, Key: handle }));
+    const res: any = await client.send(
+      new sdk.GetObjectCommand({ Bucket: this.bucket, Key: handle }),
+    );
     // res.Body is a Readable in Node; collect to Buffer.
     return streamToBuffer(res.Body);
   }
 
   async delete(handle: string): Promise<void> {
     const { client, sdk } = await this.ensure();
-    try { await client.send(new sdk.DeleteObjectCommand({ Bucket: this.bucket, Key: handle })); }
-    catch { /* idempotent */ }
+    try {
+      await client.send(new sdk.DeleteObjectCommand({ Bucket: this.bucket, Key: handle }));
+    } catch {
+      /* idempotent */
+    }
   }
 
   async list(prefix?: string) {
     const { client, sdk } = await this.ensure();
-    const res: any = await client.send(new sdk.ListObjectsV2Command({
-      Bucket: this.bucket,
-      Prefix: prefix ? this.prefix + prefix : this.prefix,
-    }));
+    const res: any = await client.send(
+      new sdk.ListObjectsV2Command({
+        Bucket: this.bucket,
+        Prefix: prefix ? this.prefix + prefix : this.prefix,
+      }),
+    );
     const items: any[] = res.Contents || [];
-    const rows = await Promise.all(items.map(async (it) => ({
-      handle: it.Key,
-      url:    await this.urlFor(it.Key),
-      bytes:  it.Size,
-    })));
+    const rows = await Promise.all(
+      items.map(async (it) => ({
+        handle: it.Key,
+        url: await this.urlFor(it.Key),
+        bytes: it.Size,
+      })),
+    );
     return rows;
   }
 

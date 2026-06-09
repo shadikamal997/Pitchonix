@@ -59,19 +59,27 @@ export class PreflightService {
     let totalWords = 0;
 
     if (pages.length === 0) {
-      errors.push({ code: 'NO_PAGES', severity: 'blocking', message: 'Document has no pages. Add content before exporting.' });
+      errors.push({
+        code: 'NO_PAGES',
+        severity: 'blocking',
+        message: 'Document has no pages. Add content before exporting.',
+      });
     }
 
     for (let i = 0; i < pages.length; i++) {
       const page = pages[i];
       const pageType: string = page.pageType || 'content';
       const title: string = page.title || '';
-      const rawText: string = String(page.content?.text || '');
+      const rawText: string = this.textForPreflight(page);
       const words = rawText.split(/\s+/).filter(Boolean).length;
       totalWords += words;
 
       const hasChart = Array.isArray(page.content?.charts) && page.content.charts.length > 0;
-      const hasImage = !!(page.content?.heroImage || page.content?.image || (Array.isArray(page.content?.placedImages) && page.content.placedImages.length > 0));
+      const hasImage = !!(
+        page.content?.heroImage ||
+        page.content?.image ||
+        (Array.isArray(page.content?.placedImages) && page.content.placedImages.length > 0)
+      );
       const context = { pageIndex: i, pageTitle: title || `Page ${i + 1}` };
 
       if (pageType !== 'cover' && pageType !== 'toc') {
@@ -121,15 +129,27 @@ export class PreflightService {
     }
 
     if (pages.length > 0 && totalWords < 50) {
-      errors.push({ code: 'DOCUMENT_EMPTY', severity: 'blocking', message: 'Document appears nearly empty. Add substantial content before exporting.' });
+      errors.push({
+        code: 'DOCUMENT_EMPTY',
+        severity: 'blocking',
+        message: 'Document appears nearly empty. Add substantial content before exporting.',
+      });
     }
 
     if (!document.title?.trim()) {
-      errors.push({ code: 'MISSING_DOCUMENT_TITLE', severity: 'error', message: 'Document has no title.' });
+      errors.push({
+        code: 'MISSING_DOCUMENT_TITLE',
+        severity: 'error',
+        message: 'Document has no title.',
+      });
     }
 
     if (pages.length > 50) {
-      warnings.push({ code: 'MANY_PAGES', severity: 'warning', message: `Document has ${pages.length} pages, which may result in a large file. Consider splitting into multiple documents.` });
+      warnings.push({
+        code: 'MANY_PAGES',
+        severity: 'warning',
+        message: `Document has ${pages.length} pages, which may result in a large file. Consider splitting into multiple documents.`,
+      });
     }
 
     let score = 100;
@@ -139,7 +159,9 @@ export class PreflightService {
     score = Math.max(0, Math.min(100, score));
 
     const exportReady = errors.length === 0;
-    this.logger.log(`Preflight complete: ${errors.length} errors, ${warnings.length} warnings, score=${score}`);
+    this.logger.log(
+      `Preflight complete: ${errors.length} errors, ${warnings.length} warnings, score=${score}`,
+    );
 
     return {
       errors,
@@ -169,7 +191,7 @@ export class PreflightService {
       const issue = {
         ...context,
         code: staleOrMinorOverflow ? 'STALE_OVERFLOW_ESTIMATE' : 'VISUAL_OVERFLOW',
-        severity: staleOrMinorOverflow ? 'warning' as const : 'blocking' as const,
+        severity: staleOrMinorOverflow ? ('warning' as const) : ('blocking' as const),
         message: staleOrMinorOverflow
           ? `Page "${context.pageTitle}" has an old overflow flag, but current content fits export limits.`
           : `Page "${context.pageTitle}" may visually overflow in preview/export.`,
@@ -223,16 +245,25 @@ export class PreflightService {
       if (type === 'image') return sum + 220;
       if (type === 'metric') return sum + 120;
       if (type === 'quote') return sum + 100;
-      if (type === 'list') return sum + Math.max(36, String(block?.content || '').split(/\s+/).filter(Boolean).length * 5.5);
-      return sum + Math.max(32, String(block?.content || '').length / 68 * 24);
+      if (type === 'list')
+        return (
+          sum +
+          Math.max(
+            36,
+            String(block?.content || '')
+              .split(/\s+/)
+              .filter(Boolean).length * 5.5,
+          )
+        );
+      return sum + Math.max(32, (String(block?.content || '').length / 68) * 24);
     }, 0);
     const textWeight = words * 4.1;
     const placedImageWeight = Array.isArray(page.content?.placedImages)
       ? page.content.placedImages.reduce((sum: number, img: any) => {
-        const widthPct = Math.max(1, Math.min(100, Number(img.width || 0)));
-        const heightPct = Math.max(1, Math.min(100, Number(img.height || 0)));
-        return sum + Math.min(620, Math.max(90, (widthPct * heightPct) / 7));
-      }, 0)
+          const widthPct = Math.max(1, Math.min(100, Number(img.width || 0)));
+          const heightPct = Math.max(1, Math.min(100, Number(img.height || 0)));
+          return sum + Math.min(620, Math.max(90, (widthPct * heightPct) / 7));
+        }, 0)
       : 0;
     return Math.max(blockWeight, textWeight) / 930 + placedImageWeight / 930;
   }
@@ -272,7 +303,9 @@ export class PreflightService {
     }
 
     const charts: any[] = page.content?.charts || [];
-    const brokenCharts = charts.filter((chart: any) => !Array.isArray(chart.data) || chart.data.length === 0);
+    const brokenCharts = charts.filter(
+      (chart: any) => !Array.isArray(chart.data) || chart.data.length === 0,
+    );
     if (brokenCharts.length > 0) {
       errors.push({
         ...context,
@@ -284,7 +317,7 @@ export class PreflightService {
     }
 
     const links = rawText.match(/https?:\/\/[^\s)]+/g) || [];
-    const invalidLinks = links.filter(link => !/^https?:\/\/[^\s]+\.[^\s]+/.test(link));
+    const invalidLinks = links.filter((link) => !/^https?:\/\/[^\s]+\.[^\s]+/.test(link));
     if (invalidLinks.length > 0) {
       warnings.push({
         ...context,
@@ -294,5 +327,39 @@ export class PreflightService {
         autoFix: 'Review and correct malformed URLs.',
       });
     }
+  }
+
+  private textForPreflight(page: any): string {
+    const report = page.content?.feasibilityReport;
+    if (report && typeof report === 'object') {
+      if (page.pageType === 'source_content') {
+        return [
+          report.title || page.title,
+          ...(Array.isArray(report.metrics)
+            ? report.metrics.map(
+                (metric: any) =>
+                  `${metric.label || ''} ${metric.value || ''} ${metric.detail || ''}`,
+              )
+            : []),
+          'Preserved source appendix',
+        ]
+          .filter(Boolean)
+          .join('\n');
+      }
+      return [
+        report.title,
+        report.subtitle,
+        ...(Array.isArray(report.paragraphs) ? report.paragraphs : []),
+        ...(Array.isArray(report.bullets) ? report.bullets : []),
+        ...(Array.isArray(report.metrics)
+          ? report.metrics.map(
+              (metric: any) => `${metric.label || ''} ${metric.value || ''} ${metric.detail || ''}`,
+            )
+          : []),
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }
+    return String(page.content?.text || '');
   }
 }

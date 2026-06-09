@@ -16,29 +16,49 @@ import { Injectable } from '@nestjs/common';
 //  Progress state — shape returned by GET /career/profile/.../import/progress
 // -----------------------------------------------------------------------------
 export interface ImportProgress {
-  jobId:         string;
-  phase:         'queued' | 'extracting' | 'rendering' | 'sampling-lang' | 'downloading-pack' | 'ocr-page' | 'classifying' | 'persisting' | 'done' | 'failed' | 'cancelled';
-  message:       string;
-  percent:       number;        // 0..100
-  page?:         number;        // current OCR page
-  pagesTotal?:   number;
+  jobId: string;
+  phase:
+    | 'queued'
+    | 'extracting'
+    | 'rendering'
+    | 'sampling-lang'
+    | 'downloading-pack'
+    | 'ocr-page'
+    | 'classifying'
+    | 'persisting'
+    | 'done'
+    | 'failed'
+    | 'cancelled';
+  message: string;
+  percent: number; // 0..100
+  page?: number; // current OCR page
+  pagesTotal?: number;
   // Phase 42.9D — language-pack download visibility.
-  packLang?:     string;        // e.g. 'fra'
-  packPercent?:  number;        // 0..100
+  packLang?: string; // e.g. 'fra'
+  packPercent?: number; // 0..100
   // Phase 42.9B — detected language on the sampled first page.
   detectedLang?: string;
-  startedAt:     number;
-  updatedAt:     number;
-  cancelled:     boolean;
+  startedAt: number;
+  updatedAt: number;
+  cancelled: boolean;
   // Populated when phase === 'done'.
-  result?:       any;
-  error?:        string;
+  result?: any;
+  error?: string;
 }
 
 // New ImportProgress phases (42.9A + 42.9B + 42.9D)
 export type ImportProgressPhase =
-  | 'queued' | 'extracting' | 'rendering' | 'sampling-lang' | 'downloading-pack'
-  | 'ocr-page' | 'classifying' | 'persisting' | 'done' | 'failed' | 'cancelled';
+  | 'queued'
+  | 'extracting'
+  | 'rendering'
+  | 'sampling-lang'
+  | 'downloading-pack'
+  | 'ocr-page'
+  | 'classifying'
+  | 'persisting'
+  | 'done'
+  | 'failed'
+  | 'cancelled';
 
 @Injectable()
 export class ImportProgressTracker {
@@ -51,37 +71,58 @@ export class ImportProgressTracker {
     const existing = this.jobs.get(id);
     if (existing) return existing;
     const j: ImportProgress = {
-      jobId:     id,
-      phase:     'queued',
-      message:   'Queued',
-      percent:   0,
+      jobId: id,
+      phase: 'queued',
+      message: 'Queued',
+      percent: 0,
       startedAt: Date.now(),
       updatedAt: Date.now(),
       cancelled: false,
     };
     this.jobs.set(j.jobId, j);
-    setTimeout(() => { this.jobs.delete(j.jobId); this.subs.delete(j.jobId); }, 30 * 60_000);
+    setTimeout(() => {
+      this.jobs.delete(j.jobId);
+      this.subs.delete(j.jobId);
+    }, 30 * 60_000);
     return j;
   }
 
   update(jobId: string, patch: Partial<ImportProgress>): void {
-    const cur = this.jobs.get(jobId); if (!cur) return;
+    const cur = this.jobs.get(jobId);
+    if (!cur) return;
     Object.assign(cur, patch, { updatedAt: Date.now() });
     // Phase 42.9A — fan out to SSE subscribers.
     const set = this.subs.get(jobId);
-    if (set) for (const fn of set) { try { fn(cur); } catch { /* ignore failed subscriber */ } }
+    if (set)
+      for (const fn of set) {
+        try {
+          fn(cur);
+        } catch {
+          /* ignore failed subscriber */
+        }
+      }
   }
 
-  get(jobId: string): ImportProgress | null { return this.jobs.get(jobId) || null; }
+  get(jobId: string): ImportProgress | null {
+    return this.jobs.get(jobId) || null;
+  }
 
   cancel(jobId: string): boolean {
-    const cur = this.jobs.get(jobId); if (!cur) return false;
+    const cur = this.jobs.get(jobId);
+    if (!cur) return false;
     cur.cancelled = true;
     cur.phase = 'cancelled';
     cur.message = 'Cancelled by user';
     cur.updatedAt = Date.now();
     const set = this.subs.get(jobId);
-    if (set) for (const fn of set) { try { fn(cur); } catch { /* */ } }
+    if (set)
+      for (const fn of set) {
+        try {
+          fn(cur);
+        } catch {
+          /* */
+        }
+      }
     return true;
   }
 
@@ -95,7 +136,10 @@ export class ImportProgressTracker {
     this.subs.get(jobId)!.add(fn);
     return () => {
       const set = this.subs.get(jobId);
-      if (set) { set.delete(fn); if (set.size === 0) this.subs.delete(jobId); }
+      if (set) {
+        set.delete(fn);
+        if (set.size === 0) this.subs.delete(jobId);
+      }
     };
   }
 }
@@ -110,19 +154,23 @@ export class ImportProgressTracker {
 // -----------------------------------------------------------------------------
 export function detectOcrLanguages(sample: string): string[] {
   if (!sample) return ['eng'];
-  const s = sample.slice(0, 5000);  // cap the work
+  const s = sample.slice(0, 5000); // cap the work
   const len = s.length;
   if (len === 0) return ['eng'];
 
-  let arabic = 0, accented = 0, ascii = 0;
+  let arabic = 0,
+    accented = 0,
+    ascii = 0;
   for (let i = 0; i < len; i++) {
     const c = s.charCodeAt(i);
-    if      (c >= 0x0600 && c <= 0x06FF) arabic++;       // Arabic block
-    else if (c >= 0x00C0 && c <= 0x024F) accented++;     // Latin Extended A/B
-    else if (c >= 0x0041 && c <= 0x007A) ascii++;        // ASCII letters
+    if (c >= 0x0600 && c <= 0x06ff)
+      arabic++; // Arabic block
+    else if (c >= 0x00c0 && c <= 0x024f)
+      accented++; // Latin Extended A/B
+    else if (c >= 0x0041 && c <= 0x007a) ascii++; // ASCII letters
   }
   // Arabic dominates.
-  if (arabic / len > 0.10) return ['ara', 'eng'];
+  if (arabic / len > 0.1) return ['ara', 'eng'];
 
   // Try to disambiguate Latin languages by stop-word presence.
   const t = s.toLowerCase();
@@ -156,21 +204,21 @@ export function detectOcrLanguages(sample: string): string[] {
 //  admin dashboard aggregates over these rows.
 // -----------------------------------------------------------------------------
 export interface ImportEvent {
-  filename:           string;
-  mimetype?:          string;
-  bytes:              number;
-  durationMs:         number;
-  ocrUsed:            boolean;
-  ocrLangsUsed?:      string[];
-  ocrAvgConfidence?:  number | null;
-  confidenceOverall:  number;
-  confidenceBand:     string;
-  detected:           string[];
-  missing:            string[];
-  counts:             Record<string, number>;
-  unknownHeadings:    string[];
-  duplicatesCount:    { skills: number; experience: number };
-  warnings:           string[];
-  appliedAutoMappings: string[];   // sourceHeading keys auto-applied this run
-  failed:             boolean;
+  filename: string;
+  mimetype?: string;
+  bytes: number;
+  durationMs: number;
+  ocrUsed: boolean;
+  ocrLangsUsed?: string[];
+  ocrAvgConfidence?: number | null;
+  confidenceOverall: number;
+  confidenceBand: string;
+  detected: string[];
+  missing: string[];
+  counts: Record<string, number>;
+  unknownHeadings: string[];
+  duplicatesCount: { skills: number; experience: number };
+  warnings: string[];
+  appliedAutoMappings: string[]; // sourceHeading keys auto-applied this run
+  failed: boolean;
 }

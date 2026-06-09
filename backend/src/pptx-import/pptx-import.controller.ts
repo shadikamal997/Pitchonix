@@ -1,9 +1,21 @@
 import {
-  Controller, Post, Get, Query, UseInterceptors, UploadedFile, Body, BadRequestException, UseGuards,
+  Controller,
+  Post,
+  Get,
+  Query,
+  UseInterceptors,
+  UploadedFile,
+  Body,
+  BadRequestException,
+  UseGuards,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { GetUser } from '../auth/get-user.decorator';
+import { PrismaService } from '../prisma/prisma.service';
 import { PptxImportService } from './pptx-import.service';
 import { roundTrip, buildSyntheticFixture } from './round-trip';
 import { runVisualRegressionSuite } from './visual-regression';
@@ -25,7 +37,10 @@ import { loadRealFixtures, certifyDirectory } from './real-fixtures';
 @ApiBearerAuth()
 @Controller('pptx-import')
 export class PptxImportController {
-  constructor(private importer: PptxImportService) {}
+  constructor(
+    private importer: PptxImportService,
+    private prisma: PrismaService,
+  ) {}
 
   private readonly MAX_PPTX_BYTES = 100 * 1024 * 1024; // 100 MB
   private readonly ALLOWED_MIME = [
@@ -41,9 +56,14 @@ export class PptxImportController {
   @UseInterceptors(FileInterceptor('file'))
   parse(@UploadedFile() file: any) {
     if (!file?.buffer) throw new BadRequestException('Missing PPTX file (multipart field "file")');
-    if (file.size > this.MAX_PPTX_BYTES) throw new BadRequestException('File exceeds the 100 MB limit');
+    if (file.size > this.MAX_PPTX_BYTES)
+      throw new BadRequestException('File exceeds the 100 MB limit');
     const ext = (file.originalname || '').toLowerCase();
-    if (!ext.endsWith('.pptx') && !ext.endsWith('.potx') && !this.ALLOWED_MIME.includes(file.mimetype)) {
+    if (
+      !ext.endsWith('.pptx') &&
+      !ext.endsWith('.potx') &&
+      !this.ALLOWED_MIME.includes(file.mimetype)
+    ) {
       throw new BadRequestException('Only .pptx and .potx files are accepted');
     }
     return this.importer.parseBuffer(file.buffer);
@@ -53,8 +73,9 @@ export class PptxImportController {
   @ApiOperation({ summary: 'Import PPTX into a new Deck under the given project' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
-  importIntoProject(
+  async importIntoProject(
     @UploadedFile() file: any,
+    @GetUser() user: any,
     // projectId is sent as a FormData field by the frontend, which NestJS
     // exposes via @Query() when multipart/form-data is used (not @Body()).
     @Query('projectId') queryProjectId?: string,
@@ -63,11 +84,22 @@ export class PptxImportController {
     // Accept projectId from either query param OR FormData body field
     const projectId = queryProjectId || body?.projectId;
     if (!file?.buffer) throw new BadRequestException('Missing PPTX file (multipart field "file")');
-    if (!projectId)    throw new BadRequestException('Missing projectId');
-    if (file.size > this.MAX_PPTX_BYTES) throw new BadRequestException('File exceeds the 100 MB limit');
+    if (!projectId) throw new BadRequestException('Missing projectId');
+    if (file.size > this.MAX_PPTX_BYTES)
+      throw new BadRequestException('File exceeds the 100 MB limit');
     const ext = (file.originalname || '').toLowerCase();
-    if (!ext.endsWith('.pptx') && !ext.endsWith('.potx') && !this.ALLOWED_MIME.includes(file.mimetype)) {
+    if (
+      !ext.endsWith('.pptx') &&
+      !ext.endsWith('.potx') &&
+      !this.ALLOWED_MIME.includes(file.mimetype)
+    ) {
       throw new BadRequestException('Only .pptx and .potx files are accepted');
+    }
+    // Ownership enforcement — prevent importing a deck into another tenant's project.
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.userId && project.userId !== user?.id) {
+      throw new ForbiddenException('You do not have access to this project');
     }
     return this.importer.importIntoProject(file.buffer, projectId);
   }
@@ -75,7 +107,9 @@ export class PptxImportController {
   // ---------- Phase 38.1H — Round-trip harness ----------
 
   @Post('round-trip')
-  @ApiOperation({ summary: 'Round-trip a PPTX through parse → export → re-parse + structural diff (Phase 38.1H)' })
+  @ApiOperation({
+    summary: 'Round-trip a PPTX through parse → export → re-parse + structural diff (Phase 38.1H)',
+  })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   async runRoundTrip(@UploadedFile() file: any) {
@@ -93,7 +127,9 @@ export class PptxImportController {
   // ---------- Phase 38.3I — Visual regression suite ----------
 
   @Get('regression/golden')
-  @ApiOperation({ summary: 'Run visual regression across the 10-archetype golden suite (Phase 38.3I)' })
+  @ApiOperation({
+    summary: 'Run visual regression across the 10-archetype golden suite (Phase 38.3I)',
+  })
   async runGoldenRegression() {
     const fixtures = await buildGoldenFixtures();
     return runVisualRegressionSuite(this.importer, fixtures, 'compare');

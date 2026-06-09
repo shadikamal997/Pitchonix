@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Delete, Patch, Body, Param, UseGuards, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CommentsService, CreateCommentInput } from './comments.service';
@@ -120,11 +130,7 @@ export class CommentsController {
 
   @Patch('comments/:id')
   @ApiOperation({ summary: 'Edit own comment content (re-parses mentions)' })
-  edit(
-    @Param('id') id: string,
-    @GetUser() user: any,
-    @Body() body: { content: string },
-  ) {
+  edit(@Param('id') id: string, @GetUser() user: any, @Body() body: { content: string }) {
     return this.commentsService.edit(id, user.id, body?.content || '');
   }
 
@@ -159,11 +165,7 @@ export class CommentsController {
 
   @Get('projects/:projectId/comments/search')
   @ApiOperation({ summary: 'Full-text-ish search across comment threads in a project' })
-  search(
-    @Param('projectId') projectId: string,
-    @GetUser() user: any,
-    @Query('q') q?: string,
-  ) {
+  search(@Param('projectId') projectId: string, @GetUser() user: any, @Query('q') q?: string) {
     return this.commentsService.search(projectId, user.id, q || '');
   }
 }

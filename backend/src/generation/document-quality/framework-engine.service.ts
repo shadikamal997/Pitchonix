@@ -22,8 +22,8 @@ export class DocumentFrameworkEngine {
     const framework = getFramework(documentType);
     const presentTypes = new Set(slides.map((s) => s.type));
 
-    const satisfied:           FrameworkSection[] = [];
-    const missing:             FrameworkSection[] = [];
+    const satisfied: FrameworkSection[] = [];
+    const missing: FrameworkSection[] = [];
     const satisfiedByAlternate: FrameworkSection[] = [];
 
     for (const section of framework.sections) {
@@ -42,9 +42,10 @@ export class DocumentFrameworkEngine {
 
     const requiredSections = framework.sections.filter((s) => s.required);
     const requiredSatisfied = requiredSections.filter((s) => satisfied.includes(s)).length;
-    const completeness = requiredSections.length === 0
-      ? 100
-      : Math.round((requiredSatisfied / requiredSections.length) * 100);
+    const completeness =
+      requiredSections.length === 0
+        ? 100
+        : Math.round((requiredSatisfied / requiredSections.length) * 100);
 
     const frameworkTypes = new Set(
       framework.sections.flatMap((s) => [s.slideType, ...(s.alternates ?? [])]),

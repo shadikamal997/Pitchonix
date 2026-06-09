@@ -1,0 +1,289 @@
+{
+  "generatedAt": "2026-06-09T12:54:05.025Z",
+  "editors": [
+    {
+      "key": "Presentation",
+      "route": "/projects/[id]/edit/[slideId]",
+      "fileCount": 130,
+      "caps": {
+        "undoRedo": {
+          "present": true,
+          "files": 5,
+          "evidence": [
+            "frontend/features/slide-editor/SlideCanvas.tsx",
+            "frontend/features/slide-editor/SlideEditor.tsx",
+            "frontend/features/slide-editor/polish/KeyboardShortcutsDialog.tsx"
+          ]
+        },
+        "autosave": {
+          "present": true,
+          "files": 6,
+          "evidence": [
+            "frontend/features/slide-editor/SlideCanvas.tsx",
+            "frontend/features/slide-editor/SlideEditor.tsx",
+            "frontend/features/slide-editor/polish/EditorErrorBoundary.tsx"
+          ]
+        },
+        "shortcuts": {
+          "present": true,
+          "files": 14,
+          "evidence": [
+            "frontend/features/slide-editor/SlideCanvas.tsx",
+            "frontend/features/slide-editor/SlideEditor.tsx",
+            "frontend/features/slide-editor/comments/CommentModeOverlay.tsx"
+          ]
+        },
+        "dragDrop": {
+          "present": true,
+          "files": 5,
+          "evidence": [
+            "frontend/features/slide-editor/SlideCanvas.tsx",
+            "frontend/features/slide-editor/inspector/widgets/FocalPointPicker.tsx",
+            "frontend/features/slide-editor/inspector/widgets/ImageUploader.tsx"
+          ]
+        },
+        "copyPaste": {
+          "present": true,
+          "files": 2,
+          "evidence": [
+            "frontend/features/slide-editor/SlideEditor.tsx",
+            "frontend/features/slide-editor/polish/KeyboardShortcutsDialog.tsx"
+          ]
+        },
+        "inlineEdit": {
+          "present": true,
+          "files": 6,
+          "evidence": [
+            "frontend/features/slide-editor/SlideCanvas.tsx",
+            "frontend/features/slide-editor/SlideEditor.tsx",
+            "frontend/features/slide-editor/layers/LayersPanel.tsx"
+          ]
+        }
+      }
+    },
+    {
+      "key": "PDF Studio",
+      "route": "/pdf-studio/editor/[id]",
+      "fileCount": 31,
+      "caps": {
+        "undoRedo": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/pdf-studio/editor/[id]/page.tsx"
+          ]
+        },
+        "autosave": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/pdf-studio/editor/[id]/page.tsx"
+          ]
+        },
+        "shortcuts": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/pdf-studio/editor/[id]/page.tsx"
+          ]
+        },
+        "dragDrop": {
+          "present": true,
+          "files": 2,
+          "evidence": [
+            "frontend/features/pdf-studio/image-placement/ImagePlacementTab.tsx",
+            "frontend/features/pdf-studio/image-placement/PageImageOverlay.tsx"
+          ]
+        },
+        "copyPaste": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "inlineEdit": {
+          "present": true,
+          "files": 2,
+          "evidence": [
+            "frontend/app/pdf-studio/editor/[id]/page.tsx",
+            "frontend/app/pdf-studio/smart-builder/page.tsx"
+          ]
+        }
+      }
+    },
+    {
+      "key": "Excel Studio",
+      "route": "/excel-studio/editor/[id]",
+      "fileCount": 9,
+      "caps": {
+        "undoRedo": {
+          "present": true,
+          "files": 2,
+          "evidence": [
+            "frontend/features/excel-studio/api.ts",
+            "frontend/app/excel-studio/editor/[id]/page.tsx"
+          ]
+        },
+        "autosave": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "shortcuts": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/excel-studio/editor/[id]/page.tsx"
+          ]
+        },
+        "dragDrop": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/excel-studio/page.tsx"
+          ]
+        },
+        "copyPaste": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "inlineEdit": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/excel-studio/editor/[id]/page.tsx"
+          ]
+        }
+      }
+    },
+    {
+      "key": "Career Docs",
+      "route": "/career/builder/[id]",
+      "fileCount": 11,
+      "caps": {
+        "undoRedo": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/career/builder/[id]/page.tsx"
+          ]
+        },
+        "autosave": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/career/builder/[id]/page.tsx"
+          ]
+        },
+        "shortcuts": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/career/builder/[id]/page.tsx"
+          ]
+        },
+        "dragDrop": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/career/builder/[id]/page.tsx"
+          ]
+        },
+        "copyPaste": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "inlineEdit": {
+          "present": true,
+          "files": 1,
+          "evidence": [
+            "frontend/app/career/builder/[id]/page.tsx"
+          ]
+        }
+      }
+    },
+    {
+      "key": "Convert",
+      "route": "/convert",
+      "fileCount": 1,
+      "caps": {
+        "undoRedo": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "autosave": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "shortcuts": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "dragDrop": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "copyPaste": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "inlineEdit": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        }
+      }
+    },
+    {
+      "key": "Brand Kits",
+      "route": "/brand-kits",
+      "fileCount": 7,
+      "caps": {
+        "undoRedo": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "autosave": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "shortcuts": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "dragDrop": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "copyPaste": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        },
+        "inlineEdit": {
+          "present": false,
+          "files": 0,
+          "evidence": []
+        }
+      }
+    }
+  ],
+  "coverage": {
+    "undoRedo": 4,
+    "autosave": 3,
+    "shortcuts": 4,
+    "dragDrop": 4,
+    "copyPaste": 1,
+    "inlineEdit": 4
+  }
+}

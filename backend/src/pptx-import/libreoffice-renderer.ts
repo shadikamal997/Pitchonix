@@ -31,14 +31,14 @@ import type { SlideRenderer } from './visual-fidelity';
 //  + the runtime gracefully skip when neither binary exists.
 // =============================================================================
 
-const SOFFICE_BIN  = process.env.LIBREOFFICE_BIN || 'soffice';
-const PDFTOPPM_BIN = process.env.PDFTOPPM_BIN    || 'pdftoppm';
+const SOFFICE_BIN = process.env.LIBREOFFICE_BIN || 'soffice';
+const PDFTOPPM_BIN = process.env.PDFTOPPM_BIN || 'pdftoppm';
 
 export async function isLibreOfficeAvailable(): Promise<boolean> {
   return new Promise((resolve) => {
     const child = spawn(SOFFICE_BIN, ['--version'], { stdio: 'ignore' });
     child.on('error', () => resolve(false));
-    child.on('exit',  (code) => resolve(code === 0));
+    child.on('exit', (code) => resolve(code === 0));
   });
 }
 
@@ -46,7 +46,7 @@ export async function isPdftoppmAvailable(): Promise<boolean> {
   return new Promise((resolve) => {
     const child = spawn(PDFTOPPM_BIN, ['-v'], { stdio: 'ignore' });
     child.on('error', () => resolve(false));
-    child.on('exit',  () => resolve(true));   // pdftoppm exits with 0 or 1; either means present
+    child.on('exit', () => resolve(true)); // pdftoppm exits with 0 or 1; either means present
   });
 }
 
@@ -61,8 +61,8 @@ export async function buildReferenceRenderer(deck: PptxImportResult): Promise<Sl
   // Render this deck once to PPTX, then convert.
   const renderInput = importedToRenderDeck(deck);
   const buffer = await exportDeckToPptx(renderInput as any);
-  const dir    = fs.mkdtempSync(path.join(os.tmpdir(), 'pptx-fidelity-'));
-  const file   = path.join(dir, `deck-${crypto.randomUUID()}.pptx`);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pptx-fidelity-'));
+  const file = path.join(dir, `deck-${crypto.randomUUID()}.pptx`);
   fs.writeFileSync(file, buffer);
 
   // Convert to PDF.
@@ -80,7 +80,8 @@ export async function buildReferenceRenderer(deck: PptxImportResult): Promise<Sl
   }
 
   // Discover output PNGs.
-  const pngs = fs.readdirSync(dir)
+  const pngs = fs
+    .readdirSync(dir)
     .filter((n) => n.toLowerCase().endsWith('.png'))
     .sort();
   if (pngs.length === 0) throw new Error('No PNG output from LibreOffice/pdftoppm');
@@ -96,7 +97,9 @@ function runShell(bin: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(bin, args, { stdio: 'ignore' });
     child.on('error', reject);
-    child.on('exit', (code) => code === 0 ? resolve() : reject(new Error(`${bin} exited ${code}`)));
+    child.on('exit', (code) =>
+      code === 0 ? resolve() : reject(new Error(`${bin} exited ${code}`)),
+    );
   });
 }
 
@@ -115,15 +118,20 @@ function importedToRenderDeck(parsed: PptxImportResult): any {
       background: null,
       themeTokens: null,
       elements: s.elements.map((el, j) => ({
-        id:       `imp-${idx}-${j}`,
-        slideId:  `imp-${idx}`,
-        type:     el.type,
-        order:    el.order,
-        x: el.x, y: el.y, width: el.width, height: el.height,
-        rotation: 0, zIndex: 0,
-        locked: false, visible: true,
+        id: `imp-${idx}-${j}`,
+        slideId: `imp-${idx}`,
+        type: el.type,
+        order: el.order,
+        x: el.x,
+        y: el.y,
+        width: el.width,
+        height: el.height,
+        rotation: 0,
+        zIndex: 0,
+        locked: false,
+        visible: true,
         content: el.content ?? null,
-        style:   el.style ?? null,
+        style: el.style ?? null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })),

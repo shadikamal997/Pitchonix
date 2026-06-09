@@ -12,29 +12,36 @@ import AdmZip = require('adm-zip');
 // =============================================================================
 
 const xml = new XMLParser({
-  ignoreAttributes:    false,
+  ignoreAttributes: false,
   attributeNamePrefix: '@',
   parseAttributeValue: false,
-  preserveOrder:       false,
-  trimValues:          true,
+  preserveOrder: false,
+  trimValues: true,
   allowBooleanAttributes: true,
 });
 
 export function parseXml<T = any>(content: string | Buffer | undefined | null): T | null {
   if (!content) return null;
-  try { return xml.parse(typeof content === 'string' ? content : content.toString('utf8')) as T; }
-  catch { return null; }
+  try {
+    return xml.parse(typeof content === 'string' ? content : content.toString('utf8')) as T;
+  } catch {
+    return null;
+  }
 }
 
 // =============================================================================
 //  OoxmlPackage — the read-side abstraction over a .pptx zip.
 // =============================================================================
 
-export interface RelEntry { id: string; type: string; target: string }
+export interface RelEntry {
+  id: string;
+  type: string;
+  target: string;
+}
 
 export class OoxmlPackage {
   private zip: AdmZip;
-  private cache = new Map<string, string>();   // path → utf8
+  private cache = new Map<string, string>(); // path → utf8
 
   constructor(buffer: Buffer) {
     this.zip = new AdmZip(buffer);
@@ -72,10 +79,10 @@ export class OoxmlPackage {
 
   /** Parse the `_rels` companion for a given xml part. Returns id→{type,target}. */
   rels(partPath: string): Map<string, RelEntry> {
-    const dir  = partPath.replace(/[^/]+$/, '');
+    const dir = partPath.replace(/[^/]+$/, '');
     const base = partPath.split('/').pop()!;
     const rels = this.parse<any>(`${dir}_rels/${base}.rels`);
-    const out  = new Map<string, RelEntry>();
+    const out = new Map<string, RelEntry>();
     if (!rels?.Relationships?.Relationship) return out;
     const list = asArray(rels.Relationships.Relationship);
     for (const r of list) {
@@ -88,8 +95,7 @@ export class OoxmlPackage {
 
   /** Slides in canonical (numeric) order. */
   slidePaths(): string[] {
-    return this.list(/^ppt\/slides\/slide\d+\.xml$/)
-      .sort((a, b) => numAt(a) - numAt(b));
+    return this.list(/^ppt\/slides\/slide\d+\.xml$/).sort((a, b) => numAt(a) - numAt(b));
   }
 
   notePathForSlide(slidePath: string): string | null {
@@ -135,7 +141,12 @@ export class OoxmlPackage {
     const rels = this.rels(slidePath);
     const r = rels.get(relId);
     if (!r) return null;
-    if (r.type.endsWith('/image') || r.type.endsWith('/media') || r.type.endsWith('/video') || r.type.endsWith('/audio')) {
+    if (
+      r.type.endsWith('/image') ||
+      r.type.endsWith('/media') ||
+      r.type.endsWith('/video') ||
+      r.type.endsWith('/audio')
+    ) {
       return { path: r.target };
     }
     return null;
@@ -197,7 +208,8 @@ export function extractText(node: any): string {
   const acc: string[] = [];
   walk(node, (k, v) => {
     if (k === 'a:t' && typeof v === 'string') acc.push(v);
-    if (k === 'a:t' && v && typeof v === 'object' && typeof v['#text'] === 'string') acc.push(v['#text']);
+    if (k === 'a:t' && v && typeof v === 'object' && typeof v['#text'] === 'string')
+      acc.push(v['#text']);
   });
   return acc.join('').trim();
 }
@@ -205,7 +217,10 @@ export function extractText(node: any): string {
 /** Walk every (key, value) pair recursively. Used by extractors. */
 export function walk(obj: any, cb: (k: string, v: any) => void) {
   if (obj == null) return;
-  if (Array.isArray(obj)) { for (const x of obj) walk(x, cb); return; }
+  if (Array.isArray(obj)) {
+    for (const x of obj) walk(x, cb);
+    return;
+  }
   if (typeof obj !== 'object') return;
   for (const [k, v] of Object.entries(obj)) {
     cb(k, v);
@@ -217,7 +232,8 @@ export function walk(obj: any, cb: (k: string, v: any) => void) {
 export function readBox(spPr: any): { x: number; y: number; w: number; h: number } | null {
   const xfrm = spPr?.['a:xfrm'];
   if (!xfrm) return null;
-  const off = xfrm['a:off']; const ext = xfrm['a:ext'];
+  const off = xfrm['a:off'];
+  const ext = xfrm['a:ext'];
   if (!off || !ext) return null;
   const x = emuToPctX(Number(off['@x'] || 0));
   const y = emuToPctY(Number(off['@y'] || 0));

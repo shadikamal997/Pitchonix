@@ -31,27 +31,29 @@ export class WorkspaceAuditService {
 
   async log(input: {
     workspaceId: string;
-    actorId:     string;
-    action:      AuditAction;
+    actorId: string;
+    action: AuditAction;
     targetType?: string;
-    targetId?:   string;
-    before?:     any;
-    after?:      any;
+    targetId?: string;
+    before?: any;
+    after?: any;
   }): Promise<void> {
     try {
       await this.prisma.workspaceAuditLog.create({
         data: {
           workspaceId: input.workspaceId,
-          actorId:     input.actorId,
-          action:      input.action,
-          targetType:  input.targetType,
-          targetId:    input.targetId,
-          before:      input.before ?? undefined,
-          after:       input.after  ?? undefined,
+          actorId: input.actorId,
+          action: input.action,
+          targetType: input.targetType,
+          targetId: input.targetId,
+          before: input.before ?? undefined,
+          after: input.after ?? undefined,
         },
       });
     } catch (e: any) {
-      this.logger.warn(`[audit] ${input.action} for workspace ${input.workspaceId} failed: ${e?.message}`);
+      this.logger.warn(
+        `[audit] ${input.action} for workspace ${input.workspaceId} failed: ${e?.message}`,
+      );
     }
   }
 

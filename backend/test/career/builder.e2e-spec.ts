@@ -98,8 +98,14 @@ describe('Career Builder (E2E)', () => {
   // ── 6. Reorder section ────────────────────────────────────────────────────
   it('POST /career/profile/:profileId/section/skills/reorder → 201', async () => {
     // Add two skills first
-    const p1 = await s.req.post(`/career/profile/${profileId}/section/skills`).set(auth(s.token)).send({ name: 'TypeScript' });
-    const p2 = await s.req.post(`/career/profile/${profileId}/section/skills`).set(auth(s.token)).send({ name: 'Python' });
+    const p1 = await s.req
+      .post(`/career/profile/${profileId}/section/skills`)
+      .set(auth(s.token))
+      .send({ name: 'TypeScript' });
+    const p2 = await s.req
+      .post(`/career/profile/${profileId}/section/skills`)
+      .set(auth(s.token))
+      .send({ name: 'Python' });
     const id1 = p1.body.skills[p1.body.skills.length - 2]?.id;
     const id2 = p2.body.skills[p2.body.skills.length - 1]?.id;
     if (!id1 || !id2) return; // guard against fixture mismatch
@@ -134,7 +140,10 @@ describe('Career Builder (E2E)', () => {
   it('GET /career/documents/:id with wrong user token → 404', async () => {
     const s2 = await createSession('builder-other');
     try {
-      const doc = await s.req.post('/career/documents').set(auth(s.token)).send({ doctype: 'cv', title: 'Private CV' });
+      const doc = await s.req
+        .post('/career/documents')
+        .set(auth(s.token))
+        .send({ doctype: 'cv', title: 'Private CV' });
       const privateDocId = doc.body.id;
       await s.req.get(`/career/documents/${privateDocId}`).set(auth(s2.token)).expect(404);
       await s.req.delete(`/career/documents/${privateDocId}`).set(auth(s.token));

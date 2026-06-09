@@ -34,33 +34,36 @@ const DEBOUNCE_MS = 2_000;
 // this long is dropped from cache. Configurable via YDOC_IDLE_MINUTES env
 // var so ops can tune without redeploys.
 const DEFAULT_IDLE_MINUTES = 10;
-const EVICTION_SWEEP_MS    = 60_000;       // sweep once a minute
+const EVICTION_SWEEP_MS = 60_000; // sweep once a minute
 
 interface CacheEntry {
-  doc:           Y.Doc;
-  lastUpdated:   number;
-  saveTimer:     NodeJS.Timeout | null;
+  doc: Y.Doc;
+  lastUpdated: number;
+  saveTimer: NodeJS.Timeout | null;
   /** Track whether the in-memory state has un-persisted edits. */
-  dirty:         boolean;
+  dirty: boolean;
   /** Phase 34.3E — count of active sockets currently subscribed to this doc. */
-  subscribers:   number;
+  subscribers: number;
 }
 
 @Injectable()
 export class YDocStore implements OnModuleInit {
   private readonly logger = new Logger(YDocStore.name);
-  private readonly cache  = new Map<string, CacheEntry>();
+  private readonly cache = new Map<string, CacheEntry>();
   private readonly idleMs: number;
-  private sweepTimer:      NodeJS.Timeout | null = null;
+  private sweepTimer: NodeJS.Timeout | null = null;
   // Phase 34.3G — observability counters.
-  private evictionCount    = 0;
+  private evictionCount = 0;
 
   constructor(
     private prisma: PrismaService,
     // Phase 34.4A — cross-process Y.Doc replication via Redis pub/sub.
     private syncBus: YDocSyncBus,
   ) {
-    const idleMin = Math.max(1, parseInt(process.env.YDOC_IDLE_MINUTES || '', 10) || DEFAULT_IDLE_MINUTES);
+    const idleMin = Math.max(
+      1,
+      parseInt(process.env.YDOC_IDLE_MINUTES || '', 10) || DEFAULT_IDLE_MINUTES,
+    );
     this.idleMs = idleMin * 60 * 1000;
     // Start the sweeper. unref so it doesn't block process shutdown in tests.
     this.sweepTimer = setInterval(() => this.sweep(), EVICTION_SWEEP_MS);
@@ -73,11 +76,14 @@ export class YDocStore implements OnModuleInit {
     // late / duplicate deliveries are safe.
     this.syncBus.setHandler((docId, update) => {
       const entry = this.cache.get(docId);
-      if (!entry) return;        // not cached here → no need to apply
-      try { Y.applyUpdate(entry.doc, update, 'sync-bus'); }
-      catch (e: any) { this.logger.warn(`Sync-bus apply ${docId} failed: ${e?.message}`); }
+      if (!entry) return; // not cached here → no need to apply
+      try {
+        Y.applyUpdate(entry.doc, update, 'sync-bus');
+      } catch (e: any) {
+        this.logger.warn(`Sync-bus apply ${docId} failed: ${e?.message}`);
+      }
       entry.lastUpdated = Date.now();
-      entry.dirty = true;        // persist on next debounce window
+      entry.dirty = true; // persist on next debounce window
     });
   }
 
@@ -93,15 +99,18 @@ export class YDocStore implements OnModuleInit {
     const doc = new Y.Doc();
     const persisted = await this.loadFromDb(docId);
     if (persisted) {
-      try { Y.applyUpdate(doc, persisted, 'persisted'); }
-      catch (e: any) { this.logger.warn(`Hydrate ${docId} failed: ${e?.message}`); }
+      try {
+        Y.applyUpdate(doc, persisted, 'persisted');
+      } catch (e: any) {
+        this.logger.warn(`Hydrate ${docId} failed: ${e?.message}`);
+      }
     }
 
     this.cache.set(docId, {
       doc,
       lastUpdated: Date.now(),
-      saveTimer:   null,
-      dirty:       false,
+      saveTimer: null,
+      dirty: false,
       subscribers: 0,
     });
     return doc;
@@ -120,8 +129,12 @@ export class YDocStore implements OnModuleInit {
   /** Apply a binary update from a client. Triggers a debounced save. */
   async applyUpdate(docId: string, update: Uint8Array): Promise<void> {
     const doc = await this.ensure(docId);
-    try { Y.applyUpdate(doc, update, 'remote'); }
-    catch (e: any) { this.logger.warn(`Update ${docId} failed: ${e?.message}`); return; }
+    try {
+      Y.applyUpdate(doc, update, 'remote');
+    } catch (e: any) {
+      this.logger.warn(`Update ${docId} failed: ${e?.message}`);
+      return;
+    }
 
     const entry = this.cache.get(docId)!;
     entry.lastUpdated = Date.now();
@@ -153,7 +166,7 @@ export class YDocStore implements OnModuleInit {
       if (target.kind === 'element') {
         await this.prisma.slideElement.update({
           where: { id: target.id },
-          data:  { ydocState: Buffer.from(update) },
+          data: { ydocState: Buffer.from(update) },
         });
       }
       entry.dirty = false;
@@ -178,10 +191,18 @@ export class YDocStore implements OnModuleInit {
   /** Phase 34.2D — restore a Y.Doc from a previous snapshot. */
   async restoreState(docId: string, state: Buffer): Promise<void> {
     const doc = new Y.Doc();
-    try { Y.applyUpdate(doc, new Uint8Array(state), 'restore'); }
-    catch (e: any) { this.logger.warn(`Restore ${docId} failed: ${e?.message}`); return; }
+    try {
+      Y.applyUpdate(doc, new Uint8Array(state), 'restore');
+    } catch (e: any) {
+      this.logger.warn(`Restore ${docId} failed: ${e?.message}`);
+      return;
+    }
     this.cache.set(docId, {
-      doc, lastUpdated: Date.now(), saveTimer: null, dirty: true, subscribers: 0,
+      doc,
+      lastUpdated: Date.now(),
+      saveTimer: null,
+      dirty: true,
+      subscribers: 0,
     });
     await this.flush(docId);
   }
@@ -199,10 +220,14 @@ export class YDocStore implements OnModuleInit {
     const cutoff = Date.now() - this.idleMs;
     let evicted = 0;
     for (const [docId, entry] of this.cache.entries()) {
-      if (entry.subscribers > 0)         continue;   // active session
-      if (entry.lastUpdated >= cutoff)   continue;   // recently touched
+      if (entry.subscribers > 0) continue; // active session
+      if (entry.lastUpdated >= cutoff) continue; // recently touched
       if (entry.dirty) {
-        try { await this.flush(docId); } catch { /* logged inside flush */ }
+        try {
+          await this.flush(docId);
+        } catch {
+          /* logged inside flush */
+        }
       }
       if (entry.saveTimer) clearTimeout(entry.saveTimer);
       this.cache.delete(docId);
@@ -217,28 +242,28 @@ export class YDocStore implements OnModuleInit {
 
   /** Phase 34.3G — observability snapshot. */
   stats(): {
-    cachedDocs:    number;
-    activeDocs:    number;    // ≥1 subscriber
-    dirtyDocs:     number;
+    cachedDocs: number;
+    activeDocs: number; // ≥1 subscriber
+    dirtyDocs: number;
     totalSubscribers: number;
     evictionCount: number;
-    idleMs:        number;
+    idleMs: number;
   } {
     let active = 0;
-    let dirty  = 0;
+    let dirty = 0;
     let totalSubs = 0;
     for (const e of this.cache.values()) {
       if (e.subscribers > 0) active++;
-      if (e.dirty)           dirty++;
+      if (e.dirty) dirty++;
       totalSubs += e.subscribers;
     }
     return {
-      cachedDocs:       this.cache.size,
-      activeDocs:       active,
-      dirtyDocs:        dirty,
+      cachedDocs: this.cache.size,
+      activeDocs: active,
+      dirtyDocs: dirty,
       totalSubscribers: totalSubs,
-      evictionCount:    this.evictionCount,
-      idleMs:           this.idleMs,
+      evictionCount: this.evictionCount,
+      idleMs: this.idleMs,
     };
   }
 
@@ -251,7 +276,7 @@ export class YDocStore implements OnModuleInit {
     if (!target) return null;
     if (target.kind === 'element') {
       const row = await this.prisma.slideElement.findUnique({
-        where:  { id: target.id },
+        where: { id: target.id },
         select: { ydocState: true },
       });
       if (row?.ydocState) return new Uint8Array(row.ydocState);
@@ -270,20 +295,22 @@ export class YDocStore implements OnModuleInit {
 //    anything else                    — in-memory only, no persistence
 // =============================================================================
 
-export function elementDocId(elementId: string): string { return `text:${elementId}`; }
+export function elementDocId(elementId: string): string {
+  return `text:${elementId}`;
+}
 export function listItemDocId(elementId: string, itemId: string): string {
   return `list:${elementId}:${itemId}`;
 }
 
 export type DocTarget =
-  | { kind: 'element';  id: string }
+  | { kind: 'element'; id: string }
   | { kind: 'listItem'; elementId: string; itemId: string };
 
 export function parseDocId(docId: string): DocTarget | null {
   if (docId.startsWith('text:')) return { kind: 'element', id: docId.slice(5) };
   if (docId.startsWith('list:')) {
     const rest = docId.slice(5);
-    const sep  = rest.indexOf(':');
+    const sep = rest.indexOf(':');
     if (sep <= 0) return null;
     return { kind: 'listItem', elementId: rest.slice(0, sep), itemId: rest.slice(sep + 1) };
   }

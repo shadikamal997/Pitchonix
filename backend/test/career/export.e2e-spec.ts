@@ -90,7 +90,7 @@ describe('Career Export (E2E)', () => {
     // Poll up to 10 s for completed state (Redis must be running for this to work).
     let state = 'queued';
     for (let i = 0; i < 10; i++) {
-      await new Promise(r => setTimeout(r, 1_000));
+      await new Promise((r) => setTimeout(r, 1_000));
       const status = await s.req
         .get(`/career/documents/${docId}/export/status/${jobId}`)
         .set(auth(s.token));
@@ -102,16 +102,17 @@ describe('Career Export (E2E)', () => {
 
   // ── 7. Export without auth → 401 ─────────────────────────────────────────
   it('POST export without Authorization header → 401', async () => {
-    await s.req
-      .post(`/career/documents/${docId}/export?format=html`)
-      .expect(401);
+    await s.req.post(`/career/documents/${docId}/export?format=html`).expect(401);
   });
 
   // ── 8. Export wrong document → 404 ───────────────────────────────────────
-  it('Export another user\'s document → 404', async () => {
+  it("Export another user's document → 404", async () => {
     const s2 = await createSession('export-other');
     try {
-      const doc2 = await s.req.post('/career/documents').set(auth(s.token)).send({ doctype: 'cv', title: 'Private' });
+      const doc2 = await s.req
+        .post('/career/documents')
+        .set(auth(s.token))
+        .send({ doctype: 'cv', title: 'Private' });
       await s.req
         .post(`/career/documents/${doc2.body.id}/export?format=html`)
         .set(auth(s2.token))

@@ -16,7 +16,9 @@
 
 import type { SlideElementDTO } from '../slides/element-types';
 import type {
-  ComponentInstanceDTO, SavedComponentDTO, ComponentElementTree,
+  ComponentInstanceDTO,
+  SavedComponentDTO,
+  ComponentElementTree,
 } from './component-types';
 
 export interface ResolveContext {
@@ -57,16 +59,16 @@ function expandOne(tree: ComponentElementTree, inst: ComponentInstanceDTO): Slid
     //   slideW = lw  * scale
     const lx = el.x ?? 0;
     const ly = el.y ?? 0;
-    const lw = el.width  ?? 0;
+    const lw = el.width ?? 0;
     const lh = el.height ?? 0;
 
     return {
       ...el,
-      id:      `inst:${inst.id}:${el.id}`,
+      id: `inst:${inst.id}:${el.id}`,
       slideId: inst.slideId,
-      x:      clampPct(ax + lx * scale),
-      y:      clampPct(ay + ly * scale),
-      width:  clampPct(lw * scale),
+      x: clampPct(ax + lx * scale),
+      y: clampPct(ay + ly * scale),
+      width: clampPct(lw * scale),
       height: clampPct(lh * scale),
       // Linked instances are always non-destructive: lock them in the editor
       // so users edit the source, not the placement.

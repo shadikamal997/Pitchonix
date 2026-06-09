@@ -30,16 +30,16 @@ export interface AuditIssue {
   category: AuditCategory;
   slideId?: string;
   elementId?: string;
-  message:  string;
+  message: string;
   fixHint?: string;
 }
 
 export interface BrandAuditReport {
-  deckId:    string;
+  deckId: string;
   brandKitId: string | null;
-  score:     number;            // 0..100
-  categories: Record<AuditCategory, number>;  // each 0..100
-  issues:    AuditIssue[];
+  score: number; // 0..100
+  categories: Record<AuditCategory, number>; // each 0..100
+  issues: AuditIssue[];
   recommendations: string[];
   generatedAt: string;
 }
@@ -54,7 +54,7 @@ export class BrandAuditService {
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },
       include: {
-        brandKit:       { include: { assets: true } },
+        brandKit: { include: { assets: true } },
         masterElements: true,
         slides: {
           orderBy: { order: 'asc' },
@@ -66,7 +66,11 @@ export class BrandAuditService {
 
     const issues: AuditIssue[] = [];
     const empty = (): Record<AuditCategory, number> => ({
-      colors: 100, typography: 100, logos: 100, charts: 100, components: 100,
+      colors: 100,
+      typography: 100,
+      logos: 100,
+      charts: 100,
+      components: 100,
     });
     const categories = empty();
     const recs: string[] = [];
@@ -77,15 +81,19 @@ export class BrandAuditService {
       issues.push({
         severity: 'warning',
         category: 'colors',
-        message:  'No brand kit is attached to this deck.',
-        fixHint:  'Attach a brand kit from the workspace dashboard.',
+        message: 'No brand kit is attached to this deck.',
+        fixHint: 'Attach a brand kit from the workspace dashboard.',
       });
       recs.push('Attach a brand kit to enforce consistent colors, fonts, and logo usage.');
     }
 
     const kitTokens = (deck.brandKit?.tokens as BrandTokens | null) || {};
     const kitIdentity = (deck.brandKit?.identity as BrandIdentity | null) || {};
-    const palette = palettify(kitTokens, deck.brandKit?.primaryColor, deck.brandKit?.secondaryColor);
+    const palette = palettify(
+      kitTokens,
+      deck.brandKit?.primaryColor,
+      deck.brandKit?.secondaryColor,
+    );
     const fonts = fontFamilies(kitTokens, deck.brandKit?.fontFamily);
 
     // ----- Colors -----
@@ -104,10 +112,10 @@ export class BrandAuditService {
               issues.push({
                 severity: 'info',
                 category: 'colors',
-                slideId:  slide.id,
+                slideId: slide.id,
                 elementId: el.id,
-                message:  `Element uses "${v}" which isn't in the brand palette.`,
-                fixHint:  'Switch to a brand color via the inspector.',
+                message: `Element uses "${v}" which isn't in the brand palette.`,
+                fixHint: 'Switch to a brand color via the inspector.',
               });
             }
           }
@@ -115,13 +123,13 @@ export class BrandAuditService {
       }
     }
     if (colorTotal > 0) {
-      const ratio = 1 - (colorOffPalette / colorTotal);
+      const ratio = 1 - colorOffPalette / colorTotal;
       categories.colors = clampScore(ratio * 100);
     }
 
     // ----- Typography -----
     let fontTotal = 0;
-    let fontOff   = 0;
+    let fontOff = 0;
     for (const slide of deck.slides) {
       for (const el of slide.elements) {
         const style = (el.style as any) || {};
@@ -134,34 +142,36 @@ export class BrandAuditService {
             issues.push({
               severity: 'info',
               category: 'typography',
-              slideId:  slide.id,
+              slideId: slide.id,
               elementId: el.id,
-              message:  `Element uses font "${f}" which isn't in the brand typography.`,
-              fixHint:  'Switch to a brand font via the inspector.',
+              message: `Element uses font "${f}" which isn't in the brand typography.`,
+              fixHint: 'Switch to a brand font via the inspector.',
             });
           }
         }
       }
     }
     if (fontTotal > 0) {
-      const ratio = 1 - (fontOff / fontTotal);
+      const ratio = 1 - fontOff / fontTotal;
       categories.typography = clampScore(ratio * 100);
     }
 
     // ----- Logos -----
     const assets = deck.brandKit?.assets || [];
-    const hasLogo = !!(deck.brandKit?.logo) || assets.some((a) => a.kind.startsWith('logo'));
+    const hasLogo = !!deck.brandKit?.logo || assets.some((a) => a.kind.startsWith('logo'));
     const usesLogo = deck.masterElements.some((m) => m.type === 'logo');
     if (!hasLogo) {
       issues.push({
-        severity: 'info', category: 'logos',
+        severity: 'info',
+        category: 'logos',
         message: 'Brand kit has no logo configured.',
         fixHint: 'Upload a primary logo on the Logos tab.',
       });
       categories.logos = 50;
     } else if (!usesLogo) {
       issues.push({
-        severity: 'info', category: 'logos',
+        severity: 'info',
+        category: 'logos',
         message: 'No master "logo" element placed on the deck.',
         fixHint: 'Enable the master logo so it shows on every slide.',
       });
@@ -179,10 +189,12 @@ export class BrandAuditService {
           if (!url || typeof url !== 'string') continue;
           if (!assetUrls.has(url) && url !== deck.brandKit.logo) {
             issues.push({
-              severity: 'warning', category: 'logos',
-              slideId:  slide.id, elementId: el.id,
-              message:  'Logo / image URL is not registered in the brand asset library.',
-              fixHint:  'Add this image to the Assets tab to keep brand inventory complete.',
+              severity: 'warning',
+              category: 'logos',
+              slideId: slide.id,
+              elementId: el.id,
+              message: 'Logo / image URL is not registered in the brand asset library.',
+              fixHint: 'Add this image to the Assets tab to keep brand inventory complete.',
             });
             categories.logos = Math.max(40, categories.logos - 5);
           }
@@ -193,7 +205,8 @@ export class BrandAuditService {
     // Phase 37.1G — missing identity check.
     if (deck.brandKit && !(kitIdentity.companyName || kitIdentity.tagline)) {
       issues.push({
-        severity: 'info', category: 'components',
+        severity: 'info',
+        category: 'components',
         message: 'Brand kit has no company identity (name / tagline / mission).',
         fixHint: 'Fill the Overview tab so generated cover slides use your brand voice.',
       });
@@ -202,7 +215,8 @@ export class BrandAuditService {
 
     // ----- Charts -----
     const chartPalette = kitTokens.chart?.palette || palette;
-    let chartTotal = 0; let chartOff = 0;
+    let chartTotal = 0;
+    let chartOff = 0;
     for (const slide of deck.slides) {
       for (const el of slide.elements) {
         if (el.type !== 'chart') continue;
@@ -215,8 +229,10 @@ export class BrandAuditService {
         if (offRatio > 0.5) {
           chartOff++;
           issues.push({
-            severity: 'warning', category: 'charts',
-            slideId: slide.id, elementId: el.id,
+            severity: 'warning',
+            category: 'charts',
+            slideId: slide.id,
+            elementId: el.id,
             message: 'Chart uses an off-brand palette.',
             fixHint: 'Apply the brand chart palette via Inspector → Style.',
           });
@@ -233,7 +249,8 @@ export class BrandAuditService {
     const md = (deck.metadata as any) || {};
     if (!md.appliedTemplateId) {
       issues.push({
-        severity: 'info', category: 'components',
+        severity: 'info',
+        category: 'components',
         message: 'No design template applied.',
         fixHint: 'Pick a template that matches your brand voice.',
       });
@@ -241,10 +258,12 @@ export class BrandAuditService {
     }
 
     // ----- Recommendations -----
-    if (categories.colors < 80)     recs.push('Audit slide element colors — replace off-palette values with brand colors.');
+    if (categories.colors < 80)
+      recs.push('Audit slide element colors — replace off-palette values with brand colors.');
     if (categories.typography < 80) recs.push('Standardise on the brand heading + body fonts.');
-    if (categories.logos < 100)     recs.push('Place the master logo so it appears across every slide.');
-    if (categories.charts < 80)     recs.push('Re-apply the brand chart palette in the Inspector.');
+    if (categories.logos < 100)
+      recs.push('Place the master logo so it appears across every slide.');
+    if (categories.charts < 80) recs.push('Re-apply the brand chart palette in the Inspector.');
     if (kitIdentity.companyName && md.themeTokens?.companyName !== kitIdentity.companyName) {
       recs.push(`Use "${kitIdentity.companyName}" consistently in slide titles + cover.`);
     }
@@ -252,17 +271,17 @@ export class BrandAuditService {
     // Weighted overall: colors + typography carry more signal than logos
     // (which are binary "present / absent"). Components is a hint at best.
     const overall = clampScore(
-      categories.colors      * 0.35 +
-      categories.typography  * 0.25 +
-      categories.logos       * 0.15 +
-      categories.charts      * 0.15 +
-      categories.components  * 0.10
+      categories.colors * 0.35 +
+        categories.typography * 0.25 +
+        categories.logos * 0.15 +
+        categories.charts * 0.15 +
+        categories.components * 0.1,
     );
 
     return {
       deckId,
       brandKitId: deck.brandKitId,
-      score:      overall,
+      score: overall,
       categories,
       issues,
       recommendations: recs,
@@ -275,16 +294,20 @@ export class BrandAuditService {
 //  Helpers
 // =============================================================================
 
-function palettify(tokens: BrandTokens, primary?: string | null, secondary?: string | null): string[] {
+function palettify(
+  tokens: BrandTokens,
+  primary?: string | null,
+  secondary?: string | null,
+): string[] {
   const palette: string[] = [];
-  if (tokens.colors?.primary)   palette.push(tokens.colors.primary);
+  if (tokens.colors?.primary) palette.push(tokens.colors.primary);
   if (tokens.colors?.secondary) palette.push(tokens.colors.secondary);
-  if (tokens.colors?.accent)    palette.push(tokens.colors.accent);
-  if (tokens.colors?.neutral)   palette.push(tokens.colors.neutral);
-  if (tokens.colors?.success)   palette.push(tokens.colors.success);
-  if (tokens.colors?.warning)   palette.push(tokens.colors.warning);
-  if (tokens.colors?.danger)    palette.push(tokens.colors.danger);
-  if (primary   && !palette.includes(primary))   palette.push(primary);
+  if (tokens.colors?.accent) palette.push(tokens.colors.accent);
+  if (tokens.colors?.neutral) palette.push(tokens.colors.neutral);
+  if (tokens.colors?.success) palette.push(tokens.colors.success);
+  if (tokens.colors?.warning) palette.push(tokens.colors.warning);
+  if (tokens.colors?.danger) palette.push(tokens.colors.danger);
+  if (primary && !palette.includes(primary)) palette.push(primary);
   if (secondary && !palette.includes(secondary)) palette.push(secondary);
   return palette.map(normalizeColor);
 }
@@ -292,7 +315,7 @@ function palettify(tokens: BrandTokens, primary?: string | null, secondary?: str
 function fontFamilies(tokens: BrandTokens, legacyFont?: string | null): string[] {
   const out = new Set<string>();
   if (tokens.typography?.heading?.family) out.add(tokens.typography.heading.family);
-  if (tokens.typography?.body?.family)    out.add(tokens.typography.body.family);
+  if (tokens.typography?.body?.family) out.add(tokens.typography.body.family);
   if (tokens.typography?.caption?.family) out.add(tokens.typography.caption.family);
   if (legacyFont) out.add(legacyFont);
   return Array.from(out);
@@ -302,14 +325,22 @@ function normalizeColor(c: string): string {
   const v = c.trim().toLowerCase();
   if (v.startsWith('#')) {
     // expand 3-digit shorthand
-    if (v.length === 4) return '#' + v.slice(1).split('').map((c) => c + c).join('');
+    if (v.length === 4)
+      return (
+        '#' +
+        v
+          .slice(1)
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      );
     return v;
   }
   return v;
 }
 
 function isPaletteColor(c: string, palette: string[]): boolean {
-  if (palette.length === 0) return true;   // no palette → don't penalise
+  if (palette.length === 0) return true; // no palette → don't penalise
   const n = normalizeColor(c);
   return palette.some((p) => p === n);
 }
@@ -317,7 +348,9 @@ function isPaletteColor(c: string, palette: string[]): boolean {
 function isAllowedFont(font: string, fonts: string[]): boolean {
   if (fonts.length === 0) return true;
   const f = font.split(',')[0].replace(/['"]/g, '').trim().toLowerCase();
-  return fonts.some((allowed) => allowed.toLowerCase().includes(f) || f.includes(allowed.toLowerCase()));
+  return fonts.some(
+    (allowed) => allowed.toLowerCase().includes(f) || f.includes(allowed.toLowerCase()),
+  );
 }
 
 function clampScore(n: number): number {

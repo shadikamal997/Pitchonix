@@ -3,14 +3,14 @@ import { IsString, MinLength, MaxLength, IsOptional, IsEnum, IsBoolean } from 'c
 export class AnalyzeContentDto {
   @IsString()
   @MinLength(10, { message: 'Content must be at least 10 characters' })
-  @MaxLength(100000, { message: 'Content must not exceed 100,000 characters' })
+  @MaxLength(500000, { message: 'Content must not exceed 500,000 characters (about 80,000 words)' })
   rawContent: string;
 }
 
 export class EnhanceContentDto {
   @IsString()
   @MinLength(10)
-  @MaxLength(100000)
+  @MaxLength(500000)
   rawContent: string;
 
   @IsOptional()
@@ -33,7 +33,7 @@ export class EnhanceContentDto {
 export class GenerateDocumentDto {
   @IsString()
   @MinLength(10)
-  @MaxLength(100000)
+  @MaxLength(500000)
   rawContent: string;
 
   @IsOptional()

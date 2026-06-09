@@ -14,19 +14,14 @@ import { EmailModule } from '../email/email.module';
 // both already global.
 @Global()
 @Module({
-  imports:     [EmailModule], // Phase 39.1E — invite email delivery
+  imports: [EmailModule], // Phase 39.1E — invite email delivery
   controllers: [WorkspacesController],
-  providers:   [
+  providers: [
     WorkspacesService,
     WorkspaceActivityService,
     WorkspaceAuditService,
     WorkspaceRoleGuard,
   ],
-  exports: [
-    WorkspacesService,
-    WorkspaceActivityService,
-    WorkspaceAuditService,
-    WorkspaceRoleGuard,
-  ],
+  exports: [WorkspacesService, WorkspaceActivityService, WorkspaceAuditService, WorkspaceRoleGuard],
 })
 export class WorkspacesModule {}

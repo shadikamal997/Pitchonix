@@ -5,10 +5,10 @@ import { ReviewEventBus } from './review-event-bus';
 import { VersionHistoryModule } from '../version-history/version-history.module';
 
 @Module({
-  imports:     [VersionHistoryModule], // Phase 36.1C — snapshots on transitions
+  imports: [VersionHistoryModule], // Phase 36.1C — snapshots on transitions
   controllers: [ReviewsController],
-  providers:   [ReviewsService, ReviewEventBus],
+  providers: [ReviewsService, ReviewEventBus],
   // Exported so CommentsModule can emit events on the same bus.
-  exports:     [ReviewsService, ReviewEventBus],
+  exports: [ReviewsService, ReviewEventBus],
 })
 export class ReviewsModule {}

@@ -4,6 +4,16 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
+import { UploadedAssetService } from '../files/uploaded-asset.service';
+
+/** Owner metadata recorded with an upload so the /uploads gate can enforce ownership. */
+export interface UploadOwner {
+  userId: string;
+  module?: string;
+  projectId?: string | null;
+  documentId?: string | null;
+  visibility?: 'private' | 'shared' | 'public';
+}
 
 export interface UploadedFile {
   originalName: string;
@@ -21,13 +31,16 @@ export class UploadService {
   private readonly maxFileSize: number;
   private readonly allowedTypes: string[];
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private uploadedAssetService: UploadedAssetService,
+  ) {
     this.uploadDir = this.configService.get<string>('UPLOAD_DIR', './uploads');
     this.maxFileSize = this.configService.get<number>('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
     this.allowedTypes = this.configService
       .get<string>('ALLOWED_FILE_TYPES', 'image/jpeg,image/png,image/jpg,image/webp')
       .split(',');
-    
+
     // Ensure upload directory exists
     this.ensureUploadDir();
   }
@@ -66,7 +79,7 @@ export class UploadService {
   /**
    * Save and optimize image
    */
-  async saveImage(file: Express.Multer.File): Promise<UploadedFile> {
+  async saveImage(file: Express.Multer.File, owner?: UploadOwner): Promise<UploadedFile> {
     this.validateFile(file);
 
     const filename = `${uuidv4()}${path.extname(file.originalname)}`;
@@ -88,11 +101,29 @@ export class UploadService {
 
       this.logger.log(`Image saved: ${filename} (${stats.size} bytes)`);
 
+      const publicPath = `/uploads/${filename}`;
+
+      // Phase Ω.1D — record ownership so the /uploads gate can owner-gate it.
+      if (owner?.userId) {
+        await this.uploadedAssetService.record({
+          userId: owner.userId,
+          publicPath,
+          storagePath: filepath,
+          module: owner.module || 'generic',
+          originalName: file.originalname,
+          mimeType: file.mimetype,
+          sizeBytes: stats.size,
+          projectId: owner.projectId ?? null,
+          documentId: owner.documentId ?? null,
+          visibility: owner.visibility ?? 'private',
+        });
+      }
+
       return {
         originalName: file.originalname,
         filename,
         path: filepath,
-        url: `/uploads/${filename}`,
+        url: publicPath,
         size: stats.size,
         mimetype: file.mimetype,
       };
@@ -105,12 +136,12 @@ export class UploadService {
   /**
    * Save multiple images
    */
-  async saveImages(files: Express.Multer.File[]): Promise<UploadedFile[]> {
+  async saveImages(files: Express.Multer.File[], owner?: UploadOwner): Promise<UploadedFile[]> {
     const results: UploadedFile[] = [];
 
     for (const file of files) {
       try {
-        const uploaded = await this.saveImage(file);
+        const uploaded = await this.saveImage(file, owner);
         results.push(uploaded);
       } catch (error) {
         this.logger.error(`Failed to save image: ${error.message}`);
@@ -125,11 +156,20 @@ export class UploadService {
    * Delete image
    */
   async deleteImage(filename: string): Promise<void> {
-    const filepath = path.join(this.uploadDir, filename);
+    // Prevent path traversal: strip any directory components and confirm the
+    // resolved path stays inside uploadDir before unlinking. A value like
+    // "../../etc/passwd" would otherwise escape the uploads directory.
+    const safeName = path.basename(filename);
+    const filepath = path.resolve(this.uploadDir, safeName);
+    const root = path.resolve(this.uploadDir);
+    if (filepath !== root && !filepath.startsWith(root + path.sep)) {
+      this.logger.warn(`Refusing to delete out-of-bounds path for input: ${filename}`);
+      return;
+    }
 
     try {
       await fs.unlink(filepath);
-      this.logger.log(`Image deleted: ${filename}`);
+      this.logger.log(`Image deleted: ${safeName}`);
     } catch (error) {
       this.logger.error(`Failed to delete image: ${error.message}`);
       // Don't throw error if file doesn't exist
@@ -152,6 +192,7 @@ export class UploadService {
     file: Express.Multer.File,
     width: number = 300,
     height: number = 300,
+    owner?: UploadOwner,
   ): Promise<UploadedFile> {
     this.validateFile(file);
 
@@ -168,12 +209,27 @@ export class UploadService {
         .toFile(filepath);
 
       const stats = await fs.stat(filepath);
+      const publicPath = `/uploads/${filename}`;
+
+      if (owner?.userId) {
+        await this.uploadedAssetService.record({
+          userId: owner.userId,
+          publicPath,
+          storagePath: filepath,
+          module: owner.module || 'generic',
+          originalName: file.originalname,
+          mimeType: file.mimetype,
+          sizeBytes: stats.size,
+          projectId: owner.projectId ?? null,
+          visibility: owner.visibility ?? 'private',
+        });
+      }
 
       return {
         originalName: file.originalname,
         filename,
         path: filepath,
-        url: `/uploads/${filename}`,
+        url: publicPath,
         size: stats.size,
         mimetype: file.mimetype,
       };

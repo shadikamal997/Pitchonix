@@ -13,9 +13,7 @@
  * No React. No DOM. No browser globals. Safe to call from a NestJS service.
  */
 
-import {
-  ChartContent, ChartSeries, ChartKind, ChartInsight,
-} from './chart-types';
+import { ChartContent, ChartSeries, ChartKind, ChartInsight } from './chart-types';
 
 // =============================================================================
 //  Theme — duplicated from frontend/charts/chart-theme.ts but kept small &
@@ -24,72 +22,89 @@ import {
 // =============================================================================
 
 const LEGACY_PALETTE = [
-  '#16a34a', '#0ea5e9', '#7c3aed', '#f59e0b',
-  '#ef4444', '#0891b2', '#db2777', '#525252',
+  '#16a34a',
+  '#0ea5e9',
+  '#7c3aed',
+  '#f59e0b',
+  '#ef4444',
+  '#0891b2',
+  '#db2777',
+  '#525252',
 ];
 
 interface ChartTheme {
-  palette:    string[];
-  accent:     string;
-  text:       string;
-  muted:      string;
-  grid:       string;
-  positive:   string;
-  negative:   string;
-  fontFamily?:string;
+  palette: string[];
+  accent: string;
+  text: string;
+  muted: string;
+  grid: string;
+  positive: string;
+  negative: string;
+  fontFamily?: string;
 }
 
 const DEFAULT_THEME: ChartTheme = {
   palette: LEGACY_PALETTE,
-  accent:  '#16a34a',
-  text:    '#111827',
-  muted:   '#6b7280',
-  grid:    '#e5e7eb',
-  positive:'#16a34a',
-  negative:'#ef4444',
+  accent: '#16a34a',
+  text: '#111827',
+  muted: '#6b7280',
+  grid: '#e5e7eb',
+  positive: '#16a34a',
+  negative: '#ef4444',
 };
 
 // Family → accent colour map (mirrors the frontend's card-variants.ts).
 // Charts in unknown families fall back to the legacy palette.
 const FAMILY_ACCENT: Record<string, string> = {
-  'crimson-dark':         '#ef4444',
-  'light-blue-business':  '#2563eb',
-  'editorial-report':     '#0f172a',
-  'investor-minimal':     '#ea580c',
+  'crimson-dark': '#ef4444',
+  'light-blue-business': '#2563eb',
+  'editorial-report': '#0f172a',
+  'investor-minimal': '#ea580c',
   'corporate-monochrome': '#475569',
-  'luxury-dark':          '#d4af37',
-  'soft-geometric-blue':  '#60a5fa',
-  'startup-gradient':     '#a855f7',
-  'ocean-deep':           '#0ea5e9',
-  'forest-executive':     '#22c55e',
-  'ember-orange':         '#f97316',
-  'arctic-white':         '#334155',
-  'slate-pro':            '#6366f1',
-  'emerald-fintech':      '#059669',
-  'midnight-tech':        '#06b6d4',
-  'rose-modern':          '#f43f5e',
-  'cobalt-impact':        '#60a5fa',
-  'warm-sand':            '#92400e',
-  'violet-creative':      '#7c3aed',
-  'teal-health':          '#0d9488',
+  'luxury-dark': '#d4af37',
+  'soft-geometric-blue': '#60a5fa',
+  'startup-gradient': '#a855f7',
+  'ocean-deep': '#0ea5e9',
+  'forest-executive': '#22c55e',
+  'ember-orange': '#f97316',
+  'arctic-white': '#334155',
+  'slate-pro': '#6366f1',
+  'emerald-fintech': '#059669',
+  'midnight-tech': '#06b6d4',
+  'rose-modern': '#f43f5e',
+  'cobalt-impact': '#60a5fa',
+  'warm-sand': '#92400e',
+  'violet-creative': '#7c3aed',
+  'teal-health': '#0d9488',
 };
 const FAMILY_DARK_BG = new Set([
-  'crimson-dark', 'luxury-dark', 'startup-gradient',
-  'ocean-deep', 'forest-executive', 'ember-orange',
-  'slate-pro', 'midnight-tech', 'cobalt-impact', 'violet-creative',
+  'crimson-dark',
+  'luxury-dark',
+  'startup-gradient',
+  'ocean-deep',
+  'forest-executive',
+  'ember-orange',
+  'slate-pro',
+  'midnight-tech',
+  'cobalt-impact',
+  'violet-creative',
 ]);
 
 function themeFor(familyId?: string | null, darkMode?: boolean): ChartTheme {
-  const accent = (familyId && FAMILY_ACCENT[familyId]) ? FAMILY_ACCENT[familyId] : DEFAULT_THEME.accent;
+  const accent =
+    familyId && FAMILY_ACCENT[familyId] ? FAMILY_ACCENT[familyId] : DEFAULT_THEME.accent;
   const isDark = darkMode || FAMILY_DARK_BG.has(familyId || '');
   if (!familyId || (!FAMILY_ACCENT[familyId] && !darkMode)) return DEFAULT_THEME;
-  const palette = [accent, ...LEGACY_PALETTE.filter((c) => c.toLowerCase() !== accent.toLowerCase())].slice(0, 8);
+  const palette = [
+    accent,
+    ...LEGACY_PALETTE.filter((c) => c.toLowerCase() !== accent.toLowerCase()),
+  ].slice(0, 8);
   return {
     palette,
     accent,
-    text:     isDark ? '#f9fafb' : '#111827',
-    muted:    isDark ? '#cbd5e1' : '#6b7280',
-    grid:     isDark ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.08)',
+    text: isDark ? '#f9fafb' : '#111827',
+    muted: isDark ? '#cbd5e1' : '#6b7280',
+    grid: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.08)',
     positive: isDark ? '#4ade80' : '#16a34a',
     negative: isDark ? '#f87171' : '#ef4444',
   };
@@ -102,14 +117,19 @@ const colorFor = (s: ChartSeries, i: number, theme: ChartTheme): string =>
 //  Geometry constants — match frontend (W=600, H=360, PAD=14)
 // =============================================================================
 
-const W   = 600;
-const H   = 360;
+const W = 600;
+const H = 360;
 const PAD = 14;
 
-interface Box { x: number; y: number; w: number; h: number; }
+interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 function innerBox(content: ChartContent): Box {
-  const TITLE_H  = content.title ? 22 : 0;
+  const TITLE_H = content.title ? 22 : 0;
   const LEGEND_H = content.legend?.visible === false ? 0 : 22;
   return {
     x: PAD,
@@ -140,41 +160,89 @@ function truncate(s: string, n: number): string {
 //  Public entry point
 // =============================================================================
 
-export function buildChartSvg(content: ChartContent, opts?: { width?: number; height?: number }): string {
+export function buildChartSvg(
+  content: ChartContent,
+  opts?: { width?: number; height?: number },
+): string {
   const theme = themeFor(content.familyId, content.darkMode);
-  const width  = opts?.width  ?? W;
+  const width = opts?.width ?? W;
   const height = opts?.height ?? H;
-  const inner  = innerBox(content);
+  const inner = innerBox(content);
 
   // Per-type body
   let body = '';
   switch (content.type) {
-    case 'bar':         body = drawBar(content, theme, inner, false); break;
-    case 'comparison':  body = drawBar(content, theme, inner, false); break;
-    case 'stackedBar':  body = drawBar(content, theme, inner, true);  break;
-    case 'line':        body = drawLineOrArea(content, theme, inner, 'line'); break;
-    case 'area':        body = drawLineOrArea(content, theme, inner, 'area'); break;
-    case 'pie':         body = drawPie(content, theme, inner, 'pie');   break;
-    case 'donut':       body = drawPie(content, theme, inner, 'donut'); break;
-    case 'kpi':         body = drawKpi(content, theme, inner); break;
-    case 'funnel':      body = drawFunnel(content, theme, inner); break;
-    case 'scatter':     body = drawScatter(content, theme, inner); break;
-    case 'waterfall':   body = drawWaterfall(content, theme, inner); break;
-    case 'radar':       body = drawRadar(content, theme, inner); break;
-    case 'heatmap':     body = drawHeatmap(content, theme, inner); break;
+    case 'bar':
+      body = drawBar(content, theme, inner, false);
+      break;
+    case 'comparison':
+      body = drawBar(content, theme, inner, false);
+      break;
+    case 'stackedBar':
+      body = drawBar(content, theme, inner, true);
+      break;
+    case 'line':
+      body = drawLineOrArea(content, theme, inner, 'line');
+      break;
+    case 'area':
+      body = drawLineOrArea(content, theme, inner, 'area');
+      break;
+    case 'pie':
+      body = drawPie(content, theme, inner, 'pie');
+      break;
+    case 'donut':
+      body = drawPie(content, theme, inner, 'donut');
+      break;
+    case 'kpi':
+      body = drawKpi(content, theme, inner);
+      break;
+    case 'funnel':
+      body = drawFunnel(content, theme, inner);
+      break;
+    case 'scatter':
+      body = drawScatter(content, theme, inner);
+      break;
+    case 'waterfall':
+      body = drawWaterfall(content, theme, inner);
+      break;
+    case 'radar':
+      body = drawRadar(content, theme, inner);
+      break;
+    case 'heatmap':
+      body = drawHeatmap(content, theme, inner);
+      break;
     // Phase 33.5 additions
-    case 'bubble':      body = drawBubble(content, theme, inner); break;
-    case 'gauge':       body = drawGauge(content, theme, inner); break;
-    case 'treemap':     body = drawTreemap(content, theme, inner); break;
-    case 'stackedArea': body = drawLineOrArea(content, theme, inner, 'area', true); break;
-    case 'percentStackedBar':  body = drawBar(content, theme, inner, true,  /*normalize*/ true); break;
-    case 'percentStackedArea': body = drawLineOrArea(content, theme, inner, 'area', true, /*normalize*/ true); break;
-    case 'dualAxis':    body = drawDualAxis(content, theme, inner); break;
-    case 'matrix2x2':   body = drawMatrix2x2(content, theme, inner); break;
-    default:            body = drawBar(content, theme, inner, false);
+    case 'bubble':
+      body = drawBubble(content, theme, inner);
+      break;
+    case 'gauge':
+      body = drawGauge(content, theme, inner);
+      break;
+    case 'treemap':
+      body = drawTreemap(content, theme, inner);
+      break;
+    case 'stackedArea':
+      body = drawLineOrArea(content, theme, inner, 'area', true);
+      break;
+    case 'percentStackedBar':
+      body = drawBar(content, theme, inner, true, /*normalize*/ true);
+      break;
+    case 'percentStackedArea':
+      body = drawLineOrArea(content, theme, inner, 'area', true, /*normalize*/ true);
+      break;
+    case 'dualAxis':
+      body = drawDualAxis(content, theme, inner);
+      break;
+    case 'matrix2x2':
+      body = drawMatrix2x2(content, theme, inner);
+      break;
+    default:
+      body = drawBar(content, theme, inner, false);
   }
 
-  const title  = content.title ? `<text x="${PAD}" y="${PAD + 14}" font-size="14" font-weight="700" fill="${theme.text}">${esc(content.title)}</text>` : '';
+  const title = content.title
+    ? `<text x="${PAD}" y="${PAD + 14}" font-size="14" font-weight="700" fill="${theme.text}">${esc(content.title)}</text>`
+    : '';
   const growth = drawGrowthBadge(content.insight, theme);
   const legend = content.legend?.visible === false ? '' : drawLegend(content, theme);
   const fontFamily = theme.fontFamily || 'Inter, system-ui, -apple-system, sans-serif';
@@ -212,9 +280,12 @@ function drawLegend(content: ChartContent, theme: ChartTheme): string {
 
 function drawGrowthBadge(insight: ChartInsight | undefined, theme: ChartTheme): string {
   if (!insight?.growth) return '';
-  const tone = insight.growth.tone === 'negative' ? theme.negative
-             : insight.growth.tone === 'neutral'  ? theme.muted
-             : theme.positive;
+  const tone =
+    insight.growth.tone === 'negative'
+      ? theme.negative
+      : insight.growth.tone === 'neutral'
+        ? theme.muted
+        : theme.positive;
   const label = insight.growth.label;
   const w = Math.max(60, label.length * 7);
   const x = W - PAD - w;
@@ -248,7 +319,8 @@ function axisTitles(content: ChartContent, theme: ChartTheme, b: Box): string {
     out += `<text x="${b.x + b.w / 2}" y="${b.y + b.h + 30}" font-size="10" font-weight="600" text-anchor="middle" fill="${theme.muted}">${esc(content.axes.x)}</text>`;
   }
   if (content.axes?.y) {
-    const cx = b.x - 28; const cy = b.y + b.h / 2;
+    const cx = b.x - 28;
+    const cy = b.y + b.h / 2;
     out += `<text x="${cx}" y="${cy}" font-size="10" font-weight="600" text-anchor="middle" fill="${theme.muted}" transform="rotate(-90 ${cx} ${cy})">${esc(content.axes.y)}</text>`;
   }
   return out;
@@ -258,7 +330,13 @@ function axisTitles(content: ChartContent, theme: ChartTheme, b: Box): string {
 //  Bar (grouped + stacked + 100% stacked)
 // =============================================================================
 
-function drawBar(content: ChartContent, theme: ChartTheme, b: Box, stacked: boolean, normalize: boolean = false): string {
+function drawBar(
+  content: ChartContent,
+  theme: ChartTheme,
+  b: Box,
+  stacked: boolean,
+  normalize: boolean = false,
+): string {
   const cats = content.categories;
   const series = content.series;
   if (cats.length === 0 || series.length === 0) return emptyMessage(b, theme);
@@ -270,7 +348,12 @@ function drawBar(content: ChartContent, theme: ChartTheme, b: Box, stacked: bool
   if (stacked && normalize) {
     max = 1; // 100%
   } else if (stacked) {
-    max = Math.max(1, ...cats.map((_, ci) => series.reduce((s, ser) => s + Math.max(0, Number(ser.values?.[ci] ?? 0)), 0)));
+    max = Math.max(
+      1,
+      ...cats.map((_, ci) =>
+        series.reduce((s, ser) => s + Math.max(0, Number(ser.values?.[ci] ?? 0)), 0),
+      ),
+    );
   } else {
     max = Math.max(1, ...series.flatMap((s) => s.values || []));
   }
@@ -286,16 +369,17 @@ function drawBar(content: ChartContent, theme: ChartTheme, b: Box, stacked: bool
   cats.forEach((cat, ci) => {
     if (stacked) {
       // Normalize per-category if 100% stacked
-      const colTotal = series.reduce((s, ser) => s + Math.max(0, Number(ser.values?.[ci] ?? 0)), 0) || 1;
+      const colTotal =
+        series.reduce((s, ser) => s + Math.max(0, Number(ser.values?.[ci] ?? 0)), 0) || 1;
       let runningY = b.y + b.h;
       series.forEach((s, si) => {
         const raw = Number(s.values?.[ci] ?? 0);
-        const v = normalize ? (raw / colTotal) : raw;
+        const v = normalize ? raw / colTotal : raw;
         const bh = (Math.max(0, v) / max) * b.h;
         runningY -= bh;
-        const isBest  = bestWorst.best  && bestWorst.best.ci === ci  && bestWorst.best.si  === si;
+        const isBest = bestWorst.best && bestWorst.best.ci === ci && bestWorst.best.si === si;
         const isWorst = bestWorst.worst && bestWorst.worst.ci === ci && bestWorst.worst.si === si;
-        const stroke  = isBest ? ` stroke="${theme.text}" stroke-width="2"` : '';
+        const stroke = isBest ? ` stroke="${theme.text}" stroke-width="2"` : '';
         const opacity = isWorst ? ' opacity="0.55"' : '';
         out += `<rect x="${b.x + ci * groupW + (groupW - barW) / 2}" y="${runningY}" width="${barW}" height="${bh}" fill="${colorFor(s, si, theme)}"${stroke}${opacity} />`;
       });
@@ -304,9 +388,9 @@ function drawBar(content: ChartContent, theme: ChartTheme, b: Box, stacked: bool
       series.forEach((s, si) => {
         const v = Number(s.values?.[ci] ?? 0);
         const bh = (Math.max(0, v) / max) * b.h;
-        const isBest  = bestWorst.best  && bestWorst.best.ci === ci  && bestWorst.best.si  === si;
+        const isBest = bestWorst.best && bestWorst.best.ci === ci && bestWorst.best.si === si;
         const isWorst = bestWorst.worst && bestWorst.worst.ci === ci && bestWorst.worst.si === si;
-        const stroke  = isBest ? ` stroke="${theme.text}" stroke-width="2"` : '';
+        const stroke = isBest ? ` stroke="${theme.text}" stroke-width="2"` : '';
         const opacity = isWorst ? ' opacity="0.55"' : '';
         out += `<rect x="${baseX + si * barW}" y="${b.y + b.h - bh}" width="${barW * 0.92}" height="${bh}" rx="2" fill="${colorFor(s, si, theme)}"${stroke}${opacity} />`;
         if (content.showValues) {
@@ -326,8 +410,12 @@ function drawBar(content: ChartContent, theme: ChartTheme, b: Box, stacked: bool
 // =============================================================================
 
 function drawLineOrArea(
-  content: ChartContent, theme: ChartTheme, b: Box,
-  kind: 'line' | 'area', stacked: boolean = false, normalize: boolean = false,
+  content: ChartContent,
+  theme: ChartTheme,
+  b: Box,
+  kind: 'line' | 'area',
+  stacked: boolean = false,
+  normalize: boolean = false,
 ): string {
   const cats = content.categories;
   const series = content.series;
@@ -336,12 +424,14 @@ function drawLineOrArea(
 
   // Pre-compute per-point sums when stacked
   const colTotals = stacked
-    ? cats.map((_, ci) => series.reduce((s, ser) => s + Math.max(0, Number(ser.values?.[ci] ?? 0)), 0))
+    ? cats.map((_, ci) =>
+        series.reduce((s, ser) => s + Math.max(0, Number(ser.values?.[ci] ?? 0)), 0),
+      )
     : null;
   let max: number;
   if (stacked && normalize) max = 1;
-  else if (stacked)         max = Math.max(1, ...(colTotals as number[]));
-  else                       max = Math.max(1, ...series.flatMap((s) => s.values || []));
+  else if (stacked) max = Math.max(1, ...(colTotals as number[]));
+  else max = Math.max(1, ...series.flatMap((s) => s.values || []));
 
   const step = cats.length > 1 ? b.w / (cats.length - 1) : b.w;
   const xAt = (i: number) => b.x + (cats.length > 1 ? i * step : b.w / 2);
@@ -349,7 +439,12 @@ function drawLineOrArea(
 
   let out = '';
   if (content.showGrid !== false) {
-    out += yGrid(b, max, theme, normalize ? (n) => `${Math.round(n * 100)}%` : (n) => formatTickValue(n, content));
+    out += yGrid(
+      b,
+      max,
+      theme,
+      normalize ? (n) => `${Math.round(n * 100)}%` : (n) => formatTickValue(n, content),
+    );
   }
 
   // For stacked we need to draw bottom-up so earlier series sit at the bottom.
@@ -374,7 +469,11 @@ function drawLineOrArea(
         const baselinePts = valuesForPlot.map((v, i) => {
           // Reconstruct the baseline (the prior running sum)
           const cur = v;
-          const baseline = cur - (stacked ? (Number((s.values || [])[i]) || 0) / (normalize ? (colTotals![i] || 1) : 1) : 0);
+          const baseline =
+            cur -
+            (stacked
+              ? (Number((s.values || [])[i]) || 0) / (normalize ? colTotals![i] || 1 : 1)
+              : 0);
           return `${xAt(i)},${yAt(Math.max(0, baseline))}`;
         });
         basePts = baselinePts.reverse().join(' ');
@@ -387,9 +486,9 @@ function drawLineOrArea(
     } else {
       out += `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" />`;
       (s.values || []).forEach((v, i) => {
-        const isBest  = bestWorst.best  && bestWorst.best.ci === i  && bestWorst.best.si  === si;
+        const isBest = bestWorst.best && bestWorst.best.ci === i && bestWorst.best.si === si;
         const isWorst = bestWorst.worst && bestWorst.worst.ci === i && bestWorst.worst.si === si;
-        const stroke  = isBest ? ` stroke="${theme.text}" stroke-width="2"` : '';
+        const stroke = isBest ? ` stroke="${theme.text}" stroke-width="2"` : '';
         const opacity = isWorst ? ' opacity="0.55"' : '';
         out += `<circle cx="${xAt(i)}" cy="${yAt(Number(v) || 0)}" r="${isBest || isWorst ? 5 : 3}" fill="${col}"${stroke}${opacity} />`;
         if (content.showValues) {
@@ -417,7 +516,7 @@ function drawPie(content: ChartContent, theme: ChartTheme, b: Box, kind: 'pie' |
   const total = values.reduce((a, b) => a + b, 0) || 1;
   const cx = b.x + b.w / 2;
   const cy = b.y + b.h / 2;
-  const r  = Math.min(b.w, b.h) / 2 - 4;
+  const r = Math.min(b.w, b.h) / 2 - 4;
 
   let start = 0;
   let out = '';
@@ -426,8 +525,8 @@ function drawPie(content: ChartContent, theme: ChartTheme, b: Box, kind: 'pie' |
     const end = start + sweep;
     const x1 = cx + r * Math.cos(start - Math.PI / 2);
     const y1 = cy + r * Math.sin(start - Math.PI / 2);
-    const x2 = cx + r * Math.cos(end   - Math.PI / 2);
-    const y2 = cy + r * Math.sin(end   - Math.PI / 2);
+    const x2 = cx + r * Math.cos(end - Math.PI / 2);
+    const y2 = cy + r * Math.sin(end - Math.PI / 2);
     const largeArc = sweep > Math.PI ? 1 : 0;
     const color = content.series[0]?.colors?.[i] ?? theme.palette[i % theme.palette.length];
     out += `<path d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${color}" stroke="#ffffff" stroke-width="1.5" />`;
@@ -446,19 +545,23 @@ function drawPie(content: ChartContent, theme: ChartTheme, b: Box, kind: 'pie' |
 // =============================================================================
 
 function drawKpi(content: ChartContent, theme: ChartTheme, b: Box): string {
-  const cats   = content.categories;
-  const values = (content.series[0]?.values || []).slice(0, 4);
+  const cats = content.categories;
+  const values = content.series[0]?.values || [];
   if (values.length === 0) return emptyMessage(b, theme);
-  const cellW = b.w / values.length;
+  const columns = Math.min(4, Math.max(1, Math.ceil(Math.sqrt(values.length))));
+  const rows = Math.max(1, Math.ceil(values.length / columns));
+  const cellW = b.w / columns;
+  const cellH = b.h / rows;
   let out = '';
   values.forEach((raw, i) => {
     const v = Number(raw) || 0;
     const col = theme.palette[i % theme.palette.length];
-    const tx = b.x + i * cellW;
-    out += `<g transform="translate(${tx} ${b.y})">
-      <rect x="4" y="4" width="${cellW - 8}" height="${b.h - 8}" rx="10" fill="${col}" opacity="0.08" />
-      <text x="${cellW / 2}" y="${b.h / 2 - 2}" font-size="${Math.min(36, cellW / 3)}" font-weight="800" text-anchor="middle" fill="${col}">${esc(formatValue(v, content))}</text>
-      <text x="${cellW / 2}" y="${b.h / 2 + 22}" font-size="11" text-anchor="middle" fill="${theme.muted}" style="text-transform:uppercase;letter-spacing:0.5px">${esc(truncate(cats[i] || '', 18))}</text>
+    const tx = b.x + (i % columns) * cellW;
+    const ty = b.y + Math.floor(i / columns) * cellH;
+    out += `<g transform="translate(${tx} ${ty})">
+      <rect x="4" y="4" width="${Math.max(1, cellW - 8)}" height="${Math.max(1, cellH - 8)}" rx="10" fill="${col}" opacity="0.08" />
+      <text x="${cellW / 2}" y="${cellH / 2 - 2}" font-size="${Math.min(30, cellW / 3, cellH / 3)}" font-weight="800" text-anchor="middle" fill="${col}">${esc(formatValue(v, content))}</text>
+      <text x="${cellW / 2}" y="${cellH / 2 + 18}" font-size="${Math.min(11, Math.max(7, cellH / 7))}" text-anchor="middle" fill="${theme.muted}" style="text-transform:uppercase;letter-spacing:0.5px">${esc(truncate(cats[i] || '', 18))}</text>
     </g>`;
   });
   return out;
@@ -478,7 +581,7 @@ function drawFunnel(content: ChartContent, theme: ChartTheme, b: Box): string {
   cats.forEach((cat, i) => {
     const v = values[i] ?? 0;
     const widthFrac = Math.max(0.08, v / max);
-    const topFrac   = i === 0 ? 1 : Math.max(0.08, (values[i - 1] ?? v) / max);
+    const topFrac = i === 0 ? 1 : Math.max(0.08, (values[i - 1] ?? v) / max);
     const cy0 = b.y + i * slotH;
     const cy1 = b.y + (i + 1) * slotH;
     const cxC = b.x + b.w / 2;
@@ -507,18 +610,33 @@ function drawFunnel(content: ChartContent, theme: ChartTheme, b: Box): string {
 function drawScatter(content: ChartContent, theme: ChartTheme, b: Box): string {
   const series = content.series;
   if (series.length === 0) return emptyMessage(b, theme);
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
   for (const s of series) {
     for (let i = 0; i < (s.values?.length ?? 0) - 1; i += 2) {
       const xv = Number(s.values[i]);
       const yv = Number(s.values[i + 1]);
-      if (Number.isFinite(xv)) { if (xv < minX) minX = xv; if (xv > maxX) maxX = xv; }
-      if (Number.isFinite(yv)) { if (yv < minY) minY = yv; if (yv > maxY) maxY = yv; }
+      if (Number.isFinite(xv)) {
+        if (xv < minX) minX = xv;
+        if (xv > maxX) maxX = xv;
+      }
+      if (Number.isFinite(yv)) {
+        if (yv < minY) minY = yv;
+        if (yv > maxY) maxY = yv;
+      }
     }
   }
   if (minX === Infinity) return emptyMessage(b, theme);
-  if (minX === maxX) { minX -= 1; maxX += 1; }
-  if (minY === maxY) { minY -= 1; maxY += 1; }
+  if (minX === maxX) {
+    minX -= 1;
+    maxX += 1;
+  }
+  if (minY === maxY) {
+    minY -= 1;
+    maxY += 1;
+  }
   const xScale = (v: number) => b.x + ((v - minX) / (maxX - minX)) * b.w;
   const yScale = (v: number) => b.y + b.h - ((v - minY) / (maxY - minY)) * b.h;
   let out = '';
@@ -526,7 +644,8 @@ function drawScatter(content: ChartContent, theme: ChartTheme, b: Box): string {
   series.forEach((s, si) => {
     const col = colorFor(s, si, theme);
     for (let i = 0; i < (s.values?.length ?? 0) - 1; i += 2) {
-      const xv = Number(s.values[i]); const yv = Number(s.values[i + 1]);
+      const xv = Number(s.values[i]);
+      const yv = Number(s.values[i + 1]);
       if (!Number.isFinite(xv) || !Number.isFinite(yv)) continue;
       out += `<circle cx="${xScale(xv)}" cy="${yScale(yv)}" r="4" fill="${col}" opacity="0.8" />`;
     }
@@ -554,12 +673,12 @@ function drawWaterfall(content: ChartContent, theme: ChartTheme, b: Box): string
   const yZero = b.y + b.h / 2;
   const groupW = b.w / allLabels.length;
   const barW = groupW * 0.6;
-  const scale = (b.h / 2) / maxAbs;
+  const scale = b.h / 2 / maxAbs;
   let out = `<line x1="${b.x}" y1="${yZero}" x2="${b.x + b.w}" y2="${yZero}" stroke="${theme.grid}" stroke-width="1" />`;
   deltas.forEach((d, i) => {
     const positive = d >= 0;
     const top = positive ? yZero - totals[i + 1] * scale : yZero - totals[i] * scale;
-    const bot = positive ? yZero - totals[i] * scale     : yZero - totals[i + 1] * scale;
+    const bot = positive ? yZero - totals[i] * scale : yZero - totals[i + 1] * scale;
     const col = positive ? theme.positive : theme.negative;
     out += `<rect x="${b.x + i * groupW + (groupW - barW) / 2}" y="${top}" width="${barW}" height="${Math.abs(bot - top)}" fill="${col}" opacity="0.85" />`;
     out += `<text x="${b.x + i * groupW + groupW / 2}" y="${bot + 12}" font-size="10" text-anchor="middle" fill="${theme.muted}">${(positive ? '+' : '') + formatValue(d, content)}</text>`;
@@ -583,7 +702,7 @@ function drawRadar(content: ChartContent, theme: ChartTheme, b: Box): string {
   if (cats.length < 3 || series.length === 0) return emptyMessage(b, theme);
   const cx = b.x + b.w / 2;
   const cy = b.y + b.h / 2;
-  const r  = Math.min(b.w, b.h) / 2 - 20;
+  const r = Math.min(b.w, b.h) / 2 - 20;
   const max = Math.max(1, ...series.flatMap((s) => s.values || []));
   const angle = (i: number) => -Math.PI / 2 + (i / cats.length) * Math.PI * 2;
   const point = (i: number, v: number) => {
@@ -592,7 +711,12 @@ function drawRadar(content: ChartContent, theme: ChartTheme, b: Box): string {
   };
   let out = '';
   [0.25, 0.5, 0.75, 1].forEach((frac) => {
-    const pts = cats.map((_, i) => { const p = point(i, frac * max); return `${p.x},${p.y}`; }).join(' ');
+    const pts = cats
+      .map((_, i) => {
+        const p = point(i, frac * max);
+        return `${p.x},${p.y}`;
+      })
+      .join(' ');
     out += `<polygon points="${pts}" fill="none" stroke="${theme.grid}" stroke-width="1" />`;
   });
   cats.forEach((_, i) => {
@@ -601,10 +725,13 @@ function drawRadar(content: ChartContent, theme: ChartTheme, b: Box): string {
   });
   series.forEach((s, si) => {
     const col = colorFor(s, si, theme);
-    const pts = (s.values || []).slice(0, cats.length).map((v, i) => {
-      const p = point(i, Number(v) || 0);
-      return `${p.x},${p.y}`;
-    }).join(' ');
+    const pts = (s.values || [])
+      .slice(0, cats.length)
+      .map((v, i) => {
+        const p = point(i, Number(v) || 0);
+        return `${p.x},${p.y}`;
+      })
+      .join(' ');
     out += `<polygon points="${pts}" fill="${col}" opacity="0.18" />`;
     out += `<polygon points="${pts}" fill="none" stroke="${col}" stroke-width="2" />`;
   });
@@ -658,20 +785,36 @@ function drawHeatmap(content: ChartContent, theme: ChartTheme, b: Box): string {
 function drawBubble(content: ChartContent, theme: ChartTheme, b: Box): string {
   const series = content.series;
   if (series.length === 0) return emptyMessage(b, theme);
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, maxR = 1;
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity,
+    maxR = 1;
   for (const s of series) {
     for (let i = 0; i < (s.values?.length ?? 0) - 2; i += 3) {
       const xv = Number(s.values[i]);
       const yv = Number(s.values[i + 1]);
       const rv = Number(s.values[i + 2]);
-      if (Number.isFinite(xv)) { if (xv < minX) minX = xv; if (xv > maxX) maxX = xv; }
-      if (Number.isFinite(yv)) { if (yv < minY) minY = yv; if (yv > maxY) maxY = yv; }
+      if (Number.isFinite(xv)) {
+        if (xv < minX) minX = xv;
+        if (xv > maxX) maxX = xv;
+      }
+      if (Number.isFinite(yv)) {
+        if (yv < minY) minY = yv;
+        if (yv > maxY) maxY = yv;
+      }
       if (Number.isFinite(rv) && rv > maxR) maxR = rv;
     }
   }
   if (minX === Infinity) return emptyMessage(b, theme);
-  if (minX === maxX) { minX -= 1; maxX += 1; }
-  if (minY === maxY) { minY -= 1; maxY += 1; }
+  if (minX === maxX) {
+    minX -= 1;
+    maxX += 1;
+  }
+  if (minY === maxY) {
+    minY -= 1;
+    maxY += 1;
+  }
   const xScale = (v: number) => b.x + ((v - minX) / (maxX - minX)) * b.w;
   const yScale = (v: number) => b.y + b.h - ((v - minY) / (maxY - minY)) * b.h;
   const rScale = (v: number) => 4 + (Math.max(0, v) / maxR) * 28;
@@ -680,7 +823,9 @@ function drawBubble(content: ChartContent, theme: ChartTheme, b: Box): string {
   series.forEach((s, si) => {
     const col = colorFor(s, si, theme);
     for (let i = 0; i < (s.values?.length ?? 0) - 2; i += 3) {
-      const xv = Number(s.values[i]); const yv = Number(s.values[i + 1]); const rv = Number(s.values[i + 2]);
+      const xv = Number(s.values[i]);
+      const yv = Number(s.values[i + 1]);
+      const rv = Number(s.values[i + 2]);
       if (!Number.isFinite(xv) || !Number.isFinite(yv)) continue;
       out += `<circle cx="${xScale(xv)}" cy="${yScale(yv)}" r="${rScale(rv)}" fill="${col}" opacity="0.55" stroke="${col}" stroke-width="1.5" />`;
     }
@@ -695,20 +840,20 @@ function drawBubble(content: ChartContent, theme: ChartTheme, b: Box): string {
 // =============================================================================
 
 function drawGauge(content: ChartContent, theme: ChartTheme, b: Box): string {
-  const v   = Number(content.series[0]?.values?.[0] ?? 0);
+  const v = Number(content.series[0]?.values?.[0] ?? 0);
   const max = Number(content.series[0]?.values?.[1] ?? 100) || 100;
   const cx = b.x + b.w / 2;
   const cy = b.y + b.h * 0.7;
-  const r  = Math.min(b.w / 2 - 10, b.h * 0.6);
+  const r = Math.min(b.w / 2 - 10, b.h * 0.6);
   const frac = Math.max(0, Math.min(1, v / max));
   const startAngle = Math.PI;
-  const endAngle   = Math.PI + frac * Math.PI;
+  const endAngle = Math.PI + frac * Math.PI;
   const arcPath = (a1: number, a2: number) => {
     const x1 = cx + r * Math.cos(a1);
     const y1 = cy + r * Math.sin(a1);
     const x2 = cx + r * Math.cos(a2);
     const y2 = cy + r * Math.sin(a2);
-    const largeArc = (a2 - a1) > Math.PI ? 1 : 0;
+    const largeArc = a2 - a1 > Math.PI ? 1 : 0;
     return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
   };
   const trackPath = arcPath(startAngle, Math.PI * 2);
@@ -746,7 +891,7 @@ function drawTreemap(content: ChartContent, theme: ChartTheme, b: Box): string {
     while (remaining.length > 0) {
       const candidate = [...row, remaining[0]];
       const rowTotal = candidate.reduce((a, x) => a + x.v, 0);
-      const rowLen = (rowTotal / total) * curBox.w * curBox.h / rowMax;
+      const rowLen = ((rowTotal / total) * curBox.w * curBox.h) / rowMax;
       const worst = candidate.reduce((wmax, x) => {
         const area = (x.v / total) * curBox.w * curBox.h;
         const w = rowMax;
@@ -761,7 +906,7 @@ function drawTreemap(content: ChartContent, theme: ChartTheme, b: Box): string {
     }
     // Lay out the row
     const rowTotal = row.reduce((a, x) => a + x.v, 0);
-    const rowSide = (rowTotal / total) * curBox.w * curBox.h / rowMax;
+    const rowSide = ((rowTotal / total) * curBox.w * curBox.h) / rowMax;
     let offset = 0;
     for (const item of row) {
       const area = (item.v / total) * curBox.w * curBox.h;
@@ -775,15 +920,33 @@ function drawTreemap(content: ChartContent, theme: ChartTheme, b: Box): string {
         offset += along;
       }
       const col = theme.palette[item.i % theme.palette.length];
-      out.push(`<rect x="${rect.x}" y="${rect.y}" width="${rect.w}" height="${rect.h}" fill="${col}" opacity="0.85" stroke="#ffffff" stroke-width="2" />`);
+      out.push(
+        `<rect x="${rect.x}" y="${rect.y}" width="${rect.w}" height="${rect.h}" fill="${col}" opacity="0.85" stroke="#ffffff" stroke-width="2" />`,
+      );
       if (rect.w > 40 && rect.h > 24) {
-        out.push(`<text x="${rect.x + 8}" y="${rect.y + 16}" font-size="11" font-weight="700" fill="#ffffff">${esc(truncate(cats[item.i] || '', 16))}</text>`);
-        out.push(`<text x="${rect.x + 8}" y="${rect.y + 30}" font-size="10" fill="#ffffff" opacity="0.85">${esc(formatValue(item.v, content))}</text>`);
+        out.push(
+          `<text x="${rect.x + 8}" y="${rect.y + 16}" font-size="11" font-weight="700" fill="#ffffff">${esc(truncate(cats[item.i] || '', 16))}</text>`,
+        );
+        out.push(
+          `<text x="${rect.x + 8}" y="${rect.y + 30}" font-size="10" fill="#ffffff" opacity="0.85">${esc(formatValue(item.v, content))}</text>`,
+        );
       }
     }
     // Shrink curBox by the row we just laid out
-    if (horizontal) curBox = { x: curBox.x + rowSide, y: curBox.y, w: Math.max(0, curBox.w - rowSide), h: curBox.h };
-    else            curBox = { x: curBox.x, y: curBox.y + rowSide, w: curBox.w, h: Math.max(0, curBox.h - rowSide) };
+    if (horizontal)
+      curBox = {
+        x: curBox.x + rowSide,
+        y: curBox.y,
+        w: Math.max(0, curBox.w - rowSide),
+        h: curBox.h,
+      };
+    else
+      curBox = {
+        x: curBox.x,
+        y: curBox.y + rowSide,
+        w: curBox.w,
+        h: Math.max(0, curBox.h - rowSide),
+      };
     if (curBox.w < 1 || curBox.h < 1) break;
   }
   return out.join('');
@@ -798,10 +961,10 @@ function drawDualAxis(content: ChartContent, theme: ChartTheme, b: Box): string 
   const cats = content.categories;
   const series = content.series;
   if (cats.length === 0 || series.length === 0) return emptyMessage(b, theme);
-  const barSeries  = series[0];
+  const barSeries = series[0];
   const lineSeries = series[1];
-  const maxBar  = Math.max(1, ...(barSeries.values  || []));
-  const maxLine = Math.max(1, ...((lineSeries?.values) || [1]));
+  const maxBar = Math.max(1, ...(barSeries.values || []));
+  const maxLine = Math.max(1, ...(lineSeries?.values || [1]));
   const groupW = b.w / cats.length;
   const barW = groupW * 0.6;
   let out = '';
@@ -816,7 +979,9 @@ function drawDualAxis(content: ChartContent, theme: ChartTheme, b: Box): string 
     const step = cats.length > 1 ? b.w / (cats.length - 1) : b.w;
     const xAt = (i: number) => b.x + i * step;
     const yAt = (v: number) => b.y + b.h - (Math.max(0, v) / maxLine) * b.h;
-    const pts = (lineSeries.values || []).map((v, i) => `${xAt(i)},${yAt(Number(v) || 0)}`).join(' ');
+    const pts = (lineSeries.values || [])
+      .map((v, i) => `${xAt(i)},${yAt(Number(v) || 0)}`)
+      .join(' ');
     const col = colorFor(lineSeries, 1, theme);
     out += `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" />`;
     (lineSeries.values || []).forEach((v, i) => {
@@ -881,20 +1046,27 @@ function drawMatrix2x2(content: ChartContent, theme: ChartTheme, b: Box): string
 // =============================================================================
 
 interface BestWorst {
-  best?:  { ci: number; si: number; value: number };
+  best?: { ci: number; si: number; value: number };
   worst?: { ci: number; si: number; value: number };
 }
 function computeBestWorst(series: ChartSeries[], insight?: ChartInsight): BestWorst {
   const out: BestWorst = {};
   if (!insight?.highlightBest && !insight?.highlightWorst) return out;
-  let bestV = -Infinity, worstV = Infinity;
+  let bestV = -Infinity,
+    worstV = Infinity;
   for (let si = 0; si < series.length; si++) {
     const vals = series[si].values || [];
     for (let ci = 0; ci < vals.length; ci++) {
       const v = Number(vals[ci]);
       if (!Number.isFinite(v)) continue;
-      if (insight.highlightBest  && v > bestV)  { bestV  = v; out.best  = { ci, si, value: v }; }
-      if (insight.highlightWorst && v < worstV) { worstV = v; out.worst = { ci, si, value: v }; }
+      if (insight.highlightBest && v > bestV) {
+        bestV = v;
+        out.best = { ci, si, value: v };
+      }
+      if (insight.highlightWorst && v < worstV) {
+        worstV = v;
+        out.worst = { ci, si, value: v };
+      }
     }
   }
   return out;
@@ -919,7 +1091,11 @@ function formatTickValue(v: number, content: ChartContent): string {
  */
 export function formatNumber(
   v: number,
-  fmt?: { kind?: 'currency' | 'percent' | 'integer' | 'decimal' | 'compact'; currency?: string; decimals?: number },
+  fmt?: {
+    kind?: 'currency' | 'percent' | 'integer' | 'decimal' | 'compact';
+    currency?: string;
+    decimals?: number;
+  },
 ): string {
   if (!Number.isFinite(v)) return '';
   const decimals = fmt?.decimals ?? 1;
@@ -928,11 +1104,16 @@ export function formatNumber(
       const sym = fmt.currency || '$';
       return `${sym}${compact(v, decimals)}`;
     }
-    case 'percent':  return `${v.toFixed(decimals)}%`;
-    case 'integer':  return Math.round(v).toLocaleString();
-    case 'decimal':  return v.toFixed(decimals);
-    case 'compact':  return compact(v, decimals);
-    default:         return formatDefault(v);
+    case 'percent':
+      return `${v.toFixed(decimals)}%`;
+    case 'integer':
+      return Math.round(v).toLocaleString();
+    case 'decimal':
+      return v.toFixed(decimals);
+    case 'compact':
+      return compact(v, decimals);
+    default:
+      return formatDefault(v);
   }
 }
 

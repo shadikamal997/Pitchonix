@@ -1,0 +1,145 @@
+{
+  "generatedAt": "2026-06-09T10:25:22.830Z",
+  "changes": [
+    {
+      "family": "CV",
+      "template": "Portfolio Developer",
+      "role": "accent",
+      "from": "#16A34A",
+      "to": "#12883E",
+      "before": 3.3,
+      "after": 4.55,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "CV",
+      "template": "Startup PM",
+      "role": "accent",
+      "from": "#0284C7",
+      "to": "#027DBD",
+      "before": 4.1,
+      "after": 4.5,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "CV",
+      "template": "Startup Growth",
+      "role": "accent",
+      "from": "#D97706",
+      "to": "#B36205",
+      "before": 3.19,
+      "after": 4.5,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "CV",
+      "template": "Startup Founder",
+      "role": "accent",
+      "from": "#059669",
+      "to": "#05875F",
+      "before": 3.77,
+      "after": 4.53,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "CV",
+      "template": "Dev Data",
+      "role": "accent",
+      "from": "#6366F1",
+      "to": "#6365F0",
+      "before": 4.47,
+      "after": 4.52,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "CV",
+      "template": "Dev Terminal",
+      "role": "accent",
+      "from": "#16A34A",
+      "to": "#12883E",
+      "before": 3.3,
+      "after": 4.55,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "CV",
+      "template": "Creative Coral",
+      "role": "accent",
+      "from": "#EA580C",
+      "to": "#CD4D0B",
+      "before": 3.56,
+      "after": 4.5,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "CV",
+      "template": "Creative Dark",
+      "role": "accent",
+      "from": "#EAB308",
+      "to": "#947205",
+      "before": 1.92,
+      "after": 4.5,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "CV",
+      "template": "Modern Dark",
+      "role": "accent",
+      "from": "#6366F1",
+      "to": "#6365F0",
+      "before": 4.47,
+      "after": 4.52,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "CV",
+      "template": "Modern Split",
+      "role": "accent",
+      "from": "#0284C7",
+      "to": "#027DBD",
+      "before": 4.1,
+      "after": 4.5,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "CV",
+      "template": "Executive Prestige",
+      "role": "accent",
+      "from": "#B8972E",
+      "to": "#8D7423",
+      "before": 2.8,
+      "after": 4.51,
+      "pair": "accent/paper"
+    },
+    {
+      "family": "Excel",
+      "template": "sales-sage",
+      "role": "header",
+      "from": "#7A988A",
+      "to": "#647C71",
+      "before": 3.14,
+      "after": 4.5,
+      "pair": "text/header"
+    },
+    {
+      "family": "Excel",
+      "template": "ops-copper",
+      "role": "header",
+      "from": "#A66F3F",
+      "to": "#A06B3D",
+      "before": 4.23,
+      "after": 4.5,
+      "pair": "text/header"
+    },
+    {
+      "family": "CV",
+      "template": "Cover Letter Developer",
+      "role": "accent",
+      "from": "#16A34A",
+      "to": "#12883E",
+      "before": 3.3,
+      "after": 4.55,
+      "pair": "accent/paper"
+    }
+  ]
+}

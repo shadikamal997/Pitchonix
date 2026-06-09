@@ -20,7 +20,10 @@ export class AnalyzeContentDto {
   @IsEnum(AnalysisType)
   type: AnalysisType;
 
-  @ApiProperty({ description: 'Additional context (company info, industry, etc.)', required: false })
+  @ApiProperty({
+    description: 'Additional context (company info, industry, etc.)',
+    required: false,
+  })
   @IsOptional()
   context?: {
     companyName?: string;

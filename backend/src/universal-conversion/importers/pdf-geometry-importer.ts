@@ -1,6 +1,4 @@
-import {
-  UniversalDocument, DocumentNode, emptyDocument, newPage,
-} from '../document-model';
+import { UniversalDocument, DocumentNode, emptyDocument, newPage } from '../document-model';
 import { extractPageImages } from './pdf-image-extractor';
 import { detectTables as detectTablesV2, DetectedBlock } from './pdf-table-detector';
 
@@ -26,8 +24,8 @@ import { detectTables as detectTablesV2, DetectedBlock } from './pdf-table-detec
 
 interface TextItem {
   str: string;
-  x: number;       // left edge in PDF user units
-  y: number;       // bottom edge (PDF coords have y up)
+  x: number; // left edge in PDF user units
+  y: number; // bottom edge (PDF coords have y up)
   width: number;
   height: number;
   fontSize: number;
@@ -35,7 +33,7 @@ interface TextItem {
 
 export async function importPdfGeometry(buffer: Buffer): Promise<UniversalDocument> {
   // Dynamic import to bridge ESM → CJS (pdfjs-dist 4.x is ESM-only).
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs') as any;
+  const pdfjs = (await import('pdfjs-dist/legacy/build/pdf.mjs')) as any;
 
   const doc = emptyDocument('pdf');
   const data = new Uint8Array(buffer);
@@ -47,7 +45,9 @@ export async function importPdfGeometry(buffer: Buffer): Promise<UniversalDocume
     const meta = await pdf.getMetadata();
     if (meta?.info?.Title) doc.metadata.title = String(meta.info.Title);
     if (meta?.info?.Author) doc.metadata.author = String(meta.info.Author);
-  } catch { /* */ }
+  } catch {
+    /* */
+  }
 
   const numPages: number = pdf.numPages;
   for (let pageIdx = 1; pageIdx <= numPages; pageIdx++) {
@@ -72,14 +72,18 @@ export async function importPdfGeometry(buffer: Buffer): Promise<UniversalDocume
     const page = newPage();
 
     // 2) Detect & strip header/footer bands (top 5% / bottom 5% of page).
-    const HEADER_BAND = pageH * 0.94;   // (PDF y goes up; this is high y)
+    const HEADER_BAND = pageH * 0.94; // (PDF y goes up; this is high y)
     const FOOTER_BAND = pageH * 0.06;
     const header = items.filter((it) => it.y >= HEADER_BAND);
     const footer = items.filter((it) => it.y <= FOOTER_BAND);
-    const body   = items.filter((it) => it.y < HEADER_BAND && it.y > FOOTER_BAND);
+    const body = items.filter((it) => it.y < HEADER_BAND && it.y > FOOTER_BAND);
 
     if (pageIdx === 1 && header.length > 0) {
-      const headerText = header.sort((a, b) => a.x - b.x).map((i) => i.str).join(' ').trim();
+      const headerText = header
+        .sort((a, b) => a.x - b.x)
+        .map((i) => i.str)
+        .join(' ')
+        .trim();
       if (headerText) doc.metadata.description = headerText.slice(0, 200);
     }
 
@@ -102,12 +106,14 @@ export async function importPdfGeometry(buffer: Buffer): Promise<UniversalDocume
     for (const block of blocks) {
       if (block.kind === 'table') {
         page.nodes.push({
-          type:  'table',
-          rows:  block.rows.map((r) => r.map((c) => ({
-            text:    c.text,
-            colspan: c.colspan,
-            bold:    c.bold,
-          }))),
+          type: 'table',
+          rows: block.rows.map((r) =>
+            r.map((c) => ({
+              text: c.text,
+              colspan: c.colspan,
+              bold: c.bold,
+            })),
+          ),
           headerRow: block.headerRow,
         });
         firstLine = false;
@@ -135,9 +141,9 @@ export async function importPdfGeometry(buffer: Buffer): Promise<UniversalDocume
       if (images.length > 0) {
         for (const img of images) {
           page.nodes.push({
-            type:  'image',
-            src:   img.url,
-            alt:   `Page ${pageIdx} image ${img.index + 1} (${img.width}×${img.height})`,
+            type: 'image',
+            src: img.url,
+            alt: `Page ${pageIdx} image ${img.index + 1} (${img.width}×${img.height})`,
           });
         }
       } else {
@@ -145,20 +151,32 @@ export async function importPdfGeometry(buffer: Buffer): Promise<UniversalDocume
         const ops = await pdfPage.getOperatorList();
         const imageCount = countImageOps(ops, pdfjs);
         for (let i = 0; i < imageCount; i++) {
-          page.nodes.push({ type: 'image', src: '', alt: `[Embedded image ${i + 1} on page ${pageIdx} — not extractable]` });
+          page.nodes.push({
+            type: 'image',
+            src: '',
+            alt: `[Embedded image ${i + 1} on page ${pageIdx} — not extractable]`,
+          });
         }
       }
     } catch {
       const ops = await pdfPage.getOperatorList();
       const imageCount = countImageOps(ops, pdfjs);
       for (let i = 0; i < imageCount; i++) {
-        page.nodes.push({ type: 'image', src: '', alt: `[Embedded image ${i + 1} on page ${pageIdx}]` });
+        page.nodes.push({
+          type: 'image',
+          src: '',
+          alt: `[Embedded image ${i + 1} on page ${pageIdx}]`,
+        });
       }
     }
 
     // 9) Footer → page notes (so we don't lose page numbers / disclaimers).
     if (footer.length > 0) {
-      const fText = footer.sort((a, b) => a.x - b.x).map((i) => i.str).join(' ').trim();
+      const fText = footer
+        .sort((a, b) => a.x - b.x)
+        .map((i) => i.str)
+        .join(' ')
+        .trim();
       if (fText) page.notes = fText;
     }
 

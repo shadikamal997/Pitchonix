@@ -6,10 +6,8 @@ import { VisualGenerationService } from './visual';
 import { VisualSlideContent, VisualGenerationOptions } from './visual/types';
 import { ProgressGateway } from './progress/progress.gateway';
 import { ContentStructureService } from './content-structure';
-import {
-  AutoExpansionService,
-  DocumentScorecardService,
-} from './document-quality';
+import { AutoExpansionService, DocumentScorecardService } from './document-quality';
+import { materializePresentationOverflow } from './presentation-overflow-materializer';
 
 @Injectable()
 export class GenerationService {
@@ -40,7 +38,7 @@ export class GenerationService {
     },
   ): Promise<VisualSlideContent[]> {
     const jobId = options?.jobId || `job-${Date.now()}`;
-    
+
     try {
       // Stage 1: Generate base slides
       this.progressGateway?.emitProgress({
@@ -126,7 +124,7 @@ export class GenerationService {
       return minimalSlides;
     } catch (error) {
       this.logger.error('Error generating presentation:', error.stack);
-      
+
       // Emit error progress
       this.progressGateway?.emitProgress({
         jobId,
@@ -150,7 +148,7 @@ export class GenerationService {
     options?: { useAI?: boolean; jobId?: string },
   ): Promise<SlideContent[]> {
     const jobId = options?.jobId || `job-${Date.now()}`;
-    
+
     try {
       // Validate input
       this.validateInput(input);
@@ -171,9 +169,9 @@ export class GenerationService {
       if (expansion.promotions.length > 0) {
         this.logger.log(
           `Phase 30: framework promotions=[${expansion.promotions.join(',')}]` +
-          (expansion.skipped.length > 0
-            ? ` skipped=[${expansion.skipped.map((s) => `${s.slideType}:${s.reason}`).join(';')}]`
-            : ''),
+            (expansion.skipped.length > 0
+              ? ` skipped=[${expansion.skipped.map((s) => `${s.slideType}:${s.reason}`).join(';')}]`
+              : ''),
         );
       }
 
@@ -192,10 +190,7 @@ export class GenerationService {
           timestamp: new Date(),
         });
 
-        enhancedSlides = await this.aiEnhancementService.enhanceDeck(
-          slides,
-          input,
-        );
+        enhancedSlides = await this.aiEnhancementService.enhanceDeck(slides, input);
         this.logger.log('AI enhancement complete');
       } else if (options?.useAI) {
         this.logger.warn('AI enhancement requested but not available');
@@ -218,7 +213,7 @@ export class GenerationService {
       enhancedSlides = enrichment.slides;
       this.logger.log(
         `Phase 27: structure score ${enrichment.score.total.toFixed(0)}/100, ` +
-        `${enrichment.blueprints.reduce((s, b) => s + b.blocks.length, 0)} visual blocks emitted`,
+          `${enrichment.blueprints.reduce((s, b) => s + b.blocks.length, 0)} visual blocks emitted`,
       );
 
       // Phase 30H — Document scorecard. Aggregates framework completeness,
@@ -227,6 +222,16 @@ export class GenerationService {
       // the breakdown; the controller exposes the full report via
       // GET /api/generate/scorecard/:deckId (Phase 30J).
       this.scorecardService.build(input, enhancedSlides, enrichment.score.total);
+
+      const materialized = materializePresentationOverflow(enhancedSlides);
+      if (materialized.warnings.length > 0) {
+        this.logger.warn(
+          `Content fidelity materialization warnings: ${materialized.warnings
+            .map((warning) => `${warning.slideTitle}:${warning.unmaterializedCount}`)
+            .join(', ')}`,
+        );
+      }
+      enhancedSlides = materialized.slides;
 
       // Validate generated content
       if (!this.validateSlideContent(enhancedSlides)) {
@@ -260,8 +265,10 @@ export class GenerationService {
     input.slideCount = input.slideCount || 10;
     input.contentDepth = input.contentDepth || 'balanced';
     input.includeCharts = input.includeCharts !== undefined ? input.includeCharts : true;
-    input.includeFinancials = input.includeFinancials !== undefined ? input.includeFinancials : false;
-    input.includeExecutiveSummary = input.includeExecutiveSummary !== undefined ? input.includeExecutiveSummary : false;
+    input.includeFinancials =
+      input.includeFinancials !== undefined ? input.includeFinancials : false;
+    input.includeExecutiveSummary =
+      input.includeExecutiveSummary !== undefined ? input.includeExecutiveSummary : false;
   }
 
   /**
@@ -297,7 +304,10 @@ export class GenerationService {
       }
 
       // Check quality score if present
-      if (slide.qualityScore !== undefined && (slide.qualityScore < 0 || slide.qualityScore > 100)) {
+      if (
+        slide.qualityScore !== undefined &&
+        (slide.qualityScore < 0 || slide.qualityScore > 100)
+      ) {
         this.logger.error('Invalid quality score:', slide.qualityScore);
         return false;
       }

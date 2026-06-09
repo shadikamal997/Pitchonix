@@ -34,7 +34,7 @@ export class FinancialTablePageGenerator extends BasePageGenerator {
   private generateRevenueTable(input: WizardInput): { title: string; rows: FinancialTableRow[] } {
     // Since financialProjections doesn't exist in WizardInput, use empty object
     const projections: any = {};
-    
+
     return {
       title: 'Revenue Projections',
       rows: [
@@ -147,7 +147,7 @@ export class FinancialTablePageGenerator extends BasePageGenerator {
   private estimateCosts(projections: any, year: number): string {
     const year3 = this.parseNumber(projections.year3Costs);
     if (year3 > 0) {
-      const estimated = year3 * Math.pow(1.20, year - 3);
+      const estimated = year3 * Math.pow(1.2, year - 3);
       return '$' + Math.round(estimated).toLocaleString();
     }
     return '$0';
@@ -156,7 +156,7 @@ export class FinancialTablePageGenerator extends BasePageGenerator {
   private estimateOpEx(projections: any, year: number): string {
     const revenue = this.parseNumber(projections[`year${year}Revenue`]);
     if (revenue > 0) {
-      const opex = revenue * 0.30; // 30% of revenue
+      const opex = revenue * 0.3; // 30% of revenue
       return '$' + Math.round(opex).toLocaleString();
     }
     return '$0';
@@ -172,7 +172,7 @@ export class FinancialTablePageGenerator extends BasePageGenerator {
   private calculateNetProfit(projections: any, year: number): string {
     const revenue = this.parseNumber(projections[`year${year}Revenue`]);
     const costs = this.parseNumber(projections[`year${year}Costs`]);
-    const opex = revenue * 0.30;
+    const opex = revenue * 0.3;
     const net = revenue - costs - opex;
     return '$' + Math.round(net).toLocaleString();
   }
@@ -180,9 +180,9 @@ export class FinancialTablePageGenerator extends BasePageGenerator {
   private calculateMargin(projections: any, year: number): string {
     const revenue = this.parseNumber(projections[`year${year}Revenue`]);
     const costs = this.parseNumber(projections[`year${year}Costs`]);
-    const opex = revenue * 0.30;
+    const opex = revenue * 0.3;
     const net = revenue - costs - opex;
-    
+
     if (revenue > 0) {
       const margin = (net / revenue) * 100;
       return margin.toFixed(1) + '%';
@@ -193,7 +193,7 @@ export class FinancialTablePageGenerator extends BasePageGenerator {
   private calculateGrowth(prev: any, current: any): string {
     const prevNum = this.parseNumber(prev);
     const currentNum = this.parseNumber(current);
-    
+
     if (prevNum > 0 && currentNum > 0) {
       const growth = ((currentNum - prevNum) / prevNum) * 100;
       return growth.toFixed(1) + '%';

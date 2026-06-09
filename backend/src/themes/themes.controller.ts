@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ThemesService, ThemeInput } from './themes.service';
@@ -23,10 +33,7 @@ export class ThemesController {
   constructor(private themes: ThemesService) {}
 
   @Get('themes')
-  list(
-    @Query('deckId') deckId?: string,
-    @Query('workspaceId') workspaceId?: string,
-  ) {
+  list(@Query('deckId') deckId?: string, @Query('workspaceId') workspaceId?: string) {
     return this.themes.list({ deckId: deckId || null, workspaceId: workspaceId || null });
   }
 

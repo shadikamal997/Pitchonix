@@ -1,0 +1,71 @@
+# Phase Ω.CONTENT.3 — Phase 9 Regression Gate (CI protection).
+#
+# Protects content fidelity on every PR:
+#   • Runs the certification + regression-gate test suite (deterministic, no DB).
+#   • In environments with a database, additionally runs the live gate
+#     (`npm run certify:gate`) which fails the build when platform retention
+#     drops below the floor, broken nodes increase vs the committed baseline,
+#     or a new uncategorized loss reason appears.
+name: Content Safety
+
+on:
+  pull_request:
+    paths:
+      - 'backend/src/content-ledger/**'
+      - 'backend/src/**/*ledger*'
+      - 'backend/scripts/certify-content.ts'
+      - 'backend/.content-certification.baseline.json'
+  push:
+    branches: [main]
+
+jobs:
+  content-ledger-tests:
+    name: Certification & gate unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      # Certification correctness + the regression-gate logic. No database needed.
+      - run: npx jest src/content-ledger/
+
+  # Live regression gate. Enable once a CI database + migrations are provisioned.
+  # Requires the DATABASE_URL secret and a postgres service.
+  live-gate:
+    name: Live regression gate
+    if: ${{ vars.RUN_LIVE_CONTENT_GATE == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pitchonix
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pitchonix
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      # Fails (exit 1) on any content-safety regression.
+      - run: npm run certify:gate

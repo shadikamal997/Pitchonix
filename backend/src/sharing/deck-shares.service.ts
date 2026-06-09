@@ -1,5 +1,8 @@
 import {
-  Injectable, NotFoundException, ForbiddenException, BadRequestException,
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -20,11 +23,14 @@ import { PrismaService } from '../prisma/prisma.service';
 export type SharingMode = 'private' | 'workspace' | 'shared';
 export type DeckPermission = 'view' | 'comment' | 'review' | 'edit';
 const PERM_RANK: Record<DeckPermission, number> = {
-  view: 1, comment: 2, review: 3, edit: 4,
+  view: 1,
+  comment: 2,
+  review: 3,
+  edit: 4,
 };
 
 const SHARE_INCLUDE = {
-  member:    { select: { id: true, name: true, email: true } },
+  member: { select: { id: true, name: true, email: true } },
   createdBy: { select: { id: true, name: true, email: true } },
 };
 
@@ -44,7 +50,7 @@ export class DeckSharesService {
    */
   async resolvePermission(projectId: string, userId: string): Promise<DeckPermission | null> {
     const project = await this.prisma.project.findUnique({
-      where:  { id: projectId },
+      where: { id: projectId },
       select: { userId: true, workspaceId: true, sharingMode: true },
     });
     if (!project) return null;
@@ -59,7 +65,7 @@ export class DeckSharesService {
     let workspacePerm: DeckPermission | null = null;
     if (project.workspaceId) {
       const member = await this.prisma.workspaceMember.findUnique({
-        where:  { workspaceId_userId: { workspaceId: project.workspaceId, userId } },
+        where: { workspaceId_userId: { workspaceId: project.workspaceId, userId } },
         select: { role: true },
       });
       if (member) {
@@ -71,7 +77,7 @@ export class DeckSharesService {
     let sharePerm: DeckPermission | null = null;
     if (project.sharingMode === 'shared') {
       const share = await this.prisma.deckShare.findUnique({
-        where:  { projectId_memberId: { projectId, memberId: userId } },
+        where: { projectId_memberId: { projectId, memberId: userId } },
         select: { permission: true },
       });
       if (share && isValidPerm(share.permission)) sharePerm = share.permission as DeckPermission;
@@ -87,26 +93,36 @@ export class DeckSharesService {
   async list(projectId: string, callerId: string) {
     await this.assertCallerCanShare(projectId, callerId);
     return this.prisma.deckShare.findMany({
-      where:   { projectId },
+      where: { projectId },
       include: SHARE_INCLUDE,
       orderBy: { createdAt: 'asc' },
     });
   }
 
-  async upsert(projectId: string, callerId: string, input: { memberId: string; permission: DeckPermission }) {
+  async upsert(
+    projectId: string,
+    callerId: string,
+    input: { memberId: string; permission: DeckPermission },
+  ) {
     await this.assertCallerCanShare(projectId, callerId);
     if (!isValidPerm(input.permission)) throw new BadRequestException('Invalid permission');
-    if (input.memberId === callerId) throw new BadRequestException('Cannot grant a share to yourself');
+    if (input.memberId === callerId)
+      throw new BadRequestException('Cannot grant a share to yourself');
 
     const target = await this.prisma.user.findUnique({
-      where:  { id: input.memberId },
+      where: { id: input.memberId },
       select: { id: true },
     });
     if (!target) throw new BadRequestException('Target user not found');
 
     return this.prisma.deckShare.upsert({
-      where:  { projectId_memberId: { projectId, memberId: input.memberId } },
-      create: { projectId, memberId: input.memberId, permission: input.permission, createdById: callerId },
+      where: { projectId_memberId: { projectId, memberId: input.memberId } },
+      create: {
+        projectId,
+        memberId: input.memberId,
+        permission: input.permission,
+        createdById: callerId,
+      },
       update: { permission: input.permission },
       include: SHARE_INCLUDE,
     });
@@ -127,7 +143,7 @@ export class DeckSharesService {
     }
     return this.prisma.project.update({
       where: { id: projectId },
-      data:  { sharingMode: mode },
+      data: { sharingMode: mode },
       select: { id: true, sharingMode: true },
     });
   }
@@ -142,18 +158,18 @@ export class DeckSharesService {
    */
   private async assertCallerCanShare(projectId: string, callerId: string) {
     const project = await this.prisma.project.findUnique({
-      where:  { id: projectId },
+      where: { id: projectId },
       select: { userId: true, workspaceId: true },
     });
     if (!project) throw new NotFoundException('Project not found');
     if (project.userId === callerId) return;
     if (!project.workspaceId) throw new ForbiddenException('No access to share this deck');
     const member = await this.prisma.workspaceMember.findUnique({
-      where:  { workspaceId_userId: { workspaceId: project.workspaceId, userId: callerId } },
+      where: { workspaceId_userId: { workspaceId: project.workspaceId, userId: callerId } },
       select: { role: true },
     });
     if (!member || !['owner', 'admin', 'editor'].includes(member.role)) {
-      throw new ForbiddenException('You don\'t have permission to share this deck');
+      throw new ForbiddenException("You don't have permission to share this deck");
     }
   }
 }
@@ -164,12 +180,18 @@ export class DeckSharesService {
 
 function workspaceRoleToDeckPermission(role: string): DeckPermission | null {
   switch (role) {
-    case 'owner':    return 'edit';
-    case 'admin':    return 'edit';
-    case 'editor':   return 'edit';
-    case 'reviewer': return 'review';
-    case 'viewer':   return 'view';
-    default:         return null;
+    case 'owner':
+      return 'edit';
+    case 'admin':
+      return 'edit';
+    case 'editor':
+      return 'edit';
+    case 'reviewer':
+      return 'review';
+    case 'viewer':
+      return 'view';
+    default:
+      return null;
   }
 }
 

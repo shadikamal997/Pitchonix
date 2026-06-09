@@ -38,7 +38,25 @@ function firstPhrase(text: string | undefined, max = 70): string {
 
 /** Title-case a string. */
 function tc(s: string): string {
-  const SMALL = new Set(['a','an','the','and','but','or','for','nor','on','at','to','by','in','of','up','as','is']);
+  const SMALL = new Set([
+    'a',
+    'an',
+    'the',
+    'and',
+    'but',
+    'or',
+    'for',
+    'nor',
+    'on',
+    'at',
+    'to',
+    'by',
+    'in',
+    'of',
+    'up',
+    'as',
+    'is',
+  ]);
   return s.replace(/\b\w+/g, (w, i) =>
     i > 0 && SMALL.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1),
   );
@@ -47,7 +65,9 @@ function tc(s: string): string {
 /** Extract the first dollar/percent/number from text. */
 function firstNum(text: string | undefined): string | null {
   if (!text) return null;
-  const m = text.match(/\$[\d,.]+\s*[BbMmKkTt]?\s*(?:billion|million|trillion|thousand)?|\d+[\d,.]*\s*[BbMmKkTt](?:illion|illion|rillion|housand)?|(?:\d+)%/);
+  const m = text.match(
+    /\$[\d,.]+\s*[BbMmKkTt]?\s*(?:billion|million|trillion|thousand)?|\d+[\d,.]*\s*[BbMmKkTt](?:illion|illion|rillion|housand)?|(?:\d+)%/,
+  );
   return m ? m[0].trim() : null;
 }
 
@@ -55,16 +75,16 @@ function firstNum(text: string | undefined): string | null {
 function revenueModelType(text: string | undefined): string {
   if (!text) return '';
   const t = text.toLowerCase();
-  if (t.match(/\bsaas\b/))                    return 'SaaS';
-  if (t.match(/subscription/))                return 'Subscription';
-  if (t.match(/marketplace|commission/))      return 'Marketplace';
-  if (t.match(/freemium/))                    return 'Freemium';
+  if (t.match(/\bsaas\b/)) return 'SaaS';
+  if (t.match(/subscription/)) return 'Subscription';
+  if (t.match(/marketplace|commission/)) return 'Marketplace';
+  if (t.match(/freemium/)) return 'Freemium';
   if (t.match(/enterprise.*licen|licen.*enterprise/)) return 'Enterprise License';
-  if (t.match(/usage.based|pay.per/))         return 'Usage-Based';
+  if (t.match(/usage.based|pay.per/)) return 'Usage-Based';
   if (t.match(/transaction fee|per.*transaction/)) return 'Transaction Fee';
-  if (t.match(/advert|media/))                return 'Advertising';
-  if (t.match(/service|consulting/))          return 'Services';
-  if (t.match(/one.time|perpetual/))          return 'One-Time License';
+  if (t.match(/advert|media/)) return 'Advertising';
+  if (t.match(/service|consulting/)) return 'Services';
+  if (t.match(/one.time|perpetual/)) return 'One-Time License';
   return '';
 }
 
@@ -97,9 +117,10 @@ export function problemTitle(input: WizardInput): string {
   // Prefer a phrase that contains a number (most compelling)
   const num = firstNum(text);
   if (num) {
-    const numIdx = text.indexOf(num.replace(/\s+/g, '')) > -1
-      ? text.indexOf(num.replace(/\s+/g, ''))
-      : text.search(/\$|\d+%/);
+    const numIdx =
+      text.indexOf(num.replace(/\s+/g, '')) > -1
+        ? text.indexOf(num.replace(/\s+/g, ''))
+        : text.search(/\$|\d+%/);
     if (numIdx >= 0) {
       const phrase = firstSentence(text.slice(Math.max(0, numIdx - 10)), 80);
       if (phrase.length > 8) return cap(tc(phrase), 80);
@@ -113,7 +134,9 @@ export function problemSubtitle(input: WizardInput): string {
   if (input.targetCustomers) return cap(firstPhrase(input.targetCustomers, 70), 70);
   const num = firstNum(input.problem);
   if (num) return `A critical pain point costing ${num} annually`;
-  return input.industry ? `Facing every ${input.industry.toLowerCase()} team` : 'An unsolved pain point';
+  return input.industry
+    ? `Facing every ${input.industry.toLowerCase()} team`
+    : 'An unsolved pain point';
 }
 
 // ---------------------------------------------------------------------------
@@ -122,11 +145,11 @@ export function problemSubtitle(input: WizardInput): string {
 
 export function solutionTitle(input: WizardInput): string {
   const product = input.productService || input.companyName;
-  const text    = input.solution;
+  const text = input.solution;
   if (text?.trim()) {
     const phrase = firstPhrase(text, 60);
     if (phrase.length > 8 && product) return cap(`${product}: ${tc(phrase)}`, 85);
-    if (phrase.length > 8)            return cap(tc(phrase), 80);
+    if (phrase.length > 8) return cap(tc(phrase), 80);
   }
   if (product) return `${product} — Built to Win`;
   return 'A Better Way Forward';
@@ -134,7 +157,7 @@ export function solutionTitle(input: WizardInput): string {
 
 export function solutionSubtitle(input: WizardInput): string {
   if (input.differentiation) return cap(firstPhrase(input.differentiation, 70), 70);
-  if (input.productService)   return input.productService;
+  if (input.productService) return input.productService;
   return 'How we solve it';
 }
 
@@ -165,7 +188,7 @@ export function marketSubtitle(input: WizardInput): string {
   const rate = input.structured?.marketSizing?.growthRate;
   if (rate) return `Growing ${rate} annually`;
   const region = input.structured?.marketSizing?.region;
-  const tam  = input.structured?.marketSizing?.tam;
+  const tam = input.structured?.marketSizing?.tam;
   if (tam && region) return `${region} TAM`;
   return 'TAM · SAM · SOM';
 }
@@ -176,7 +199,7 @@ export function marketSubtitle(input: WizardInput): string {
 
 export function businessModelTitle(input: WizardInput): string {
   const modelType = revenueModelType(input.revenueModel);
-  const tiers     = input.structured?.pricingTiers;
+  const tiers = input.structured?.pricingTiers;
   if (modelType && tiers?.length) {
     const lowestPrice = tiers
       .map((t) => t.price)
@@ -199,7 +222,11 @@ export function businessModelTitle(input: WizardInput): string {
 export function businessModelSubtitle(input: WizardInput): string {
   const tiers = input.structured?.pricingTiers;
   if (tiers?.length) {
-    const names = tiers.slice(0, 3).map((t) => t.name).filter(Boolean).join(' · ');
+    const names = tiers
+      .slice(0, 3)
+      .map((t) => t.name)
+      .filter(Boolean)
+      .join(' · ');
     if (names) return names;
   }
   if (input.pricing) return cap(firstPhrase(input.pricing, 65), 65);
@@ -214,13 +241,16 @@ export function tractionTitle(input: WizardInput): string {
   const kpis = input.structured?.kpis;
   if (kpis?.length) {
     // Pick the most impressive-looking KPI (revenue > users > %, else first)
-    const order = ['mrr','arr','revenue','users','customers','growth'];
+    const order = ['mrr', 'arr', 'revenue', 'users', 'customers', 'growth'];
     const sorted = [...kpis].sort((a, b) => {
       const ai = order.findIndex((k) => a.label.toLowerCase().includes(k));
       const bi = order.findIndex((k) => b.label.toLowerCase().includes(k));
       return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
     });
-    const top = sorted.slice(0, 3).map((k) => `${k.value} ${k.label}`).join(', ');
+    const top = sorted
+      .slice(0, 3)
+      .map((k) => `${k.value} ${k.label}`)
+      .join(', ');
     if (top.length < 80) return cap(top, 80);
     return cap(`${sorted[0].value} ${sorted[0].label}`, 80);
   }
@@ -258,10 +288,22 @@ export function teamTitle(input: WizardInput): string {
   if (members?.length) {
     // Build: "3 Founders with Deep SaaS Experience"
     const count = members.length;
-    const ind   = input.industry ? ` ${tc(input.industry)}` : '';
+    const ind = input.industry ? ` ${tc(input.industry)}` : '';
     if (count === 1) return `${members[0].name}, ${members[0].role}`;
     // Surface former employers / credentials if any
-    const credWords = ['ex-', 'former', 'google', 'mckinsey', 'goldman', 'meta', 'amazon', 'harvard', 'stanford', 'mit', 'phd'];
+    const credWords = [
+      'ex-',
+      'former',
+      'google',
+      'mckinsey',
+      'goldman',
+      'meta',
+      'amazon',
+      'harvard',
+      'stanford',
+      'mit',
+      'phd',
+    ];
     const credMember = members.find((m) =>
       credWords.some((cw) => (m.experience || '').toLowerCase().includes(cw)),
     );
@@ -286,7 +328,11 @@ export function teamTitle(input: WizardInput): string {
 export function teamSubtitle(input: WizardInput): string {
   const members = input.structured?.teamMembers;
   if (members?.length) {
-    const roles = members.slice(0, 3).map((m) => m.role).filter(Boolean).join(' · ');
+    const roles = members
+      .slice(0, 3)
+      .map((m) => m.role)
+      .filter(Boolean)
+      .join(' · ');
     if (roles) return roles;
   }
   if (input.industry) return `Domain experts in ${input.industry.toLowerCase()}`;
@@ -299,10 +345,10 @@ export function teamSubtitle(input: WizardInput): string {
 
 export function askTitle(input: WizardInput): string {
   const funding = input.structured?.funding;
-  const amount  = funding?.amount || firstNum(input.fundingAsk);
-  const round   = funding?.roundType || detectRoundType(input.fundingAsk);
+  const amount = funding?.amount || firstNum(input.fundingAsk);
+  const round = funding?.roundType || detectRoundType(input.fundingAsk);
   if (amount && round) return `Raising ${amount.replace(/^\$/, '$')} ${round}`;
-  if (amount)          return `Raising ${amount.replace(/^\$/, '$')}`;
+  if (amount) return `Raising ${amount.replace(/^\$/, '$')}`;
   if (input.fundingAsk) {
     const phrase = firstPhrase(input.fundingAsk, 65);
     if (phrase.length > 8) return cap(tc(phrase), 75);
@@ -332,9 +378,9 @@ function detectRoundType(text: string | undefined): string {
   if (t.includes('series a')) return 'Series A';
   if (t.includes('series b')) return 'Series B';
   if (t.includes('series c')) return 'Series C';
-  if (t.includes('seed'))     return 'Seed Round';
+  if (t.includes('seed')) return 'Seed Round';
   if (t.includes('pre-seed') || t.includes('preseed')) return 'Pre-Seed';
-  if (t.includes('bridge'))   return 'Bridge Round';
+  if (t.includes('bridge')) return 'Bridge Round';
   return '';
 }
 
@@ -371,7 +417,7 @@ export function roadmapTitle(input: WizardInput): string {
   const phases = input.structured?.roadmapPhases;
   if (phases?.length) {
     const first = phases[0].period || phases[0].phase;
-    const last  = phases[phases.length - 1].period || phases[phases.length - 1].phase;
+    const last = phases[phases.length - 1].period || phases[phases.length - 1].phase;
     if (first && last && first !== last) return `From ${tc(first)} to ${tc(last)}`;
     if (first) return `${tc(first)}: Our Execution Plan`;
   }
@@ -410,10 +456,10 @@ export function gtmSubtitle(input: WizardInput): string {
 
 function detectChannel(target: string, revenue?: string): string {
   const t = (target + ' ' + (revenue || '')).toLowerCase();
-  if (t.includes('enterprise') || t.includes('b2b'))       return 'Direct Sales';
-  if (t.includes('consumer') || t.includes('b2c'))         return 'Digital Marketing';
-  if (t.includes('developer') || t.includes('api'))        return 'Product-Led Growth';
-  if (t.includes('partner') || t.includes('channel'))      return 'Channel Partners';
+  if (t.includes('enterprise') || t.includes('b2b')) return 'Direct Sales';
+  if (t.includes('consumer') || t.includes('b2c')) return 'Digital Marketing';
+  if (t.includes('developer') || t.includes('api')) return 'Product-Led Growth';
+  if (t.includes('partner') || t.includes('channel')) return 'Channel Partners';
   if (t.includes('self-serve') || t.includes('product-led')) return 'Product-Led Growth';
   return 'Multi-Channel';
 }
@@ -479,7 +525,7 @@ export function featuresTitle(input: WizardInput): string {
   if (input.solution) {
     const phrase = firstPhrase(input.solution, 55);
     if (phrase.length > 8 && product) return cap(`${product}: ${tc(phrase)}`, 80);
-    if (phrase.length > 8)            return cap(tc(phrase), 75);
+    if (phrase.length > 8) return cap(tc(phrase), 75);
   }
   return product ? `${product}'s Core Capabilities` : 'Key Features';
 }
@@ -494,7 +540,7 @@ export function featuresSubtitle(input: WizardInput): string {
 
 export function visionTitle(input: WizardInput): string {
   const product = input.productService || input.companyName;
-  const ind     = input.industry;
+  const ind = input.industry;
   if (product && ind) return `Transforming ${tc(ind)} with ${product}`;
   if (input.shortDescription) {
     const phrase = firstPhrase(input.shortDescription, 65);

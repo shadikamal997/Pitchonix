@@ -46,14 +46,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         // object (when the caller throws `new BadRequestException({ ... })`).
         // Stringify cleanly instead of letting it become "[object Object]".
         message = normaliseMessage(responseObj.message) || message;
-        error   = responseObj.error;
+        error = responseObj.error;
         details = responseObj.details;
       }
     }
     // Handle standard Error
     else if (exception instanceof Error) {
       message = exception.message;
-      error   = exception.name;
+      error = exception.name;
     }
     // Handle unknown errors
     else {
@@ -80,14 +80,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // Phase audit fix — only leak stack traces when explicitly opted in.
     // Treat the default (no NODE_ENV set) as "non-development" so dev-mode
     // runs of `nest start` don't accidentally publish stack traces.
-    const isExplicitlyDev = process.env.NODE_ENV === 'development' && process.env.EXPOSE_STACK_TRACES === '1';
+    const isExplicitlyDev =
+      process.env.NODE_ENV === 'development' && process.env.EXPOSE_STACK_TRACES === '1';
     if (isExplicitlyDev && exception instanceof Error) {
       errorResponse.stack = exception.stack;
     }
 
     // Log the error
     const logMessage = `[${request.method}] ${request.url} - ${status} - ${message}`;
-    
+
     if (status >= 500) {
       this.logger.error(logMessage, exception instanceof Error ? exception.stack : '');
     } else if (status >= 400) {
@@ -106,30 +107,51 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 function normaliseMessage(raw: unknown): string {
   if (raw == null) return '';
   if (typeof raw === 'string') return raw;
-  if (Array.isArray(raw)) return raw.map((m) => normaliseMessage(m)).filter(Boolean).join('; ');
+  if (Array.isArray(raw))
+    return raw
+      .map((m) => normaliseMessage(m))
+      .filter(Boolean)
+      .join('; ');
   if (typeof raw === 'object') {
     // class-validator nested error → pull constraint messages if present.
     const r = raw as any;
     if (r.message) return normaliseMessage(r.message);
-    try { return JSON.stringify(raw); } catch { return String(raw); }
+    try {
+      return JSON.stringify(raw);
+    } catch {
+      return String(raw);
+    }
   }
   return String(raw);
 }
 
 function errorLabelFor(status: number): string {
   switch (status) {
-    case 400: return 'Bad Request';
-    case 401: return 'Unauthorized';
-    case 403: return 'Forbidden';
-    case 404: return 'Not Found';
-    case 405: return 'Method Not Allowed';
-    case 409: return 'Conflict';
-    case 410: return 'Gone';
-    case 422: return 'Unprocessable Entity';
-    case 429: return 'Too Many Requests';
-    case 500: return 'Internal Server Error';
-    case 502: return 'Bad Gateway';
-    case 503: return 'Service Unavailable';
-    default:  return 'Error';
+    case 400:
+      return 'Bad Request';
+    case 401:
+      return 'Unauthorized';
+    case 403:
+      return 'Forbidden';
+    case 404:
+      return 'Not Found';
+    case 405:
+      return 'Method Not Allowed';
+    case 409:
+      return 'Conflict';
+    case 410:
+      return 'Gone';
+    case 422:
+      return 'Unprocessable Entity';
+    case 429:
+      return 'Too Many Requests';
+    case 500:
+      return 'Internal Server Error';
+    case 502:
+      return 'Bad Gateway';
+    case 503:
+      return 'Service Unavailable';
+    default:
+      return 'Error';
   }
 }

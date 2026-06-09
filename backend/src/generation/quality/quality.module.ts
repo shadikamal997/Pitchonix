@@ -9,17 +9,7 @@ import { QualityControlService } from './quality-control.service';
  * Provides quality scoring, validation, and monitoring services
  */
 @Module({
-  providers: [
-    ScoringService,
-    ValidationService,
-    MonitoringService,
-    QualityControlService,
-  ],
-  exports: [
-    ScoringService,
-    ValidationService,
-    MonitoringService,
-    QualityControlService,
-  ],
+  providers: [ScoringService, ValidationService, MonitoringService, QualityControlService],
+  exports: [ScoringService, ValidationService, MonitoringService, QualityControlService],
 })
 export class QualityModule {}

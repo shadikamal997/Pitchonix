@@ -34,11 +34,24 @@ export type ComponentCategory =
   | 'custom';
 
 export const COMPONENT_CATEGORIES: ComponentCategory[] = [
-  'kpi', 'metric', 'dashboard', 'pricing', 'revenueModel',
-  'team', 'testimonial', 'featureGrid', 'comparison', 'swot',
-  'process', 'roadmap', 'timeline',
-  'chart', 'dataPanel',
-  'hero', 'quote', 'imageCard',
+  'kpi',
+  'metric',
+  'dashboard',
+  'pricing',
+  'revenueModel',
+  'team',
+  'testimonial',
+  'featureGrid',
+  'comparison',
+  'swot',
+  'process',
+  'roadmap',
+  'timeline',
+  'chart',
+  'dataPanel',
+  'hero',
+  'quote',
+  'imageCard',
   'custom',
 ];
 
@@ -53,51 +66,51 @@ export const COMPONENT_CATEGORIES: ComponentCategory[] = [
 export type ComponentElementTree = SlideElementDTO[];
 
 export interface SavedComponentDTO {
-  id:           string;
-  userId:       string;
-  workspaceId:  string | null;
-  name:         string;
-  description:  string | null;
-  category:     ComponentCategory;
-  thumbnail:    string | null;
-  familyId:     string | null;
-  tags:         string[];
-  favorite:     boolean;
-  usageCount:   number;
-  version:      number;
-  elementTree:  ComponentElementTree;
-  createdAt:    string;
-  updatedAt:    string;
+  id: string;
+  userId: string;
+  workspaceId: string | null;
+  name: string;
+  description: string | null;
+  category: ComponentCategory;
+  thumbnail: string | null;
+  familyId: string | null;
+  tags: string[];
+  favorite: boolean;
+  usageCount: number;
+  version: number;
+  elementTree: ComponentElementTree;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ComponentInstanceDTO {
-  id:          string;
+  id: string;
   componentId: string;
-  slideId:     string;
-  anchorX:     number;
-  anchorY:     number;
-  scale:       number;
-  version:     number;        // acknowledged source version
-  createdAt:   string;
+  slideId: string;
+  anchorX: number;
+  anchorY: number;
+  scale: number;
+  version: number; // acknowledged source version
+  createdAt: string;
 }
 
 /** Input for "save the selection as a component". */
 export interface CreateComponentInput {
-  name:         string;
-  category:     ComponentCategory;
+  name: string;
+  category: ComponentCategory;
   description?: string;
-  tags?:        string[];
-  familyId?:    string;
-  thumbnail?:   string;
-  elementTree:  ComponentElementTree;
+  tags?: string[];
+  familyId?: string;
+  thumbnail?: string;
+  elementTree: ComponentElementTree;
 }
 
 /** Search/filter inputs for listing the user's library. */
 export interface ListComponentsQuery {
-  search?:    string;
-  category?:  ComponentCategory;
-  favorite?:  boolean;
-  tag?:       string;
-  limit?:     number;
-  offset?:    number;
+  search?: string;
+  category?: ComponentCategory;
+  favorite?: boolean;
+  tag?: string;
+  limit?: number;
+  offset?: number;
 }

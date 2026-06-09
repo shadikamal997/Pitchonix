@@ -6,37 +6,37 @@ export class CreateBrandKitDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ 
-    example: 'https://example.com/logo.png', 
+  @ApiProperty({
+    example: 'https://example.com/logo.png',
     description: 'URL to brand logo',
-    required: false 
+    required: false,
   })
   @IsOptional()
   @IsString()
   logo?: string;
 
-  @ApiProperty({ 
-    example: '#8B5CF6', 
+  @ApiProperty({
+    example: '#8B5CF6',
     description: 'Primary brand color (hex)',
-    required: false 
+    required: false,
   })
   @IsOptional()
   @IsHexColor()
   primaryColor?: string;
 
-  @ApiProperty({ 
-    example: '#06B6D4', 
+  @ApiProperty({
+    example: '#06B6D4',
     description: 'Secondary brand color (hex)',
-    required: false 
+    required: false,
   })
   @IsOptional()
   @IsHexColor()
   secondaryColor?: string;
 
-  @ApiProperty({ 
-    example: 'Inter', 
+  @ApiProperty({
+    example: 'Inter',
     description: 'Font family name',
-    required: false 
+    required: false,
   })
   @IsOptional()
   @IsString()

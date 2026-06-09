@@ -21,8 +21,8 @@ export type GenerationEventName =
   | 'stage.completed';
 
 export interface GenerationEvent<T = any> {
-  name:      GenerationEventName;
-  payload:   T;
+  name: GenerationEventName;
+  payload: T;
   timestamp: number;
 }
 
@@ -35,7 +35,10 @@ export class GenerationEventBus {
 
   on(name: GenerationEventName, listener: Listener): () => void {
     let set = this.listeners.get(name);
-    if (!set) { set = new Set(); this.listeners.set(name, set); }
+    if (!set) {
+      set = new Set();
+      this.listeners.set(name, set);
+    }
     set.add(listener);
     return () => set!.delete(listener);
   }
@@ -45,8 +48,11 @@ export class GenerationEventBus {
     const set = this.listeners.get(name);
     if (!set || set.size === 0) return;
     for (const listener of set) {
-      try { listener(event); }
-      catch (err) { this.logger.warn(`Listener for ${name} threw: ${(err as Error).message}`); }
+      try {
+        listener(event);
+      } catch (err) {
+        this.logger.warn(`Listener for ${name} threw: ${(err as Error).message}`);
+      }
     }
   }
 }

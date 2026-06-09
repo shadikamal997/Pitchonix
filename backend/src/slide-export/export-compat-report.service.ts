@@ -20,18 +20,18 @@ import { PrismaService } from '../prisma/prisma.service';
 // =============================================================================
 
 export interface ExportCompatIssue {
-  severity:   'info' | 'warning' | 'error';
-  category:   string;
-  slideId:    string;
+  severity: 'info' | 'warning' | 'error';
+  category: string;
+  slideId: string;
   slideTitle: string;
-  message:    string;
+  message: string;
 }
 
 export interface ExportCompatReport {
-  issues:        ExportCompatIssue[];
-  summary:       Record<string, number>;
+  issues: ExportCompatIssue[];
+  summary: Record<string, number>;
   /** Coarse 0..100 readiness score. */
-  readiness:     number;
+  readiness: number;
   /** Suggested action ("ready" / "review" / "remediate"). */
   recommendation: 'ready' | 'review' | 'remediate';
 }
@@ -57,8 +57,10 @@ export class ExportCompatReportService {
       );
       if (animTotal > 12) {
         issues.push({
-          severity: 'warning', category: 'animationDensity',
-          slideId: slide.id, slideTitle: title,
+          severity: 'warning',
+          category: 'animationDensity',
+          slideId: slide.id,
+          slideTitle: title,
           message: `${animTotal} animations on this slide may be hard to manage in PowerPoint UI.`,
         });
       }
@@ -69,9 +71,12 @@ export class ExportCompatReportService {
         for (const a of list) {
           if (a?.class === 'path' && a?.motionPath) {
             issues.push({
-              severity: 'info', category: 'motionPath',
-              slideId: slide.id, slideTitle: title,
-              message: 'Motion path will render natively in PowerPoint 2016+; older versions fall back to fade.',
+              severity: 'info',
+              category: 'motionPath',
+              slideId: slide.id,
+              slideTitle: title,
+              message:
+                'Motion path will render natively in PowerPoint 2016+; older versions fall back to fade.',
             });
             break;
           }
@@ -80,17 +85,23 @@ export class ExportCompatReportService {
         // smartArt (flat)
         if (el.type === 'smartArt') {
           issues.push({
-            severity: 'warning', category: 'smartArt',
-            slideId: slide.id, slideTitle: title,
-            message: 'SmartArt was imported as flat shapes — exported deck will look the same but not be live-editable as SmartArt.',
+            severity: 'warning',
+            category: 'smartArt',
+            slideId: slide.id,
+            slideTitle: title,
+            message:
+              'SmartArt was imported as flat shapes — exported deck will look the same but not be live-editable as SmartArt.',
           });
         }
         // OLE objects
         if (el.type === 'oleObject') {
           issues.push({
-            severity: 'warning', category: 'oleObject',
-            slideId: slide.id, slideTitle: title,
-            message: 'Embedded OLE object will be exported as a placeholder image — the original file stays in attachments.',
+            severity: 'warning',
+            category: 'oleObject',
+            slideId: slide.id,
+            slideTitle: title,
+            message:
+              'Embedded OLE object will be exported as a placeholder image — the original file stays in attachments.',
           });
         }
         // Chart kind downgrades
@@ -98,17 +109,24 @@ export class ExportCompatReportService {
           const k = ((el.content as any)?.type || '').toLowerCase();
           if (k === 'waterfall' || k === 'funnel') {
             issues.push({
-              severity: 'info', category: 'chartKind',
-              slideId: slide.id, slideTitle: title,
+              severity: 'info',
+              category: 'chartKind',
+              slideId: slide.id,
+              slideTitle: title,
               message: `Chart kind "${k}" will be exported as bar (PowerPoint OOXML has no native ${k}).`,
             });
           }
         }
         // Media src missing
-        if ((el.type === 'videoPlaceholder' || el.type === 'embeddedMediaPlaceholder') && !(el.content as any)?.src) {
+        if (
+          (el.type === 'videoPlaceholder' || el.type === 'embeddedMediaPlaceholder') &&
+          !(el.content as any)?.src
+        ) {
           issues.push({
-            severity: 'info', category: 'media',
-            slideId: slide.id, slideTitle: title,
+            severity: 'info',
+            category: 'media',
+            slideId: slide.id,
+            slideTitle: title,
             message: 'Video placeholder has no source set — will export as a static poster.',
           });
         }
@@ -119,13 +137,11 @@ export class ExportCompatReportService {
     const summary: Record<string, number> = {};
     for (const i of issues) summary[i.category] = (summary[i.category] || 0) + 1;
     const errorN = issues.filter((i) => i.severity === 'error').length;
-    const warnN  = issues.filter((i) => i.severity === 'warning').length;
+    const warnN = issues.filter((i) => i.severity === 'warning').length;
     const readiness = Math.max(0, 100 - errorN * 12 - warnN * 4 - issues.length * 0.5);
 
     const recommendation: ExportCompatReport['recommendation'] =
-      errorN > 0           ? 'remediate' :
-      readiness < 80       ? 'review'    :
-                             'ready';
+      errorN > 0 ? 'remediate' : readiness < 80 ? 'review' : 'ready';
 
     return { issues, summary, readiness: Math.round(readiness), recommendation };
   }

@@ -57,13 +57,17 @@ export class CaseStudyPageGenerator extends BasePageGenerator {
     return {
       customerName: 'Leading Enterprise Client',
       industry: input.industry || 'Technology',
-      challenge: input.problem || 'Customer faced significant operational challenges that impacted efficiency and growth.',
-      solution: input.solution || 'We implemented our comprehensive solution to address their key pain points.',
+      challenge:
+        input.problem ||
+        'Customer faced significant operational challenges that impacted efficiency and growth.',
+      solution:
+        input.solution ||
+        'We implemented our comprehensive solution to address their key pain points.',
       results: [
         '50% improvement in efficiency',
         '$1M+ cost savings annually',
         '95% customer satisfaction rate',
-        'ROI achieved in 6 months'
+        'ROI achieved in 6 months',
       ],
       metrics: [
         { label: 'Efficiency Gain', value: '50%' },

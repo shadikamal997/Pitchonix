@@ -28,10 +28,7 @@ export class ContactController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id/status')
-  async updateMessageStatus(
-    @Param('id') id: string,
-    @Body('status') status: string,
-  ) {
+  async updateMessageStatus(@Param('id') id: string, @Body('status') status: string) {
     return this.contactService.updateContactStatus(id, status);
   }
 }

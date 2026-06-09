@@ -31,14 +31,16 @@ export class BrandKitService {
       borderRadius: brandKit.style.borderRadius,
       shadowStyle: brandKit.style.shadowStyle,
       headerStyle: brandKit.style.headerStyle,
-      logo: brandKit.logo.url ? {
-        url: brandKit.logo.url,
-        position: brandKit.logo.position,
-        size: this.getLogoSize(brandKit.logo.size),
-        showOnCover: brandKit.logo.showOnCover,
-        showOnHeaders: brandKit.logo.showOnHeaders,
-        showOnFooters: brandKit.logo.showOnFooters,
-      } : null,
+      logo: brandKit.logo.url
+        ? {
+            url: brandKit.logo.url,
+            position: brandKit.logo.position,
+            size: this.getLogoSize(brandKit.logo.size),
+            showOnCover: brandKit.logo.showOnCover,
+            showOnHeaders: brandKit.logo.showOnHeaders,
+            showOnFooters: brandKit.logo.showOnFooters,
+          }
+        : null,
       contact: brandKit.contact || null,
     };
   }
@@ -64,11 +66,7 @@ export class BrandKitService {
       return { ...DEFAULT_BRAND_KIT, ...customizations };
     }
 
-    return this.deepMerge(
-      DEFAULT_BRAND_KIT,
-      preset,
-      customizations,
-    ) as BrandKit;
+    return this.deepMerge(DEFAULT_BRAND_KIT, preset, customizations) as BrandKit;
   }
 
   /**
@@ -76,15 +74,11 @@ export class BrandKitService {
    */
   private deepMerge(...objects: any[]): any {
     const result: any = {};
-    
+
     for (const obj of objects) {
       for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
-          if (
-            typeof obj[key] === 'object' &&
-            obj[key] !== null &&
-            !Array.isArray(obj[key])
-          ) {
+          if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
             result[key] = this.deepMerge(result[key] || {}, obj[key]);
           } else {
             result[key] = obj[key];
@@ -92,7 +86,7 @@ export class BrandKitService {
         }
       }
     }
-    
+
     return result;
   }
 
@@ -117,31 +111,48 @@ export class BrandKitService {
       // available; fall back to legacy `config` / per-column values so older
       // kits stay rendered correctly. This is the "renderer switch" that
       // makes PDF Studio + presentations share one source of truth.
-      const tokens = (brandKit.tokens   as any) || null;
+      const tokens = (brandKit.tokens as any) || null;
       const identity = (brandKit.identity as any) || null;
-      const config  = (brandKit.config   as any) || {};
+      const config = (brandKit.config as any) || {};
 
-      const tokenColors    = tokens?.colors     || {};
-      const tokenTypo      = tokens?.typography || {};
-      const tokenStyle     = tokens?.tokens     || {};
+      const tokenColors = tokens?.colors || {};
+      const tokenTypo = tokens?.typography || {};
+      const tokenStyle = tokens?.tokens || {};
 
       return {
         id: brandKit.id,
         name: brandKit.name,
         userId: brandKit.userId,
         colors: {
-          primary:    tokenColors.primary    ?? config.colors?.primary    ?? brandKit.primaryColor   ?? '#3B82F6',
-          secondary:  tokenColors.secondary  ?? config.colors?.secondary  ?? brandKit.secondaryColor ?? '#1D4ED8',
-          accent:     tokenColors.accent     ?? config.colors?.accent     ?? '#60A5FA',
-          text:       config.colors?.text       ?? '#1F2937',
-          background: tokenColors.neutral    ?? config.colors?.background ?? '#FFFFFF',
-          surface:    config.colors?.surface    ?? '#F9FAFB',
+          primary:
+            tokenColors.primary ?? config.colors?.primary ?? brandKit.primaryColor ?? '#3B82F6',
+          secondary:
+            tokenColors.secondary ??
+            config.colors?.secondary ??
+            brandKit.secondaryColor ??
+            '#1D4ED8',
+          accent: tokenColors.accent ?? config.colors?.accent ?? '#60A5FA',
+          text: config.colors?.text ?? '#1F2937',
+          background: tokenColors.neutral ?? config.colors?.background ?? '#FFFFFF',
+          surface: config.colors?.surface ?? '#F9FAFB',
         } as any,
         typography: {
-          fontFamily:  tokenTypo.body?.family    ?? config.typography?.fontFamily  ?? brandKit.fontFamily ?? 'Inter, system-ui, sans-serif',
-          headingFont: tokenTypo.heading?.family ?? config.typography?.headingFont ?? brandKit.fontFamily ?? undefined,
-          bodyFont:    tokenTypo.body?.family    ?? config.typography?.bodyFont    ?? brandKit.fontFamily ?? undefined,
-          fontSize:    config.typography?.fontSize ?? { base: 16, heading: 32, body: 16 },
+          fontFamily:
+            tokenTypo.body?.family ??
+            config.typography?.fontFamily ??
+            brandKit.fontFamily ??
+            'Inter, system-ui, sans-serif',
+          headingFont:
+            tokenTypo.heading?.family ??
+            config.typography?.headingFont ??
+            brandKit.fontFamily ??
+            undefined,
+          bodyFont:
+            tokenTypo.body?.family ??
+            config.typography?.bodyFont ??
+            brandKit.fontFamily ??
+            undefined,
+          fontSize: config.typography?.fontSize ?? { base: 16, heading: 32, body: 16 },
         } as any,
         logo: config.logo || {
           url: brandKit.logo || '',
@@ -155,14 +166,23 @@ export class BrandKitService {
         style: {
           ...DEFAULT_BRAND_KIT.style,
           ...config.style,
-          borderRadius: tokenStyle.borderRadius ?? (config.style?.borderRadius) ?? DEFAULT_BRAND_KIT.style.borderRadius,
-          shadowStyle:  tokenStyle.shadowStyle  ?? (config.style?.shadowStyle)  ?? DEFAULT_BRAND_KIT.style.shadowStyle,
+          borderRadius:
+            tokenStyle.borderRadius ??
+            config.style?.borderRadius ??
+            DEFAULT_BRAND_KIT.style.borderRadius,
+          shadowStyle:
+            tokenStyle.shadowStyle ??
+            config.style?.shadowStyle ??
+            DEFAULT_BRAND_KIT.style.shadowStyle,
         } as any,
-        contact: config.contact || identity ? {
-          ...(config.contact || {}),
-          ...(identity?.companyName ? { companyName: identity.companyName } : {}),
-          ...(identity?.website     ? { website:     identity.website     } : {}),
-        } : DEFAULT_BRAND_KIT.contact,
+        contact:
+          config.contact || identity
+            ? {
+                ...(config.contact || {}),
+                ...(identity?.companyName ? { companyName: identity.companyName } : {}),
+                ...(identity?.website ? { website: identity.website } : {}),
+              }
+            : DEFAULT_BRAND_KIT.contact,
       };
     } catch (error) {
       console.error('Error fetching brand kit:', error);
@@ -175,7 +195,7 @@ export class BrandKitService {
    */
   async createBrandKit(userId: string, data: Partial<BrandKit>): Promise<BrandKit> {
     const brandKit = this.deepMerge(DEFAULT_BRAND_KIT, data);
-    
+
     const created = await this.prisma.brandKit.create({
       data: {
         userId,
@@ -214,7 +234,7 @@ export class BrandKitService {
   async updateBrandKit(brandKitId: string, data: Partial<BrandKit>): Promise<BrandKit> {
     const existing = await this.getBrandKit(undefined, brandKitId);
     const merged = this.deepMerge(existing, data);
-    
+
     const updated = await this.prisma.brandKit.update({
       where: { id: brandKitId },
       data: {

@@ -24,31 +24,50 @@ export interface DiffReportInput {
   /** Path to the source PPTX. */
   fixturePath: string;
   /** Original parsed result. */
-  before:      PptxImportResult;
+  before: PptxImportResult;
   /** Parsed result of the exported-then-re-imported deck. */
-  after:       PptxImportResult;
+  after: PptxImportResult;
   /** Structural diff between before/after. */
-  diff:        RoundTripDiff;
+  diff: RoundTripDiff;
   /** Optional pixel-diff result if VisualFidelityEngine has been run. */
-  visual?:     DeckDiff;
+  visual?: DeckDiff;
   /** Optional certification snapshot to embed at the top. */
   certification?: CertificationResult;
 }
 
-export async function buildRoundTripReport(svc: PptxImportService, fixturePath: string, outputHtml: string): Promise<DiffReportInput> {
+export async function buildRoundTripReport(
+  svc: PptxImportService,
+  fixturePath: string,
+  outputHtml: string,
+): Promise<DiffReportInput> {
   const buffer = fs.readFileSync(fixturePath);
-  const before  = svc.parseBuffer(buffer);
-  const rt      = await roundTrip(svc, buffer);
+  const before = svc.parseBuffer(buffer);
+  const rt = await roundTrip(svc, buffer);
   // Re-parse the exported buffer so we have a comparable "after".
   // The round-trip helper already does this internally but doesn't expose it;
   // we redo it here so the HTML can render both sides.
-  const after  = svc.parseBuffer(await roundtripExport(svc, buffer));
+  const after = svc.parseBuffer(await roundtripExport(svc, buffer));
   let visual: DeckDiff | undefined;
-  try { visual = await diffDecks(before, after); } catch { /* internal-mode failed */ }
+  try {
+    visual = await diffDecks(before, after);
+  } catch {
+    /* internal-mode failed */
+  }
   let certification: CertificationResult | undefined;
-  try { certification = await certifyDeck(svc, buffer); } catch { /* */ }
+  try {
+    certification = await certifyDeck(svc, buffer);
+  } catch {
+    /* */
+  }
 
-  const input: DiffReportInput = { fixturePath, before, after, diff: rt.diff, visual, certification };
+  const input: DiffReportInput = {
+    fixturePath,
+    before,
+    after,
+    diff: rt.diff,
+    visual,
+    certification,
+  };
   const html = renderHtml(input);
   fs.mkdirSync(path.dirname(outputHtml), { recursive: true });
   fs.writeFileSync(outputHtml, html);
@@ -70,12 +89,18 @@ async function roundtripExport(svc: PptxImportService, buffer: Buffer): Promise<
       elements: s.elements.map((el, j) => ({
         id: `imp-${idx}-${j}`,
         slideId: `imp-${idx}`,
-        type:   el.type as any,
-        order:  el.order,
-        x: el.x, y: el.y, width: el.width, height: el.height,
-        rotation: 0, zIndex: 0, locked: false, visible: true,
+        type: el.type as any,
+        order: el.order,
+        x: el.x,
+        y: el.y,
+        width: el.width,
+        height: el.height,
+        rotation: 0,
+        zIndex: 0,
+        locked: false,
+        visible: true,
         content: el.content,
-        style:   el.style ?? null,
+        style: el.style ?? null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })),
@@ -132,32 +157,39 @@ function renderHtml(input: DiffReportInput): string {
     ${visual ? ` · Visual mode: <code>${visual.mode}</code>` : ' · Visual mode: none'}
   </div>
 
-  ${certification ? `
+  ${
+    certification
+      ? `
     <div class="scores">
-      ${scoreBlock('Import',     certification.scores.import)}
-      ${scoreBlock('Export',     certification.scores.export)}
+      ${scoreBlock('Import', certification.scores.import)}
+      ${scoreBlock('Export', certification.scores.export)}
       ${scoreBlock('Round-trip', certification.scores.roundTrip)}
-      ${scoreBlock('Visual',     certification.scores.visual)}
+      ${scoreBlock('Visual', certification.scores.visual)}
     </div>
     <div>
       <span class="badge band-${certification.band}">${certification.band.toUpperCase()} · ${certification.overall}/100</span>
     </div>
-  ` : ''}
+  `
+      : ''
+  }
 
   <h2>Structural diff</h2>
   <table>
     <tr><th>Metric</th><th>Before</th><th>After</th><th>Δ</th></tr>
-    ${diffRow('Slides',       before.slides.length,             after.slides.length,             diff.slideCountDelta)}
-    ${diffRow('Text frames',  before.report.textFrames,         after.report.textFrames,         diff.textFrameDelta)}
-    ${diffRow('Charts',       before.report.charts,             after.report.charts,             diff.chartDelta)}
-    ${diffRow('Tables',       before.report.tables,             after.report.tables,             diff.tableDelta)}
-    ${diffRow('Images',       before.report.images,             after.report.images,             diff.imageDelta)}
-    ${diffRow('Speaker notes',before.report.notes,              after.report.notes,              diff.noteDelta)}
-    ${diffRow('Mean drift',   '—',                              '—',                              diff.meanPositionDrift.toFixed(3))}
+    ${diffRow('Slides', before.slides.length, after.slides.length, diff.slideCountDelta)}
+    ${diffRow('Text frames', before.report.textFrames, after.report.textFrames, diff.textFrameDelta)}
+    ${diffRow('Charts', before.report.charts, after.report.charts, diff.chartDelta)}
+    ${diffRow('Tables', before.report.tables, after.report.tables, diff.tableDelta)}
+    ${diffRow('Images', before.report.images, after.report.images, diff.imageDelta)}
+    ${diffRow('Speaker notes', before.report.notes, after.report.notes, diff.noteDelta)}
+    ${diffRow('Mean drift', '—', '—', diff.meanPositionDrift.toFixed(3))}
   </table>
 
   <h2>Per-slide preview</h2>
-  ${before.slides.slice(0, 12).map((slide, i) => `
+  ${before.slides
+    .slice(0, 12)
+    .map(
+      (slide, i) => `
     <div class="pair">
       <div class="slide-mock">
         <div class="title">Before #${i + 1} · ${esc(slide.title || '')}</div>
@@ -168,13 +200,17 @@ function renderHtml(input: DiffReportInput): string {
         ${after.slides[i] ? slideSvg(after.slides[i]) : '<svg viewBox="0 0 100 56" />'}
       </div>
     </div>
-  `).join('')}
+  `,
+    )
+    .join('')}
   ${before.slides.length > 12 ? `<p class="meta">(showing first 12 of ${before.slides.length} slides)</p>` : ''}
 
   <h2>Import warnings</h2>
-  ${before.report.warnings.length === 0
-    ? '<p class="ok">No warnings.</p>'
-    : `<ul>${before.report.warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>`}
+  ${
+    before.report.warnings.length === 0
+      ? '<p class="ok">No warnings.</p>'
+      : `<ul>${before.report.warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>`
+  }
 </body>
 </html>`;
 }
@@ -185,23 +221,33 @@ function scoreBlock(label: string, value: number): string {
 }
 
 function diffRow(label: string, before: any, after: any, delta: any): string {
-  const cls = (Number(delta) === 0) ? 'ok' : (Number(delta) > 5 ? 'fail' : 'warn');
+  const cls = Number(delta) === 0 ? 'ok' : Number(delta) > 5 ? 'fail' : 'warn';
   return `<tr><td>${esc(label)}</td><td>${before}</td><td>${after}</td><td class="delta ${cls}">${delta}</td></tr>`;
 }
 
 function slideSvg(slide: ImportedSlide): string {
   return `<svg viewBox="0 0 100 56.25" width="100%" height="auto" style="background:#FAFAFA">
-    ${slide.elements.map((el) => {
-      const fill = el.type === 'heading'   ? '#1F2937'
-                 : el.type === 'paragraph' ? '#94A3B8'
-                 : el.type === 'image'     ? '#0EA5E9'
-                 : el.type === 'chart'     ? '#EA580C'
-                 : el.type === 'table'     ? '#16A34A'
-                 : el.type === 'smartArt'  ? '#A855F7'
-                 : el.type === 'oleObject' ? '#FBBF24'
-                 :                            '#CBD5E1';
-      return `<rect x="${el.x}" y="${el.y * 0.5625}" width="${el.width}" height="${el.height * 0.5625}" fill="${fill}" opacity="0.8" />`;
-    }).join('')}
+    ${slide.elements
+      .map((el) => {
+        const fill =
+          el.type === 'heading'
+            ? '#1F2937'
+            : el.type === 'paragraph'
+              ? '#94A3B8'
+              : el.type === 'image'
+                ? '#0EA5E9'
+                : el.type === 'chart'
+                  ? '#EA580C'
+                  : el.type === 'table'
+                    ? '#16A34A'
+                    : el.type === 'smartArt'
+                      ? '#A855F7'
+                      : el.type === 'oleObject'
+                        ? '#FBBF24'
+                        : '#CBD5E1';
+        return `<rect x="${el.x}" y="${el.y * 0.5625}" width="${el.width}" height="${el.height * 0.5625}" fill="${fill}" opacity="0.8" />`;
+      })
+      .join('')}
   </svg>`;
 }
 

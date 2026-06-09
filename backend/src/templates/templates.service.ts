@@ -173,7 +173,7 @@ export class TemplatesService {
         companyName: 'Nextbank',
         industry: 'Digital Banking',
         shortDescription: 'Mobile-first banking for digital nomads and expats',
-        problem: 'Traditional banks don\'t support multi-currency accounts for global workers',
+        problem: "Traditional banks don't support multi-currency accounts for global workers",
         solution: 'Multi-currency accounts with local IBANs in 30+ countries',
         targetCustomers: 'Digital nomads, expats, remote workers',
         marketOpportunity: '50M digital nomads, $5B addressable market',
@@ -216,7 +216,7 @@ export class TemplatesService {
         currentTraction: '$2M annual revenue, 10K customers, 35% repeat rate',
         team: 'Fashion industry veterans + sustainability experts',
         fundingAsk: '$3M for inventory and marketing',
-        roadmap: 'Q1: Retail partnerships, Q2: Men\'s line, Q3: Accessories',
+        roadmap: "Q1: Retail partnerships, Q2: Men's line, Q3: Accessories",
       },
     },
     {

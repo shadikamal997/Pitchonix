@@ -13,8 +13,11 @@ import { UniversalDocument, emptyDocument, newPage } from '../document-model';
 
 export function importHtml(buffer: Buffer, filename = 'document.html'): UniversalDocument {
   const html = buffer.toString('utf8');
-  const $    = cheerio.load(html);
-  const doc  = emptyDocument('html', $('title').first().text().trim() || filename.replace(/\.[a-z]+$/i, ''));
+  const $ = cheerio.load(html);
+  const doc = emptyDocument(
+    'html',
+    $('title').first().text().trim() || filename.replace(/\.[a-z]+$/i, ''),
+  );
 
   let page = newPage();
   doc.pages.push(page);
@@ -56,27 +59,38 @@ function mapNode($: cheerio.CheerioAPI, el: any): any {
   const txt = $el.text().trim();
 
   switch (tag) {
-    case 'h2': return { type: 'heading', level: 2, text: txt };
-    case 'h3': return { type: 'heading', level: 3, text: txt };
-    case 'h4': return { type: 'heading', level: 4, text: txt };
-    case 'h5': return { type: 'heading', level: 5, text: txt };
-    case 'h6': return { type: 'heading', level: 6, text: txt };
+    case 'h2':
+      return { type: 'heading', level: 2, text: txt };
+    case 'h3':
+      return { type: 'heading', level: 3, text: txt };
+    case 'h4':
+      return { type: 'heading', level: 4, text: txt };
+    case 'h5':
+      return { type: 'heading', level: 5, text: txt };
+    case 'h6':
+      return { type: 'heading', level: 6, text: txt };
     case 'p':
       if (!txt) return null;
       return { type: 'paragraph', text: txt };
     case 'ul':
     case 'ol': {
-      const items = $el.children('li').map((_i, li) => $(li).text().trim()).get();
+      const items = $el
+        .children('li')
+        .map((_i, li) => $(li).text().trim())
+        .get();
       return { type: 'list', ordered: tag === 'ol', items };
     }
     case 'table': {
       const rows: any[] = [];
       let headerRow = false;
       $el.find('tr').each((rIdx, tr) => {
-        const cells = $(tr).find('th,td').map((_ci, c) => ({
-          text: $(c).text().trim(),
-          bold: c.tagName === 'th',
-        })).get();
+        const cells = $(tr)
+          .find('th,td')
+          .map((_ci, c) => ({
+            text: $(c).text().trim(),
+            bold: c.tagName === 'th',
+          }))
+          .get();
         if (rIdx === 0 && $(tr).find('th').length > 0) headerRow = true;
         rows.push(cells);
       });
@@ -87,7 +101,11 @@ function mapNode($: cheerio.CheerioAPI, el: any): any {
     case 'blockquote':
       return txt ? { type: 'quote', text: txt } : null;
     case 'pre':
-      return { type: 'code', text: $el.text(), language: $el.find('code').attr('class')?.replace('language-', '') };
+      return {
+        type: 'code',
+        text: $el.text(),
+        language: $el.find('code').attr('class')?.replace('language-', ''),
+      };
     default:
       return txt ? { type: 'paragraph', text: txt } : null;
   }

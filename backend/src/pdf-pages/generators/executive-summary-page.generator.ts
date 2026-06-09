@@ -43,7 +43,9 @@ export class ExecutiveSummaryPageGenerator extends BasePageGenerator {
       parts.push(`We have achieved significant traction: ${input.traction}.`);
     }
 
-    return parts.join(' ') || 'Executive summary of the business opportunity and strategic approach.';
+    return (
+      parts.join(' ') || 'Executive summary of the business opportunity and strategic approach.'
+    );
   }
 
   private generateKeyPoints(input: WizardInput): string[] {
@@ -69,19 +71,21 @@ export class ExecutiveSummaryPageGenerator extends BasePageGenerator {
       points.push(`Funding Requirement: ${input.fundingAsk}`);
     }
 
-    return points.length > 0 ? points : [
-      'Comprehensive business opportunity',
-      'Strong market potential',
-      'Proven execution capability',
-      'Clear path to profitability'
-    ];
+    return points.length > 0
+      ? points
+      : [
+          'Comprehensive business opportunity',
+          'Strong market potential',
+          'Proven execution capability',
+          'Clear path to profitability',
+        ];
   }
 
   private generateHighlights(input: WizardInput): string[] {
     const highlights: string[] = [];
 
     if (input.traction) {
-      const tractionLines = input.traction.split('\n').filter(l => l.trim());
+      const tractionLines = input.traction.split('\n').filter((l) => l.trim());
       highlights.push(...tractionLines.slice(0, 3));
     }
 
@@ -93,10 +97,8 @@ export class ExecutiveSummaryPageGenerator extends BasePageGenerator {
       highlights.push(`Experienced team: ${input.team}`);
     }
 
-    return highlights.length > 0 ? highlights : [
-      'Strong value proposition',
-      'Scalable business model',
-      'Proven market demand'
-    ];
+    return highlights.length > 0
+      ? highlights
+      : ['Strong value proposition', 'Scalable business model', 'Proven market demand'];
   }
 }

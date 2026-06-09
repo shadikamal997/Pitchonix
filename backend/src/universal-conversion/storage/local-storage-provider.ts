@@ -24,12 +24,16 @@ export class LocalStorageProvider implements ConversionStorageProvider {
 
   constructor() {
     if (!fs.existsSync(STORAGE_DIR)) {
-      try { fs.mkdirSync(STORAGE_DIR, { recursive: true }); } catch { /* logged on first write */ }
+      try {
+        fs.mkdirSync(STORAGE_DIR, { recursive: true });
+      } catch {
+        /* logged on first write */
+      }
     }
   }
 
   async save(buffer: Buffer, originalFilename: string, _mimetype?: string): Promise<SavedFile> {
-    const ext  = pickExt(originalFilename);
+    const ext = pickExt(originalFilename);
     const safe = `${crypto.randomUUID()}${ext}`;
     const full = path.join(STORAGE_DIR, safe);
     fs.writeFileSync(full, buffer);
@@ -43,12 +47,17 @@ export class LocalStorageProvider implements ConversionStorageProvider {
 
   async delete(handle: string): Promise<void> {
     const full = path.join(STORAGE_DIR, path.basename(handle));
-    try { fs.unlinkSync(full); } catch { /* idempotent */ }
+    try {
+      fs.unlinkSync(full);
+    } catch {
+      /* idempotent */
+    }
   }
 
   async list(prefix?: string) {
     if (!fs.existsSync(STORAGE_DIR)) return [];
-    return fs.readdirSync(STORAGE_DIR)
+    return fs
+      .readdirSync(STORAGE_DIR)
       .filter((n) => !prefix || n.startsWith(prefix))
       .map((n) => {
         const stat = fs.statSync(path.join(STORAGE_DIR, n));

@@ -4,7 +4,7 @@ import { VersionHistoryService } from './version-history.service';
 
 @Module({
   controllers: [VersionHistoryController],
-  providers:   [VersionHistoryService],
-  exports:     [VersionHistoryService],
+  providers: [VersionHistoryService],
+  exports: [VersionHistoryService],
 })
 export class VersionHistoryModule {}

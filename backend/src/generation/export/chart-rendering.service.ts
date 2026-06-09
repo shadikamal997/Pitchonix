@@ -37,7 +37,7 @@ export class ChartRenderingService {
     content: ChartContent,
     opts?: { width?: number; height?: number },
   ): Promise<Buffer> {
-    const width  = opts?.width  ?? 1200;
+    const width = opts?.width ?? 1200;
     const height = opts?.height ?? 720;
     const svg = buildChartSvg(content, { width, height });
     try {
@@ -82,10 +82,7 @@ export class ChartRenderingService {
       const buffer = await this.chartRenderer.renderToBuffer(configuration);
       return `data:image/png;base64,${buffer.toString('base64')}`;
     } catch (error) {
-      this.logger.error(
-        `Failed to render chart: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to render chart: ${error.message}`, error.stack);
       throw new Error(`Chart rendering failed: ${error.message}`);
     }
   }
@@ -101,9 +98,7 @@ export class ChartRenderingService {
   /**
    * Convert ChartConfig to Chart.js configuration
    */
-  private convertToChartJSConfig(
-    chartConfig: ChartConfig,
-  ): ChartConfiguration<any, any[], any> {
+  private convertToChartJSConfig(chartConfig: ChartConfig): ChartConfiguration<any, any[], any> {
     const type = this.mapChartType(chartConfig.type);
     const datasets = this.createDatasets(chartConfig);
     const labels = this.extractLabels(chartConfig);
@@ -160,19 +155,12 @@ export class ChartRenderingService {
     return chartConfig.data.map((series) => ({
       label: series.name,
       data: series.values,
-      backgroundColor:
-        series.color ||
-        chartConfig.options?.colorScheme?.[0] ||
-        '#4F46E5',
-      borderColor:
-        series.color ||
-        chartConfig.options?.colorScheme?.[0] ||
-        '#4F46E5',
+      backgroundColor: series.color || chartConfig.options?.colorScheme?.[0] || '#4F46E5',
+      borderColor: series.color || chartConfig.options?.colorScheme?.[0] || '#4F46E5',
       borderWidth: 2,
       fill: chartConfig.type === ChartType.AREA,
       // Horizontal bars for funnel charts
-      indexAxis:
-        chartConfig.type === ChartType.FUNNEL ? 'y' : undefined,
+      indexAxis: chartConfig.type === ChartType.FUNNEL ? 'y' : undefined,
     }));
   }
 
@@ -198,11 +186,7 @@ export class ChartRenderingService {
    */
   private createScales(chartConfig: ChartConfig): any {
     // Pie, donut, and gauge charts don't have scales
-    if (
-      [ChartType.PIE, ChartType.DONUT, ChartType.GAUGE].includes(
-        chartConfig.type,
-      )
-    ) {
+    if ([ChartType.PIE, ChartType.DONUT, ChartType.GAUGE].includes(chartConfig.type)) {
       return {};
     }
 
@@ -240,9 +224,7 @@ export class ChartRenderingService {
       const buffer = await customRenderer.renderToBuffer(configuration);
       return `data:image/png;base64,${buffer.toString('base64')}`;
     } catch (error) {
-      this.logger.error(
-        `Failed to render chart with custom size: ${error.message}`,
-      );
+      this.logger.error(`Failed to render chart with custom size: ${error.message}`);
       throw error;
     }
   }
@@ -250,10 +232,7 @@ export class ChartRenderingService {
   /**
    * Render chart to file
    */
-  async renderChartToFile(
-    chartConfig: ChartConfig,
-    filePath: string,
-  ): Promise<void> {
+  async renderChartToFile(chartConfig: ChartConfig, filePath: string): Promise<void> {
     const fs = require('fs').promises;
     const configuration = this.convertToChartJSConfig(chartConfig);
     const buffer = await this.chartRenderer.renderToBuffer(configuration);

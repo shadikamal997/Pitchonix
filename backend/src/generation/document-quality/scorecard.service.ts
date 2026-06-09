@@ -21,8 +21,8 @@ import { DocumentFrameworkEngine } from './framework-engine.service';
 import { BusinessLogicValidator } from './business-logic-validator.service';
 import { ExecutiveQualityEngine } from './executive-quality.service';
 import { InvestorReadinessEngine } from './readiness/investor.service';
-import { SalesReadinessEngine }    from './readiness/sales.service';
-import { BoardReadinessEngine }    from './readiness/board.service';
+import { SalesReadinessEngine } from './readiness/sales.service';
+import { BoardReadinessEngine } from './readiness/board.service';
 import { StrategyReadinessEngine } from './readiness/strategy.service';
 import { DocumentScorecard, ReadinessReport } from './types';
 
@@ -31,13 +31,13 @@ export class DocumentScorecardService {
   private readonly logger = new Logger(DocumentScorecardService.name);
 
   constructor(
-    private framework:    DocumentFrameworkEngine,
-    private business:     BusinessLogicValidator,
-    private executive:    ExecutiveQualityEngine,
-    private investor:     InvestorReadinessEngine,
-    private sales:        SalesReadinessEngine,
-    private board:        BoardReadinessEngine,
-    private strategy:     StrategyReadinessEngine,
+    private framework: DocumentFrameworkEngine,
+    private business: BusinessLogicValidator,
+    private executive: ExecutiveQualityEngine,
+    private investor: InvestorReadinessEngine,
+    private sales: SalesReadinessEngine,
+    private board: BoardReadinessEngine,
+    private strategy: StrategyReadinessEngine,
   ) {}
 
   /**
@@ -45,28 +45,31 @@ export class DocumentScorecardService {
    *
    * @param structureScore  Optional Phase 27 score (0..100). Used for "Visual Readiness".
    */
-  build(
-    input:           WizardInput,
-    slides:          SlideContent[],
-    structureScore?: number,
-  ): DocumentScorecard {
-    const frameworkReport  = this.framework.validate(input.documentType, slides);
-    const businessReport   = this.business.validate(input, slides);
-    const executiveReport  = this.executive.score(input, slides, frameworkReport.completeness);
+  build(input: WizardInput, slides: SlideContent[], structureScore?: number): DocumentScorecard {
+    const frameworkReport = this.framework.validate(input.documentType, slides);
+    const businessReport = this.business.validate(input, slides);
+    const executiveReport = this.executive.score(input, slides, frameworkReport.completeness);
 
     const readiness = this.runReadinessFor(input, slides);
 
     // Business readiness combines: framework completeness + (100 − warningRate).
     const totalWarnings = businessReport.warnCount + businessReport.errorCount * 2;
-    const businessReadiness = Math.max(0,
-      Math.round(frameworkReport.completeness * 0.6 + (100 - Math.min(100, totalWarnings * 12)) * 0.4),
+    const businessReadiness = Math.max(
+      0,
+      Math.round(
+        frameworkReport.completeness * 0.6 + (100 - Math.min(100, totalWarnings * 12)) * 0.4,
+      ),
     );
 
     const smartVisualCoverage = slides.length
-      ? Math.round((slides.filter((s: any) => {
-          const sc = s.smartComponent || s.content?.smartComponent;
-          return sc?.elementTree?.length > 0;
-        }).length / slides.length) * 100)
+      ? Math.round(
+          (slides.filter((s: any) => {
+            const sc = s.smartComponent || s.content?.smartComponent;
+            return sc?.elementTree?.length > 0;
+          }).length /
+            slides.length) *
+            100,
+        )
       : 0;
 
     // Visual readiness — Phase 27 if available, smart component coverage if the
@@ -88,12 +91,12 @@ export class DocumentScorecardService {
 
     // Overall — weighted blend.
     const overall = Math.round(
-      frameworkReport.completeness * 0.20 +
-      businessReadiness            * 0.15 +
-      visualReadiness              * 0.20 +
-      narrativeReadiness           * 0.15 +
-      presentationReadiness        * 0.10 +
-      (readiness?.total ?? executiveReport.total) * 0.20,
+      frameworkReport.completeness * 0.2 +
+        businessReadiness * 0.15 +
+        visualReadiness * 0.2 +
+        narrativeReadiness * 0.15 +
+        presentationReadiness * 0.1 +
+        (readiness?.total ?? executiveReport.total) * 0.2,
     );
 
     const scorecard: DocumentScorecard = {
@@ -107,7 +110,7 @@ export class DocumentScorecardService {
       readiness,
       reports: {
         framework: frameworkReport,
-        business:  businessReport,
+        business: businessReport,
         executive: executiveReport,
       },
       band: band(overall),
@@ -115,12 +118,12 @@ export class DocumentScorecardService {
 
     this.logger.log(
       `Phase 30 scorecard [${input.documentType}]: overall=${overall} ` +
-      `framework=${frameworkReport.completeness} business=${businessReadiness} ` +
-      `visual=${visualReadiness} narrative=${narrativeReadiness} ` +
-      `presentation=${presentationReadiness}` +
-      (readiness ? ` readiness(${readiness.engine})=${readiness.total}` : '') +
-      ` | ${businessReport.errorCount}err/${businessReport.warnCount}warn ` +
-      `missing=[${frameworkReport.missing.map((m) => m.label).join(',')}]`,
+        `framework=${frameworkReport.completeness} business=${businessReadiness} ` +
+        `visual=${visualReadiness} narrative=${narrativeReadiness} ` +
+        `presentation=${presentationReadiness}` +
+        (readiness ? ` readiness(${readiness.engine})=${readiness.total}` : '') +
+        ` | ${businessReport.errorCount}err/${businessReport.warnCount}warn ` +
+        `missing=[${frameworkReport.missing.map((m) => m.label).join(',')}]`,
     );
 
     return scorecard;
@@ -132,12 +135,17 @@ export class DocumentScorecardService {
    */
   private runReadinessFor(input: WizardInput, slides: SlideContent[]): ReadinessReport | undefined {
     switch (input.documentType) {
-      case 'pitch_deck':            return this.investor.score(input, slides);
-      case 'sales_deck':            return this.sales.score(input, slides);
+      case 'pitch_deck':
+        return this.investor.score(input, slides);
+      case 'sales_deck':
+        return this.sales.score(input, slides);
       case 'board_meeting':
-      case 'board_meeting_deck':    return this.board.score(input, slides);
-      case 'strategy_presentation': return this.strategy.score(input, slides);
-      default:                      return undefined;
+      case 'board_meeting_deck':
+        return this.board.score(input, slides);
+      case 'strategy_presentation':
+        return this.strategy.score(input, slides);
+      default:
+        return undefined;
     }
   }
 }

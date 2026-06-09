@@ -18,19 +18,27 @@ import { PrismaService } from '../prisma/prisma.service';
 // =============================================================================
 
 export type TelemetryEvent =
-  | 'upload_start' | 'upload_done' | 'upload_fail'
-  | 'export_start' | 'export_done' | 'export_fail'
-  | 'ats_analyze'  | 'ats_fail'
-  | 'job_match'    | 'job_match_fail'
+  | 'upload_start'
+  | 'upload_done'
+  | 'upload_fail'
+  | 'export_start'
+  | 'export_done'
+  | 'export_fail'
+  | 'ats_analyze'
+  | 'ats_fail'
+  | 'job_match'
+  | 'job_match_fail'
   | 'template_switch'
   | 'profile_repair'
-  | 'ocr_start'    | 'ocr_done'    | 'ocr_fail';
+  | 'ocr_start'
+  | 'ocr_done'
+  | 'ocr_fail';
 
 export interface TelemetryPayload {
-  userId?:     string;
+  userId?: string;
   durationMs?: number;
-  success?:    boolean;
-  meta?:       Record<string, any>;
+  success?: boolean;
+  meta?: Record<string, any>;
 }
 
 @Injectable()
@@ -42,11 +50,19 @@ export class BetaTelemetryService {
   track(event: TelemetryEvent, payload: TelemetryPayload = {}): void {
     const { userId, durationMs, success = true, meta } = payload;
     // Fire-and-forget: never await, never throw
-    this.prisma.betaTelemetry.create({
-      data: { event, userId: userId ?? null, durationMs: durationMs ?? null, success, meta: meta ?? null },
-    }).catch((e) => {
-      this.logger.warn(`[TELEMETRY] failed to record "${event}": ${e?.message}`);
-    });
+    this.prisma.betaTelemetry
+      .create({
+        data: {
+          event,
+          userId: userId ?? null,
+          durationMs: durationMs ?? null,
+          success,
+          meta: meta ?? null,
+        },
+      })
+      .catch((e) => {
+        this.logger.warn(`[TELEMETRY] failed to record "${event}": ${e?.message}`);
+      });
   }
 
   // ---------------------------------------------------------------------------
@@ -60,7 +76,10 @@ export class BetaTelemetryService {
       select: { event: true, success: true, durationMs: true, createdAt: true },
     });
 
-    const byEvent: Record<string, { total: number; failed: number; avgMs: number | null; p95Ms: number | null }> = {};
+    const byEvent: Record<
+      string,
+      { total: number; failed: number; avgMs: number | null; p95Ms: number | null }
+    > = {};
     const grouped: Record<string, { durations: number[]; total: number; failed: number }> = {};
 
     for (const r of rows) {
@@ -73,10 +92,10 @@ export class BetaTelemetryService {
     for (const [ev, g] of Object.entries(grouped)) {
       const sorted = [...g.durations].sort((a, b) => a - b);
       byEvent[ev] = {
-        total:   g.total,
-        failed:  g.failed,
-        avgMs:   sorted.length ? Math.round(sorted.reduce((s, n) => s + n, 0) / sorted.length) : null,
-        p95Ms:   sorted.length ? sorted[Math.floor(sorted.length * 0.95)] ?? null : null,
+        total: g.total,
+        failed: g.failed,
+        avgMs: sorted.length ? Math.round(sorted.reduce((s, n) => s + n, 0) / sorted.length) : null,
+        p95Ms: sorted.length ? (sorted[Math.floor(sorted.length * 0.95)] ?? null) : null,
       };
     }
 
@@ -86,7 +105,9 @@ export class BetaTelemetryService {
       const day = r.createdAt.toISOString().slice(0, 10);
       dailyMap[day] = (dailyMap[day] || 0) + 1;
     }
-    const daily = Object.entries(dailyMap).sort(([a], [b]) => a.localeCompare(b)).map(([day, n]) => ({ day, n }));
+    const daily = Object.entries(dailyMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([day, n]) => ({ day, n }));
 
     return { since: since.toISOString(), total: rows.length, byEvent, daily };
   }
@@ -96,7 +117,15 @@ export class BetaTelemetryService {
       where: { durationMs: { gte: thresholdMs } },
       orderBy: { durationMs: 'desc' },
       take: limit,
-      select: { id: true, event: true, userId: true, durationMs: true, success: true, meta: true, createdAt: true },
+      select: {
+        id: true,
+        event: true,
+        userId: true,
+        durationMs: true,
+        success: true,
+        meta: true,
+        createdAt: true,
+      },
     });
   }
 
@@ -105,7 +134,14 @@ export class BetaTelemetryService {
       where: { success: false },
       orderBy: { createdAt: 'desc' },
       take: limit,
-      select: { id: true, event: true, userId: true, durationMs: true, meta: true, createdAt: true },
+      select: {
+        id: true,
+        event: true,
+        userId: true,
+        durationMs: true,
+        meta: true,
+        createdAt: true,
+      },
     });
   }
 }

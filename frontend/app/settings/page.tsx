@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { useToast } from '@/components/ToastProvider';
+import { useConfirm } from '@/components/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { User, Shield, Bell, Trash, Eye, EyeOff, Smartphone, CheckCircle } from 'lucide-react';
 import api from '@/lib/api';
@@ -12,6 +13,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { user, _hasHydrated, logout } = useAuthStore();
   const toast = useToast();
+  const confirm = useConfirm();
 
   // Profile
   const [name, setName] = useState('');
@@ -157,8 +159,13 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
-    if (!confirm('This will permanently delete all your projects and data. Are you absolutely sure?')) return;
+    const confirmed = await confirm({
+      title: 'Delete account?',
+      message: 'This permanently deletes your account and all your projects and data. This action cannot be undone.',
+      confirmLabel: 'Delete my account',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
     setDeletingAccount(true);
     try {
       await api.delete('/users/me');

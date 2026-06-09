@@ -103,12 +103,12 @@ export class EmailService {
    * surface the copy-link fallback.
    */
   async sendWorkspaceInviteEmail(input: {
-    to:            string;
-    inviterName:   string;
+    to: string;
+    inviterName: string;
     workspaceName: string;
-    role:          string;
-    token:         string;
-    expiresAt:     Date;
+    role: string;
+    token: string;
+    expiresAt: Date;
   }): Promise<boolean> {
     const url = `${this.appUrl}/workspaces/accept?token=${input.token}`;
     const expiresText = input.expiresAt.toLocaleDateString();

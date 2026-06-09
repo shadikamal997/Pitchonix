@@ -11,13 +11,19 @@ import { solutionTitle, solutionSubtitle } from './narrative-titles';
 export class SolutionSlideGenerator extends BaseSlideGenerator {
   type = SlideType.SOLUTION;
   defaultPriority = 3;
-  protected usesSmartComponent() { return true; }
+  protected usesSmartComponent() {
+    return true;
+  }
 
   isApplicable(input: WizardInput): boolean {
     return !!input.solution && input.solution.trim().length > 0;
   }
-  getTitle(input: WizardInput): string    { return solutionTitle(input); }
-  getSubtitle(input: WizardInput): string { return solutionSubtitle(input); }
+  getTitle(input: WizardInput): string {
+    return solutionTitle(input);
+  }
+  getSubtitle(input: WizardInput): string {
+    return solutionSubtitle(input);
+  }
 
   generateContent(input: WizardInput): any {
     return {
@@ -27,8 +33,10 @@ export class SolutionSlideGenerator extends BaseSlideGenerator {
   }
 
   getSpeakerNotes(input: WizardInput): string {
-    return `Present the solution clearly and emphasize the unique value proposition. ` +
-           `Focus on benefits over features. Highlight what makes you different: ${input.differentiation?.substring(0, 80) || 'your unique approach'}. ` +
-           `Be ready to demo if appropriate.`;
+    return (
+      `Present the solution clearly and emphasize the unique value proposition. ` +
+      `Focus on benefits over features. Highlight what makes you different: ${input.differentiation?.substring(0, 80) || 'your unique approach'}. ` +
+      `Be ready to demo if appropriate.`
+    );
   }
 }

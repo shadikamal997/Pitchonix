@@ -1,6 +1,17 @@
 import {
-  Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query,
-  UploadedFile, UseInterceptors, Res, BadRequestException,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+  Res,
+  BadRequestException,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -43,16 +54,27 @@ import { GetUser } from '../auth/get-user.decorator';
 export class BrandKitsController {
   constructor(
     private readonly brandKits: BrandKitsService,
-    private readonly audit:     BrandAuditService,
-    private readonly zip:       BrandKitZipService,
-    private readonly autofix:   BrandAutofixService,
+    private readonly audit: BrandAuditService,
+    private readonly zip: BrandKitZipService,
+    private readonly autofix: BrandAutofixService,
   ) {}
 
   // ---------- Legacy CRUD (unchanged paths) ----------
 
   @Post('brand-kits')
   @ApiOperation({ summary: 'Create a brand kit' })
-  create(@GetUser() user: any, @Body() body: CreateBrandKitDto & { workspaceId?: string; description?: string; tokens?: any; voice?: any; identity?: any; isDefault?: boolean }) {
+  create(
+    @GetUser() user: any,
+    @Body()
+    body: CreateBrandKitDto & {
+      workspaceId?: string;
+      description?: string;
+      tokens?: any;
+      voice?: any;
+      identity?: any;
+      isDefault?: boolean;
+    },
+  ) {
     return this.brandKits.create(user.id, body);
   }
 
@@ -70,7 +92,18 @@ export class BrandKitsController {
 
   @Patch('brand-kits/:id')
   @ApiOperation({ summary: 'Update brand kit' })
-  update(@Param('id') id: string, @GetUser() user: any, @Body() body: UpdateBrandKitDto & { description?: string; tokens?: any; voice?: any; identity?: any; isDefault?: boolean }) {
+  update(
+    @Param('id') id: string,
+    @GetUser() user: any,
+    @Body()
+    body: UpdateBrandKitDto & {
+      description?: string;
+      tokens?: any;
+      voice?: any;
+      identity?: any;
+      isDefault?: boolean;
+    },
+  ) {
     return this.brandKits.update(id, user.id, body);
   }
 
@@ -95,7 +128,15 @@ export class BrandKitsController {
   addAsset(
     @Param('id') id: string,
     @GetUser() user: any,
-    @Body() body: { kind: string; url: string; mimeType?: string; width?: number; height?: number; alt?: string },
+    @Body()
+    body: {
+      kind: string;
+      url: string;
+      mimeType?: string;
+      width?: number;
+      height?: number;
+      alt?: string;
+    },
   ) {
     return this.brandKits.addAsset(id, user.id, body);
   }
@@ -126,7 +167,11 @@ export class BrandKitsController {
 
   @Post('brand-kits/:id/rebrand-chart/:elementId')
   @ApiOperation({ summary: 'Apply brand chart palette to one chart element (Phase 37.1B)' })
-  rebrandChart(@Param('id') id: string, @Param('elementId') elementId: string, @GetUser() user: any) {
+  rebrandChart(
+    @Param('id') id: string,
+    @Param('elementId') elementId: string,
+    @GetUser() user: any,
+  ) {
     return this.brandKits.rebrandChartElement(id, elementId, user.id);
   }
 
@@ -165,7 +210,9 @@ export class BrandKitsController {
   // ---------- Phase 37.1D — PDF Studio adapter ----------
 
   @Get('brand-kits/:id/pdf-studio-format')
-  @ApiOperation({ summary: 'Resolve this brand kit into the PDF Studio internal format (Phase 37.1D)' })
+  @ApiOperation({
+    summary: 'Resolve this brand kit into the PDF Studio internal format (Phase 37.1D)',
+  })
   pdfFormat(@Param('id') id: string, @GetUser() user: any) {
     return this.brandKits.toPdfStudioBrand(id, user.id);
   }

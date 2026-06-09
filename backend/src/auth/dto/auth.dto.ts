@@ -25,4 +25,10 @@ export class LoginDto {
   @ApiProperty({ example: 'password123' })
   @IsString()
   password: string;
+
+  // Optional TOTP code — required only when the account has 2FA enabled.
+  @ApiProperty({ example: '123456', required: false })
+  @IsOptional()
+  @IsString()
+  code?: string;
 }

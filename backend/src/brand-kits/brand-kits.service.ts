@@ -1,5 +1,10 @@
 import {
-  Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger, OnModuleInit,
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBrandKitDto } from './dto/create-brand-kit.dto';
@@ -27,50 +32,55 @@ import { UpdateBrandKitDto } from './dto/update-brand-kit.dto';
 // of truth for the field layout.
 export interface BrandTokens {
   colors?: Partial<{
-    primary: string; secondary: string; accent: string;
-    success: string; warning: string; danger: string; neutral: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+    success: string;
+    warning: string;
+    danger: string;
+    neutral: string;
   }>;
   typography?: Partial<{
     heading: { family: string; weight?: number; lineHeight?: number; letterSpacing?: number };
-    body:    { family: string; weight?: number; lineHeight?: number; letterSpacing?: number };
+    body: { family: string; weight?: number; lineHeight?: number; letterSpacing?: number };
     caption: { family: string; weight?: number; lineHeight?: number; letterSpacing?: number };
   }>;
   tokens?: Partial<{
     borderRadius: number;
-    shadowStyle:  'none' | 'subtle' | 'pronounced';
+    shadowStyle: 'none' | 'subtle' | 'pronounced';
     spacingScale: number;
     containerWidth: number;
-    buttonStyle:  'pill' | 'square' | 'rounded';
+    buttonStyle: 'pill' | 'square' | 'rounded';
   }>;
   chart?: Partial<{
-    palette:    string[];
-    axisColor:  string;
-    gridColor:  string;
+    palette: string[];
+    axisColor: string;
+    gridColor: string;
     legendStyle: 'inline' | 'side' | 'bottom';
   }>;
   icon?: Partial<{
     style: 'outline' | 'filled' | 'rounded' | 'sharp' | 'duotone';
   }>;
   image?: Partial<{
-    style: string;            // free-form: "corporate" | "startup" | …
+    style: string; // free-form: "corporate" | "startup" | …
     prompts: string[];
     moodboards: string[];
   }>;
 }
 
 export interface BrandVoice {
-  tone?:  string;             // "professional" | "friendly" | "luxury" | …
-  voice?: string;             // "first-person" | "executive" | …
-  rules?: string[];           // ["Avoid jargon", "Use active voice"]
+  tone?: string; // "professional" | "friendly" | "luxury" | …
+  voice?: string; // "first-person" | "executive" | …
+  rules?: string[]; // ["Avoid jargon", "Use active voice"]
   examples?: string[];
 }
 
 export interface BrandIdentity {
   companyName?: string;
-  tagline?:     string;
-  mission?:     string;
-  vision?:      string;
-  website?:     string;
+  tagline?: string;
+  mission?: string;
+  vision?: string;
+  website?: string;
 }
 
 @Injectable()
@@ -98,7 +108,7 @@ export class BrandKitsService implements OnModuleInit {
    */
   async backfillWorkspaceIds(): Promise<{ updated: number }> {
     const orphans = await this.prisma.brandKit.findMany({
-      where:  { workspaceId: null },
+      where: { workspaceId: null },
       select: { id: true, userId: true },
     });
     if (orphans.length === 0) return { updated: 0 };
@@ -106,14 +116,14 @@ export class BrandKitsService implements OnModuleInit {
     let updated = 0;
     for (const kit of orphans) {
       const membership = await this.prisma.workspaceMember.findFirst({
-        where:  { userId: kit.userId },
+        where: { userId: kit.userId },
         select: { workspaceId: true },
         orderBy: { joinedAt: 'asc' },
       });
       if (!membership) continue;
       await this.prisma.brandKit.update({
         where: { id: kit.id },
-        data:  { workspaceId: membership.workspaceId },
+        data: { workspaceId: membership.workspaceId },
       });
       updated++;
     }
@@ -126,38 +136,41 @@ export class BrandKitsService implements OnModuleInit {
   // ---------------------------------------------------------------------------
 
   /** Legacy create — defaults to caller's first workspace if no id given. */
-  async create(userId: string, dto: CreateBrandKitDto & {
-    workspaceId?: string;
-    description?: string;
-    tokens?:      BrandTokens;
-    voice?:       BrandVoice;
-    identity?:    BrandIdentity;
-    isDefault?:   boolean;
-  }) {
-    const workspaceId = dto.workspaceId || await this.defaultWorkspaceFor(userId);
+  async create(
+    userId: string,
+    dto: CreateBrandKitDto & {
+      workspaceId?: string;
+      description?: string;
+      tokens?: BrandTokens;
+      voice?: BrandVoice;
+      identity?: BrandIdentity;
+      isDefault?: boolean;
+    },
+  ) {
+    const workspaceId = dto.workspaceId || (await this.defaultWorkspaceFor(userId));
     // Phase 37A — preserve the "one default per workspace" invariant.
     return this.prisma.$transaction(async (tx) => {
       if (dto.isDefault && workspaceId) {
         await tx.brandKit.updateMany({
           where: { workspaceId, isDefault: true },
-          data:  { isDefault: false },
+          data: { isDefault: false },
         });
       }
       return tx.brandKit.create({
         data: {
           userId,
           workspaceId: workspaceId || undefined,
-          name:           dto.name,
-          description:    dto.description,
-          isDefault:      dto.isDefault ?? false,
-          logo:           dto.logo,
-          primaryColor:   dto.primaryColor,
+          name: dto.name,
+          description: dto.description,
+          isDefault: dto.isDefault ?? false,
+          logo: dto.logo,
+          primaryColor: dto.primaryColor,
           secondaryColor: dto.secondaryColor,
-          fontFamily:     dto.fontFamily,
-          config:         {},
-          tokens:         dto.tokens   ? (dto.tokens   as any) : undefined,
-          voice:          dto.voice    ? (dto.voice    as any) : undefined,
-          identity:       dto.identity ? (dto.identity as any) : undefined,
+          fontFamily: dto.fontFamily,
+          config: {},
+          tokens: dto.tokens ? (dto.tokens as any) : undefined,
+          voice: dto.voice ? (dto.voice as any) : undefined,
+          identity: dto.identity ? (dto.identity as any) : undefined,
         },
       });
     });
@@ -167,7 +180,7 @@ export class BrandKitsService implements OnModuleInit {
     // Legacy behavior — kits owned by this user. Workspace-scoped listing
     // lives in `findForWorkspace`.
     return this.prisma.brandKit.findMany({
-      where:   { userId },
+      where: { userId },
       include: { assets: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -176,7 +189,7 @@ export class BrandKitsService implements OnModuleInit {
   /** Phase 37M — list every kit visible inside a workspace. */
   async findForWorkspace(workspaceId: string) {
     return this.prisma.brandKit.findMany({
-      where:   { workspaceId },
+      where: { workspaceId },
       include: { assets: true },
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
     });
@@ -184,7 +197,7 @@ export class BrandKitsService implements OnModuleInit {
 
   async findOne(id: string, userId: string) {
     const brandKit = await this.prisma.brandKit.findUnique({
-      where:   { id },
+      where: { id },
       include: { assets: true },
     });
     if (!brandKit) throw new NotFoundException(`Brand kit with ID ${id} not found`);
@@ -194,34 +207,38 @@ export class BrandKitsService implements OnModuleInit {
     return brandKit;
   }
 
-  async update(id: string, userId: string, dto: UpdateBrandKitDto & {
-    description?: string;
-    tokens?:      BrandTokens;
-    voice?:       BrandVoice;
-    identity?:    BrandIdentity;
-    isDefault?:   boolean;
-  }) {
+  async update(
+    id: string,
+    userId: string,
+    dto: UpdateBrandKitDto & {
+      description?: string;
+      tokens?: BrandTokens;
+      voice?: BrandVoice;
+      identity?: BrandIdentity;
+      isDefault?: boolean;
+    },
+  ) {
     const existing = await this.findOne(id, userId);
     return this.prisma.$transaction(async (tx) => {
       if (dto.isDefault === true && existing.workspaceId) {
         await tx.brandKit.updateMany({
           where: { workspaceId: existing.workspaceId, isDefault: true, NOT: { id } },
-          data:  { isDefault: false },
+          data: { isDefault: false },
         });
       }
       return tx.brandKit.update({
         where: { id },
         data: {
-          name:           dto.name           ?? undefined,
-          description:    dto.description    ?? undefined,
-          isDefault:      dto.isDefault      ?? undefined,
-          logo:           dto.logo           ?? undefined,
-          primaryColor:   dto.primaryColor   ?? undefined,
+          name: dto.name ?? undefined,
+          description: dto.description ?? undefined,
+          isDefault: dto.isDefault ?? undefined,
+          logo: dto.logo ?? undefined,
+          primaryColor: dto.primaryColor ?? undefined,
           secondaryColor: dto.secondaryColor ?? undefined,
-          fontFamily:     dto.fontFamily     ?? undefined,
-          tokens:         dto.tokens   ? (dto.tokens   as any) : undefined,
-          voice:          dto.voice    ? (dto.voice    as any) : undefined,
-          identity:       dto.identity ? (dto.identity as any) : undefined,
+          fontFamily: dto.fontFamily ?? undefined,
+          tokens: dto.tokens ? (dto.tokens as any) : undefined,
+          voice: dto.voice ? (dto.voice as any) : undefined,
+          identity: dto.identity ? (dto.identity as any) : undefined,
         },
         include: { assets: true },
       });
@@ -237,21 +254,29 @@ export class BrandKitsService implements OnModuleInit {
   //  Phase 37B/R — Brand Asset management
   // ---------------------------------------------------------------------------
 
-  async addAsset(id: string, userId: string, input: {
-    kind: string; url: string; mimeType?: string;
-    width?: number; height?: number; alt?: string;
-  }) {
+  async addAsset(
+    id: string,
+    userId: string,
+    input: {
+      kind: string;
+      url: string;
+      mimeType?: string;
+      width?: number;
+      height?: number;
+      alt?: string;
+    },
+  ) {
     await this.findOne(id, userId);
     if (!input.kind || !input.url) throw new BadRequestException('kind + url required');
     return this.prisma.brandAsset.create({
       data: {
         brandKitId: id,
-        kind:       input.kind,
-        url:        input.url,
-        mimeType:   input.mimeType,
-        width:      input.width,
-        height:     input.height,
-        alt:        input.alt,
+        kind: input.kind,
+        url: input.url,
+        mimeType: input.mimeType,
+        width: input.width,
+        height: input.height,
+        alt: input.alt,
       },
     });
   }
@@ -275,7 +300,7 @@ export class BrandKitsService implements OnModuleInit {
   async applyToDeck(brandKitId: string, deckId: string, userId: string) {
     const kit = await this.findOne(brandKitId, userId);
     const deck = await this.prisma.deck.findUnique({
-      where:  { id: deckId },
+      where: { id: deckId },
       select: { id: true, metadata: true },
     });
     if (!deck) throw new NotFoundException('Deck not found');
@@ -284,9 +309,9 @@ export class BrandKitsService implements OnModuleInit {
     const themeTokens = {
       // Primary colors take precedence; fall back to the legacy single-color
       // fields so old kits still apply.
-      primary:    tokens.colors?.primary    ?? kit.primaryColor   ?? undefined,
-      secondary:  tokens.colors?.secondary  ?? kit.secondaryColor ?? undefined,
-      accent:     tokens.colors?.accent     ?? undefined,
+      primary: tokens.colors?.primary ?? kit.primaryColor ?? undefined,
+      secondary: tokens.colors?.secondary ?? kit.secondaryColor ?? undefined,
+      accent: tokens.colors?.accent ?? undefined,
       fontFamily: tokens.typography?.body?.family ?? kit.fontFamily ?? undefined,
       headingFontFamily: tokens.typography?.heading?.family ?? undefined,
       borderRadius: tokens.tokens?.borderRadius ?? undefined,
@@ -302,11 +327,50 @@ export class BrandKitsService implements OnModuleInit {
       brandKitId,
     };
 
-    return this.prisma.deck.update({
+    const updatedDeck = await this.prisma.deck.update({
       where: { id: deckId },
-      data:  { brandKitId, metadata: nextMeta },
+      data: { brandKitId, metadata: nextMeta },
       select: { id: true, brandKitId: true, metadata: true },
     });
+
+    // The HTML/export renderer reads the per-slide `slide.themeTokens` column
+    // (element-html-renderer.ts) — NOT deck.metadata — and expects the
+    // SlideThemeTokens shape {accent, accent2, text, muted, surface, border,
+    // background, fontHeading, fontBody}. Map the kit into that shape and write
+    // it onto every slide so the brand actually shows up in preview/export.
+    const c = (tokens.colors || {}) as Record<string, string | undefined>;
+    const slideTokens: Record<string, string> = {};
+    const accent = c.primary ?? kit.primaryColor ?? undefined;
+    const accent2 = c.secondary ?? c.accent ?? kit.secondaryColor ?? undefined;
+    if (accent) slideTokens.accent = accent;
+    if (accent2) slideTokens.accent2 = accent2;
+    if (c.text) slideTokens.text = c.text;
+    if (c.muted) slideTokens.muted = c.muted;
+    if (c.surface) slideTokens.surface = c.surface;
+    if (c.border) slideTokens.border = c.border;
+    if (c.background) slideTokens.background = c.background;
+    const fontHeading = tokens.typography?.heading?.family ?? undefined;
+    const fontBody = tokens.typography?.body?.family ?? kit.fontFamily ?? undefined;
+    if (fontHeading) slideTokens.fontHeading = fontHeading;
+    if (fontBody) slideTokens.fontBody = fontBody;
+
+    if (Object.keys(slideTokens).length > 0) {
+      const slides = await this.prisma.slide.findMany({
+        where: { deckId },
+        select: { id: true, themeTokens: true },
+      });
+      // Per-slide merge preserves any existing manual per-slide overrides.
+      await Promise.all(
+        slides.map((s) =>
+          this.prisma.slide.update({
+            where: { id: s.id },
+            data: { themeTokens: { ...((s.themeTokens as any) || {}), ...slideTokens } },
+          }),
+        ),
+      );
+    }
+
+    return updatedDeck;
   }
 
   // ---------------------------------------------------------------------------
@@ -328,16 +392,16 @@ export class BrandKitsService implements OnModuleInit {
     const tokens = (kit.tokens as BrandTokens | null) || {};
     const palette = brandChartPalette(tokens, kit.primaryColor, kit.secondaryColor);
     if (palette.length === 0) throw new BadRequestException('Brand kit has no chart palette');
-    const data  = (element.data  as any) || {};
+    const data = (element.data as any) || {};
     const style = (element.style as any) || {};
     return this.prisma.slideElement.update({
       where: { id: elementId },
       data: {
-        data:  { ...data,  colors: palette, palette },
+        data: { ...data, colors: palette, palette },
         style: {
           ...style,
-          axisColor:  tokens.chart?.axisColor  ?? style.axisColor,
-          gridColor:  tokens.chart?.gridColor  ?? style.gridColor,
+          axisColor: tokens.chart?.axisColor ?? style.axisColor,
+          gridColor: tokens.chart?.gridColor ?? style.gridColor,
           legendStyle: tokens.chart?.legendStyle ?? style.legendStyle,
         },
       },
@@ -351,21 +415,21 @@ export class BrandKitsService implements OnModuleInit {
     const palette = brandChartPalette(tokens, kit.primaryColor, kit.secondaryColor);
     if (palette.length === 0) throw new BadRequestException('Brand kit has no chart palette');
     const charts = await this.prisma.slideElement.findMany({
-      where:  { type: 'chart', slide: { deckId } },
+      where: { type: 'chart', slide: { deckId } },
       select: { id: true, data: true, style: true },
     });
     let updated = 0;
     for (const c of charts) {
-      const data  = (c.data  as any) || {};
+      const data = (c.data as any) || {};
       const style = (c.style as any) || {};
       await this.prisma.slideElement.update({
         where: { id: c.id },
-        data:  {
-          data:  { ...data, colors: palette, palette },
+        data: {
+          data: { ...data, colors: palette, palette },
           style: {
             ...style,
-            axisColor:  tokens.chart?.axisColor  ?? style.axisColor,
-            gridColor:  tokens.chart?.gridColor  ?? style.gridColor,
+            axisColor: tokens.chart?.axisColor ?? style.axisColor,
+            gridColor: tokens.chart?.gridColor ?? style.gridColor,
             legendStyle: tokens.chart?.legendStyle ?? style.legendStyle,
           },
         },
@@ -379,15 +443,19 @@ export class BrandKitsService implements OnModuleInit {
   //  Phase 37.1F — Batch apply to multiple decks
   // ---------------------------------------------------------------------------
 
-  async applyToMany(brandKitId: string, userId: string, input: {
-    deckIds?: string[];
-    workspaceId?: string;
-  }) {
+  async applyToMany(
+    brandKitId: string,
+    userId: string,
+    input: {
+      deckIds?: string[];
+      workspaceId?: string;
+    },
+  ) {
     await this.findOne(brandKitId, userId);
     let targets = input.deckIds || [];
     if (input.workspaceId) {
       const decks = await this.prisma.deck.findMany({
-        where:  { project: { workspaceId: input.workspaceId } },
+        where: { project: { workspaceId: input.workspaceId } },
         select: { id: true },
       });
       targets = Array.from(new Set([...targets, ...decks.map((d) => d.id)]));
@@ -395,8 +463,12 @@ export class BrandKitsService implements OnModuleInit {
     if (targets.length === 0) return { applied: 0 };
     let applied = 0;
     for (const id of targets) {
-      try { await this.applyToDeck(brandKitId, id, userId); applied++; }
-      catch (e: any) { this.logger.warn(`Batch apply skipped deck ${id}: ${e?.message}`); }
+      try {
+        await this.applyToDeck(brandKitId, id, userId);
+        applied++;
+      } catch (e: any) {
+        this.logger.warn(`Batch apply skipped deck ${id}: ${e?.message}`);
+      }
     }
     return { applied };
   }
@@ -408,20 +480,24 @@ export class BrandKitsService implements OnModuleInit {
   async exportKit(id: string, userId: string): Promise<BrandKitExportV1> {
     const kit = await this.findOne(id, userId);
     return {
-      $schema:    'pitchonix.brand-kit',
-      version:    1,
-      name:        kit.name,
+      $schema: 'pitchonix.brand-kit',
+      version: 1,
+      name: kit.name,
       description: kit.description,
-      identity:    (kit.identity as BrandIdentity | null) || undefined,
-      voice:       (kit.voice    as BrandVoice    | null) || undefined,
-      tokens:      (kit.tokens   as BrandTokens   | null) || undefined,
-      logo:        kit.logo || undefined,
-      primaryColor:   kit.primaryColor   || undefined,
+      identity: (kit.identity as BrandIdentity | null) || undefined,
+      voice: (kit.voice as BrandVoice | null) || undefined,
+      tokens: (kit.tokens as BrandTokens | null) || undefined,
+      logo: kit.logo || undefined,
+      primaryColor: kit.primaryColor || undefined,
       secondaryColor: kit.secondaryColor || undefined,
-      fontFamily:     kit.fontFamily     || undefined,
-      assets:      kit.assets.map((a) => ({
-        kind: a.kind, url: a.url, mimeType: a.mimeType,
-        width: a.width, height: a.height, alt: a.alt,
+      fontFamily: kit.fontFamily || undefined,
+      assets: kit.assets.map((a) => ({
+        kind: a.kind,
+        url: a.url,
+        mimeType: a.mimeType,
+        width: a.width,
+        height: a.height,
+        alt: a.alt,
       })),
       exportedAt: new Date().toISOString(),
     };
@@ -438,27 +514,28 @@ export class BrandKitsService implements OnModuleInit {
       throw new BadRequestException('Brand kit name is required');
     }
     const created = await this.create(userId, {
-      name:           payload.name,
-      description:    payload.description ?? undefined,
-      logo:           payload.logo,
-      primaryColor:   payload.primaryColor,
+      name: payload.name,
+      description: payload.description ?? undefined,
+      logo: payload.logo,
+      primaryColor: payload.primaryColor,
       secondaryColor: payload.secondaryColor,
-      fontFamily:     payload.fontFamily,
-      tokens:         payload.tokens,
-      voice:          payload.voice,
-      identity:       payload.identity,
+      fontFamily: payload.fontFamily,
+      tokens: payload.tokens,
+      voice: payload.voice,
+      identity: payload.identity,
       workspaceId,
     } as any);
-    for (const a of (payload.assets || [])) {
+    for (const a of payload.assets || []) {
       try {
         await this.prisma.brandAsset.create({
           data: {
             brandKitId: created.id,
-            kind:       a.kind,  url:    a.url,
-            mimeType:   a.mimeType ?? undefined,
-            width:      a.width    ?? undefined,
-            height:     a.height   ?? undefined,
-            alt:        a.alt      ?? undefined,
+            kind: a.kind,
+            url: a.url,
+            mimeType: a.mimeType ?? undefined,
+            width: a.width ?? undefined,
+            height: a.height ?? undefined,
+            alt: a.alt ?? undefined,
           },
         });
       } catch (e: any) {
@@ -477,34 +554,37 @@ export class BrandKitsService implements OnModuleInit {
   //  hand-rolling presets.
   // ---------------------------------------------------------------------------
 
-  async toPdfStudioBrand(id: string, userId: string): Promise<{
-    primaryColor:   string | null;
+  async toPdfStudioBrand(
+    id: string,
+    userId: string,
+  ): Promise<{
+    primaryColor: string | null;
     secondaryColor: string | null;
-    accentColor:    string | null;
+    accentColor: string | null;
     backgroundColor: string | null;
-    textColor:      string | null;
+    textColor: string | null;
     mutedTextColor: string | null;
     headingFontFamily: string | null;
-    bodyFontFamily:    string | null;
-    logoUrl:        string | null;
-    companyName:    string | null;
+    bodyFontFamily: string | null;
+    logoUrl: string | null;
+    companyName: string | null;
   }> {
     const kit = await this.findOne(id, userId);
-    const t   = (kit.tokens as BrandTokens | null) || {};
-    const c   = t.colors || {};
+    const t = (kit.tokens as BrandTokens | null) || {};
+    const c = t.colors || {};
     const typ = t.typography || {};
     const ident = (kit.identity as BrandIdentity | null) || {};
     return {
-      primaryColor:    c.primary   ?? kit.primaryColor   ?? null,
-      secondaryColor:  c.secondary ?? kit.secondaryColor ?? null,
-      accentColor:     c.accent    ?? null,
-      backgroundColor: c.neutral   ?? '#FFFFFF',
-      textColor:       null,
-      mutedTextColor:  null,
+      primaryColor: c.primary ?? kit.primaryColor ?? null,
+      secondaryColor: c.secondary ?? kit.secondaryColor ?? null,
+      accentColor: c.accent ?? null,
+      backgroundColor: c.neutral ?? '#FFFFFF',
+      textColor: null,
+      mutedTextColor: null,
       headingFontFamily: typ.heading?.family ?? kit.fontFamily ?? null,
-      bodyFontFamily:    typ.body?.family    ?? kit.fontFamily ?? null,
-      logoUrl:        kit.logo || null,
-      companyName:    ident.companyName || null,
+      bodyFontFamily: typ.body?.family ?? kit.fontFamily ?? null,
+      logoUrl: kit.logo || null,
+      companyName: ident.companyName || null,
     };
   }
 
@@ -515,7 +595,7 @@ export class BrandKitsService implements OnModuleInit {
   /** Pick a sensible default workspaceId for legacy single-arg calls. */
   private async defaultWorkspaceFor(userId: string): Promise<string | null> {
     const m = await this.prisma.workspaceMember.findFirst({
-      where:  { userId },
+      where: { userId },
       select: { workspaceId: true },
       orderBy: { joinedAt: 'asc' },
     });
@@ -528,37 +608,51 @@ export class BrandKitsService implements OnModuleInit {
 // =============================================================================
 
 export interface BrandKitExportV1 {
-  $schema:        'pitchonix.brand-kit';
-  version:        1;
-  name:           string;
-  description?:   string | null;
-  identity?:      BrandIdentity;
-  voice?:         BrandVoice;
-  tokens?:        BrandTokens;
-  logo?:          string | null;
-  primaryColor?:  string | null;
+  $schema: 'pitchonix.brand-kit';
+  version: 1;
+  name: string;
+  description?: string | null;
+  identity?: BrandIdentity;
+  voice?: BrandVoice;
+  tokens?: BrandTokens;
+  logo?: string | null;
+  primaryColor?: string | null;
   secondaryColor?: string | null;
-  fontFamily?:    string | null;
-  assets:         Array<{
-    kind:     string;
-    url:      string;
+  fontFamily?: string | null;
+  assets: Array<{
+    kind: string;
+    url: string;
     mimeType: string | null;
-    width:    number | null;
-    height:   number | null;
-    alt:      string | null;
+    width: number | null;
+    height: number | null;
+    alt: string | null;
   }>;
-  exportedAt:     string;
+  exportedAt: string;
 }
 
 // =============================================================================
 //  Helpers (file-scope so audit + rebrand methods share)
 // =============================================================================
 
-function brandChartPalette(tokens: BrandTokens, primary?: string | null, secondary?: string | null): string[] {
+function brandChartPalette(
+  tokens: BrandTokens,
+  primary?: string | null,
+  secondary?: string | null,
+): string[] {
   if (tokens.chart?.palette && tokens.chart.palette.length > 0) return tokens.chart.palette;
   const c = tokens.colors || {};
   const out: string[] = [];
-  for (const v of [c.primary, c.secondary, c.accent, c.success, c.warning, c.danger, c.neutral, primary, secondary]) {
+  for (const v of [
+    c.primary,
+    c.secondary,
+    c.accent,
+    c.success,
+    c.warning,
+    c.danger,
+    c.neutral,
+    primary,
+    secondary,
+  ]) {
     if (v && !out.includes(v)) out.push(v);
   }
   return out;

@@ -1,7 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
-import { AnalysisType, ContentScore, Suggestion, ContentAnalysisDto } from './dto/analyze-content.dto';
+import {
+  AnalysisType,
+  ContentScore,
+  Suggestion,
+  ContentAnalysisDto,
+} from './dto/analyze-content.dto';
 
 @Injectable()
 export class IntelligenceService {
@@ -43,7 +48,7 @@ export class IntelligenceService {
       });
 
       const analysis = JSON.parse(response.choices[0].message.content);
-      
+
       // Validate and structure the response
       const result: ContentAnalysisDto = {
         scores: this.parseScores(analysis.scores),
@@ -175,8 +180,14 @@ Evaluate the content on:
    * Parse and validate scores
    */
   private parseScores(scores: any): ContentScore {
-    const defaultScore = { overall: 50, clarity: 50, impact: 50, specificity: 50, professionalism: 50 };
-    
+    const defaultScore = {
+      overall: 50,
+      clarity: 50,
+      impact: 50,
+      specificity: 50,
+      professionalism: 50,
+    };
+
     if (!scores || typeof scores !== 'object') {
       return defaultScore;
     }
@@ -243,7 +254,14 @@ Evaluate the content on:
     }
 
     // Jargon check (basic)
-    const jargonWords = ['synergy', 'leverage', 'utilize', 'paradigm', 'disruptive', 'revolutionary'];
+    const jargonWords = [
+      'synergy',
+      'leverage',
+      'utilize',
+      'paradigm',
+      'disruptive',
+      'revolutionary',
+    ];
     jargonWords.forEach((word) => {
       if (content.toLowerCase().includes(word)) {
         issues.push(`Avoid overused buzzwords like "${word}". Use simpler language.`);
@@ -276,7 +294,8 @@ Evaluate the content on:
         messages: [
           {
             role: 'system',
-            content: 'You are an expert at improving business content for pitch decks. Make the content more compelling, clear, and impactful while maintaining the core message.',
+            content:
+              'You are an expert at improving business content for pitch decks. Make the content more compelling, clear, and impactful while maintaining the core message.',
           },
           {
             role: 'user',

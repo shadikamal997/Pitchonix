@@ -3,7 +3,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { buildSnapshot, SNAPSHOT_SCHEMA_VERSION } from './snapshot-builder';
 import { diffSnapshots } from './snapshot-differ';
 import {
-  DeckVersionDTO, DeckVersionType, CreateSnapshotInput, DeckSnapshot, VersionDiff,
+  DeckVersionDTO,
+  DeckVersionType,
+  CreateSnapshotInput,
+  DeckSnapshot,
+  VersionDiff,
 } from './version-types';
 import { CollaborationBroadcaster } from '../collaboration/collaboration-broadcaster';
 import { YDocStore, elementDocId } from '../collaboration/ydoc-store';
@@ -35,12 +39,10 @@ export class VersionHistoryService {
    */
   private async flushDeckYDocs(deckId: string): Promise<void> {
     const elements = await this.prisma.slideElement.findMany({
-      where:  { slide: { deckId } },
+      where: { slide: { deckId } },
       select: { id: true },
     });
-    await Promise.all(elements.map((el) =>
-      this.ydocs.flush(elementDocId(el.id)).catch(() => {})
-    ));
+    await Promise.all(elements.map((el) => this.ydocs.flush(elementDocId(el.id)).catch(() => {})));
   }
 
   // ---------------------------------------------------------------------------
@@ -75,7 +77,10 @@ export class VersionHistoryService {
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },
       include: {
-        slides: { orderBy: { order: 'asc' }, include: { elements: { orderBy: [{ order: 'asc' }, { zIndex: 'asc' }] } } },
+        slides: {
+          orderBy: { order: 'asc' },
+          include: { elements: { orderBy: [{ order: 'asc' }, { zIndex: 'asc' }] } },
+        },
         masterElements: true,
       },
     });
@@ -83,12 +88,13 @@ export class VersionHistoryService {
 
     // Pull component instances across all slides (one query).
     const slideIds = deck.slides.map((s) => s.id);
-    const componentInstances = slideIds.length === 0
-      ? []
-      : await this.prisma.componentInstance.findMany({
-          where: { slideId: { in: slideIds } },
-          orderBy: { createdAt: 'asc' },
-        });
+    const componentInstances =
+      slideIds.length === 0
+        ? []
+        : await this.prisma.componentInstance.findMany({
+            where: { slideId: { in: slideIds } },
+            orderBy: { createdAt: 'asc' },
+          });
 
     const snapshot: DeckSnapshot = buildSnapshot({
       deck,
@@ -97,10 +103,13 @@ export class VersionHistoryService {
       componentInstances,
     });
 
-    const businessInfo = ((await this.prisma.project.findUnique({
-      where: { id: deck.projectId },
-      select: { businessInfo: true },
-    }))?.businessInfo as any) || {};
+    const businessInfo =
+      ((
+        await this.prisma.project.findUnique({
+          where: { id: deck.projectId },
+          select: { businessInfo: true },
+        })
+      )?.businessInfo as any) || {};
     const familyId = businessInfo.theme || null;
 
     const type: DeckVersionType = input.type ?? 'MANUAL_SNAPSHOT';
@@ -115,9 +124,10 @@ export class VersionHistoryService {
         type,
         snapshot: snapshot as any,
         slideCount: snapshot.slides.length,
-        qualityScore: typeof snapshot.deck.qualityScore?.overall === 'number'
-          ? Math.round(snapshot.deck.qualityScore.overall)
-          : null,
+        qualityScore:
+          typeof snapshot.deck.qualityScore?.overall === 'number'
+            ? Math.round(snapshot.deck.qualityScore.overall)
+            : null,
         familyId,
         templateId: deck.templateId || null,
       },
@@ -127,7 +137,9 @@ export class VersionHistoryService {
     // are kept forever.
     await this.pruneAutoSaves(deckId);
 
-    this.logger.log(`Snapshot ${row.id} (${type}) created for deck ${deckId} in ${Date.now() - t0}ms (${snapshot.slides.length} slides)`);
+    this.logger.log(
+      `Snapshot ${row.id} (${type}) created for deck ${deckId} in ${Date.now() - t0}ms (${snapshot.slides.length} slides)`,
+    );
     const dto = toDTO(row);
     // Phase 34.1B — broadcast so other collaborators get a toast: "John
     // created snapshot 'Before review request'".
@@ -145,9 +157,17 @@ export class VersionHistoryService {
       // Don't return the full snapshot blob in the list — clients call
       // getVersion() for that.
       select: {
-        id: true, deckId: true, userId: true, name: true, description: true,
-        type: true, slideCount: true, qualityScore: true, familyId: true,
-        templateId: true, createdAt: true,
+        id: true,
+        deckId: true,
+        userId: true,
+        name: true,
+        description: true,
+        type: true,
+        slideCount: true,
+        qualityScore: true,
+        familyId: true,
+        templateId: true,
+        createdAt: true,
       },
     });
     return rows.map(toDTO);
@@ -176,18 +196,23 @@ export class VersionHistoryService {
    * restore itself is reversible. Restore is transactional — either the
    * whole deck flips to the snapshot or nothing is touched.
    */
-  async restoreVersion(versionId: string, userId?: string): Promise<{ restoredVersionId: string; safetyVersionId: string }> {
+  async restoreVersion(
+    versionId: string,
+    userId?: string,
+  ): Promise<{ restoredVersionId: string; safetyVersionId: string }> {
     const target = await this.prisma.deckVersion.findUnique({ where: { id: versionId } });
     if (!target) throw new NotFoundException('Version not found');
     const snapshot = target.snapshot as unknown as DeckSnapshot;
     if (!snapshot || snapshot.schemaVersion !== SNAPSHOT_SCHEMA_VERSION) {
-      throw new Error(`Snapshot schema version mismatch (have ${(snapshot as any)?.schemaVersion}, expected ${SNAPSHOT_SCHEMA_VERSION})`);
+      throw new Error(
+        `Snapshot schema version mismatch (have ${(snapshot as any)?.schemaVersion}, expected ${SNAPSHOT_SCHEMA_VERSION})`,
+      );
     }
 
     // 1) Capture a safety snapshot so the restore is reversible.
     const safety = await this.createSnapshot(target.deckId, {
-      type:    'SAFETY',
-      name:    `Before restoring "${target.name}"`,
+      type: 'SAFETY',
+      name: `Before restoring "${target.name}"`,
       userId,
     });
 
@@ -239,9 +264,15 @@ export class VersionHistoryService {
               slideId: created.id,
               type: e.type,
               name: e.name ?? null,
-              order: e.order, x: e.x, y: e.y, width: e.width, height: e.height,
-              rotation: e.rotation, zIndex: e.zIndex,
-              locked: !!e.locked, visible: e.visible !== false,
+              order: e.order,
+              x: e.x,
+              y: e.y,
+              width: e.width,
+              height: e.height,
+              rotation: e.rotation,
+              zIndex: e.zIndex,
+              locked: !!e.locked,
+              visible: e.visible !== false,
               content: e.content ?? undefined,
               data: e.data ?? undefined,
               style: e.style ?? undefined,
@@ -258,10 +289,17 @@ export class VersionHistoryService {
         await tx.masterElement.createMany({
           data: snapshot.masters.map((m) => ({
             deckId: target.deckId,
-            type: m.type, name: m.name,
-            x: m.x, y: m.y, width: m.width, height: m.height,
-            rotation: m.rotation, zIndex: m.zIndex, sendToFront: m.sendToFront,
-            visible: m.visible, excludedSlides: m.excludedSlides,
+            type: m.type,
+            name: m.name,
+            x: m.x,
+            y: m.y,
+            width: m.width,
+            height: m.height,
+            rotation: m.rotation,
+            zIndex: m.zIndex,
+            sendToFront: m.sendToFront,
+            visible: m.visible,
+            excludedSlides: m.excludedSlides,
             elementData: m.elementData ?? undefined,
             style: m.style ?? undefined,
           })),
@@ -274,14 +312,19 @@ export class VersionHistoryService {
       for (const ci of snapshot.componentInstances) {
         const slideId = slideByOrder.get(ci.slideOrder);
         if (!slideId) continue;
-        const compExists = await tx.savedComponent.findUnique({ where: { id: ci.componentId }, select: { id: true } });
+        const compExists = await tx.savedComponent.findUnique({
+          where: { id: ci.componentId },
+          select: { id: true },
+        });
         if (!compExists) continue;
         await tx.componentInstance.create({
           data: {
             componentId: ci.componentId,
             slideId,
-            anchorX: ci.anchorX, anchorY: ci.anchorY,
-            scale: ci.scale, version: ci.version,
+            anchorX: ci.anchorX,
+            anchorY: ci.anchorY,
+            scale: ci.scale,
+            version: ci.version,
           },
         });
       }
@@ -299,7 +342,7 @@ export class VersionHistoryService {
     // version 'Approved Version'".
     this.broadcaster.toDeck(target.deckId, 'version.restored', {
       restoredVersionId: restored.id,
-      safetyVersionId:   safety.id,
+      safetyVersionId: safety.id,
       sourceVersionName: target.name,
     });
 
@@ -312,13 +355,17 @@ export class VersionHistoryService {
   async deleteVersion(versionId: string): Promise<void> {
     // Capture deckId BEFORE delete so we can broadcast afterwards.
     const v = await this.prisma.deckVersion.findUnique({
-      where: { id: versionId }, select: { deckId: true },
+      where: { id: versionId },
+      select: { deckId: true },
     });
     await this.prisma.deckVersion.delete({ where: { id: versionId } });
     if (v) this.broadcaster.toDeck(v.deckId, 'version.deleted', { versionId });
   }
 
-  async renameVersion(versionId: string, patch: { name?: string; description?: string }): Promise<DeckVersionDTO> {
+  async renameVersion(
+    versionId: string,
+    patch: { name?: string; description?: string },
+  ): Promise<DeckVersionDTO> {
     const row = await this.prisma.deckVersion.update({
       where: { id: versionId },
       data: { name: patch.name ?? undefined, description: patch.description ?? undefined },
@@ -351,12 +398,16 @@ export class VersionHistoryService {
 // =============================================================================
 function toDTO(row: any): DeckVersionDTO {
   return {
-    id: row.id, deckId: row.deckId, userId: row.userId,
-    name: row.name, description: row.description,
+    id: row.id,
+    deckId: row.deckId,
+    userId: row.userId,
+    name: row.name,
+    description: row.description,
     type: row.type as DeckVersionType,
     slideCount: row.slideCount,
     qualityScore: row.qualityScore,
-    familyId: row.familyId, templateId: row.templateId,
+    familyId: row.familyId,
+    templateId: row.templateId,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -364,15 +415,25 @@ function toDTO(row: any): DeckVersionDTO {
 function defaultName(type: DeckVersionType): string {
   const ts = new Date().toLocaleString();
   switch (type) {
-    case 'AUTO_SAVE':       return `Auto-save · ${ts}`;
-    case 'MANUAL_SNAPSHOT': return `Snapshot · ${ts}`;
-    case 'GENERATED':       return `Generated · ${ts}`;
-    case 'REGENERATED':     return `Regenerated · ${ts}`;
-    case 'RESTORED':        return `Restored · ${ts}`;
-    case 'FAMILY_CHANGED':  return `Family change · ${ts}`;
-    case 'TEMPLATE_CHANGED':return `Template change · ${ts}`;
-    case 'EXPORTED':        return `Exported · ${ts}`;
-    case 'SAFETY':          return `Safety snapshot · ${ts}`;
-    default:                return `Snapshot · ${ts}`;
+    case 'AUTO_SAVE':
+      return `Auto-save · ${ts}`;
+    case 'MANUAL_SNAPSHOT':
+      return `Snapshot · ${ts}`;
+    case 'GENERATED':
+      return `Generated · ${ts}`;
+    case 'REGENERATED':
+      return `Regenerated · ${ts}`;
+    case 'RESTORED':
+      return `Restored · ${ts}`;
+    case 'FAMILY_CHANGED':
+      return `Family change · ${ts}`;
+    case 'TEMPLATE_CHANGED':
+      return `Template change · ${ts}`;
+    case 'EXPORTED':
+      return `Exported · ${ts}`;
+    case 'SAFETY':
+      return `Safety snapshot · ${ts}`;
+    default:
+      return `Snapshot · ${ts}`;
   }
 }

@@ -110,7 +110,7 @@ export class PdfPagesService {
 
   async duplicatePage(id: string) {
     const originalPage = await this.findOne(id);
-    
+
     // Find the max order in the document
     const maxOrderPage = await this.prisma.pdfPage.findFirst({
       where: { documentId: originalPage.documentId },

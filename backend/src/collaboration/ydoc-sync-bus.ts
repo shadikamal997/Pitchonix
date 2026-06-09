@@ -22,8 +22,8 @@ import * as crypto from 'crypto';
 //  the bus, but doesn't require this code to be removed — both can coexist.
 // =============================================================================
 
-const CHANNEL_PREFIX  = 'pitchonix:ydoc:';
-const SUBSCRIBE_GLOB  = 'pitchonix:ydoc:*';
+const CHANNEL_PREFIX = 'pitchonix:ydoc:';
+const SUBSCRIBE_GLOB = 'pitchonix:ydoc:*';
 
 export type YDocUpdateHandler = (docId: string, update: Uint8Array) => void;
 
@@ -32,12 +32,12 @@ export class YDocSyncBus implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(YDocSyncBus.name);
   /** Stable nonce so we ignore our own published updates. */
   private readonly originId = crypto.randomBytes(8).toString('hex');
-  private pub:   any = null;
-  private sub:   any = null;
+  private pub: any = null;
+  private sub: any = null;
   private handler: YDocUpdateHandler | null = null;
   private active = false;
   private published = 0;
-  private received  = 0;
+  private received = 0;
 
   async onModuleInit() {
     if (!process.env.REDIS_URL) {
@@ -60,9 +60,21 @@ export class YDocSyncBus implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    try { await this.sub?.punsubscribe(SUBSCRIBE_GLOB); } catch { /* ignore */ }
-    try { this.pub?.disconnect(); } catch { /* ignore */ }
-    try { this.sub?.disconnect(); } catch { /* ignore */ }
+    try {
+      await this.sub?.punsubscribe(SUBSCRIBE_GLOB);
+    } catch {
+      /* ignore */
+    }
+    try {
+      this.pub?.disconnect();
+    } catch {
+      /* ignore */
+    }
+    try {
+      this.sub?.disconnect();
+    } catch {
+      /* ignore */
+    }
   }
 
   /** Caller (YDocStore) registers itself to receive remote updates. */
@@ -89,7 +101,12 @@ export class YDocSyncBus implements OnModuleInit, OnModuleDestroy {
 
   /** Phase 34.4D — observability counter accessors. */
   stats(): { active: boolean; published: number; received: number; originId: string } {
-    return { active: this.active, published: this.published, received: this.received, originId: this.originId };
+    return {
+      active: this.active,
+      published: this.published,
+      received: this.received,
+      originId: this.originId,
+    };
   }
 
   private onMessage(channel: string, message: string) {
@@ -98,7 +115,7 @@ export class YDocSyncBus implements OnModuleInit, OnModuleDestroy {
       const sep = message.indexOf(':');
       if (sep <= 0) return;
       const origin = message.slice(0, sep);
-      if (origin === this.originId) return;   // our own publish
+      if (origin === this.originId) return; // our own publish
       const b64 = message.slice(sep + 1);
       const update = new Uint8Array(Buffer.from(b64, 'base64'));
       const docId = channel.slice(CHANNEL_PREFIX.length);

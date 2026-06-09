@@ -60,7 +60,9 @@ export class DocxExportService {
       }),
       new Paragraph({
         text: new Date(document.createdAt).toLocaleDateString('en-US', {
-          year: 'numeric', month: 'long', day: 'numeric',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
         }),
         alignment: AlignmentType.CENTER,
         spacing: { after: 800 },
@@ -70,14 +72,16 @@ export class DocxExportService {
     );
 
     // Process pages — skip TOC, render cover as styled title block
-    const contentPages = (document.pages as any[]).filter(p => p.pageType !== 'toc');
+    const contentPages = (document.pages as any[]).filter((p) => p.pageType !== 'toc');
 
     for (let i = 0; i < contentPages.length; i++) {
       const page = contentPages[i];
 
       if (page.pageType === 'cover') {
         let coverData: any = {};
-        try { coverData = JSON.parse(page.content?.text || '{}'); } catch (_) {
+        try {
+          coverData = JSON.parse(page.content?.text || '{}');
+        } catch (_) {
           coverData = { title: page.title || document.title };
         }
         children.push(
@@ -89,11 +93,13 @@ export class DocxExportService {
           }),
         );
         if (coverData.subtitle) {
-          children.push(new Paragraph({
-            text: coverData.subtitle,
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 200 },
-          }));
+          children.push(
+            new Paragraph({
+              text: coverData.subtitle,
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 200 },
+            }),
+          );
         }
         if (i < contentPages.length - 1) {
           children.push(new Paragraph({ children: [new PageBreak()] }));
@@ -166,90 +172,110 @@ export class DocxExportService {
 
       // H1 heading
       if (/^#\s/.test(line)) {
-        paragraphs.push(new Paragraph({
-          text: line.replace(/^#\s+/, ''),
-          heading: HeadingLevel.HEADING_1,
-          spacing: { before: 360, after: 160 },
-        }));
+        paragraphs.push(
+          new Paragraph({
+            text: line.replace(/^#\s+/, ''),
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 360, after: 160 },
+          }),
+        );
         continue;
       }
 
       // H2 heading
       if (/^##\s/.test(line)) {
-        paragraphs.push(new Paragraph({
-          text: line.replace(/^##\s+/, ''),
-          heading: HeadingLevel.HEADING_2,
-          spacing: { before: 280, after: 120 },
-        }));
+        paragraphs.push(
+          new Paragraph({
+            text: line.replace(/^##\s+/, ''),
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 280, after: 120 },
+          }),
+        );
         continue;
       }
 
       // H3 heading
       if (/^###\s/.test(line)) {
-        paragraphs.push(new Paragraph({
-          text: line.replace(/^###\s+/, ''),
-          heading: HeadingLevel.HEADING_3,
-          spacing: { before: 200, after: 80 },
-        }));
+        paragraphs.push(
+          new Paragraph({
+            text: line.replace(/^###\s+/, ''),
+            heading: HeadingLevel.HEADING_3,
+            spacing: { before: 200, after: 80 },
+          }),
+        );
         continue;
       }
 
       // Unordered bullet
       if (/^[-*•]\s/.test(line)) {
-        paragraphs.push(new Paragraph({
-          children: this.parseInlineMarkdown(line.replace(/^[-*•]\s+/, '')),
-          bullet: { level: 0 },
-          spacing: { after: 60 },
-        }));
+        paragraphs.push(
+          new Paragraph({
+            children: this.parseInlineMarkdown(line.replace(/^[-*•]\s+/, '')),
+            bullet: { level: 0 },
+            spacing: { after: 60 },
+          }),
+        );
         continue;
       }
 
       // Nested bullet (two spaces indent)
       if (/^\s{2,}[-*•]\s/.test(line)) {
-        paragraphs.push(new Paragraph({
-          children: this.parseInlineMarkdown(line.trim().replace(/^[-*•]\s+/, '')),
-          bullet: { level: 1 },
-          spacing: { after: 40 },
-        }));
+        paragraphs.push(
+          new Paragraph({
+            children: this.parseInlineMarkdown(line.trim().replace(/^[-*•]\s+/, '')),
+            bullet: { level: 1 },
+            spacing: { after: 40 },
+          }),
+        );
         continue;
       }
 
       // Numbered list
       if (/^\d+\.\s/.test(line)) {
-        paragraphs.push(new Paragraph({
-          children: this.parseInlineMarkdown(line.replace(/^\d+\.\s+/, '')),
-          numbering: { reference: 'default-numbering', level: 0 },
-          spacing: { after: 60 },
-        }));
+        paragraphs.push(
+          new Paragraph({
+            children: this.parseInlineMarkdown(line.replace(/^\d+\.\s+/, '')),
+            numbering: { reference: 'default-numbering', level: 0 },
+            spacing: { after: 60 },
+          }),
+        );
         continue;
       }
 
       // Blockquote
       if (/^>\s/.test(line)) {
-        paragraphs.push(new Paragraph({
-          children: [new TextRun({ text: line.replace(/^>\s+/, ''), italics: true, color: '6B7280' })],
-          indent: { left: 720 },
-          border: { left: { style: BorderStyle.SINGLE, size: 8, color: '9CA3AF', space: 8 } },
-          spacing: { after: 100 },
-        }));
+        paragraphs.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: line.replace(/^>\s+/, ''), italics: true, color: '6B7280' }),
+            ],
+            indent: { left: 720 },
+            border: { left: { style: BorderStyle.SINGLE, size: 8, color: '9CA3AF', space: 8 } },
+            spacing: { after: 100 },
+          }),
+        );
         continue;
       }
 
       // Horizontal rule
       if (/^---+$/.test(line.trim()) || /^\*\*\*+$/.test(line.trim())) {
-        paragraphs.push(new Paragraph({
-          text: '',
-          border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'E5E7EB', space: 4 } },
-          spacing: { before: 120, after: 120 },
-        }));
+        paragraphs.push(
+          new Paragraph({
+            text: '',
+            border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'E5E7EB', space: 4 } },
+            spacing: { before: 120, after: 120 },
+          }),
+        );
         continue;
       }
 
       // Regular paragraph with inline formatting
-      paragraphs.push(new Paragraph({
-        children: this.parseInlineMarkdown(line),
-        spacing: { after: 120 },
-      }));
+      paragraphs.push(
+        new Paragraph({
+          children: this.parseInlineMarkdown(line),
+          spacing: { after: 120 },
+        }),
+      );
     }
 
     return paragraphs;
@@ -287,17 +313,20 @@ export class DocxExportService {
   }
 
   private createTable(rows: string[][]): Table {
-    const tableRows = rows.map((row, rowIndex) =>
-      new TableRow({
-        children: row.map(cell =>
-          new TableCell({
-            children: [new Paragraph({ text: cell })],
-            shading: rowIndex === 0
-              ? { fill: '2563EB', type: ShadingType.SOLID, color: 'FFFFFF' }
-              : undefined,
-          }),
-        ),
-      }),
+    const tableRows = rows.map(
+      (row, rowIndex) =>
+        new TableRow({
+          children: row.map(
+            (cell) =>
+              new TableCell({
+                children: [new Paragraph({ text: cell })],
+                shading:
+                  rowIndex === 0
+                    ? { fill: '2563EB', type: ShadingType.SOLID, color: 'FFFFFF' }
+                    : undefined,
+              }),
+          ),
+        }),
     );
     return new Table({ rows: tableRows, width: { size: 100, type: WidthType.PERCENTAGE } });
   }

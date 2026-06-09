@@ -37,7 +37,10 @@ export class PresenceGateway implements OnGatewayConnection, OnGatewayDisconnect
   async handleConnection(client: Socket) {
     try {
       const token = client.handshake.auth?.token as string;
-      if (!token) { client.disconnect(); return; }
+      if (!token) {
+        client.disconnect();
+        return;
+      }
       this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
       });
@@ -80,7 +83,9 @@ export class PresenceGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.socketMap.set(client.id, { documentId, user });
 
     client.join(documentId);
-    this.server.to(documentId).emit('presence:update', Array.from(this.rooms.get(documentId)!.values()));
+    this.server
+      .to(documentId)
+      .emit('presence:update', Array.from(this.rooms.get(documentId)!.values()));
   }
 
   @SubscribeMessage('presence:leave')

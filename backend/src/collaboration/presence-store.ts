@@ -10,28 +10,28 @@
 // =============================================================================
 
 export interface EditingFocus {
-  slideId:   string;
+  slideId: string;
   elementId: string;
-  field?:    string;        // 'title' | 'subtitle' | 'content' | etc.
+  field?: string; // 'title' | 'subtitle' | 'content' | etc.
   startedAt: number;
 }
 
 export interface PresenceUser {
-  userId:    string;
-  name:      string;
-  email:     string;
-  color:     string;
-  role:      string | null;             // workspace role at join time
-  slideId:   string | null;             // currently-viewed slide
-  cursor:    { x: number; y: number } | null;
-  selection: string[];                  // elementIds
-  editing:   EditingFocus | null;       // Phase 34.1C — "John is editing X"
-  lastSeen:  number;                    // epoch ms
+  userId: string;
+  name: string;
+  email: string;
+  color: string;
+  role: string | null; // workspace role at join time
+  slideId: string | null; // currently-viewed slide
+  cursor: { x: number; y: number } | null;
+  selection: string[]; // elementIds
+  editing: EditingFocus | null; // Phase 34.1C — "John is editing X"
+  lastSeen: number; // epoch ms
 }
 
 export interface RoomEntry {
-  socketId:  string;
-  user:      PresenceUser;
+  socketId: string;
+  user: PresenceUser;
 }
 
 const COLORS = [
@@ -61,7 +61,10 @@ export class PresenceStore {
   /** Returns the room snapshot for broadcast. */
   join(deckId: string, socketId: string, user: PresenceUser): PresenceUser[] {
     let room = this.rooms.get(deckId);
-    if (!room) { room = new Map(); this.rooms.set(deckId, room); }
+    if (!room) {
+      room = new Map();
+      this.rooms.set(deckId, room);
+    }
     room.set(socketId, { socketId, user });
     this.sockets.set(socketId, { deckId, userId: user.userId });
     return this.snapshot(deckId);
@@ -81,7 +84,10 @@ export class PresenceStore {
   }
 
   /** Update slide / cursor / selection / lastSeen for a connected socket. */
-  patch(socketId: string, patch: Partial<Omit<PresenceUser, 'userId' | 'name' | 'email' | 'color' | 'role'>>): PresenceUser[] | null {
+  patch(
+    socketId: string,
+    patch: Partial<Omit<PresenceUser, 'userId' | 'name' | 'email' | 'color' | 'role'>>,
+  ): PresenceUser[] | null {
     const entry = this.sockets.get(socketId);
     if (!entry) return null;
     const room = this.rooms.get(entry.deckId);

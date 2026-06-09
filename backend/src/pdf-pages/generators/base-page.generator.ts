@@ -36,7 +36,11 @@ export abstract class BasePageGenerator {
   /**
    * Create base page structure
    */
-  protected createBasePage(pageNumber: number, type: string, layout: PageContent['layout']): PageContent {
+  protected createBasePage(
+    pageNumber: number,
+    type: string,
+    layout: PageContent['layout'],
+  ): PageContent {
     return {
       pageNumber,
       type,
@@ -49,7 +53,7 @@ export abstract class BasePageGenerator {
    * Format bullet points for PDF rendering
    */
   protected formatBulletPoints(items: string[]): string[] {
-    return items.filter(item => item && item.trim().length > 0);
+    return items.filter((item) => item && item.trim().length > 0);
   }
 
   /**

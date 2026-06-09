@@ -498,9 +498,16 @@ function CreateWizardPage() {
         });
 
         console.log('[Wizard] PDF generation started:', response.data);
-        // Navigate to PDF Studio (once created)
-        // For now, redirect to project page
-        router.push(`/projects/${savedProjectId}`);
+        // Open the generated PDF document in the PDF Studio editor. The
+        // /projects/[id] page is deck/slide-only and would dead-end a PDF
+        // document ("No decks yet"), so route by the returned pdfDocumentId.
+        const pdfDocumentId = response.data?.pdfDocumentId;
+        if (pdfDocumentId) {
+          router.push(`/pdf-studio/editor/${pdfDocumentId}`);
+        } else {
+          setGenerateError('Generation did not return a document. Please try again.');
+          setLoading(false);
+        }
       } else {
         // Generate slide presentation
         console.log('[Wizard] Calling slide generation...');

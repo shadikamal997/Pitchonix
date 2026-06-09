@@ -19,10 +19,7 @@ describe('ContentEnhancementService (safe pipeline)', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ContentEnhancementService,
-        { provide: PrismaService, useValue: {} },
-      ],
+      providers: [ContentEnhancementService, { provide: PrismaService, useValue: {} }],
     }).compile();
 
     service = module.get<ContentEnhancementService>(ContentEnhancementService);
@@ -39,7 +36,7 @@ describe('ContentEnhancementService (safe pipeline)', () => {
       expect(r.enhancedContent).toContain('there is');
     });
 
-    it('fixes your → you\'re in clear verb contexts', async () => {
+    it("fixes your → you're in clear verb contexts", async () => {
       const r = await service.enhanceContent('your going to like this', { fixGrammar: true });
       expect(r.enhancedContent).toContain("you're going");
     });
@@ -69,10 +66,9 @@ describe('ContentEnhancementService (safe pipeline)', () => {
   // ── Redundancy fixes ──────────────────────────────────────────────────────
   describe('redundancy fixes', () => {
     it('removes redundant modifiers when clarity is enabled', async () => {
-      const r = await service.enhanceContent(
-        'past history, free gift, end result',
-        { improveClarity: true },
-      );
+      const r = await service.enhanceContent('past history, free gift, end result', {
+        improveClarity: true,
+      });
       expect(r.enhancedContent).not.toContain('past history');
       expect(r.enhancedContent).not.toContain('free gift');
       expect(r.enhancedContent).not.toContain('end result');
@@ -87,7 +83,8 @@ describe('ContentEnhancementService (safe pipeline)', () => {
         'It has changed how we communicate. It will continue to evolve. ' +
         'New applications appear every day.';
       const r = await service.enhanceContent(longParagraph, {
-        fixGrammar: true, improveClarity: true,
+        fixGrammar: true,
+        improveClarity: true,
       });
       expect(r.enhancedContent).not.toMatch(/^\s*-\s/m);
     });
@@ -158,7 +155,10 @@ describe('ContentEnhancementService (safe pipeline)', () => {
         '<h1>Test</h1><p>their is alot of issues. ' +
         'i could of done better. seperate the items.</p>';
       const first = await service.enhanceContent(input, { fixGrammar: true, improveClarity: true });
-      const second = await service.enhanceContent(first.enhancedContent, { fixGrammar: true, improveClarity: true });
+      const second = await service.enhanceContent(first.enhancedContent, {
+        fixGrammar: true,
+        improveClarity: true,
+      });
       expect(second.enhancedContent).toBe(first.enhancedContent);
     });
 
@@ -174,14 +174,17 @@ describe('ContentEnhancementService (safe pipeline)', () => {
   // ── Tone modes ────────────────────────────────────────────────────────────
   describe('tone modes', () => {
     it('expands contractions in formal tone', async () => {
-      const r = await service.enhanceContent("I can't do that. I don't want to.", { tone: 'formal' });
+      const r = await service.enhanceContent("I can't do that. I don't want to.", {
+        tone: 'formal',
+      });
       expect(r.enhancedContent).toContain('cannot');
       expect(r.enhancedContent).toContain('do not');
     });
 
     it('expands gonna/kinda when grammar fixes are on', async () => {
       const r = await service.enhanceContent('gonna make this work, kinda important', {
-        fixGrammar: true, tone: 'formal',
+        fixGrammar: true,
+        tone: 'formal',
       });
       expect(r.enhancedContent).not.toContain('gonna');
       expect(r.enhancedContent).not.toContain('kinda');
@@ -210,7 +213,10 @@ describe('ContentEnhancementService (safe pipeline)', () => {
 
     it('ignores expand / shorten / professionalize / makeEngaging', async () => {
       const r = await service.enhanceContent('plain text', {
-        expand: true, shorten: true, professionalize: true, makeEngaging: true,
+        expand: true,
+        shorten: true,
+        professionalize: true,
+        makeEngaging: true,
       } as any);
       expect(r.enhancedContent).toBe('plain text');
     });
@@ -229,7 +235,7 @@ describe('ContentEnhancementService (safe pipeline)', () => {
     it('shows improvement when fixing real grammar issues', async () => {
       const r = await service.enhanceContent(
         'their is alot of issues here. i think we could of done better. ' +
-        'recieve the seperate items definately by tomorrow.',
+          'recieve the seperate items definately by tomorrow.',
         { fixGrammar: true },
       );
       expect(r.qualityAfter).toBeGreaterThanOrEqual(r.qualityBefore);
