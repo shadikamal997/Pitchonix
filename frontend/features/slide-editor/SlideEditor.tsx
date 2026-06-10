@@ -681,15 +681,19 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId: ro
       if (meta && e.key.toLowerCase() === 'v' && clipboardRef.current && clipboardRef.current.length > 0) {
         e.preventDefault();
         (async () => {
-          const newIds: string[] = [];
+          const dups: SlideElementDTO[] = [];
           for (const src of clipboardRef.current!) {
             // duplicateElement is the simplest path to a server-side clone with
             // a new id + offset, which mirrors how ⌘D already works.
             const dup = await api$.duplicateElement(src.id);
-            if (dup) newIds.push(dup.id);
+            if (dup) dups.push(dup);
           }
-          if (newIds.length > 0) setSelectedIds(newIds);
-          history.commit(apiRef.current.elements);
+          if (dups.length > 0) setSelectedIds(dups.map((d) => d.id));
+          // Commit a snapshot that includes the pasted elements (the ref may be
+          // stale post-async, which would make redo lose them).
+          const base = apiRef.current.elements;
+          const have = new Set(base.map((e) => e.id));
+          history.commit([...base, ...dups.filter((d) => !have.has(d.id))]);
         })();
         return;
       }
@@ -738,26 +742,37 @@ export const SlideEditor: React.FC<SlideEditorProps> = ({ projectId, slideId: ro
 
   // ── Selection-derived actions ─────────────────────────────────────────────
   const handleDeleteSelected = useCallback(async () => {
-    for (const id of selectedIds) await api$.deleteElement(id);
+    const deletedIds = [...selectedIds];
+    for (const id of deletedIds) await api$.deleteElement(id);
     setSelectedIds([]);
-    history.commit(apiRef.current.elements);
+    // Commit the post-delete snapshot deterministically (filter the removed ids)
+    // rather than trusting the possibly-stale ref — keeps undo/redo exact.
+    history.commit(apiRef.current.elements.filter((e) => !deletedIds.includes(e.id)));
   }, [selectedIds, api$, history]);
 
   const handleDuplicateSelected = useCallback(async () => {
-    const newIds: string[] = [];
+    const dups: SlideElementDTO[] = [];
     for (const id of selectedIds) {
       const dup = await api$.duplicateElement(id);
-      if (dup) newIds.push(dup.id);
+      if (dup) dups.push(dup);
     }
-    if (newIds.length > 0) setSelectedIds(newIds);
-    history.commit(apiRef.current.elements);
+    if (dups.length > 0) setSelectedIds(dups.map((d) => d.id));
+    // Ω.PRODUCT.3B.1 — commit a snapshot that DEFINITELY includes the new
+    // elements. `apiRef.current.elements` may not have re-rendered with them
+    // yet (async setState), and a stale snapshot would make redo lose them.
+    // Dedup by id so this is correct whether or not the ref already updated.
+    const base = apiRef.current.elements;
+    const have = new Set(base.map((e) => e.id));
+    history.commit([...base, ...dups.filter((d) => !have.has(d.id))]);
   }, [selectedIds, api$, history]);
 
   const handleInsertElement = useCallback(async (def: Partial<SlideElementDTO>) => {
     const created = await api$.createElement(def);
     if (created) {
       setSelectedIds([created.id]);
-      history.commit(apiRef.current.elements);
+      // Include the freshly-created element even if the ref hasn't re-rendered.
+      const base = apiRef.current.elements;
+      history.commit(base.some((e) => e.id === created.id) ? base : [...base, created]);
     }
   }, [api$, history]);
 

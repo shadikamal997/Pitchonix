@@ -29,7 +29,9 @@
     "validate:corpus": "ts-node scripts/validate-corpus.ts",
     "render:cert": "ts-node scripts/render-cert.ts",
     "render:cert:doc": "ts-node scripts/render-cert-doc.ts",
-    "editor:live-probe": "ts-node scripts/editor-live-probe.ts"
+    "editor:live-probe": "ts-node scripts/editor-live-probe.ts",
+    "editor:cert": "ts-node scripts/editor-cert.ts",
+    "editor:diag": "ts-node scripts/editor-diag.ts"
   },
   "dependencies": {
     "@nestjs/bull": "^10.0.1",

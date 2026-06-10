@@ -37,7 +37,8 @@
     "render:cert:doc": "cd backend && npm run render:cert:doc",
     "review:packet": "node scripts/human-review.mjs init",
     "review:aggregate": "node scripts/human-review.mjs",
-    "audit:editors": "node scripts/audit-editors.mjs"
+    "audit:editors": "node scripts/audit-editors.mjs",
+    "editor:cert": "cd backend && npm run editor:cert"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

@@ -1,0 +1,83 @@
+{
+  "generatedAt": "2026-06-09T21:29:10.559Z",
+  "results": [
+    {
+      "name": "Drag & Drop — element moved + autosaved to DB",
+      "pass": true,
+      "detail": {
+        "before": {
+          "x": 8,
+          "y": 30
+        },
+        "after": {
+          "x": 16,
+          "y": 43
+        }
+      }
+    },
+    {
+      "name": "Refresh recovery — moved element persists after reload",
+      "pass": true,
+      "detail": {
+        "domLeftTop": "16%,43%",
+        "dbX": 16
+      }
+    },
+    {
+      "name": "Undo/Redo (DELETE) — toolbar undo restores, redo re-deletes",
+      "pass": true,
+      "detail": {
+        "n0": 2,
+        "afterDelete": 1,
+        "afterUndo": 2,
+        "afterRedo": 1
+      }
+    },
+    {
+      "name": "Undo/Redo (DUPLICATE) — toolbar undo reverts, redo reapplies",
+      "pass": true,
+      "detail": {
+        "n0": 2,
+        "afterDup": 3,
+        "afterUndo": 2,
+        "afterRedo": 3
+      }
+    },
+    {
+      "name": "Undo/Redo (MOVE) — toolbar undo reverts position, redo reapplies",
+      "pass": true,
+      "detail": {
+        "x0": 8,
+        "xMoved": 16,
+        "xUndo": 8,
+        "xRedo": 16
+      }
+    },
+    {
+      "name": "Copy/Paste — ⌘C then ⌘V creates a pasted element (DB +1)",
+      "pass": true,
+      "detail": {
+        "n0": 2,
+        "afterPaste": 3
+      }
+    },
+    {
+      "name": "Crash recovery — abrupt tab kill, reopen keeps last autosave",
+      "pass": true,
+      "detail": {
+        "savedX": 0,
+        "recoveredX": 0,
+        "elementsAfterReopen": 2
+      }
+    },
+    {
+      "name": "Workflow E2E — open→edit→autosave→reopen→continue-edit persists",
+      "pass": true,
+      "detail": {
+        "clicks": 4,
+        "nBefore": 2,
+        "nAfter": 1
+      }
+    }
+  ]
+}

@@ -4,23 +4,25 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SlideElementDTO } from '@/types/slide-element';
 
 // =============================================================================
-//  useUndoRedo
+//  useUndoRedo  (Ω.PRODUCT.3B.1 — present-pointer model)
 //
 //  Snapshot-based undo/redo for a single slide's elements.
 //
-//  Design:
-//    - Snapshot = a deep-cloned SlideElementDTO[].
-//    - The hook holds two stacks: past[] and future[].
-//    - `commit(elements)` is called by the editor whenever a settled change
-//      occurs (drag end, resize end, inspector field commit, insert, delete,
-//      duplicate, reorder). Live dragging doesn't fire commits; only settles
-//      do, which keeps the stack small.
-//    - `undo()` pops past, pushes current → future, calls onRestore(target).
-//    - `redo()` pops future, pushes current → past, calls onRestore(target).
-//    - Stack capped at MAX so memory stays bounded.
+//  History is a three-part timeline: past[] · present · future[].
+//   - `present` is the last COMMITTED canonical state.
+//   - The editor calls `commit(newState)` AFTER a settled mutation (drag/resize
+//     end, delete, duplicate, insert, reorder, inspector commit, layout apply).
+//     commit() pushes the PREVIOUS `present` onto `past`, then adopts `newState`
+//     as the new `present`, and clears `future`.
+//   - `undo()` restores `past.pop()` (the state BEFORE the last mutation) and
+//     parks the current `present` on `future` for redo.
+//   - `redo()` is the mirror.
 //
-//  The hook does NOT call the API itself — it delegates to `onRestore`, which
-//  the editor wires to `useElementsApi.syncAll`.
+//  This is the correct semantics for commit-AFTER callers: undoing a delete
+//  restores the deleted element, undoing a move restores the prior geometry —
+//  the prior fix-defect (committing the post-mutation state and restoring it,
+//  i.e. a no-op) is gone. The hook never calls the API itself; it delegates the
+//  actual element replacement to `onRestore` (wired to useElementsApi.syncAll).
 // =============================================================================
 
 const MAX = 50;
@@ -28,41 +30,48 @@ const MAX = 50;
 export interface UseUndoRedo {
   canUndo: boolean;
   canRedo: boolean;
-  /** Push a snapshot of the current state (after a settled change). */
+  /** Adopt a snapshot as the new present (call AFTER a settled change). */
   commit:  (elements: SlideElementDTO[]) => void;
-  /** Clear stacks (e.g. when the slide changes). */
+  /** Clear the timeline and seed the present (e.g. when the slide changes). */
   reset:   (elements?: SlideElementDTO[]) => void;
   undo:    () => void;
   redo:    () => void;
 }
 
 interface Args {
-  /** Current canonical elements list — read at the moment of undo/redo. */
-  getCurrent: () => SlideElementDTO[];
-  /** Called with the elements that should be restored. */
+  /** Retained for API compatibility; the present-pointer model tracks state
+   *  internally so this is no longer consulted for undo/redo. */
+  getCurrent?: () => SlideElementDTO[];
+  /** Called with the elements that should be restored into the editor + DB. */
   onRestore:  (elements: SlideElementDTO[]) => void | Promise<void>;
-  /** Reset the stack whenever this changes (typically: slideId). */
+  /** Reset the timeline whenever this changes (typically: slideId). */
   resetKey?:  string | number | null | undefined;
 }
 
-export function useUndoRedo({ getCurrent, onRestore, resetKey }: Args): UseUndoRedo {
-  const past   = useRef<SlideElementDTO[][]>([]);
-  const future = useRef<SlideElementDTO[][]>([]);
+export function useUndoRedo({ onRestore, resetKey }: Args): UseUndoRedo {
+  const past    = useRef<SlideElementDTO[][]>([]);
+  const future  = useRef<SlideElementDTO[][]>([]);
+  const present = useRef<SlideElementDTO[]>([]); // last committed canonical state
   // Re-render trigger so canUndo / canRedo update
   const [, force] = useState(0);
   const tick = () => force((n) => n + 1);
 
-  // Clear stacks whenever the reset key changes (e.g. moved to a different slide)
+  // Clear the timeline whenever the reset key changes (e.g. different slide)
   useEffect(() => {
     past.current = [];
     future.current = [];
+    present.current = [];
     tick();
   }, [resetKey]);
 
   const commit = useCallback((elements: SlideElementDTO[]) => {
-    // Snapshot has to be a deep clone so future edits don't mutate it
-    past.current.push(deepClone(elements));
+    // Push the PREVIOUS present onto `past` (so undo returns to it), then adopt
+    // the committed snapshot as the new present and clear redo. Every settled
+    // mutation establishes one checkpoint; this is what makes undo of delete /
+    // move / duplicate restore the pre-mutation state.
+    past.current.push(deepClone(present.current));
     if (past.current.length > MAX) past.current.shift();
+    present.current = deepClone(elements);
     future.current = [];
     tick();
   }, []);
@@ -70,30 +79,27 @@ export function useUndoRedo({ getCurrent, onRestore, resetKey }: Args): UseUndoR
   const reset = useCallback((elements?: SlideElementDTO[]) => {
     past.current = [];
     future.current = [];
-    if (elements) past.current.push(deepClone(elements));
+    present.current = elements ? deepClone(elements) : [];
     tick();
   }, []);
 
   const undo = useCallback(async () => {
     if (past.current.length === 0) return;
-    // Move the latest "past" off the stack and into "future", restore the one before it
-    const current = getCurrent();
-    const target  = past.current.pop()!;     // most recent committed state
-    future.current.push(deepClone(current));
+    future.current.push(deepClone(present.current));
     if (future.current.length > MAX) future.current.shift();
+    present.current = past.current.pop()!;
     tick();
-    await onRestore(target);
-  }, [getCurrent, onRestore]);
+    await onRestore(deepClone(present.current));
+  }, [onRestore]);
 
   const redo = useCallback(async () => {
     if (future.current.length === 0) return;
-    const current = getCurrent();
-    const target  = future.current.pop()!;
-    past.current.push(deepClone(current));
+    past.current.push(deepClone(present.current));
     if (past.current.length > MAX) past.current.shift();
+    present.current = future.current.pop()!;
     tick();
-    await onRestore(target);
-  }, [getCurrent, onRestore]);
+    await onRestore(deepClone(present.current));
+  }, [onRestore]);
 
   return {
     canUndo: past.current.length > 0,
