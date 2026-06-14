@@ -41,17 +41,17 @@ export class RuleBasedPagePlannerService {
   private readonly TARGETS: Record<string, number> = {
     cover: 0,
     toc: 0,
-    summary: 420,
-    intro: 440,
-    content: 460,
+    summary: 500,
+    intro: 520,
+    content: 540,
     financial: 380,
     chart: 280,
     timeline: 380,
-    conclusion: 420,
-    references: 460,
+    conclusion: 500,
+    references: 540,
   };
-  private readonly MIN_WORDS = 250;
-  private readonly MAX_WORDS = 650;
+  private readonly MIN_WORDS = 320;
+  private readonly MAX_WORDS = 780;
 
   planPages(
     outline: DocumentOutline,

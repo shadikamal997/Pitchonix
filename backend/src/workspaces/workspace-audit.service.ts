@@ -2,26 +2,52 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 // =============================================================================
-//  Phase 39M — WorkspaceAuditService
+//  Phase 39M / Ω.4A — WorkspaceAuditService
 //
-//  Append-only audit trail of *administrative* actions: member invites /
-//  removals, role changes, ownership transfers, workspace setting updates.
-//  Distinct from WorkspaceActivity (which logs content-level events).
+//  Append-only audit trail covering:
+//    - Administrative actions: member invites/removals, role changes, ownership
+//    - Content lifecycle: project/deck/document create/delete, exports, shares
 //
-//  Required for enterprise readiness — most compliance frameworks need a
-//  who-did-what-when log for permission changes.
+//  Distinct from WorkspaceActivity (user-facing feed). This log is the
+//  compliance record — append-only, no mutations, admin-only read access.
 // =============================================================================
 
 export type AuditAction =
+  // Member / role management
   | 'member.invited'
   | 'member.invite_revoked'
   | 'member.invite_accepted'
   | 'member.removed'
   | 'member.role_changed'
   | 'ownership.transferred'
+  // Workspace lifecycle
   | 'workspace.created'
   | 'workspace.renamed'
-  | 'workspace.deleted';
+  | 'workspace.deleted'
+  // Project lifecycle (Phase Ω.4A)
+  | 'project.created'
+  | 'project.deleted'
+  | 'project.archived'
+  // Deck lifecycle (Phase Ω.4A)
+  | 'deck.created'
+  | 'deck.deleted'
+  | 'deck.shared'
+  // Document lifecycle (Phase Ω.4A / 4B)
+  | 'document.created'
+  | 'document.deleted'
+  | 'document.restored'
+  // Export events (Phase Ω.4A / 4B)
+  | 'export.completed'
+  | 'export.created'
+  // Share events (Phase Ω.4B)
+  | 'share.created'
+  | 'share.revoked'
+  // Governance events (Phase Ω.4B)
+  | 'user.suspended'
+  | 'user.banned'
+  | 'user.reactivated'
+  | 'workspace.locked'
+  | 'workspace.archived';
 
 @Injectable()
 export class WorkspaceAuditService {

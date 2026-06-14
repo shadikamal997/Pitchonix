@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-06-14T12:15:12.088Z",
+  "mode": "smoke",
+  "corpusPresent": false,
+  "smokeTestsPassed": true,
+  "smokeTests": [
+    {
+      "name": "CV import → render → HTML export",
+      "pipeline": "career",
+      "passed": true,
+      "durationMs": 148,
+      "detail": "Import ✓ (8788B response) | Render ✓ (33620B HTML)"
+    },
+    {
+      "name": "PPTX synthetic round-trip",
+      "pipeline": "presentation",
+      "passed": true,
+      "durationMs": 78,
+      "detail": "Slides: 5 | Fidelity: 100% | passed=true"
+    },
+    {
+      "name": "Excel upload → analyze → export → reopen",
+      "pipeline": "excel",
+      "passed": true,
+      "durationMs": 136,
+      "detail": "Upload ✓ | Analysis: 1 sheet(s) | Export: 17177B | Reopen: 1 sheet(s)"
+    },
+    {
+      "name": "Excel smart-builder generation",
+      "pipeline": "excel-generation",
+      "passed": true,
+      "durationMs": 310,
+      "detail": "Generated ✓ | 8 sheets | 33239B"
+    },
+    {
+      "name": "Document parser connectivity (minimal PDF)",
+      "pipeline": "document-parser",
+      "passed": true,
+      "durationMs": 19,
+      "detail": "Document parser reachable | words=5 | text=12B"
+    }
+  ],
+  "certificationMetrics": {
+    "importSuccess": {
+      "value": "NO_CORPUS",
+      "threshold": "≥99%",
+      "status": "NO_CORPUS"
+    },
+    "exportSuccess": {
+      "value": "NO_CORPUS",
+      "threshold": "≥99%",
+      "status": "NO_CORPUS"
+    },
+    "contentRetention": {
+      "value": "NO_CORPUS",
+      "threshold": "≥99%",
+      "status": "NO_CORPUS"
+    },
+    "userSatisfaction": {
+      "value": "REQUIRES_HUMAN_REVIEW",
+      "threshold": "≥8.5/10",
+      "status": "REQUIRES_HUMAN_REVIEW"
+    },
+    "recurringFailures": {
+      "value": "NO_CORPUS",
+      "threshold": "≤1% per category",
+      "status": "NO_CORPUS"
+    }
+  }
+}

@@ -38,6 +38,15 @@ model User {
   twoFactorSecret  String?
   twoFactorEnabled Boolean @default(false)
 
+  // Phase Ω.4B — User Governance
+  suspendedAt DateTime? // set by admin; blocks login
+  bannedAt    DateTime? // set by admin; permanent block
+  suspendReason String?
+  banReason     String?
+
+  // Phase Ω.4B — Billing
+  subscriptions Subscription[]
+
   projects                Project[]
   brandKits               BrandKit[]
   exportTemplates         ExportTemplate[]
@@ -167,6 +176,9 @@ model Deck {
   // (request → in_review; approve → approved; request-changes → changes_requested).
   // Edits to deck content after approval flip back to draft (Phase 36I warning surface).
   reviewStatus String @default("draft")
+
+  // Phase Ω.4B — Soft delete
+  deletedAt DateTime?
 
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
@@ -725,6 +737,9 @@ model PdfDocument {
   exportReady      Boolean   @default(false)
   lastQualityCheck DateTime?
 
+  // Phase Ω.4B — Soft delete
+  deletedAt DateTime?
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1261,12 +1276,19 @@ model Workspace {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  // Phase Ω.4B — Workspace Governance
+  lockedAt    DateTime? // members cannot create/edit content while locked
+  archivedAt  DateTime? // workspace is read-only and hidden from active list
+  lockReason  String?
+  archiveReason String?
+
   members    WorkspaceMember[]
   invites    WorkspaceInvite[]
   activities WorkspaceActivity[]
   auditLog   WorkspaceAuditLog[]
   projects   Project[]
   brandKits  BrandKit[] // Phase 37A
+  subscriptions Subscription[] // Phase Ω.4B
 
   @@index([organizationId])
   @@map("workspaces")
@@ -2073,4 +2095,106 @@ model ContentNode {
   @@index([sourceDocumentId, type])
   @@index([sourceDocumentId, contentHash])
   @@map("content_nodes")
+}
+
+// =============================================================================
+//  Phase Ω.4B — Billing Foundation
+//
+//  Plan → Subscription → UsageRecord
+//  No payment processor required. Models provide the data layer for:
+//    - Plan definitions (free / pro / enterprise)
+//    - User/workspace subscriptions with seat counts
+//    - Per-metric usage tracking (exports, decks, AI calls, storage)
+//    - Quota enforcement hooks
+// =============================================================================
+
+model Plan {
+  id          String  @id @default(uuid())
+  name        String  @unique // free | pro | enterprise
+  displayName String
+  // Limits (-1 = unlimited)
+  maxSeats    Int     @default(1)
+  maxProjects Int     @default(10)
+  maxDecks    Int     @default(50)
+  maxExports  Int     @default(100) // per billing period
+  maxAiCalls  Int     @default(500)
+  storageGb   Float   @default(1.0)
+  price       Float   @default(0) // USD / month per seat
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  planId      String
+  plan        Plan       @relation(fields: [planId], references: [id])
+  // active | trialing | suspended | cancelled
+  status      String     @default("active")
+  seatCount   Int        @default(1)
+  // Billing period
+  currentPeriodStart DateTime @default(now())
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+  cancelledAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usageRecords UsageRecord[]
+
+  @@index([userId])
+  @@index([workspaceId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model UsageRecord {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  userId         String
+  // exports | decks | projects | ai_calls | storage_gb | seats
+  metric         String
+  value          Float        @default(1)
+  periodStart    DateTime
+  periodEnd      DateTime
+  recordedAt     DateTime     @default(now())
+
+  @@index([subscriptionId, metric])
+  @@index([userId, metric, periodStart])
+  @@map("usage_records")
+}
+
+// =============================================================================
+//  Phase Ω.4B — Data Governance
+//
+//  RetentionPolicy defines how long deleted resources are kept before
+//  hard-deletion. Soft-deleted rows set deletedAt; a background job
+//  (or admin action) hard-deletes rows past the retention window.
+// =============================================================================
+
+model RetentionPolicy {
+  id             String   @id @default(uuid())
+  // deck | document | project | export | user
+  resourceType   String
+  retentionDays  Int      @default(30) // -1 = keep forever
+  softDeleteDays Int      @default(30) // grace period before purge
+  // null = default policy; non-null = plan-specific override
+  planId         String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([resourceType, planId])
+  @@map("retention_policies")
 }

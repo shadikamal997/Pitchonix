@@ -182,7 +182,12 @@ function sidebarLayout(
   const lightSidebar = t.sidebarColor === 'light' || t.sidebarColor === 'warmlight';
   const sidebarClass = lightSidebar ? 'sidebar light' : 'sidebar';
 
-  const sidebarBlock = `<aside class="${sidebarClass}">${sidebarHead}${photoHtml}${renderContact(profile, t)}${sidebar}</aside>`;
+  // Ω.CAREER.QUALITY.1A — sidebar continuation fill.
+  // On multi-page CVs the sidebar stretches full document height (align-items:stretch on the
+  // grid), but sidebar sections exhaust on page 1. The fill div (flex:1) grows to occupy the
+  // remaining sidebar space on page 2+, ensuring the sidebar column is not blank.
+  const sidebarContFill = `<div class="sidebar-cont-fill" aria-hidden="true"></div>`;
+  const sidebarBlock = `<aside class="${sidebarClass}">${sidebarHead}${photoHtml}${renderContact(profile, t)}${sidebar}${sidebarContFill}</aside>`;
   const mainBlock = `<main class="main">${mainHeaderHtml}<div class="content">${main}</div></main>`;
 
   return `<div class="${pageClasses(t, `sidebar-layout side-${side}`)}">${side === 'left' ? sidebarBlock + mainBlock : mainBlock + sidebarBlock}</div>`;
@@ -903,7 +908,9 @@ function resolveTheme(layout: CvTemplateLayout, brand?: BrandTokens): ResolvedTh
     sidebarWidth: layout.sidebarWidth || 275,
     photoShape: ats ? 'none' : layout.photoShape,
     photoPlace: ats ? undefined : layout.photoPlace,
-    skillStyle: ats ? 'plain' : layout.skillStyle,
+    // Ω.CAREER.QUALITY.1A — ATS templates keep their configured skillStyle (compact) for density;
+    // the .compact-dots visual indicators are hidden via ATS CSS below, preserving ATS text safety.
+    skillStyle: layout.skillStyle,
     languageStyle: ats ? 'plain' : layout.languageStyle,
     icons: ats ? false : (layout.icons ?? true),
     timeline: ats ? false : layout.timeline,
@@ -984,7 +991,10 @@ body { margin:0; padding:0; font-family:var(--bf); font-size:11.5px; line-height
 .page.sidebar-layout.side-left  { grid-template-columns:${sidebarW}px 1fr; }
 .page.sidebar-layout.side-right { grid-template-columns:1fr ${sidebarW}px; }
 /* ── Sidebar ─────────────────────────────────────────── */
-.sidebar { background:var(--sb); color:var(--sf); padding:${Math.round(hPad * 0.85)}px 22px ${pgPad}px; }
+/* display:flex enables sidebar-cont-fill to grow and occupy page-2 sidebar space */
+.sidebar { display:flex; flex-direction:column; background:var(--sb); color:var(--sf); padding:${Math.round(hPad * 0.85)}px 22px ${pgPad}px; }
+/* Ω.CAREER.QUALITY.1A — fills remaining sidebar height on continuation pages */
+.sidebar-cont-fill { flex:1; min-height:60px; }
 .sidebar.light { background:var(--sb); color:var(--tx); }
 .sidebar h1,.sidebar h2,.sidebar h3 { color:var(--sf); }
 .sidebar.light h1,.sidebar.light h2,.sidebar.light h3 { color:var(--tx); }
@@ -1208,6 +1218,10 @@ ${
 h1,h2,h3,.e-company { color:black!important; }
 .e-company,.e-role { font-style:normal!important; }
 .fill { display:none!important; }
+/* Ω.CAREER.QUALITY.1A — hide compact-dots (●●●○○) for ATS; the sk-name text stays,
+   giving a clean 2-column skill grid without visual indicators */
+.compact-dots { display:none!important; }
+.sk-compact-grid { column-gap:24px; }
 .pills { display:block!important; margin-top:5px!important; }
 .pill { display:inline!important; padding:0!important; border:0!important; background:transparent!important; color:black!important; font-size:inherit!important; font-weight:400!important; }
 .pill+.pill::before { content:', '; color:black; }
@@ -1270,7 +1284,7 @@ h2 { border-bottom:1px solid black!important; font-size:13px!important; letter-s
 }
 /* ── Per-template overrides ──────────────────────────── */
 ${t.customCss || ''}
-</style></head><body>${watermark}${opts.body}${footLogo}</body></html>`;
+</style></head><body>${watermark}${opts.body}${footLogo}<script>(function(){var fill=document.querySelector('.sidebar-cont-fill');if(!fill)return;var sidebar=fill.parentElement,main=document.querySelector('.main'),page=document.querySelector('.page');if(!main||!page||!sidebar)return;var pageH=parseFloat(window.getComputedStyle(page).minHeight)||1122.52;var mainH=main.scrollHeight;var totalPages=Math.max(1,Math.ceil(mainH/pageH));sidebar.style.minHeight=(totalPages*pageH)+'px';fill.style.flexGrow='1';fill.style.flexShrink='0';fill.style.minHeight='0px';})()</script></body></html>`;
 }
 
 // =============================================================================

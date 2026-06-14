@@ -20,6 +20,7 @@ import { PdfDocumentsService } from './pdf-documents.service';
 import { PdfDocumentGenerationService } from './pdf-document-generation.service';
 import { PdfGenerationService } from '../pdf-generation/pdf-generation.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { WorkspaceAuditService } from '../workspaces/workspace-audit.service';
 import { GetUser } from '../auth/get-user.decorator';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -32,6 +33,7 @@ export class PdfDocumentsController {
     private readonly pdfDocumentGenerationService: PdfDocumentGenerationService,
     private readonly pdfGenerationService: PdfGenerationService,
     private readonly prisma: PrismaService,
+    private readonly auditService: WorkspaceAuditService,
   ) {}
 
   private async assertProjectAccess(projectId: string, user: any) {
@@ -46,7 +48,7 @@ export class PdfDocumentsController {
   private async assertDocumentAccess(documentId: string, user: any) {
     const document = await this.prisma.pdfDocument.findUnique({
       where: { id: documentId },
-      include: { project: true },
+      include: { project: { select: { userId: true, workspaceId: true } } },
     });
     if (!document) throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
     if (document.project?.userId && document.project.userId !== user?.id) {
@@ -57,8 +59,19 @@ export class PdfDocumentsController {
 
   @Post()
   async create(@Body() createDto: any, @GetUser() user: any) {
-    await this.assertProjectAccess(createDto.projectId, user);
-    return this.pdfDocumentsService.create(createDto);
+    const project = await this.assertProjectAccess(createDto.projectId, user);
+    const doc = await this.pdfDocumentsService.create(createDto);
+    if (project.workspaceId) {
+      void this.auditService.log({
+        workspaceId: project.workspaceId,
+        actorId: user.id,
+        action: 'document.created',
+        targetType: 'document',
+        targetId: doc.id,
+        after: { title: doc.title, documentType: (doc as any).documentType },
+      }).catch(() => {});
+    }
+    return doc;
   }
 
   @Post('generate')
@@ -113,8 +126,19 @@ export class PdfDocumentsController {
 
   @Delete(':id')
   async delete(@Param('id') id: string, @GetUser() user: any) {
-    await this.assertDocumentAccess(id, user);
-    return this.pdfDocumentsService.delete(id);
+    const doc = await this.assertDocumentAccess(id, user);
+    const result = await this.pdfDocumentsService.delete(id);
+    if (doc.project?.workspaceId) {
+      void this.auditService.log({
+        workspaceId: doc.project.workspaceId,
+        actorId: user.id,
+        action: 'document.deleted',
+        targetType: 'document',
+        targetId: id,
+        before: { title: doc.title },
+      }).catch(() => {});
+    }
+    return result;
   }
 
   @Get(':id/quality-history')
@@ -221,7 +245,7 @@ export class PdfDocumentsController {
     @Param('versionId') versionId: string,
     @GetUser() user: any,
   ) {
-    await this.assertDocumentAccess(documentId, user);
+    const doc = await this.assertDocumentAccess(documentId, user);
     const version = await this.prisma.documentVersion.findUnique({
       where: { id: versionId },
     });
@@ -239,6 +263,16 @@ export class PdfDocumentsController {
       });
     }
 
+    if (doc.project?.workspaceId) {
+      void this.auditService.log({
+        workspaceId: doc.project.workspaceId,
+        actorId: user.id,
+        action: 'document.restored',
+        targetType: 'document',
+        targetId: documentId,
+        after: { versionId, versionNumber: version.version, title: version.title },
+      }).catch(() => {});
+    }
     return { success: true, pages: snapshot };
   }
 }

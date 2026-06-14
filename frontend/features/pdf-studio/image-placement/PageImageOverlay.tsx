@@ -170,6 +170,7 @@ export function PageImageOverlay({ images, onUpdate, onDelete, selectedId, onSel
         return (
           <div
             key={img.id}
+            data-pdf-placed-image-id={img.id}
             style={{
               position: 'absolute',
               left: `${img.x}%`,

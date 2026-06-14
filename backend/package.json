@@ -31,6 +31,7 @@
     "render:cert:doc": "ts-node scripts/render-cert-doc.ts",
     "editor:live-probe": "ts-node scripts/editor-live-probe.ts",
     "editor:cert": "ts-node scripts/editor-cert.ts",
+    "editor:cert:docs": "ts-node scripts/editor-docs-cert.ts",
     "editor:diag": "ts-node scripts/editor-diag.ts"
   },
   "dependencies": {

@@ -107,6 +107,13 @@ export class BrandKitService {
         return DEFAULT_BRAND_KIT;
       }
 
+      // Phase Ω.4A — ownership gate: only the owner may use this brand kit
+      // in generation. If a userId is provided and doesn't match, fall back
+      // to the default rather than leaking another workspace's brand identity.
+      if (userId && brandKit.userId !== userId) {
+        return DEFAULT_BRAND_KIT;
+      }
+
       // Phase 37.2B — Prefer the unified Phase 37 BrandTokens shape when
       // available; fall back to legacy `config` / per-column values so older
       // kits stay rendered correctly. This is the "renderer switch" that

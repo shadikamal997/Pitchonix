@@ -15,18 +15,33 @@ import { CreateProjectDto, UpdateProjectDto, QueryProjectsDto } from './dto/proj
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
 import { Public } from '../auth/public.decorator';
+import { WorkspaceAuditService } from '../workspaces/workspace-audit.service';
 
 @ApiTags('Projects')
 @Controller('projects')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly auditService: WorkspaceAuditService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new project' })
-  create(@GetUser() user: any, @Body() createProjectDto: CreateProjectDto) {
-    return this.projectsService.create(user.id, createProjectDto);
+  async create(@GetUser() user: any, @Body() createProjectDto: CreateProjectDto) {
+    const project = await this.projectsService.create(user.id, createProjectDto);
+    if ((project as any).workspaceId) {
+      void this.auditService.log({
+        workspaceId: (project as any).workspaceId,
+        actorId: user.id,
+        action: 'project.created',
+        targetType: 'project',
+        targetId: project.id,
+        after: { name: project.name, documentType: (project as any).documentType },
+      });
+    }
+    return project;
   }
 
   @Get('archived')
@@ -61,8 +76,18 @@ export class ProjectsController {
 
   @Post(':id/archive')
   @ApiOperation({ summary: 'Archive project' })
-  archive(@Param('id') id: string, @GetUser() user: any) {
-    return this.projectsService.archive(id, user.id);
+  async archive(@Param('id') id: string, @GetUser() user: any) {
+    const project = await this.projectsService.archive(id, user.id);
+    if ((project as any).workspaceId) {
+      void this.auditService.log({
+        workspaceId: (project as any).workspaceId,
+        actorId: user.id,
+        action: 'project.archived',
+        targetType: 'project',
+        targetId: id,
+      });
+    }
+    return project;
   }
 
   @Post(':id/restore')
@@ -107,8 +132,21 @@ export class ProjectsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete project' })
-  remove(@Param('id') id: string, @GetUser() user: any) {
-    return this.projectsService.remove(id, user.id);
+  async remove(@Param('id') id: string, @GetUser() user: any) {
+    // Capture workspaceId before deletion for the audit record.
+    const project = await this.projectsService.findOne(id, user.id);
+    const result = await this.projectsService.remove(id, user.id);
+    if ((project as any).workspaceId) {
+      void this.auditService.log({
+        workspaceId: (project as any).workspaceId,
+        actorId: user.id,
+        action: 'project.deleted',
+        targetType: 'project',
+        targetId: id,
+        before: { name: project.name },
+      });
+    }
+    return result;
   }
 }
 

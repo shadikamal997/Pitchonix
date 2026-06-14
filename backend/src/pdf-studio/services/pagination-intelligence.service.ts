@@ -11,9 +11,12 @@ import {
 @Injectable()
 export class PaginationIntelligenceService {
   private readonly pageContentHeight = 930;
-  private readonly minOccupancy = 0.32;
+  private readonly minOccupancy = 0.38;
   private readonly maxOccupancy = 0.9;
-  private readonly idealOccupancy = 0.72;
+  private readonly idealOccupancy = 0.80;
+  // Minimum occupancy a continuation page must have before forward-merge triggers.
+  // Raised from 0.28 → 0.40 to eliminate thin continuation tails (Phase Ω.PDF.QUALITY.1C).
+  private readonly minContinuationOccupancy = 0.40;
 
   estimatePage(page: PageComposition): VisualEstimate {
     const sectionHeights = page.sections.map((section) => this.estimateSectionHeight(section));
@@ -115,7 +118,7 @@ export class PaginationIntelligenceService {
     let estimate = this.estimatePage(page);
     if (!estimate.hasOverflow || page.sections.length <= 1) return [page];
 
-    const pages: PageComposition[] = [];
+    let pages: PageComposition[] = [];
     let current: ComposedSection[] = [];
     let currentHeight = 0;
 
@@ -164,7 +167,46 @@ export class PaginationIntelligenceService {
       );
     }
 
+    // Balance thin split tail: if last page is below minContinuationOccupancy, pull
+    // non-heading sections forward from the second-to-last page until threshold is met,
+    // as long as the donor page stays above minOccupancy.
+    if (pages.length >= 2) {
+      const tailEst = this.estimatePage(pages[pages.length - 1]);
+      if (tailEst.occupancy < this.minContinuationOccupancy) {
+        pages = this.balanceSplitTail(pages);
+      }
+    }
+
     return pages;
+  }
+
+  private balanceSplitTail(pages: PageComposition[]): PageComposition[] {
+    const tail = pages[pages.length - 1];
+    const donor = pages[pages.length - 2];
+    const newTailSections = [...tail.sections];
+
+    for (let i = donor.sections.length - 1; i >= 0; i--) {
+      const candidate = donor.sections[i];
+      if (candidate.type === 'heading') break; // never strand a heading on the donor
+
+      const newDonorSections = donor.sections.slice(0, i);
+      if (newDonorSections.length === 0) break; // donor can't become empty
+
+      const donorEst = this.estimatePage({ ...donor, sections: newDonorSections });
+      if (donorEst.occupancy < this.minOccupancy) break; // would under-fill donor
+      if (this.endsWithOrphanHeading(newDonorSections)) break;
+
+      newTailSections.unshift(candidate);
+      const tailEst = this.estimatePage({ ...tail, sections: newTailSections });
+
+      if (tailEst.occupancy >= this.minContinuationOccupancy) {
+        const newDonor = this.cloneWithSections(donor, newDonorSections, pages.length - 2);
+        const newTail = this.cloneWithSections(tail, newTailSections, pages.length - 1);
+        return [...pages.slice(0, -2), newDonor, newTail];
+      }
+    }
+
+    return pages; // no viable balance found — forward merge will handle it
   }
 
   private splitOversizedSections(sections: ComposedSection[]): ComposedSection[] {
@@ -256,6 +298,63 @@ export class PaginationIntelligenceService {
 
       resultPages.push(page);
       resultMeta.push(meta);
+    }
+
+    // Pass 2 — forward merge for thin pages that could not merge backward because the
+    // previous page was already near-full after the split. Thin pages are those with
+    // occupancy < minContinuationOccupancy that were not already resolved by pass 1.
+    let j = 0;
+    while (j < resultPages.length - 1) {
+      const page = resultPages[j];
+      const meta = resultMeta[j];
+
+      if (this.isSpecial(page, meta)) {
+        j++;
+        continue;
+      }
+
+      const estimate = this.estimatePage(page);
+      const isThin =
+        !estimate.isHeadingOnly &&
+        estimate.occupancy < this.minContinuationOccupancy &&
+        estimate.wordCount < 200;
+
+      if (!isThin) {
+        j++;
+        continue;
+      }
+
+      const nextPage = resultPages[j + 1];
+      const nextMeta = resultMeta[j + 1];
+
+      if (this.isSpecial(nextPage, nextMeta)) {
+        j++;
+        continue;
+      }
+
+      const merged = this.cloneWithSections(
+        nextPage,
+        [...page.sections, ...nextPage.sections],
+        j,
+      );
+      const mergedEstimate = this.estimatePage(merged);
+
+      if (mergedEstimate.occupancy <= this.maxOccupancy) {
+        resultPages.splice(j, 1);
+        resultMeta.splice(j, 1);
+        resultPages[j] = merged;
+        resultMeta[j] = this.mergeMeta(meta, nextMeta, merged);
+        issues.push({
+          code: 'AUTO_MERGE_UNDERFILLED',
+          severity: 'info',
+          pageNumber: j + 1,
+          message: `Page ${j + 1} forward-merged to improve space utilization (was ${Math.round(estimate.occupancy * 100)}% full).`,
+          autoFix: 'Forward-merged thin continuation page with next page',
+        });
+        // re-examine position j — the merged page may itself now be thin
+      } else {
+        j++;
+      }
     }
 
     return { pages: resultPages, metadata: resultMeta };

@@ -70,6 +70,8 @@ export function TemplatePreviewCard({
   return (
     <button
       onClick={onSelect}
+      data-pdf-template-id={template.id}
+      data-pdf-template-selected={selected ? 'true' : 'false'}
       className={`group w-full overflow-hidden rounded-lg border bg-white text-left transition-all duration-150 ${
         selected
           ? 'border-blue-500 ring-2 ring-blue-100'

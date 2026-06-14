@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
@@ -68,6 +69,8 @@ import { ExcelStudioModule } from './excel-studio/excel-studio.module';
 import { FeasibilityStudioModule } from './feasibility-studio/feasibility-studio.module';
 // Phase Ω.CONTENT.2 — Universal Content Ledger
 import { ContentLedgerModule } from './content-ledger/content-ledger.module';
+// Phase Ω.4B — Billing Foundation
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -176,14 +179,18 @@ import { ContentLedgerModule } from './content-ledger/content-ledger.module';
     FeasibilityStudioModule,
     // Phase Ω.CONTENT.2 — Universal Content Ledger
     ContentLedgerModule,
+    // Phase Ω.4B — Billing Foundation
+    BillingModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    // Phase Ω.1 — apply the rate limiter globally. Without APP_GUARD the
-    // ThrottlerModule limits are dormant. Buckets configured above:
-    // 10/sec, 100/min, 1000/hr per IP.
+    // Phase Ω.1 — apply the rate limiter globally.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Phase Ω.4A — JWT guard applied globally so new controllers cannot
+    // accidentally ship unauthenticated. Routes that must be public use
+    // the @Public() decorator, which the guard already respects.
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
 export class AppModule {}

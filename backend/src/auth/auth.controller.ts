@@ -14,6 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { Public } from './public.decorator';
 import { IsEmail, IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -45,12 +46,14 @@ export class AuthController {
     private twoFactorService: TwoFactorService,
   ) {}
 
+  @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login user' })
@@ -58,6 +61,7 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  @Public()
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify email with token' })
@@ -65,6 +69,7 @@ export class AuthController {
     return this.authService.verifyEmail(dto.token);
   }
 
+  @Public()
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Resend email verification link' })
@@ -72,6 +77,7 @@ export class AuthController {
     return this.authService.resendVerification(dto.email);
   }
 
+  @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send password reset email' })
@@ -79,6 +85,7 @@ export class AuthController {
     return this.authService.forgotPassword(dto.email);
   }
 
+  @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password with token' })
@@ -86,6 +93,7 @@ export class AuthController {
     return this.authService.resetPassword(dto.token, dto.newPassword);
   }
 
+  @Public()
   @Post('magic-link')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Send magic sign-in link' })
@@ -93,6 +101,7 @@ export class AuthController {
     return this.authService.sendMagicLink(dto.email);
   }
 
+  @Public()
   @Get('magic-link/verify')
   @ApiOperation({ summary: 'Verify magic link token' })
   async verifyMagicLink(@Query('token') token: string) {

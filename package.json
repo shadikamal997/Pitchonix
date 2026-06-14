@@ -38,7 +38,8 @@
     "review:packet": "node scripts/human-review.mjs init",
     "review:aggregate": "node scripts/human-review.mjs",
     "audit:editors": "node scripts/audit-editors.mjs",
-    "editor:cert": "cd backend && npm run editor:cert"
+    "editor:cert": "cd backend && npm run editor:cert",
+    "editor:cert:docs": "cd backend && npm run editor:cert:docs"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

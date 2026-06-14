@@ -22,6 +22,7 @@ import {
   ExportWithOptionsDto,
 } from './dto/export-template.dto';
 import { ExportTemplateService, BatchExportService } from './services';
+import { WorkspaceAuditService } from '../workspaces/workspace-audit.service';
 
 @ApiTags('Export')
 @Controller('export')
@@ -32,11 +33,12 @@ export class ExportController {
     private readonly exportService: ExportService,
     private readonly templateService: ExportTemplateService,
     private readonly batchService: BatchExportService,
+    private readonly auditService: WorkspaceAuditService,
   ) {}
 
   @Post('pptx')
   @ApiOperation({ summary: 'Export deck to PPTX' })
-  async exportPptx(@Body() dto: ExportDto, @Res() res: Response) {
+  async exportPptx(@Body() dto: ExportDto, @Req() req: any, @Res() res: Response) {
     // Create export record
     const exportRecord = await this.exportService.createExportRecord(dto.deckId, 'pptx');
 
@@ -58,6 +60,19 @@ export class ExportController {
       // Update export record
       await this.exportService.updateExportRecord(exportRecord.id, `exports/${dto.deckId}.pptx`);
 
+      // Phase Ω.4B — audit export event
+      const wid = req.workspaceContext?.workspaceId;
+      if (wid && req.user?.id) {
+        void this.auditService.log({
+          workspaceId: wid,
+          actorId: req.user.id,
+          action: 'export.created',
+          targetType: 'deck',
+          targetId: dto.deckId,
+          after: { format: 'pptx', exportRecordId: exportRecord.id },
+        }).catch(() => {});
+      }
+
       // Send file
       res.send(buffer);
     } catch (error) {
@@ -70,7 +85,7 @@ export class ExportController {
 
   @Post('pdf')
   @ApiOperation({ summary: 'Export deck to PDF' })
-  async exportPdf(@Body() dto: ExportDto, @Res() res: Response) {
+  async exportPdf(@Body() dto: ExportDto, @Req() req: any, @Res() res: Response) {
     const exportRecord = await this.exportService.createExportRecord(dto.deckId, 'pdf');
 
     try {
@@ -86,6 +101,19 @@ export class ExportController {
 
       const fileUrl = await this.exportService.exportToPDF(deck, {});
       await this.exportService.updateExportRecord(exportRecord.id, fileUrl);
+
+      // Phase Ω.4B — audit export event
+      const wid = req.workspaceContext?.workspaceId;
+      if (wid && req.user?.id) {
+        void this.auditService.log({
+          workspaceId: wid,
+          actorId: req.user.id,
+          action: 'export.created',
+          targetType: 'deck',
+          targetId: dto.deckId,
+          after: { format: 'pdf', exportRecordId: exportRecord.id },
+        }).catch(() => {});
+      }
 
       res.json({ success: true, fileUrl, deckId: dto.deckId });
     } catch (error) {

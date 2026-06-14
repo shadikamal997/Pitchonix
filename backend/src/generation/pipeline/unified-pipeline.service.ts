@@ -455,7 +455,10 @@ export class UnifiedGenerationPipeline {
     if (!ctx.deckId) throw new PipelineError('migration', 'deckId missing');
 
     // Persist SlideContent rows first, then migrate each into SlideElement rows.
-    const materialized = materializePresentationOverflow(ctx.slides as any);
+    const materialized = materializePresentationOverflow(
+      ctx.slides as any,
+      ctx.wizardInput?.slideCount ?? ctx.command.wizardInput?.slideCount,
+    );
     if (materialized.warnings.length > 0) {
       this.logger.warn(
         `Content fidelity materialization warnings: ${materialized.warnings

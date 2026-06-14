@@ -223,12 +223,14 @@ export interface CvDocumentDto {
 //  Defaults — used when creating a brand-new profile / document.
 // =============================================================================
 
+// Ω.CAREER.QUALITY.1A — skills moved before education so ATS/1-col layouts don't push
+// skill content to a sparse final page after experience fills page 1.
 export const DEFAULT_CV_SECTION_ORDER: CvSectionKey[] = [
   'header',
   'summary',
   'experience',
-  'education',
   'skills',
+  'education',
   'projects',
   'certifications',
   'languages',

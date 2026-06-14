@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
 import { RequireRole } from '../workspaces/role.guard';
 import { DeckSharesService, DeckPermission, SharingMode } from './deck-shares.service';
+import { WorkspaceAuditService } from '../workspaces/workspace-audit.service';
 
 // =============================================================================
 //  Phase 39.1D — DeckSharesController
@@ -20,7 +21,10 @@ import { DeckSharesService, DeckPermission, SharingMode } from './deck-shares.se
 @ApiBearerAuth()
 @Controller()
 export class DeckSharesController {
-  constructor(private readonly shares: DeckSharesService) {}
+  constructor(
+    private readonly shares: DeckSharesService,
+    private readonly auditService: WorkspaceAuditService,
+  ) {}
 
   @Get('projects/:projectId/shares')
   @ApiOperation({ summary: 'List explicit DeckShare grants for a project' })
@@ -32,23 +36,49 @@ export class DeckSharesController {
   @Post('projects/:projectId/shares')
   @ApiOperation({ summary: 'Grant a workspace member access (or update their permission)' })
   @RequireRole('deck.share', { kind: 'workspaceFromProject', param: 'projectId' })
-  upsert(
+  async upsert(
     @Param('projectId') projectId: string,
     @GetUser() user: any,
     @Body() body: { memberId: string; permission: DeckPermission },
+    @Req() req: any,
   ) {
-    return this.shares.upsert(projectId, user.id, body);
+    const result = await this.shares.upsert(projectId, user.id, body);
+    const wid = req.workspaceContext?.workspaceId;
+    if (wid) {
+      void this.auditService.log({
+        workspaceId: wid,
+        actorId: user.id,
+        action: 'share.created',
+        targetType: 'project',
+        targetId: projectId,
+        after: { memberId: body.memberId, permission: body.permission },
+      }).catch(() => {});
+    }
+    return result;
   }
 
   @Delete('projects/:projectId/shares/:shareId')
   @ApiOperation({ summary: 'Revoke an explicit grant' })
   @RequireRole('deck.share', { kind: 'workspaceFromProject', param: 'projectId' })
-  revoke(
+  async revoke(
     @Param('projectId') projectId: string,
     @Param('shareId') shareId: string,
     @GetUser() user: any,
+    @Req() req: any,
   ) {
-    return this.shares.revoke(projectId, user.id, shareId);
+    const result = await this.shares.revoke(projectId, user.id, shareId);
+    const wid = req.workspaceContext?.workspaceId;
+    if (wid) {
+      void this.auditService.log({
+        workspaceId: wid,
+        actorId: user.id,
+        action: 'share.revoked',
+        targetType: 'project',
+        targetId: projectId,
+        before: { shareId },
+      }).catch(() => {});
+    }
+    return result;
   }
 
   @Patch('projects/:projectId/sharing-mode')

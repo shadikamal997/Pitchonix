@@ -178,9 +178,26 @@ export default function CvBuilderPage() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [corruptionIssues, setCorruptionIssues] = useState<string[]>([]);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [sparseDismissed, setSparseDismissed] = useState(false);
   const [repairing, setRepairing] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const reimportInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Ω.CAREER.QUALITY.1A — detect sparse content so the user can be prompted to add more.
+  // A profile is considered sparse when the total rendered content items are below the
+  // threshold where a CV typically fills 60%+ of an A4 page.
+  const isSparseProfile = (() => {
+    if (!profile) return false;
+    const expCount   = (profile.experience   || []).length;
+    const eduCount   = (profile.education    || []).length;
+    const skillCount = (profile.skills       || []).length;
+    const projCount  = (profile.projects     || []).length;
+    const certCount  = (profile.certifications || []).length;
+    const hasSummary = !!(profile.personal?.summary?.trim());
+    const totalItems = expCount + eduCount + skillCount + projCount + certCount + (hasSummary ? 1 : 0);
+    // Sparse: fewer than 2 experience entries AND total items below 8
+    return expCount < 2 && totalItems < 8;
+  })();
 
   const { items: templates } = useCvTemplates(doc?.doctype);
 
@@ -470,6 +487,24 @@ export default function CvBuilderPage() {
         </div>
       )}
 
+      {/* ── Sparse Content Warning (Ω.CAREER.QUALITY.1A) ── */}
+      {isSparseProfile && !sparseDismissed && (
+        <div className="bg-[#EFF6FF] border-b border-[#93C5FD] px-4 py-2 flex items-center gap-3 shrink-0">
+          <AlertTriangle className="w-4 h-4 text-[#1D4ED8] shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-[#1E3A8A]">
+              This CV may look sparse on the page
+            </p>
+            <p className="text-[10px] text-[#1E40AF]">
+              Add more experience, projects, certifications, skills, or a summary to fill the page better.
+            </p>
+          </div>
+          <button onClick={() => setSparseDismissed(true)} className="text-[#1D4ED8] hover:text-[#1E3A8A]">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* ── Body ── */}
       <div className="flex-1 grid grid-cols-[300px_1fr] overflow-hidden">
         {/* Left panel */}
@@ -715,6 +750,8 @@ const TemplateCard: React.FC<{
   return (
     <button
       onClick={onClick}
+      data-cv-template-id={template.id}
+      data-cv-template-selected={selected ? 'true' : 'false'}
       className={`w-full text-left px-2 py-1.5 rounded border transition-all flex items-center gap-2 group
         ${selected
           ? 'border-[#4F7563] bg-[#EEF5F1]'

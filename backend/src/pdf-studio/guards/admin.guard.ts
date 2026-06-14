@@ -1,10 +1,9 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 
-/**
- * Guards pdf-studio admin endpoints.
- * In production: only the email set in ADMIN_EMAIL env var passes.
- * In development: any authenticated user passes (so devs can test locally).
- */
+// Phase Ω.4A — AdminGuard: enforces ADMIN_EMAILS allowlist in all environments.
+// The previous dev-mode bypass was removed because staging environments often
+// run with NODE_ENV=development and would otherwise expose admin endpoints.
+// Set ADMIN_EMAILS="email1@example.com,email2@example.com" to grant access.
 @Injectable()
 export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -15,14 +14,12 @@ export class AdminGuard implements CanActivate {
       throw new ForbiddenException('Authentication required');
     }
 
-    // Development — allow any authenticated user
-    if (process.env.NODE_ENV !== 'production') {
-      return true;
-    }
+    const allowList = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
 
-    // Production — require the ADMIN_EMAIL env var to match
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (adminEmail && user.email === adminEmail) {
+    if (allowList.length > 0 && user.email && allowList.includes(user.email.toLowerCase())) {
       return true;
     }
 

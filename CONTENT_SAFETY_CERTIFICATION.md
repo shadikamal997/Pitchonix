@@ -2,48 +2,74 @@
 
 > Phase Ω.CONTENT.3 — generated from real Universal Content Ledger data. No estimates.
 
-**Generated:** 2026-06-09T09:39:39.377Z
+**Generated:** 2026-06-14T12:27:57.443Z
 
 ## Platform
 
-- **Content Safety Grade:** `A+`
-- **Platform Retention (exported/imported):** 100.0%
-- **Effective Retention (reopen-verified):** 100.0%
-- **Imported / Rendered / Exported / Reopened:** 230 / 230 / 230 / 230
-- **Broken nodes:** 0 · **Missing:** 0 · **Unexpected mutations:** 0
-- **Documents tracked:** 2
+- **Content Safety Grade:** `F`
+- **Platform Retention (exported/imported):** 30.7%
+- **Effective Retention (reopen-verified):** 30.5%
+- **Imported / Rendered / Exported / Reopened:** 15983 / 15962 / 4904 / 4870
+- **Broken nodes:** 11113 · **Missing:** 21 · **Unexpected mutations:** 0
+- **Documents tracked:** 142
 
 ## Per-Module Certification
 
 | Module | Grade | Imported | Rendered | Exported | Reopened | Missing | Broken | Retention | Certified |
 |---|---|---|---|---|---|---|---|---|---|
+| Career Docs | `C` | 1380 | 1359 | 1359 | 1325 | 21 | 55 | 96.0% | ⚠️ |
+| Excel Studio | `F` | 5856 | 5856 | 3315 | 3315 | 0 | 2541 | 56.6% | ⚠️ |
 | PPTX Import | `A+` | 190 | 190 | 190 | 190 | 0 | 0 | 100.0% | ✅ |
-| Presentations | `A+` | 40 | 40 | 40 | 40 | 0 | 0 | 100.0% | ✅ |
+| Presentations | `F` | 8557 | 8557 | 40 | 40 | 0 | 8517 | 0.5% | ⚠️ |
 
 ## Certified Modules
 
 - ✅ PPTX Import
-- ✅ Presentations
 
 ## Uncertified Modules
 
 - ⚠️ Feasibility Studio
 - ⚠️ Excel Studio
 - ⚠️ Career Docs
+- ⚠️ Presentations
 - ⚠️ Convert
 - ⚠️ PDF Studio
 
 ## Top Loss Reasons
 
-- _no losses recorded_
+| Reason | Count | Known | Expected |
+|---|---|---|---|
+| `rendered_but_not_exported` | 11058 | yes | no |
+| `imported_but_not_rendered` | 20 | yes | no |
+| `personal_field_missing` | 10 | yes | no |
+| `skill_missing` | 5 | yes | no |
+| `summary_mutated` | 5 | **NO** | no |
+| `experience_bullet_missing` | 5 | yes | no |
+| `education_missing` | 5 | yes | no |
+| `experience_missing` | 4 | yes | no |
+| `technology_or_skill_fragment` | 1 | **NO** | no |
 
 ## Highest-Risk Modules
 
-- _no module risk detected_
+| Module | Broken | Imported | Risk Rate |
+|---|---|---|---|
+| Presentations | 8517 | 8557 | 99.5% |
+| Excel Studio | 2541 | 5856 | 43.4% |
+| Career Docs | 55 | 1380 | 4.0% |
 
 ## Highest-Risk Pipelines
 
-- _no pipeline risk detected_
+| Pipeline | Broken | Total | Risk Rate |
+|---|---|---|---|
+| `career` | 21 | 21 | 100.0% |
+| `presentation-designer` | 8517 | 8557 | 99.5% |
+| `excel-studio` | 2541 | 5856 | 43.4% |
+| `career:html` | 34 | 1339 | 2.5% |
+
+## ⚠️ Uncategorized Loss Reasons (triage required)
+
+- `summary_mutated`
+- `technology_or_skill_fragment`
 
 ## Grading Scale
 
@@ -60,7 +86,9 @@ _Any unexpected (silent) mutation caps a module at grade B._
 
 ## Remaining Risks
 
-- _No module with recorded data is currently at risk._
+- **Career Docs** — 96.0% effective retention, 55 broken node(s) (top: `imported_but_not_rendered` ×20).
+- **Excel Studio** — 56.6% effective retention, 2541 broken node(s) (top: `rendered_but_not_exported` ×2541).
+- **Presentations** — 0.5% effective retention, 8517 broken node(s) (top: `rendered_but_not_exported` ×8517).
 
 ## Known Limitations
 

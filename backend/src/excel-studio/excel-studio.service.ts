@@ -1379,7 +1379,14 @@ export class ExcelStudioService {
       ),
     );
     const rows = Array.isArray(operation.payload?.rows) ? operation.payload.rows : [[]];
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), name);
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    // Apply default column widths so content is not auto-size-failed on export.
+    // Matches the widths set by appendStyledSheet() for consistent export quality.
+    ws['!cols'] = [
+      { wch: 28 }, { wch: 20 }, { wch: 14 }, { wch: 40 },
+      { wch: 50 }, { wch: 40 }, { wch: 12 },
+    ];
+    XLSX.utils.book_append_sheet(workbook, ws, name);
   }
 
   private applyDeleteSheet(workbook: XLSX.WorkBook, sheetName: string | undefined) {

@@ -42,6 +42,15 @@ export class AuthService {
     });
 
     await this.emailService.sendVerificationEmail(dto.email, verificationToken);
+    // Phase Ω.4A — record registration in user activity log (fire-and-forget)
+    void this.prisma.activity.create({
+      data: {
+        userId: user.id,
+        type: 'auth.register',
+        title: 'Account created',
+        description: `Account registered`,
+      },
+    }).catch(() => {});
     const token = this.generateToken(user.id, user.email);
     return { user: { ...user, onboardingCompleted: false, twoFactorEnabled: false }, token };
   }
@@ -53,6 +62,14 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
     if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
 
+    // Phase Ω.4B — governance blocks: banned > suspended > active
+    if ((user as any).bannedAt) {
+      throw new UnauthorizedException('Account has been permanently disabled');
+    }
+    if ((user as any).suspendedAt) {
+      throw new UnauthorizedException('Account is temporarily suspended');
+    }
+
     // Enforce 2FA when enabled: password alone must NOT yield a token. If no
     // code was supplied, challenge the client; otherwise verify the TOTP code.
     if (user.twoFactorEnabled) {
@@ -62,6 +79,17 @@ export class AuthService {
       const codeValid = await this.twoFactorService.verifyCode(user.id, dto.code);
       if (!codeValid) throw new UnauthorizedException('Invalid two-factor code');
     }
+
+    // Phase Ω.4A — record login in user activity log (fire-and-forget)
+    void this.prisma.activity.create({
+      data: {
+        userId: user.id,
+        type: 'auth.login',
+        title: 'Login',
+        description: `Signed in`,
+        metadata: { method: dto.code ? 'password+2fa' : 'password' },
+      },
+    }).catch(() => {});
 
     const token = this.generateToken(user.id, user.email);
     return {

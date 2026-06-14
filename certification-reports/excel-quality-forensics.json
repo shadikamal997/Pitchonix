@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-06-14T12:23:04.568Z",
+  "certPassed": true,
+  "scenarioCount": 4,
+  "scenarios": [
+    {
+      "name": "S1: Financial Forecast",
+      "certPassed": true,
+      "certFailures": [],
+      "avgDensity": 72,
+      "sheetCount": 11,
+      "totalErrorFormulas": 0,
+      "totalClippedCols": 0
+    },
+    {
+      "name": "S2: Sales Dashboard (modernize)",
+      "certPassed": true,
+      "certFailures": [],
+      "avgDensity": 74,
+      "sheetCount": 17,
+      "totalErrorFormulas": 0,
+      "totalClippedCols": 0
+    },
+    {
+      "name": "S3: SaaS Metrics (freeze+headers)",
+      "certPassed": true,
+      "certFailures": [],
+      "avgDensity": 72,
+      "sheetCount": 12,
+      "totalErrorFormulas": 0,
+      "totalClippedCols": 0
+    },
+    {
+      "name": "S4: Marketing Analytics",
+      "certPassed": true,
+      "certFailures": [],
+      "avgDensity": 74,
+      "sheetCount": 15,
+      "totalErrorFormulas": 0,
+      "totalClippedCols": 0
+    }
+  ]
+}

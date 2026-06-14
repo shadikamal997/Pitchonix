@@ -1,0 +1,417 @@
+{
+  "generatedAt": "2026-06-14T12:23:25.554Z",
+  "certPassed": true,
+  "scenarioCount": 6,
+  "scenarios": [
+    {
+      "name": "S1: Alexandra Chen × sidebar/2col",
+      "result": {
+        "scenarioName": "S1: Alexandra Chen × sidebar/2col",
+        "profileLabel": "rich-swe",
+        "templateName": "Consulting Strategic",
+        "templateColumns": 2,
+        "templateHeaderStyle": "sidebar",
+        "pageCount": 2,
+        "avgUtilization": 77,
+        "avgWhitespace": 23,
+        "sparsePageCount": 0,
+        "sparsePct": 0,
+        "headerHeightPct": 0,
+        "photoAreaPct": 0,
+        "isHeaderOversized": false,
+        "isPhotoOversized": false,
+        "expEntryCount": 3,
+        "expFragmentedCount": 0,
+        "expFragPct": 0,
+        "eduEntryCount": 2,
+        "eduFragmentedCount": 0,
+        "skillItemCount": 33,
+        "isSkillBlockWaste": false,
+        "h1Count": 1,
+        "h2Count": 4,
+        "isHierarchyInconsistent": false,
+        "h2Titles": [
+          "SKSkills",
+          "EXExperience",
+          "EDEducation",
+          "PRProjects"
+        ],
+        "isDuplicateStructure": false,
+        "isExcessiveSpacing": true,
+        "maxInterSectionGapPx": 302,
+        "timelineYears": [
+          2017,
+          2019,
+          2022
+        ],
+        "timelineSpan": 5,
+        "isTimelineImbalanced": false,
+        "pageMetrics": [
+          {
+            "pageNum": 1,
+            "utilization": 86,
+            "whitespace": 14,
+            "isSparse": false,
+            "elementCount": 61
+          },
+          {
+            "pageNum": 2,
+            "utilization": 68,
+            "whitespace": 32,
+            "isSparse": false,
+            "elementCount": 18
+          }
+        ],
+        "certChecks": {
+          "utilization": true,
+          "whitespace": true,
+          "expFragmentation": true,
+          "sparsePages": true,
+          "timelineBalance": true,
+          "hierarchy": true
+        },
+        "certPassed": true,
+        "certFailures": [],
+        "isContentLimited": false
+      }
+    },
+    {
+      "name": "S2: Alexandra Chen × banner/1col",
+      "result": {
+        "scenarioName": "S2: Alexandra Chen × banner/1col",
+        "profileLabel": "rich-swe",
+        "templateName": "Corporate Timeline",
+        "templateColumns": 1,
+        "templateHeaderStyle": "banner",
+        "pageCount": 2,
+        "avgUtilization": 71,
+        "avgWhitespace": 29,
+        "sparsePageCount": 0,
+        "sparsePct": 0,
+        "headerHeightPct": 10,
+        "photoAreaPct": 0,
+        "isHeaderOversized": false,
+        "isPhotoOversized": false,
+        "expEntryCount": 3,
+        "expFragmentedCount": 0,
+        "expFragPct": 0,
+        "eduEntryCount": 2,
+        "eduFragmentedCount": 1,
+        "skillItemCount": 33,
+        "isSkillBlockWaste": false,
+        "h1Count": 1,
+        "h2Count": 4,
+        "isHierarchyInconsistent": false,
+        "h2Titles": [
+          "EXExperience",
+          "SKSkills",
+          "EDEducation",
+          "PRProjects"
+        ],
+        "isDuplicateStructure": false,
+        "isExcessiveSpacing": false,
+        "maxInterSectionGapPx": 32,
+        "timelineYears": [
+          2017,
+          2019,
+          2022
+        ],
+        "timelineSpan": 5,
+        "isTimelineImbalanced": false,
+        "pageMetrics": [
+          {
+            "pageNum": 1,
+            "utilization": 83,
+            "whitespace": 17,
+            "isSparse": false,
+            "elementCount": 55
+          },
+          {
+            "pageNum": 2,
+            "utilization": 59,
+            "whitespace": 41,
+            "isSparse": false,
+            "elementCount": 22
+          }
+        ],
+        "certChecks": {
+          "utilization": true,
+          "whitespace": true,
+          "expFragmentation": true,
+          "sparsePages": true,
+          "timelineBalance": true,
+          "hierarchy": true
+        },
+        "certPassed": true,
+        "certFailures": [],
+        "isContentLimited": false
+      }
+    },
+    {
+      "name": "S3: James Rivera × minimal/1col",
+      "result": {
+        "scenarioName": "S3: James Rivera × minimal/1col",
+        "profileLabel": "medium-marketing",
+        "templateName": "Academic Modern",
+        "templateColumns": 1,
+        "templateHeaderStyle": "minimal",
+        "pageCount": 1,
+        "avgUtilization": 72,
+        "avgWhitespace": 28,
+        "sparsePageCount": 0,
+        "sparsePct": 0,
+        "headerHeightPct": 9,
+        "photoAreaPct": 0,
+        "isHeaderOversized": false,
+        "isPhotoOversized": false,
+        "expEntryCount": 3,
+        "expFragmentedCount": 0,
+        "expFragPct": 0,
+        "eduEntryCount": 1,
+        "eduFragmentedCount": 0,
+        "skillItemCount": 12,
+        "isSkillBlockWaste": false,
+        "h1Count": 1,
+        "h2Count": 3,
+        "isHierarchyInconsistent": false,
+        "h2Titles": [
+          "EXExperience",
+          "SKSkills",
+          "EDEducation"
+        ],
+        "isDuplicateStructure": false,
+        "isExcessiveSpacing": false,
+        "maxInterSectionGapPx": 41,
+        "timelineYears": [
+          2016,
+          2017,
+          2020
+        ],
+        "timelineSpan": 4,
+        "isTimelineImbalanced": false,
+        "pageMetrics": [
+          {
+            "pageNum": 1,
+            "utilization": 72,
+            "whitespace": 28,
+            "isSparse": false,
+            "elementCount": 45
+          }
+        ],
+        "certChecks": {
+          "utilization": true,
+          "whitespace": true,
+          "expFragmentation": true,
+          "sparsePages": true,
+          "timelineBalance": true,
+          "hierarchy": true
+        },
+        "certPassed": true,
+        "certFailures": [],
+        "isContentLimited": false
+      }
+    },
+    {
+      "name": "S4: James Rivera × block/1col",
+      "result": {
+        "scenarioName": "S4: James Rivera × block/1col",
+        "profileLabel": "medium-marketing",
+        "templateName": "ATS Universal",
+        "templateColumns": 1,
+        "templateHeaderStyle": "block",
+        "pageCount": 1,
+        "avgUtilization": 73,
+        "avgWhitespace": 27,
+        "sparsePageCount": 0,
+        "sparsePct": 0,
+        "headerHeightPct": 5,
+        "photoAreaPct": 0,
+        "isHeaderOversized": false,
+        "isPhotoOversized": false,
+        "expEntryCount": 3,
+        "expFragmentedCount": 0,
+        "expFragPct": 0,
+        "eduEntryCount": 1,
+        "eduFragmentedCount": 0,
+        "skillItemCount": 12,
+        "isSkillBlockWaste": false,
+        "h1Count": 1,
+        "h2Count": 3,
+        "isHierarchyInconsistent": false,
+        "h2Titles": [
+          "Experience",
+          "Skills",
+          "Education"
+        ],
+        "isDuplicateStructure": false,
+        "isExcessiveSpacing": false,
+        "maxInterSectionGapPx": 28,
+        "timelineYears": [
+          2016,
+          2017,
+          2020
+        ],
+        "timelineSpan": 4,
+        "isTimelineImbalanced": false,
+        "pageMetrics": [
+          {
+            "pageNum": 1,
+            "utilization": 73,
+            "whitespace": 27,
+            "isSparse": false,
+            "elementCount": 39
+          }
+        ],
+        "certChecks": {
+          "utilization": true,
+          "whitespace": true,
+          "expFragmentation": true,
+          "sparsePages": true,
+          "timelineBalance": true,
+          "hierarchy": true
+        },
+        "certPassed": true,
+        "certFailures": [],
+        "isContentLimited": false
+      }
+    },
+    {
+      "name": "S5: Priya Patel × block/1col",
+      "result": {
+        "scenarioName": "S5: Priya Patel × block/1col",
+        "profileLabel": "sparse-entry",
+        "templateName": "Academic Formal",
+        "templateColumns": 1,
+        "templateHeaderStyle": "block",
+        "pageCount": 1,
+        "avgUtilization": 51,
+        "avgWhitespace": 49,
+        "sparsePageCount": 0,
+        "sparsePct": 0,
+        "headerHeightPct": 6,
+        "photoAreaPct": 0,
+        "isHeaderOversized": false,
+        "isPhotoOversized": false,
+        "expEntryCount": 1,
+        "expFragmentedCount": 0,
+        "expFragPct": 0,
+        "eduEntryCount": 1,
+        "eduFragmentedCount": 0,
+        "skillItemCount": 8,
+        "isSkillBlockWaste": false,
+        "h1Count": 1,
+        "h2Count": 3,
+        "isHierarchyInconsistent": false,
+        "h2Titles": [
+          "EXExperience",
+          "SKSkills",
+          "EDEducation"
+        ],
+        "isDuplicateStructure": false,
+        "isExcessiveSpacing": false,
+        "maxInterSectionGapPx": 32,
+        "timelineYears": [
+          2023
+        ],
+        "timelineSpan": 0,
+        "isTimelineImbalanced": false,
+        "pageMetrics": [
+          {
+            "pageNum": 1,
+            "utilization": 51,
+            "whitespace": 49,
+            "isSparse": false,
+            "elementCount": 25
+          }
+        ],
+        "certChecks": {
+          "utilization": false,
+          "whitespace": false,
+          "expFragmentation": true,
+          "sparsePages": true,
+          "timelineBalance": true,
+          "hierarchy": true
+        },
+        "certPassed": false,
+        "certFailures": [
+          "Avg utilization 51% < 60% required",
+          "Avg whitespace 49% > 35% allowed"
+        ],
+        "isContentLimited": true
+      }
+    },
+    {
+      "name": "S6: Priya Patel × block/2col",
+      "result": {
+        "scenarioName": "S6: Priya Patel × block/2col",
+        "profileLabel": "sparse-entry",
+        "templateName": "Academic European",
+        "templateColumns": 2,
+        "templateHeaderStyle": "block",
+        "pageCount": 2,
+        "avgUtilization": 45,
+        "avgWhitespace": 55,
+        "sparsePageCount": 1,
+        "sparsePct": 50,
+        "headerHeightPct": 7,
+        "photoAreaPct": 0,
+        "isHeaderOversized": false,
+        "isPhotoOversized": false,
+        "expEntryCount": 1,
+        "expFragmentedCount": 0,
+        "expFragPct": 0,
+        "eduEntryCount": 1,
+        "eduFragmentedCount": 0,
+        "skillItemCount": 8,
+        "isSkillBlockWaste": false,
+        "h1Count": 1,
+        "h2Count": 3,
+        "isHierarchyInconsistent": false,
+        "h2Titles": [
+          "SKSkills",
+          "EXExperience",
+          "EDEducation"
+        ],
+        "isDuplicateStructure": false,
+        "isExcessiveSpacing": false,
+        "maxInterSectionGapPx": 32,
+        "timelineYears": [
+          2023
+        ],
+        "timelineSpan": 0,
+        "isTimelineImbalanced": false,
+        "pageMetrics": [
+          {
+            "pageNum": 1,
+            "utilization": 58,
+            "whitespace": 42,
+            "isSparse": false,
+            "elementCount": 26
+          },
+          {
+            "pageNum": 2,
+            "utilization": 32,
+            "whitespace": 68,
+            "isSparse": true,
+            "elementCount": 1
+          }
+        ],
+        "certChecks": {
+          "utilization": false,
+          "whitespace": false,
+          "expFragmentation": true,
+          "sparsePages": false,
+          "timelineBalance": true,
+          "hierarchy": true
+        },
+        "certPassed": false,
+        "certFailures": [
+          "Avg utilization 45% < 60% required",
+          "Avg whitespace 55% > 35% allowed",
+          "Sparse pages 50% > 20% allowed"
+        ],
+        "isContentLimited": true
+      }
+    }
+  ]
+}

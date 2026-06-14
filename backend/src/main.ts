@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, BadRequestException, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -199,12 +199,11 @@ async function bootstrap() {
             formattedErrors[error.property] = Object.values(error.constraints);
           }
         });
-        return {
-          statusCode: 400,
+        return new BadRequestException({
           message: 'Validation failed',
           error: 'ValidationError',
           details: formattedErrors,
-        };
+        });
       },
     }),
   );

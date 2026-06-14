@@ -1,0 +1,428 @@
+{
+  "generatedAt": "2026-06-10T07:49:11.549Z",
+  "frontend": "http://localhost:3002",
+  "api": "http://localhost:4000/api",
+  "results": [
+    {
+      "area": "PDF Studio",
+      "action": "open seeded document",
+      "status": "PASS",
+      "evidence": {
+        "domSeedFound": true,
+        "apiStatus": 200
+      }
+    },
+    {
+      "area": "PDF Studio",
+      "action": "drag/drop image placement",
+      "status": "PASS",
+      "evidence": {
+        "imageDragged": true,
+        "before": {
+          "x": 8,
+          "y": 18
+        },
+        "after": {
+          "x": 21.49072512647555,
+          "y": 23.35714285714286
+        }
+      }
+    },
+    {
+      "area": "PDF Studio",
+      "action": "inline text edit + autosave",
+      "status": "PASS",
+      "evidence": {
+        "dbText": "PDF CERT edited body text",
+        "dbHtmlContains": true
+      }
+    },
+    {
+      "area": "PDF Studio",
+      "action": "undo/redo text edit",
+      "status": "PASS",
+      "evidence": {
+        "undoClicked": true,
+        "redoClicked": true,
+        "dbUndone": true,
+        "dbRedone": true
+      }
+    },
+    {
+      "area": "PDF Studio",
+      "action": "refresh recovery",
+      "status": "PASS",
+      "evidence": {
+        "domRecoveredText": true
+      }
+    },
+    {
+      "area": "PDF Studio",
+      "action": "section/page title edit",
+      "status": "PASS",
+      "evidence": {
+        "titleEdited": true,
+        "dbTitle": "Certified Cover"
+      }
+    },
+    {
+      "area": "PDF Studio",
+      "action": "section/block insert edit",
+      "status": "PASS",
+      "evidence": {
+        "blockSaved": true
+      }
+    },
+    {
+      "area": "PDF Studio",
+      "action": "template change",
+      "status": "PASS",
+      "evidence": {
+        "templateUi": true,
+        "templateOption": true,
+        "beforeTemplate": {
+          "templateType": "clean_business_report"
+        },
+        "afterTemplate": {
+          "templateType": "modern_one_pager",
+          "proTemplateId": null,
+          "templateStyle": {
+            "spacing": "normal",
+            "cardStyle": "rounded",
+            "colorScheme": "blue",
+            "headerStyle": "gradient"
+          }
+        }
+      }
+    },
+    {
+      "area": "PDF Studio",
+      "action": "export button availability",
+      "status": "PASS",
+      "evidence": {
+        "exportAvailable": true
+      }
+    },
+    {
+      "area": "Career Docs",
+      "action": "open seeded CV document",
+      "status": "PASS",
+      "evidence": {
+        "inputValues": [
+          "Cert CV",
+          "Cert Person",
+          "Original Headline",
+          "Austin"
+        ],
+        "apiStatus": 200
+      }
+    },
+    {
+      "area": "Career Docs",
+      "action": "edit name and headline",
+      "status": "PASS",
+      "evidence": {
+        "nameOk": true,
+        "headlineOk": true,
+        "personal": {
+          "summary": "Original summary text.",
+          "fullName": "Certified Person",
+          "headline": "Certified Headline",
+          "location": "Austin"
+        }
+      }
+    },
+    {
+      "area": "Career Docs",
+      "action": "edit summary",
+      "status": "PASS",
+      "evidence": {
+        "summaryOk": true,
+        "summary": "Certified summary text with no field loss."
+      }
+    },
+    {
+      "area": "Career Docs",
+      "action": "edit experience",
+      "status": "PASS",
+      "evidence": {
+        "roleOk": true,
+        "companyOk": true,
+        "bulletsOk": true,
+        "experience": {
+          "id": "x1",
+          "role": "Certified Engineer",
+          "start": "2020",
+          "bullets": [
+            "Certified bullet one",
+            "Certified bullet two"
+          ],
+          "company": "CertifiedCo",
+          "location": ""
+        }
+      }
+    },
+    {
+      "area": "Career Docs",
+      "action": "edit education",
+      "status": "PASS",
+      "evidence": {
+        "institutionOk": true,
+        "degreeOk": true,
+        "education": {
+          "id": "e1",
+          "end": "2020",
+          "field": "CS",
+          "start": "2016",
+          "degree": "MSc",
+          "institution": "Certified University"
+        }
+      }
+    },
+    {
+      "area": "Career Docs",
+      "action": "edit skill",
+      "status": "PASS",
+      "evidence": {
+        "skillOk": true,
+        "skill": {
+          "id": "s1",
+          "name": "Certified Skill",
+          "level": "expert",
+          "category": "technical"
+        }
+      }
+    },
+    {
+      "area": "Career Docs",
+      "action": "photo area presence",
+      "status": "PASS",
+      "evidence": {
+        "photoArea": true
+      }
+    },
+    {
+      "area": "Career Docs",
+      "action": "template change",
+      "status": "PASS",
+      "evidence": {
+        "templateClicked": true,
+        "beforeTemplate": null,
+        "afterTemplate": "fe7e9e91-ac4d-4a3c-a278-fc7919d01a2f"
+      }
+    },
+    {
+      "area": "Career Docs",
+      "action": "autosave + refresh recovery",
+      "status": "PASS",
+      "evidence": {
+        "recoveredValues": [
+          "Cert CV",
+          "Certified Person",
+          "Certified Headline",
+          "Austin"
+        ]
+      }
+    },
+    {
+      "area": "Career Docs",
+      "action": "undo/redo controls",
+      "status": "NOT_IMPLEMENTED",
+      "evidence": {
+        "undoPresent": false
+      }
+    },
+    {
+      "area": "Excel Studio",
+      "action": "open seeded workbook",
+      "status": "PASS",
+      "evidence": {
+        "initialDom": true,
+        "apiStatus": 200
+      }
+    },
+    {
+      "area": "Excel Studio",
+      "action": "edit cell + create operation",
+      "status": "PASS",
+      "evidence": {
+        "a1": {
+          "row": 0,
+          "type": "s",
+          "style": {
+            "bold": false,
+            "italic": false
+          },
+          "value": "Certified Header",
+          "column": 0,
+          "address": "A1",
+          "isMerged": false,
+          "rawValue": "Certified Header",
+          "formatted": "Certified Header",
+          "mergeMaster": false,
+          "numberFormat": "General"
+        },
+        "operations": [
+          {
+            "type": "setCellValue",
+            "status": "approved",
+            "target": {
+              "address": "A1"
+            },
+            "payload": {
+              "value": "Certified Header"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "area": "Excel Studio",
+      "action": "edit formula cell",
+      "status": "PASS",
+      "evidence": {
+        "c2": {
+          "row": 1,
+          "type": "n",
+          "style": {
+            "bold": false,
+            "italic": false
+          },
+          "value": "0",
+          "column": 2,
+          "address": "C2",
+          "formula": "B2*3",
+          "isMerged": false,
+          "rawValue": 0,
+          "formatted": "0",
+          "mergeMaster": false,
+          "numberFormat": "General"
+        },
+        "operationTypes": [
+          "setCellValue",
+          "setFormula"
+        ]
+      }
+    },
+    {
+      "area": "Excel Studio",
+      "action": "undo and redo operation",
+      "status": "PASS",
+      "evidence": {
+        "undoClicked": true,
+        "redoClicked": true,
+        "c2AfterUndo": {
+          "row": 1,
+          "type": "s",
+          "style": {
+            "bold": false,
+            "italic": false
+          },
+          "value": "84",
+          "column": 2,
+          "address": "C2",
+          "formula": "B2*2",
+          "isMerged": false,
+          "rawValue": "84",
+          "formatted": "84",
+          "mergeMaster": false,
+          "numberFormat": "General"
+        },
+        "c2AfterRedo": {
+          "row": 1,
+          "type": "n",
+          "style": {
+            "bold": false,
+            "italic": false
+          },
+          "value": "0",
+          "column": 2,
+          "address": "C2",
+          "formula": "B2*3",
+          "isMerged": false,
+          "rawValue": 0,
+          "formatted": "0",
+          "mergeMaster": false,
+          "numberFormat": "General"
+        },
+        "operationStatuses": [
+          {
+            "type": "setCellValue",
+            "status": "approved"
+          },
+          {
+            "type": "setFormula",
+            "status": "undone"
+          }
+        ]
+      }
+    },
+    {
+      "area": "Excel Studio",
+      "action": "rename sheet",
+      "status": "PASS",
+      "evidence": {
+        "renamed": true,
+        "sheetNames": [
+          "CertSheet"
+        ]
+      }
+    },
+    {
+      "area": "Excel Studio",
+      "action": "add sheet",
+      "status": "PASS",
+      "evidence": {
+        "addSheet": true,
+        "sheetNames": [
+          "CertSheet",
+          "Sheet2"
+        ]
+      }
+    },
+    {
+      "area": "Excel Studio",
+      "action": "refresh recovery + operation log",
+      "status": "PASS",
+      "evidence": {
+        "recoveredHeader": true,
+        "recoveredSheet": true,
+        "operations": [
+          {
+            "sequence": 1,
+            "type": "setCellValue",
+            "status": "approved"
+          },
+          {
+            "sequence": 2,
+            "type": "setFormula",
+            "status": "approved"
+          },
+          {
+            "sequence": 3,
+            "type": "renameSheet",
+            "status": "approved"
+          },
+          {
+            "sequence": 4,
+            "type": "createSheet",
+            "status": "approved"
+          }
+        ]
+      }
+    },
+    {
+      "area": "Excel Studio",
+      "action": "export button availability",
+      "status": "PASS",
+      "evidence": {
+        "exportAvailable": true
+      }
+    }
+  ],
+  "summary": {
+    "pass": 26,
+    "fail": 0,
+    "notImplemented": 1
+  }
+}
