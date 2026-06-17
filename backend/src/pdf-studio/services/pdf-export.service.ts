@@ -500,12 +500,20 @@ export class PdfExportService {
     let firstContentPage = true;
     const parts: string[] = [];
     const hasCoverPage = pages.some((p: any) => p.pageType === 'cover');
-    // Use pages.length so pageNumber and totalPages both count all rendered pages,
-    // preventing mismatches like "Page 25 of 24" when TOC is excluded.
-    const totalPageCount = pages.length;
+
+    // Drop near-empty content pages (CONFIDENTIAL watermark-only pages, import
+    // artifacts, etc.) before computing page count so numbering stays accurate.
+    const renderablePages = pages.filter((p: any) => {
+      const pType = p.pageType || 'content';
+      if (pType === 'cover' || pType === 'toc') return true;
+      const text = (p.content?.text || '').trim();
+      const html = (p.content?.html || '').trim();
+      return text.length > 3 || html.length > 10;
+    });
+    const totalPageCount = renderablePages.length;
     const proseBody = this.pickProseBody(templateConfig);
 
-    for (const page of pages) {
+    for (const page of renderablePages) {
       const pageType = page.pageType || 'content';
 
       // Render TOC page with its populated content
@@ -575,16 +583,37 @@ export class PdfExportService {
         continue;
       }
 
+      // Strip bare markdown hash lines ("# " with no following text) that can
+      // survive import and render as literal "#" in the output.
+      const cleanedText = (page.content?.text || '').replace(/^#{1,6}\s*$/gm, '');
+
       const htmlContent =
-        page.content?.html || this.convertMarkdownToHtml(page.content?.text || '');
+        page.content?.html || this.convertMarkdownToHtml(cleanedText);
       const content = purify.sanitize(htmlContent);
-      const rawTitle = purify.sanitize(page.title || '');
+
+      // The page planner stores the SECTION title in page.title for all
+      // continuation pages under that section. For long sections spanning many
+      // PDF pages (e.g. section "أولاً" containing 9 sub-pages), this produces
+      // stale headers like "أولاً: أطراف الاتفاقية" on pages that have moved on
+      // to ثانياً, ثالثاً, etc. Fix: extract the first markdown heading from
+      // the page's own content text and use that as the displayed card title.
+      const contentFirstHeading =
+        cleanedText.match(/^#{1,3}\s+(.+)$/m)?.[1]?.trim() || '';
+      const storedTitle = page.title || '';
+      // Prefer the content heading when it differs from the stored section title;
+      // this replaces stale inherited section titles with the actual page topic.
+      const rawTitle = purify.sanitize(
+        contentFirstHeading && contentFirstHeading !== storedTitle
+          ? contentFirstHeading
+          : storedTitle,
+      );
+
       const textStyles = this.buildTextStyle(page.content?.styles || {});
 
       // Suppress the card-level title when:
       // (a) the title is empty (cross-section merged page) or
-      // (b) the HTML content already opens with an <h1>/<h2>/<h3> whose text
-      //     matches the page title — prevents the heading appearing twice.
+      // (b) the HTML content already contains the same heading — prevents it
+      //     appearing twice (once as card title, once as <h2> in body).
       const contentStartsWithHeading = /^\s*<h[123][^>]*>/i.test(content);
       const titleIsDuplicatedInContent =
         rawTitle.length > 0 &&
