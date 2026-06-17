@@ -139,9 +139,14 @@ export class BrandKitService {
             brandKit.secondaryColor ??
             '#1D4ED8',
           accent: tokenColors.accent ?? config.colors?.accent ?? '#60A5FA',
-          text: config.colors?.text ?? '#1F2937',
-          background: tokenColors.neutral ?? config.colors?.background ?? '#FFFFFF',
-          surface: config.colors?.surface ?? '#F9FAFB',
+          text: tokenColors.text ?? config.colors?.text ?? '#1F2937',
+          background:
+            tokenColors.background ?? tokenColors.neutral ?? config.colors?.background ?? '#FFFFFF',
+          surface: (tokenColors as any).surface ?? config.colors?.surface ?? '#F9FAFB',
+          muted: (tokenColors as any).muted ?? tokenColors.secondary ?? config.colors?.muted ?? '#6B7280',
+          heading: (tokenColors as any).heading ?? tokenColors.text ?? tokenColors.primary ?? '#111827',
+          link: (tokenColors as any).link ?? tokenColors.primary ?? '#2563EB',
+          border: (tokenColors as any).border ?? config.colors?.border ?? '#E5E7EB',
         } as any,
         typography: {
           fontFamily:

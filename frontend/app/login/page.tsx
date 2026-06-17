@@ -33,6 +33,11 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  const handleGoogleSignIn = () => {
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
+    window.location.href = `${apiBase}/api/auth/google`;
+  };
+
   const onSubmit = async (data: LoginForm) => {
     setLoading(true);
     setError('');
@@ -86,6 +91,23 @@ export default function LoginPage() {
           <p className="text-gray-600 text-base leading-relaxed mb-10">
             Create investor-ready decks, business plans, and proposals in minutes.
           </p>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="w-full mb-5 bg-white text-black py-4 px-6 rounded-2xl font-semibold text-base border-2 border-gray-200 hover:border-black transition-colors flex items-center justify-center space-x-3"
+          >
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-sm font-bold">
+              G
+            </span>
+            <span>Continue with Google</span>
+          </button>
+
+          <div className="mb-5 flex items-center gap-4">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-xs font-medium uppercase tracking-[0.18em] text-gray-400">or</span>
+            <div className="h-px flex-1 bg-gray-200" />
+          </div>
 
           {/* Login Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

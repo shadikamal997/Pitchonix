@@ -564,6 +564,10 @@ export class BrandKitsService implements OnModuleInit {
     backgroundColor: string | null;
     textColor: string | null;
     mutedTextColor: string | null;
+    surfaceColor: string | null;
+    headingColor: string | null;
+    linkColor: string | null;
+    borderColor: string | null;
     headingFontFamily: string | null;
     bodyFontFamily: string | null;
     logoUrl: string | null;
@@ -571,16 +575,20 @@ export class BrandKitsService implements OnModuleInit {
   }> {
     const kit = await this.findOne(id, userId);
     const t = (kit.tokens as BrandTokens | null) || {};
-    const c = t.colors || {};
+    const c = (t.colors || {}) as any;
     const typ = t.typography || {};
     const ident = (kit.identity as BrandIdentity | null) || {};
     return {
       primaryColor: c.primary ?? kit.primaryColor ?? null,
       secondaryColor: c.secondary ?? kit.secondaryColor ?? null,
       accentColor: c.accent ?? null,
-      backgroundColor: c.neutral ?? '#FFFFFF',
-      textColor: null,
-      mutedTextColor: null,
+      backgroundColor: c.background ?? c.neutral ?? '#FFFFFF',
+      textColor: c.text ?? '#1F2937',
+      mutedTextColor: (c as any).muted ?? c.secondary ?? '#6B7280',
+      surfaceColor: (c as any).surface ?? c.neutral ?? '#F9FAFB',
+      headingColor: (c as any).heading ?? c.text ?? c.primary ?? kit.primaryColor ?? '#111827',
+      linkColor: (c as any).link ?? c.primary ?? kit.primaryColor ?? '#2563EB',
+      borderColor: (c as any).border ?? '#E5E7EB',
       headingFontFamily: typ.heading?.family ?? kit.fontFamily ?? null,
       bodyFontFamily: typ.body?.family ?? kit.fontFamily ?? null,
       logoUrl: kit.logo || null,

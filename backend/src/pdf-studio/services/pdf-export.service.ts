@@ -11,6 +11,16 @@ import { ChartRenderingService } from './chart-rendering.service';
 import { BrowserPoolService } from './browser-pool.service';
 import { ProTemplateRendererService } from '../pro-templates/renderers/pro-template-renderer.service';
 import { BrandKitService } from './brand-kit.service';
+import {
+  buildTitleFrequency,
+  hasRtlPdfContent,
+  hasSignatureContent,
+  isRenderablePdfPage,
+  normalizeCoverDescription,
+  normalizeCoverOverview,
+  normalizePdfTextForRendering,
+  resolvePdfPageDisplayTitle,
+} from './rendering-normalization';
 
 export interface PdfExportOptions {
   paperSize?: 'A4' | 'Letter' | 'A3' | 'Legal';
@@ -135,7 +145,7 @@ export class PdfExportService {
     const isVisualDocument = this.isVisualDocumentType(document.documentType);
 
     // Detect Arabic / RTL content to enable proper bidirectional rendering
-    const isRtlDocument = this.hasRtlContent(pages);
+    const isRtlDocument = hasRtlPdfContent(pages);
 
     let pageContent = '';
 
@@ -231,6 +241,7 @@ export class PdfExportService {
           ${isRtlDocument ? `
           h1, h2, h3, h4, h5, h6, p, li, td, th, div {
             text-align: right;
+            unicode-bidi: plaintext;
           }
           ul, ol {
             padding-right: 24px;
@@ -249,6 +260,21 @@ export class PdfExportService {
           .signature-block {
             page-break-inside: avoid;
             break-inside: avoid;
+            display: block;
+            margin-top: 16px;
+          }
+          .signature-block p,
+          .signature-block div {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          h1, h2, h3 {
+            page-break-after: avoid;
+            break-after: avoid;
+          }
+          p {
+            orphans: 3;
+            widows: 3;
           }
 
           /* Prevent page breaks inside elements */
@@ -503,15 +529,11 @@ export class PdfExportService {
 
     // Drop near-empty content pages (CONFIDENTIAL watermark-only pages, import
     // artifacts, etc.) before computing page count so numbering stays accurate.
-    const renderablePages = pages.filter((p: any) => {
-      const pType = p.pageType || 'content';
-      if (pType === 'cover' || pType === 'toc') return true;
-      const text = (p.content?.text || '').trim();
-      const html = (p.content?.html || '').trim();
-      return text.length > 3 || html.length > 10;
-    });
+    const renderablePages = pages.filter(isRenderablePdfPage);
+    const titleFrequency = buildTitleFrequency(renderablePages);
     const totalPageCount = renderablePages.length;
     const proseBody = this.pickProseBody(templateConfig);
+    let lastEmittedSectionHeading = '';
 
     for (const page of renderablePages) {
       const pageType = page.pageType || 'content';
@@ -560,10 +582,12 @@ export class PdfExportService {
           {
             title: purify.sanitize(document?.title || coverData.title || page.title || ''),
             subtitle: purify.sanitize(coverData.subtitle || document?.outline?.detectedType || ''),
-            description: purify.sanitize(coverData.description || coverData.summary || ''),
-            overview: Array.isArray(coverData.overview)
-              ? coverData.overview.map((item: string) => purify.sanitize(item))
-              : [],
+            description: purify.sanitize(
+              normalizeCoverDescription(coverData.description || coverData.summary || ''),
+            ),
+            overview: normalizeCoverOverview(coverData.overview).map((item) =>
+              purify.sanitize(item),
+            ),
             date: purify.sanitize(
               coverData.date ||
                 new Date().toLocaleDateString('en-US', {
@@ -583,51 +607,42 @@ export class PdfExportService {
         continue;
       }
 
-      // Strip bare markdown hash lines ("# " with no following text) that can
-      // survive import and render as literal "#" in the output.
-      const cleanedText = (page.content?.text || '').replace(/^#{1,6}\s*$/gm, '');
+      const cleanedText = normalizePdfTextForRendering(page.content?.text || '');
 
       const htmlContent =
         page.content?.html || this.convertMarkdownToHtml(cleanedText);
       const content = purify.sanitize(htmlContent);
 
-      // The page planner stores the SECTION title in page.title for all
-      // continuation pages under that section. For long sections spanning many
-      // PDF pages (e.g. section "أولاً" containing 9 sub-pages), this produces
-      // stale headers like "أولاً: أطراف الاتفاقية" on pages that have moved on
-      // to ثانياً, ثالثاً, etc. Fix: extract the first markdown heading from
-      // the page's own content text and use that as the displayed card title.
-      const contentFirstHeading =
-        cleanedText.match(/^#{1,3}\s+(.+)$/m)?.[1]?.trim() || '';
-      const storedTitle = page.title || '';
-      // Prefer the content heading when it differs from the stored section title;
-      // this replaces stale inherited section titles with the actual page topic.
       const rawTitle = purify.sanitize(
-        contentFirstHeading && contentFirstHeading !== storedTitle
-          ? contentFirstHeading
-          : storedTitle,
+        resolvePdfPageDisplayTitle(page, cleanedText, titleFrequency),
       );
 
       const textStyles = this.buildTextStyle(page.content?.styles || {});
 
       // Suppress the card-level title when:
-      // (a) the title is empty (cross-section merged page) or
-      // (b) the HTML content already contains the same heading — prevents it
-      //     appearing twice (once as card title, once as <h2> in body).
-      const contentStartsWithHeading = /^\s*<h[123][^>]*>/i.test(content);
-      const titleIsDuplicatedInContent =
+      // (a) the title is empty, OR
+      // (b) the content body already contains this heading anywhere (deduplication
+      //     catches both "heading at start" and "heading mid-page" cases), OR
+      // (c) this is a continuation page whose section heading was already emitted —
+      //     prevents the same section title reappearing on every continuation page.
+      const titleKey = rawTitle.toLowerCase().slice(0, Math.min(20, rawTitle.length));
+      const titleInContent =
         rawTitle.length > 0 &&
-        contentStartsWithHeading &&
-        content.toLowerCase().includes(rawTitle.toLowerCase().slice(0, 20));
-      const title = titleIsDuplicatedInContent || !rawTitle ? '' : rawTitle;
+        /<h[123][^>]*>/i.test(content) &&
+        content.toLowerCase().includes(titleKey);
+      const isContinuationPage =
+        rawTitle.length > 0 && rawTitle === lastEmittedSectionHeading;
+      const title = titleInContent || isContinuationPage || !rawTitle ? '' : rawTitle;
+
+      if (rawTitle && !titleInContent && !isContinuationPage) {
+        lastEmittedSectionHeading = rawTitle;
+      }
 
       // Wrap signature sections to keep all parties on the same page.
       // Pattern: lines with multiple underscores (signature lines) or Arabic
       // party labels (الطرف الأول / الطرف الثاني / Party N / Signature).
       const hasSignaturePattern =
-        /_{4,}|الطرف\s+(الأول|الثاني|الثالث)|party\s+\d|التوقيع|signature/i.test(
-          page.content?.text || '',
-        );
+        hasSignatureContent(page.content?.text || '');
       const wrapSignature = (html: string) =>
         hasSignaturePattern
           ? `<div class="signature-block" style="page-break-inside:avoid;break-inside:avoid;">${html}</div>`
@@ -674,14 +689,6 @@ export class PdfExportService {
     }
 
     return parts.join('');
-  }
-
-  private hasRtlContent(pages: any[]): boolean {
-    const arabicRange = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
-    return pages.some((p: any) => {
-      const text = [p.title, p.content?.text, p.content?.html].filter(Boolean).join(' ');
-      return arabicRange.test(text);
-    });
   }
 
   private renderPlacedImages(images: any[], purify: any): string {

@@ -4,11 +4,13 @@ import {
   Get,
   Body,
   Query,
+  Res,
   HttpCode,
   HttpStatus,
   UseGuards,
   Request,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -59,6 +61,33 @@ export class AuthController {
   @ApiOperation({ summary: 'Login user' })
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Public()
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Start Google OAuth sign-in' })
+  async googleAuth() {
+    // Passport redirects to Google.
+  }
+
+  @Public()
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Handle Google OAuth callback' })
+  async googleAuthCallback(@Request() req: any, @Res() res: Response) {
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3002')
+      .split(',')[0]
+      .trim()
+      .replace(/\/$/, '');
+
+    const payload = req.user;
+    const params = new URLSearchParams({
+      token: payload.token,
+      user: JSON.stringify(payload.user),
+    });
+
+    return res.redirect(`${frontendUrl}/auth/google/callback#${params.toString()}`);
   }
 
   @Public()

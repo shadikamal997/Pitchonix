@@ -5,6 +5,17 @@ import { LAYOUT_RENDERERS, LayoutComponentType } from '../templates/layout-compo
 import { getTemplateConfig } from '../templates/template-configs';
 import { BrandKitService } from './brand-kit.service';
 import { ProTemplateRendererService } from '../pro-templates/renderers/pro-template-renderer.service';
+import {
+  buildTitleFrequency,
+  extractFirstRenderedHeading,
+  hasRtlPdfContent,
+  hasSignatureContent,
+  isRenderablePdfPage,
+  normalizeCoverDescription,
+  normalizeCoverOverview,
+  normalizePdfTextForRendering,
+  resolvePdfPageDisplayTitle,
+} from './rendering-normalization';
 
 interface PreviewCache {
   html: string;
@@ -152,6 +163,7 @@ export class PreviewService {
     proTemplateId?: string | null,
   ): Promise<string> {
     const { pages } = document;
+    const isRtlDocument = hasRtlPdfContent(pages);
 
     // Load the sanitizer lazily so importing the Nest app does not pull ESM
     // jsdom dependencies through Jest before any preview is requested.
@@ -211,7 +223,7 @@ export class PreviewService {
     // Complete HTML with preview-optimized styles — each page is its own A4 container
     const html = `
       <!DOCTYPE html>
-      <html lang="en">
+      <html lang="${isRtlDocument ? 'ar' : 'en'}" dir="${isRtlDocument ? 'rtl' : 'ltr'}">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -224,11 +236,12 @@ export class PreviewService {
           }
 
           body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: ${isRtlDocument ? "'Cairo', 'Noto Sans Arabic', 'Tahoma', 'Arial Unicode MS', Arial, sans-serif" : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"};
             font-size: 16px;
-            line-height: 1.6;
+            line-height: ${isRtlDocument ? '1.8' : '1.6'};
             color: #1F2937;
             background: #525659;
+            direction: ${isRtlDocument ? 'rtl' : 'ltr'};
           }
 
           .preview-container {
@@ -265,6 +278,39 @@ export class PreviewService {
           .layout-two-col table { column-span: all; }
           .layout-two-col .chart-block { column-span: all; }
           .layout-two-col img { max-width: 100%; }
+
+          ${isRtlDocument ? `
+          h1, h2, h3, h4, h5, h6, p, li, td, th, div {
+            text-align: right;
+            unicode-bidi: plaintext;
+          }
+          ul, ol {
+            padding-right: 24px;
+            padding-left: 0;
+          }
+          .section-card {
+            border-right: 4px solid;
+            border-left: none !important;
+          }
+          .footer-block {
+            flex-direction: row-reverse;
+          }
+          ` : ''}
+
+          .signature-block,
+          .signature-block p,
+          .signature-block div {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          h1, h2, h3 {
+            page-break-after: avoid;
+            break-after: avoid;
+          }
+          p {
+            orphans: 3;
+            widows: 3;
+          }
 
           /* Metric grid */
           .layout-metric-grid {
@@ -547,9 +593,12 @@ export class PreviewService {
       kind: 'content';
       pages: any[];
       words: number;
+      headingKey: string;
     }
     type Bucket = SpecialBucket | ContentBucket;
 
+    const renderablePages = pages.filter(isRenderablePdfPage);
+    const titleFrequency = buildTitleFrequency(renderablePages);
     const buckets: Bucket[] = [];
     let current: ContentBucket | null = null;
 
@@ -560,7 +609,7 @@ export class PreviewService {
       }
     };
 
-    for (const page of pages) {
+    for (const page of renderablePages) {
       const pageType: string = page.pageType || 'content';
 
       if (pageType === 'cover' || pageType === 'toc') {
@@ -569,7 +618,7 @@ export class PreviewService {
         continue;
       }
 
-      const rawText: string = String(page.content?.text || '');
+      const rawText: string = normalizePdfTextForRendering(String(page.content?.text || ''));
       const wordCount = rawText.split(/\s+/).filter(Boolean).length;
       const hasVisual = !!(
         page.content?.charts?.length ||
@@ -579,12 +628,32 @@ export class PreviewService {
 
       if (wordCount === 0 && !hasVisual) continue; // skip only truly empty pages
 
-      if (!current) current = { kind: 'content', pages: [], words: 0 };
-
-      // Flush when adding this page would push us well past target
-      if (current.words + wordCount > TARGET_WORDS * 1.25 && current.words >= MIN_WORDS * 2) {
+      // Section-boundary detection: when the incoming page starts a new section
+      // (different heading than the current bucket's lead section), flush the
+      // current bucket first. This prevents stale headings where the bucket-level
+      // card title belongs to section A but the bucket also contains section B.
+      const incomingHeading = extractFirstRenderedHeading(rawText);
+      // Only flush on section boundary if the current bucket already has enough words
+      // to produce a reasonably-filled page on its own. Short sections (< 380 words)
+      // are allowed to merge with the next section so they don't render as sparse pages.
+      if (
+        incomingHeading &&
+        current &&
+        current.headingKey &&
+        incomingHeading !== current.headingKey &&
+        current.words >= 380
+      ) {
         flushCurrent();
-        current = { kind: 'content', pages: [], words: 0 };
+      }
+
+      if (!current) current = { kind: 'content', pages: [], words: 0, headingKey: incomingHeading };
+      if (incomingHeading && !current.headingKey) current.headingKey = incomingHeading;
+
+      // Flush when adding this page would push us well past 2× target (prevents
+      // runaway merging while still allowing two short sections to combine).
+      if (current.words + wordCount > TARGET_WORDS * 2.0 && current.words >= MIN_WORDS * 2) {
+        flushCurrent();
+        current = { kind: 'content', pages: [], words: 0, headingKey: incomingHeading };
       }
 
       current.pages.push(page);
@@ -653,10 +722,12 @@ export class PreviewService {
               subtitle: purify.sanitize(
                 coverData.subtitle || document?.outline?.detectedType || '',
               ),
-              description: purify.sanitize(coverData.description || coverData.summary || ''),
-              overview: Array.isArray(coverData.overview)
-                ? coverData.overview.map((item: string) => purify.sanitize(item))
-                : [],
+              description: purify.sanitize(
+                normalizeCoverDescription(coverData.description || coverData.summary || ''),
+              ),
+              overview: normalizeCoverOverview(coverData.overview).map((item) =>
+                purify.sanitize(item),
+              ),
               date: purify.sanitize(
                 coverData.date ||
                   new Date().toLocaleDateString('en-US', {
@@ -698,10 +769,13 @@ export class PreviewService {
 
       for (let i = 0; i < cb.pages.length; i++) {
         const pg = cb.pages[i];
+        const normalizedText = normalizePdfTextForRendering(String(pg.content?.text || ''));
         const htmlContent =
-          pg.content?.html || this.convertMarkdownToHtml(String(pg.content?.text || ''));
+          pg.content?.html || this.convertMarkdownToHtml(normalizedText);
         const safeContent = purify.sanitize(htmlContent);
-        const pgTitle = purify.sanitize(pg.title || '');
+        const pgTitle = purify.sanitize(
+          resolvePdfPageDisplayTitle(pg, normalizedText, titleFrequency),
+        );
         const textStyles = this.buildTextStyle(pg.content?.styles || {});
         const imageUrl = pg.content?.heroImage || pg.content?.image || '';
         const imageHtml = imageUrl
@@ -709,16 +783,32 @@ export class PreviewService {
           : '';
         const chartsHtml = this.renderChartsHtml(pg.content?.charts || [], style);
 
-        // When multiple DB pages are merged into one A4, show each page's title
-        // as a section sub-header (except the first page, whose title becomes the card title)
-        if (i > 0 && pgTitle) {
+        // Show a sub-header only when this page introduces a different section than
+        // the bucket's lead section. Continuation pages that share the same heading
+        // as the bucket's card title must NOT re-emit it as a sub-header.
+        const isNewSubSection = i > 0 && pgTitle && pgTitle !== cb.headingKey;
+        if (isNewSubSection) {
           combinedContent += `<h3 style="font-size:17px;font-weight:600;color:${primary};margin:22px 0 8px 0;padding-top:14px;border-top:1px solid #E5E7EB;">${pgTitle}</h3>`;
         }
 
-        combinedContent += `<div style="${textStyles}">${safeContent}</div>${imageHtml}${chartsHtml}`;
+        const bodyHtml = `<div style="${textStyles}">${safeContent}</div>${imageHtml}${chartsHtml}`;
+        combinedContent += hasSignatureContent(normalizedText)
+          ? `<div class="signature-block" style="page-break-inside:avoid;break-inside:avoid;">${bodyHtml}</div>`
+          : bodyHtml;
       }
 
-      const primaryTitle = purify.sanitize(cb.pages[0]?.title || '');
+      const firstPageText = normalizePdfTextForRendering(String(cb.pages[0]?.content?.text || ''));
+      const rawPrimaryTitle = resolvePdfPageDisplayTitle(cb.pages[0], firstPageText, titleFrequency);
+
+      // Suppress bucket-level card title when it already appears as a heading
+      // anywhere inside the combined content body (prevents the section title
+      // from being rendered twice — once as card title, once as <h2> in body).
+      const primaryTitleKey = rawPrimaryTitle.toLowerCase().slice(0, Math.min(20, rawPrimaryTitle.length));
+      const primaryTitleInContent =
+        rawPrimaryTitle.length > 0 &&
+        /<h[123][^>]*>/i.test(combinedContent) &&
+        combinedContent.toLowerCase().includes(primaryTitleKey);
+      const primaryTitle = purify.sanitize(primaryTitleInContent ? '' : rawPrimaryTitle);
 
       const headerHTML =
         firstContentPage && document && !hasCoverPage

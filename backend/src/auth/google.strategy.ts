@@ -9,7 +9,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback',
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:4000/api/auth/google/callback',
       scope: ['email', 'profile'],
     });
   }
@@ -21,14 +21,23 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     done: VerifyCallback,
   ): Promise<any> {
     const { id, emails, displayName, photos } = profile;
+    const email = emails?.[0]?.value;
+    if (!email) {
+      return done(new Error('Google account did not provide an email address'), false);
+    }
+
     const user = {
       googleId: id,
-      email: emails[0].value,
-      name: displayName,
+      email,
+      name: displayName || email,
       picture: photos?.[0]?.value,
     };
 
-    const result = await this.authService.validateGoogleUser(user);
-    done(null, result);
+    try {
+      const result = await this.authService.validateGoogleUser(user);
+      done(null, result);
+    } catch (error) {
+      done(error, false);
+    }
   }
 }

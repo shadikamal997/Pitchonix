@@ -39,6 +39,9 @@ export class ExportController {
   @Post('pptx')
   @ApiOperation({ summary: 'Export deck to PPTX' })
   async exportPptx(@Body() dto: ExportDto, @Req() req: any, @Res() res: Response) {
+    // Phase Ω.CERT.FINAL — verify deck ownership before exporting. Throws
+    // ForbiddenException for non-owners / soft-deleted decks.
+    await this.exportService.verifyDeckOwnership(dto.deckId, req.user?.id);
     // Create export record
     const exportRecord = await this.exportService.createExportRecord(dto.deckId, 'pptx');
 
@@ -86,6 +89,8 @@ export class ExportController {
   @Post('pdf')
   @ApiOperation({ summary: 'Export deck to PDF' })
   async exportPdf(@Body() dto: ExportDto, @Req() req: any, @Res() res: Response) {
+    // Phase Ω.CERT.FINAL — verify deck ownership before exporting.
+    await this.exportService.verifyDeckOwnership(dto.deckId, req.user?.id);
     const exportRecord = await this.exportService.createExportRecord(dto.deckId, 'pdf');
 
     try {
@@ -216,6 +221,9 @@ export class ExportController {
   @ApiOperation({ summary: 'Export deck with template and options' })
   async exportWithOptions(@Body() dto: ExportWithOptionsDto, @Req() req: any) {
     const userId = req.user.id;
+
+    // Phase Ω.CERT.FINAL — verify deck ownership before exporting.
+    await this.exportService.verifyDeckOwnership(dto.deckId, userId);
 
     // Create export record
     const exportRecord = await this.exportService.createExportRecord(dto.deckId, dto.format);

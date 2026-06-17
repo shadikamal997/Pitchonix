@@ -70,6 +70,7 @@ const SLIDE_TYPE_TO_COMPONENT: Partial<Record<SlideType, SmartComponentType>> = 
   [SlideType.FINANCIALS]: 'financialDashboard',
   [SlideType.CASE_STUDY]: 'caseStudyBlock',
   [SlideType.COMPANY_OVERVIEW]: 'companyOverviewBlock',
+  [SlideType.RISKS]: 'riskMatrix',
 };
 
 /** Default family by document type. Falls back to `investor-minimal`. */

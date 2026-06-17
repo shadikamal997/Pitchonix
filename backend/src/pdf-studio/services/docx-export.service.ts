@@ -16,6 +16,7 @@ import {
   PageBreak,
   UnderlineType,
 } from 'docx';
+import { buildSafePdfStudioDocument } from './safe-document-model';
 
 @Injectable()
 export class DocxExportService {
@@ -43,11 +44,12 @@ export class DocxExportService {
 
   private async buildDocxDocument(document: any): Promise<Document> {
     const children: any[] = [];
+    const safeDocument = buildSafePdfStudioDocument(document);
 
     // Title page from document metadata
     children.push(
       new Paragraph({
-        text: document.title,
+        text: safeDocument.title,
         heading: HeadingLevel.TITLE,
         alignment: AlignmentType.CENTER,
         spacing: { after: 400 },
@@ -72,27 +74,22 @@ export class DocxExportService {
     );
 
     // Process pages — skip TOC, render cover as styled title block
-    const contentPages = (document.pages as any[]).filter((p) => p.pageType !== 'toc');
+    const contentPages = safeDocument.pages.filter((p) => p.pageType !== 'toc');
 
     for (let i = 0; i < contentPages.length; i++) {
       const page = contentPages[i];
 
       if (page.pageType === 'cover') {
-        let coverData: any = {};
-        try {
-          coverData = JSON.parse(page.content?.text || '{}');
-        } catch (_) {
-          coverData = { title: page.title || document.title };
-        }
+        const coverData = page.cover;
         children.push(
           new Paragraph({
-            text: coverData.title || document.title,
+            text: coverData?.title || safeDocument.title,
             heading: HeadingLevel.HEADING_1,
             alignment: AlignmentType.CENTER,
             spacing: { before: 400, after: 200 },
           }),
         );
-        if (coverData.subtitle) {
+        if (coverData?.subtitle) {
           children.push(
             new Paragraph({
               text: coverData.subtitle,
@@ -108,10 +105,10 @@ export class DocxExportService {
       }
 
       // Section heading
-      if (page.title) {
+      if (page.displayTitle) {
         children.push(
           new Paragraph({
-            text: page.title,
+            text: page.displayTitle,
             heading: HeadingLevel.HEADING_1,
             spacing: { before: 400, after: 200 },
             border: {
@@ -122,8 +119,7 @@ export class DocxExportService {
       }
 
       // Parse and render markdown content
-      const rawText = page.content?.text || '';
-      const paragraphs = this.parseMarkdownToParagraphs(rawText);
+      const paragraphs = this.parseMarkdownToParagraphs(page.normalizedText);
       children.push(...paragraphs);
 
       // Page break between pages (except last)

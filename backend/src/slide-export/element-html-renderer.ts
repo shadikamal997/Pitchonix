@@ -302,7 +302,7 @@ function renderText(
   const spacing = fit?.letterSpacing != null ? `letter-spacing:${fit.letterSpacing}px;` : '';
   const style = `font-size:${size}px;${weight ? `font-weight:${weight};` : ''}line-height:${lineHeight};${spacing}${clamp}color:#111827;${textStyleAttr(el.style)}`;
   if (html && html.trim()) {
-    return `<div class="el-rt fit-text" style="${style}">${html}</div>`;
+    return `<div class="el-rt fit-text" style="${style}">${sanitizeRichHtml(html)}</div>`;
   }
   return `<div class="el-rt fit-text" style="${style}">${escapeHtml(text)}</div>`;
 }
@@ -343,7 +343,7 @@ function renderBulletList(el: SlideElementDTO): string {
   const items: any[] = (el.content as any)?.items || [];
   const li = items
     .map((it) => {
-      const body = it.html && it.html.trim() ? it.html : escapeHtml(it.text || '');
+      const body = it.html && it.html.trim() ? sanitizeRichHtml(it.html) : escapeHtml(it.text || '');
       return `<li><span class="marker marker-dot"></span><span>${body}</span></li>`;
     })
     .join('');
@@ -354,7 +354,7 @@ function renderNumberedList(el: SlideElementDTO): string {
   const items: any[] = (el.content as any)?.items || [];
   const li = items
     .map((it) => {
-      const body = it.html && it.html.trim() ? it.html : escapeHtml(it.text || '');
+      const body = it.html && it.html.trim() ? sanitizeRichHtml(it.html) : escapeHtml(it.text || '');
       return `<li><span class="marker"></span><span>${body}</span></li>`;
     })
     .join('');
@@ -652,9 +652,6 @@ function renderTeamCard(el: SlideElementDTO): string {
   const nSize = count <= 2 ? 16 : count <= 4 ? 14 : 13;
   const rSize = count <= 2 ? 13 : 12;
   const bSize = 13;
-  // Limit bio to 100 chars for 2-col, 80 for 3-col
-  const bioMax = count <= 4 ? 100 : 0;
-
   const cardCss = `flex:1 1 calc(${100 / cols}% - 12px);padding:${pad}px 14px;background:${surfBg};border:1px solid ${surfBdr};border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:${count <= 2 ? 10 : 6}px;overflow:hidden;`;
 
   return `<div style="display:flex;gap:12px;width:100%;height:100%;flex-wrap:wrap;align-content:flex-start;">${members
@@ -668,7 +665,7 @@ function renderTeamCard(el: SlideElementDTO): string {
       }
       <div style="font-size:${nSize}px;font-weight:700;color:${textCol};text-align:center;line-height:1.2;">${escapeHtml(m.name || '')}</div>
       ${m.role ? `<div style="font-size:${rSize}px;font-weight:600;color:${accent};text-align:center;letter-spacing:0.02em;">${escapeHtml(m.role)}</div>` : ''}
-      ${m.bio && bioMax > 0 ? `<div style="font-size:${bSize}px;color:${mutedCol};text-align:center;line-height:1.4;overflow:hidden;">${escapeHtml((m.bio || '').slice(0, bioMax))}</div>` : ''}
+      ${m.bio ? `<div style="font-size:${bSize}px;color:${mutedCol};text-align:center;line-height:1.4;">${escapeHtml(m.bio || '')}</div>` : ''}
     </div>`,
     )
     .join('')}</div>`;
@@ -829,4 +826,43 @@ function escapeHtml(s: any): string {
 
 function escapeAttr(s: any): string {
   return escapeHtml(s).replace(/'/g, '&#39;');
+}
+
+// Phase Ω.CERT — server-side rich-text sanitizer.
+//
+// Element rich text (`el.content.html`) is editor-authored markup (bold,
+// italic, lists, spans). It is injected raw into export HTML and then rendered
+// by Puppeteer. Because decks can be shared with workspace members and
+// collaborators, an attacker-controlled `html` payload is a STORED-XSS vector
+// the moment a second user previews or exports the deck. We strip the
+// dangerous surface — script/style/iframe/object/embed/form/link tags, inline
+// event handlers (`on*=`), and `javascript:`/`vbscript:`/`data:` URIs — while
+// preserving the benign formatting tags the editor actually emits.
+function sanitizeRichHtml(input: any): string {
+  if (input === null || input === undefined) return '';
+  let html = String(input);
+  // Drop entire dangerous elements including their content.
+  html = html.replace(
+    /<\s*(script|style|iframe|object|embed|form|link|meta|base|svg|math)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi,
+    '',
+  );
+  // Drop self-closing / unclosed dangerous tags.
+  html = html.replace(
+    /<\s*\/?\s*(script|style|iframe|object|embed|form|link|meta|base|svg|math)\b[^>]*>/gi,
+    '',
+  );
+  // Strip inline event handlers: on*="..." / on*='...' / on*=value.
+  html = html.replace(/\son[a-z0-9_-]+\s*=\s*"[^"]*"/gi, '');
+  html = html.replace(/\son[a-z0-9_-]+\s*=\s*'[^']*'/gi, '');
+  html = html.replace(/\son[a-z0-9_-]+\s*=\s*[^\s>]+/gi, '');
+  // Neutralise dangerous URI schemes in href/src/style.
+  html = html.replace(
+    /((?:href|src|xlink:href|action)\s*=\s*['"]?)\s*(?:javascript|vbscript|data)\s*:/gi,
+    '$1#',
+  );
+  // Strip CSS expression()/url(javascript:) inside any surviving style="".
+  html = html.replace(/style\s*=\s*"([^"]*)"/gi, (_m, css) =>
+    `style="${String(css).replace(/(expression|javascript|vbscript)\s*[:(]/gi, '')}"`,
+  );
+  return html;
 }

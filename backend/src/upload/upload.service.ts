@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -174,6 +174,38 @@ export class UploadService {
       this.logger.error(`Failed to delete image: ${error.message}`);
       // Don't throw error if file doesn't exist
     }
+  }
+
+  /**
+   * Phase Ω.CERT.FINAL — ownership-enforcing delete for the HTTP endpoint.
+   *
+   * `deleteImage()` above stays trusted (internal callers: project deletion,
+   * brand-asset replacement). This variant is what the authenticated HTTP
+   * `DELETE /upload/:filename` route calls: it resolves the asset's owner from
+   * the UploadedAsset ledger and throws ForbiddenException unless the caller
+   * owns it (directly or via the parent project). Untracked files (no ledger
+   * row) are denied — every API upload records a row, so a missing row means
+   * the caller cannot prove ownership.
+   */
+  async deleteImageOwnedBy(filename: string, userId: string | undefined): Promise<void> {
+    if (!userId) {
+      throw new ForbiddenException('You do not have permission to delete this file');
+    }
+    const safeName = path.basename(filename);
+    const publicPath = `/uploads/${safeName}`;
+    const asset = await this.uploadedAssetService.findByPublicPath(publicPath);
+
+    const owns =
+      !!asset &&
+      !asset.deletedAt &&
+      (asset.userId === userId || asset.project?.userId === userId);
+
+    if (!owns) {
+      throw new ForbiddenException('You do not have permission to delete this file');
+    }
+
+    await this.deleteImage(safeName);
+    await this.uploadedAssetService.markDeletedByPublicPath(publicPath);
   }
 
   /**

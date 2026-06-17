@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import puppeteer, { Browser, Page } from 'puppeteer';
 import { VisualSlideContent } from '../visual/types';
 import { HTMLPreviewService } from './html-preview.service';
@@ -6,25 +6,66 @@ import { HTMLPreviewService } from './html-preview.service';
 /**
  * PDF Export Service
  * Exports presentations to PDF format using Puppeteer
+ *
+ * Phase Ω.CERT.FINAL — browser lifecycle hardening.
+ *   • OnModuleDestroy guarantees the singleton Chromium is closed on shutdown
+ *     (previously it leaked: `cleanup()` was never wired to a lifecycle hook).
+ *   • A 'disconnected' listener nulls the reference when Chromium crashes, so
+ *     getBrowser() relaunches instead of handing back a dead/zombie browser.
+ *   • A re-entrancy guard prevents two concurrent first-callers from launching
+ *     two browsers (only one becomes the singleton; the rest reuse it).
  */
 @Injectable()
-export class PDFExportService {
+export class PDFExportService implements OnModuleDestroy {
   private readonly logger = new Logger(PDFExportService.name);
   private browser: Browser | null = null;
+  private launching: Promise<Browser> | null = null;
 
   constructor(private htmlPreviewService: HTMLPreviewService) {}
 
   /**
-   * Initialize browser instance
+   * Initialize browser instance (single shared Chromium, crash-resilient).
    */
   private async getBrowser(): Promise<Browser> {
-    if (!this.browser) {
-      this.browser = await puppeteer.launch({
+    // Reuse a healthy, connected browser.
+    if (this.browser && this.browser.connected) {
+      return this.browser;
+    }
+    // A crashed/disconnected reference must be discarded before relaunch.
+    if (this.browser && !this.browser.connected) {
+      this.browser = null;
+    }
+    // Coalesce concurrent launches so we never spawn duplicate Chromium procs.
+    if (this.launching) {
+      return this.launching;
+    }
+    this.launching = puppeteer
+      .launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      })
+      .then((browser) => {
+        browser.on('disconnected', () => {
+          this.logger.warn('Chromium disconnected; clearing browser reference');
+          this.browser = null;
+        });
+        this.browser = browser;
+        this.launching = null;
+        return browser;
+      })
+      .catch((err) => {
+        this.launching = null;
+        throw err;
       });
-    }
-    return this.browser;
+    return this.launching;
+  }
+
+  /**
+   * NestJS lifecycle hook — close Chromium when the module is torn down so no
+   * browser process is left running after shutdown / hot-reload.
+   */
+  async onModuleDestroy(): Promise<void> {
+    await this.cleanup();
   }
 
   /**

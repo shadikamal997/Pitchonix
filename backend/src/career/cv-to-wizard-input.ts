@@ -17,7 +17,7 @@ export interface CvToWizardOptions {
   documentType?: string;
   /** Override the theme family. */
   theme?: string;
-  /** Max experience entries to include in team section. */
+  /** Deprecated: all experience entries are preserved. */
   maxExperience?: number;
 }
 
@@ -40,7 +40,6 @@ export function cvToWizardInput(
   const {
     documentType = 'company_profile',
     theme = 'investor-minimal',
-    maxExperience = 5,
   } = options;
 
   const p = profile.personal || {};
@@ -58,50 +57,46 @@ export function cvToWizardInput(
 
   // ---- Solution — top projects / core wins ----------------------------------
   const solutionParts: string[] = [];
-  for (const proj of (profile.projects || []).slice(0, 3)) {
+  for (const proj of profile.projects || []) {
     const line = [proj.name, proj.description].filter(Boolean).join(': ');
     if (line) solutionParts.push(line);
   }
   // If no projects, use top experience bullets
   if (!solutionParts.length) {
-    for (const exp of profile.experience.slice(0, 2)) {
-      for (const b of (exp.bullets || []).slice(0, 2)) {
+    for (const exp of profile.experience) {
+      for (const b of exp.bullets || []) {
         solutionParts.push(b);
       }
     }
   }
-  const solution = solutionParts.slice(0, 4).join('\n') || shortDescription;
+  const solution = solutionParts.join('\n') || shortDescription;
 
   // ---- Team — structured teamMembers from experience -----------------------
   const teamMembers = profile.experience
-    .slice(0, maxExperience)
     .map((exp: CvExperience, i: number) => ({
       name: i === 0 ? name : exp.company,
       role: exp.role,
       experience: buildRoleSummary(exp),
-      responsibilities: (exp.bullets || []).slice(0, 3).join('; ') || undefined,
+      responsibilities: (exp.bullets || []).join('; ') || undefined,
     }));
 
   // ---- Skills → productService / differentiation ---------------------------
   const techSkills = profile.skills
     .filter((s: CvSkill) => ['technical', 'tool'].includes(s.category))
-    .map((s: CvSkill) => s.name)
-    .slice(0, 12);
+    .map((s: CvSkill) => s.name);
   const softSkills = profile.skills
     .filter((s: CvSkill) => ['business', 'soft'].includes(s.category))
-    .map((s: CvSkill) => s.name)
-    .slice(0, 6);
+    .map((s: CvSkill) => s.name);
   const productService = techSkills.join(', ') || shortDescription;
   const differentiation = softSkills.join(', ') || 'Domain expertise, execution track record';
 
   // ---- Traction — extract metrics from experience bullets ------------------
   const metricLines = extractMetrics(profile.experience);
-  const traction = metricLines.slice(0, 4).join('\n') || buildTractionSummary(profile);
+  const traction = metricLines.join('\n') || buildTractionSummary(profile);
 
   // ---- Education → roadmap -------------------------------------------------
   const roadmap =
     profile.education
-      .slice(0, 3)
       .map((ed) => {
         const period = [ed.start, ed.end].filter(Boolean).join('–') || '';
         const degree = [ed.degree, ed.field].filter(Boolean).join(' in ') || 'Degree';
@@ -111,7 +106,6 @@ export function cvToWizardInput(
 
   // ---- Certifications → awards section text --------------------------------
   const certText = (profile.certifications || [])
-    .slice(0, 4)
     .map((c) => `${c.name} — ${c.issuer}${c.date ? ` (${c.date})` : ''}`)
     .join('\n');
 
@@ -162,7 +156,6 @@ export function cvToWizardInput(
 function buildSummaryFromExperience(experience: CvExperience[]): string {
   if (!experience.length) return 'Results-driven professional with cross-functional expertise.';
   const roles = experience
-    .slice(0, 3)
     .map((e) => `${e.role} at ${e.company}`)
     .join(', ');
   return `Experienced professional with roles including ${roles}. Focused on delivering measurable results.`;
@@ -170,7 +163,7 @@ function buildSummaryFromExperience(experience: CvExperience[]): string {
 
 function buildRoleSummary(exp: CvExperience): string {
   const period = [exp.start, exp.end || 'Present'].join('–');
-  return `${exp.company} (${period}): ${(exp.bullets || []).slice(0, 2).join('; ')}`;
+  return `${exp.company} (${period}): ${(exp.bullets || []).join('; ')}`;
 }
 
 function extractMetrics(experience: CvExperience[]): string[] {
@@ -180,12 +173,11 @@ function extractMetrics(experience: CvExperience[]): string[] {
   for (const exp of experience) {
     for (const b of exp.bullets || []) {
       if (METRIC_RE.test(b)) {
-        found.push(b.slice(0, 120));
-        if (found.length >= 6) return found;
+        found.push(b);
       }
     }
     for (const m of exp.metrics || []) {
-      found.push(m.slice(0, 80));
+      found.push(m);
     }
   }
   return found;
@@ -194,14 +186,13 @@ function extractMetrics(experience: CvExperience[]): string[] {
 function extractKpiMetrics(profile: CvProfileDto) {
   const metrics = extractMetrics(profile.experience);
   if (!metrics.length) return [];
-  return metrics.slice(0, 4).map((m, i) => {
+  return metrics.map((m, i) => {
     const val = m.match(/(?:\$[\d.]+[KMB]?|\d+[%xX×]|\d+[KMB]\+?)/)?.[0] || `Metric ${i + 1}`;
     const label =
       m
         .replace(val, '')
         .replace(/[,.:;]+/g, ' ')
-        .trim()
-        .slice(0, 40) || 'Achievement';
+        .trim() || 'Achievement';
     return { label, value: val, trend: undefined };
   });
 }

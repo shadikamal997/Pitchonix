@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
 import PptxGenJS from 'pptxgenjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { join } from 'path';
@@ -853,6 +853,27 @@ export class ExportService {
   /**
    * Create export record
    */
+  /**
+   * Phase Ω.CERT.FINAL — ownership gate for deck exports.
+   *
+   * Throws ForbiddenException when the deck does not belong to the requesting
+   * user (via deck → project → userId). Called before any export path so a
+   * caller cannot export another user's deck by guessing its ID. Soft-deleted
+   * decks (deletedAt set) are also rejected.
+   */
+  async verifyDeckOwnership(deckId: string, userId: string): Promise<void> {
+    if (!deckId || !userId) {
+      throw new ForbiddenException('You do not have permission to export this deck');
+    }
+    const deck = await this.prisma.deck.findFirst({
+      where: { id: deckId, deletedAt: null, project: { userId } },
+      select: { id: true },
+    });
+    if (!deck) {
+      throw new ForbiddenException('You do not have permission to export this deck');
+    }
+  }
+
   async createExportRecord(deckId: string, format: string) {
     return this.prisma.export.create({
       data: {

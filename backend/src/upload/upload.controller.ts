@@ -77,8 +77,13 @@ export class UploadController {
 
   @Delete(':filename')
   @ApiOperation({ summary: 'Delete uploaded image' })
-  async deleteImage(@Param('filename') filename: string): Promise<{ message: string }> {
-    await this.uploadService.deleteImage(filename);
+  async deleteImage(
+    @Param('filename') filename: string,
+    @GetUser() user: any,
+  ): Promise<{ message: string }> {
+    // Phase Ω.CERT.FINAL — enforce ownership: only the uploader (or the owner of
+    // the parent project) may delete an asset via the API.
+    await this.uploadService.deleteImageOwnedBy(filename, user?.id);
     return { message: 'Image deleted successfully' };
   }
 }

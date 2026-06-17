@@ -37,7 +37,12 @@ export class ExecutiveSummarySlideGenerator extends BaseSlideGenerator {
   }
 
   isApplicable(input: WizardInput): boolean {
-    return input.includeExecutiveSummary === true;
+    return (
+      input.includeExecutiveSummary === true ||
+      input.documentType === 'strategy_presentation' ||
+      input.documentType === 'board_meeting_deck' ||
+      input.documentType === 'board_meeting'
+    );
   }
   getTitle(input: WizardInput): string {
     return execSummaryTitle(input);
@@ -173,7 +178,10 @@ export class ProductFeaturesSlideGenerator extends BaseSlideGenerator {
   }
 
   isApplicable(input: WizardInput): boolean {
-    return !!input.solution && input.contentDepth === 'detailed';
+    return (
+      (!!input.solution && input.contentDepth === 'detailed') ||
+      input.documentType === 'training_presentation'
+    );
   }
   getTitle(input: WizardInput): string {
     return featuresTitle(input);
@@ -206,7 +214,12 @@ export class VisionSlideGenerator extends BaseSlideGenerator {
   }
 
   isApplicable(input: WizardInput): boolean {
-    return input.contentDepth === 'detailed' || input.documentType === 'company_profile';
+    return (
+      input.contentDepth === 'detailed' ||
+      input.documentType === 'company_profile' ||
+      input.documentType === 'strategy_presentation' ||
+      input.documentType === 'training_presentation'
+    );
   }
   getTitle(input: WizardInput): string {
     return visionTitle(input);

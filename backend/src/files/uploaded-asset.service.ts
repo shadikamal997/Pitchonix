@@ -76,6 +76,24 @@ export class UploadedAssetService {
   }
 
   /**
+   * Phase Ω.CERT.FINAL — soft-delete the ledger row when its physical file is
+   * removed, so the asset can no longer authorize downloads and isn't left as a
+   * dangling "active" record pointing at a deleted file.
+   */
+  async markDeletedByPublicPath(publicPath: string): Promise<void> {
+    try {
+      await this.prisma.uploadedAsset.updateMany({
+        where: { publicPath, deletedAt: null },
+        data: { deletedAt: new Date() },
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Failed to mark UploadedAsset deleted ${publicPath}: ${(err as any)?.message}`,
+      );
+    }
+  }
+
+  /**
    * Ownership decision for the gate.
    *   true  → allow   (owner / parent-owner / public)
    *   false → deny     (someone else's private/shared asset, or soft-deleted)

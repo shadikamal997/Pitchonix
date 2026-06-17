@@ -25,7 +25,7 @@ export const CoverPageLayout: LayoutRenderer = {
 
     return `
       <div class="cover-page" style="
-        min-height: 297mm;
+        min-height: calc(297mm - 30mm);
         background: white;
         display: flex;
         flex-direction: column;

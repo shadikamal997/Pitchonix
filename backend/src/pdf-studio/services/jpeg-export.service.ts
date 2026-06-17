@@ -49,9 +49,9 @@ export class JpegExportService {
       (document as any).proTemplateId,
     );
 
-    // Render full preview to JPEG
-    this.logger.log(`Rendering document as JPEG (quality: ${quality})`);
-    const jpegBuffer = await this.browserPool.executeWithBrowser(async (browser) => {
+    // Render each preview page to its own JPEG.
+    this.logger.log(`Rendering document pages as JPEG (quality: ${quality})`);
+    const jpegBuffers = await this.browserPool.executeWithBrowser(async (browser) => {
       const page = await browser.newPage();
 
       try {
@@ -65,14 +65,22 @@ export class JpegExportService {
         // Load HTML content
         await page.setContent(fullHtml, { waitUntil: 'load' });
 
-        // Take screenshot
-        const screenshot = await page.screenshot({
-          type: 'jpeg',
-          quality,
-          fullPage: true,
-        });
+        const pageElements = await page.$$('.a4-page');
+        const targets = pageElements.length ? pageElements : [await page.$('body')].filter(Boolean);
+        const selectedIndexes = this.selectedPageIndexes(targets.length, options.pages || 'all');
+        const buffers: Buffer[] = [];
 
-        return Buffer.from(screenshot);
+        for (const index of selectedIndexes) {
+          const handle = targets[index];
+          if (!handle) continue;
+          const screenshot = await handle.screenshot({
+            type: 'jpeg',
+            quality,
+          });
+          buffers.push(Buffer.from(screenshot));
+        }
+
+        return buffers;
       } finally {
         await page.close();
       }
@@ -81,10 +89,18 @@ export class JpegExportService {
     const filename = `${document.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_export`;
 
     return {
-      jpegBuffers: [jpegBuffer],
+      jpegBuffers,
       filename,
-      isZip: false, // Single image for now
+      isZip: jpegBuffers.length > 1,
     };
+  }
+
+  private selectedPageIndexes(total: number, pages: 'all' | number[]): number[] {
+    if (pages === 'all') return Array.from({ length: total }, (_, index) => index);
+    const seen = new Set<number>();
+    return pages
+      .map((pageNumber) => Math.trunc(Number(pageNumber)) - 1)
+      .filter((index) => index >= 0 && index < total && !seen.has(index) && (seen.add(index), true));
   }
 
   /**
@@ -100,9 +116,8 @@ export class JpegExportService {
       archive.on('end', () => resolve(Buffer.concat(chunks)));
       archive.on('error', reject);
 
-      // Add each JPEG to the archive
       jpegBuffers.forEach((buffer, index) => {
-        const pageFilename = `${filename}_page_${String(index + 1).padStart(3, '0')}.jpg`;
+        const pageFilename = `page-${String(index + 1).padStart(3, '0')}.jpg`;
         archive.append(buffer, { name: pageFilename });
       });
 

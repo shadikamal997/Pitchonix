@@ -31,6 +31,7 @@ export class GoToMarketSlideGenerator extends BaseSlideGenerator {
   isApplicable(input: WizardInput): boolean {
     return (
       input.documentType === 'business_plan' ||
+      input.documentType === 'strategy_presentation' ||
       (input.contentDepth === 'detailed' && !!input.targetCustomers)
     );
   }

@@ -60,8 +60,21 @@ export async function isPlatformAdmin(prisma: PrismaService, userId: string): Pr
     return !!(u?.email && allow.includes(u.email.toLowerCase()));
   }
 
-  // Fallback for self-hosted / single-tenant deployments where ADMIN_EMAILS is
-  // not set: the workspace owner acts as the platform admin.
+  // Phase Ω.CERT.FINAL — fail closed when ADMIN_EMAILS is unset.
+  //
+  // Previously this inferred platform-admin from "is a workspace owner", so
+  // anyone who created a workspace gained access to ALL tenants' data, GDPR
+  // exports, and retention controls whenever the env var was missing. Platform
+  // admin is now NEVER inferred: a multi-tenant deployment MUST set ADMIN_EMAILS.
+  //
+  // Self-hosted / single-tenant operators who deliberately want the workspace
+  // owner to act as platform admin must opt in EXPLICITLY (not by accident of a
+  // missing env var) via ALLOW_WORKSPACE_OWNER_ADMIN=true.
+  const allowWorkspaceOwnerAdmin =
+    String(process.env.ALLOW_WORKSPACE_OWNER_ADMIN || '').toLowerCase() === 'true';
+  if (!allowWorkspaceOwnerAdmin) {
+    return false;
+  }
   const ownerRow = await prisma.workspaceMember.findFirst({
     where: { userId, role: 'owner' },
     select: { id: true },

@@ -25,6 +25,7 @@ import {
   CaseStudySlideGenerator,
   CompanyOverviewSlideGenerator,
 } from './specialized-slides.generator';
+import { RisksSlideGenerator } from './risks.generator';
 
 /**
  * SlideFactory
@@ -65,6 +66,7 @@ export class SlideFactory {
     this.generators.push(new FinancialsSlideGenerator());
     this.generators.push(new CaseStudySlideGenerator());
     this.generators.push(new CompanyOverviewSlideGenerator());
+    this.generators.push(new RisksSlideGenerator());
   }
 
   /**
@@ -135,6 +137,7 @@ export class SlideFactory {
     if ((s.kpis?.length ?? 0) >= 3) promoted.push(SlideType.TRACTION);
     if (!!s.financials?.revenue || (s.financials?.projections?.length ?? 0) > 0)
       promoted.push(SlideType.FINANCIALS);
+    if ((s.swot?.threats?.length ?? 0) > 0) promoted.push(SlideType.RISKS);
     return promoted;
   }
 
@@ -238,6 +241,7 @@ export class SlideFactory {
         SlideType.BUSINESS_MODEL,
         SlideType.TRACTION,
         SlideType.FINANCIALS,
+        SlideType.RISKS,
         SlideType.ROADMAP,
         SlideType.ASK,
       ],
@@ -247,6 +251,7 @@ export class SlideFactory {
         SlideType.BUSINESS_MODEL,
         SlideType.TRACTION,
         SlideType.FINANCIALS,
+        SlideType.RISKS,
         SlideType.ROADMAP,
         SlideType.ASK,
       ],
@@ -269,9 +274,11 @@ export class SlideFactory {
         SlideType.COVER,
         SlideType.EXECUTIVE_SUMMARY,
         SlideType.MARKET_OPPORTUNITY,
+        SlideType.VISION,
         SlideType.COMPETITION,
         SlideType.GO_TO_MARKET,
         SlideType.ROADMAP,
+        SlideType.TRACTION,
         SlideType.TEAM,
       ],
       case_study: [

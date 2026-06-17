@@ -226,6 +226,7 @@ export class AuthService {
         createdAt: true,
         isVerified: true,
         onboardingCompleted: true,
+        picture: true,
       },
     });
     if (!user) throw new UnauthorizedException();
@@ -239,7 +240,7 @@ export class AuthService {
     picture?: string;
   }) {
     // Check if user exists by Google ID
-    let user = await (this.prisma.user as any).findFirst({
+    let user = await this.prisma.user.findUnique({
       where: { googleId: googleUser.googleId },
     });
 
@@ -257,7 +258,7 @@ export class AuthService {
             googleId: googleUser.googleId,
             picture: googleUser.picture,
             isVerified: true,
-          } as any,
+          },
         });
       }
     }
@@ -272,7 +273,7 @@ export class AuthService {
           picture: googleUser.picture,
           isVerified: true,
           password: '', // No password for OAuth users
-        } as any,
+        },
       });
     }
 
@@ -286,7 +287,7 @@ export class AuthService {
         isVerified: user.isVerified,
         onboardingCompleted: user.onboardingCompleted,
         twoFactorEnabled: user.twoFactorEnabled,
-        picture: (user as any).picture,
+        picture: user.picture,
       },
       token,
     };

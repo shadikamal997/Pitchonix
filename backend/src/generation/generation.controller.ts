@@ -1,9 +1,20 @@
-import { Controller, Post, Body, UseGuards, Get, Param, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Param,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../pdf-studio/guards/admin.guard';
+import { GetUser } from '../auth/get-user.decorator';
 import { GenerateDto } from './dto/generate.dto';
 import { QualityReportDto } from './dto/quality-report.dto';
 import { GenerationStatusDto } from './dto/generation-status.dto';
@@ -48,6 +59,38 @@ export class GenerationController {
     private scorecardService: DocumentScorecardService,
     private pipeline: UnifiedGenerationPipeline,
   ) {}
+
+  // ---------------------------------------------------------------------------
+  //  Phase Ω.CERT.FINAL — ownership enforcement helpers.
+  //
+  //  Every endpoint that accepts a projectId / deckId / jobId from the request
+  //  MUST resolve ownership before touching the resource. These helpers throw
+  //  ForbiddenException (or NotFoundException) for non-owners, closing the IDOR
+  //  class that previously let any authenticated user act on any project/deck.
+  // ---------------------------------------------------------------------------
+  private async assertProjectOwner(projectId: string, userId: string): Promise<void> {
+    if (!projectId) throw new NotFoundException('Project not found');
+    const project = await this.prisma.project.findFirst({
+      where: { id: projectId, userId },
+      select: { id: true },
+    });
+    if (!project) {
+      // Don't disclose existence to non-owners — 403 for both "not yours" and
+      // "doesn't exist" so the endpoint can't be used as a project oracle.
+      throw new ForbiddenException('You do not have permission to access this project');
+    }
+  }
+
+  private async assertDeckOwner(deckId: string, userId: string): Promise<void> {
+    if (!deckId) throw new NotFoundException('Deck not found');
+    const deck = await this.prisma.deck.findFirst({
+      where: { id: deckId, project: { userId } },
+      select: { id: true },
+    });
+    if (!deck) {
+      throw new ForbiddenException('You do not have permission to access this deck');
+    }
+  }
 
   // ---------------------------------------------------------------------------
   //  applyBrandAssets — drop user-uploaded logo + photos into the deck.
@@ -156,7 +199,10 @@ export class GenerationController {
 
   @Post()
   @ApiOperation({ summary: 'Generate a new deck or PDF document (queue job)' })
-  async generate(@Body() dto: GenerateDto) {
+  async generate(@Body() dto: GenerateDto, @GetUser() user: any) {
+    // Phase Ω.CERT.FINAL — verify the caller owns the target project before
+    // generating into it (previously dto.projectId was trusted blindly).
+    await this.assertProjectOwner(dto.projectId, user.id);
     // Determine document format based on type
     const documentType = dto.input.documentType;
     const format = this.getDocumentFormat(documentType);
@@ -289,11 +335,18 @@ export class GenerationController {
 
   @Get('status/:jobId')
   @ApiOperation({ summary: 'Get generation job status' })
-  async getStatus(@Param('jobId') jobId: string) {
+  async getStatus(@Param('jobId') jobId: string, @GetUser() user: any) {
     const job = await this.generationQueue.getJob(jobId);
 
     if (!job) {
       return { status: 'not_found' };
+    }
+
+    // Phase Ω.CERT.FINAL — a job exposes deck/project data; only the owner of
+    // the underlying project may read its status.
+    const jobProjectId = job.data?.projectId;
+    if (jobProjectId) {
+      await this.assertProjectOwner(jobProjectId, user.id);
     }
 
     const state = await job.getState();
@@ -311,7 +364,11 @@ export class GenerationController {
   @ApiOperation({ summary: 'Get quality report for a deck' })
   @ApiResponse({ status: 200, description: 'Quality report retrieved', type: QualityReportDto })
   @ApiResponse({ status: 404, description: 'Deck not found' })
-  async getQualityReport(@Param('deckId') deckId: string): Promise<QualityReportDto> {
+  async getQualityReport(
+    @Param('deckId') deckId: string,
+    @GetUser() user: any,
+  ): Promise<QualityReportDto> {
+    await this.assertDeckOwner(deckId, user.id);
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },
       select: {
@@ -380,7 +437,8 @@ export class GenerationController {
    */
   @Get('scorecard/:deckId')
   @ApiOperation({ summary: 'Phase 30 — full document scorecard (framework, business, readiness)' })
-  async getScorecard(@Param('deckId') deckId: string) {
+  async getScorecard(@Param('deckId') deckId: string, @GetUser() user: any) {
+    await this.assertDeckOwner(deckId, user.id);
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },
       include: {
@@ -427,7 +485,9 @@ export class GenerationController {
   async applyBrandAssetsEndpoint(
     @Param('projectId') projectId: string,
     @Body() body: { logoUrl?: string | null; imageUrls?: string[] },
+    @GetUser() user: any,
   ) {
+    await this.assertProjectOwner(projectId, user.id);
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: { decks: { include: { slides: { select: { id: true } } } } },
@@ -481,7 +541,8 @@ export class GenerationController {
   @ApiOperation({
     summary: 'Synchronously regenerate slides via the unified pipeline (REGENERATE command)',
   })
-  async regenerate(@Param('projectId') projectId: string) {
+  async regenerate(@Param('projectId') projectId: string, @GetUser() user: any) {
+    await this.assertProjectOwner(projectId, user.id);
     return this.runPipelineCommand({ type: 'REGENERATE', projectId });
   }
 
@@ -490,7 +551,8 @@ export class GenerationController {
     summary:
       'Force a full rebuild (REBUILD command — same stages as REGENERATE but with forceMigrate)',
   })
-  async rebuild(@Param('projectId') projectId: string) {
+  async rebuild(@Param('projectId') projectId: string, @GetUser() user: any) {
+    await this.assertProjectOwner(projectId, user.id);
     return this.runPipelineCommand({ type: 'REBUILD', projectId, options: { forceMigrate: true } });
   }
 
@@ -498,7 +560,8 @@ export class GenerationController {
   @ApiOperation({
     summary: 'Re-run quality + persistence stages without regenerating slides (REFRESH command)',
   })
-  async refresh(@Param('deckId') deckId: string) {
+  async refresh(@Param('deckId') deckId: string, @GetUser() user: any) {
+    await this.assertDeckOwner(deckId, user.id);
     const deck = await this.prisma.deck.findUnique({ where: { id: deckId } });
     if (!deck) throw new NotFoundException(`Deck ${deckId} not found`);
     return this.runPipelineCommand({ type: 'REFRESH', projectId: deck.projectId, deckId });
@@ -511,7 +574,10 @@ export class GenerationController {
   async familySwitch(
     @Param('projectId') projectId: string,
     @Body() body: { familyId: SmartFamilyId; deckId?: string },
+    @GetUser() user: any,
   ) {
+    await this.assertProjectOwner(projectId, user.id);
+    if (body.deckId) await this.assertDeckOwner(body.deckId, user.id);
     return this.runPipelineCommand({
       type: 'FAMILY_SWITCH',
       projectId,
@@ -526,7 +592,9 @@ export class GenerationController {
   async templateSwitch(
     @Param('projectId') projectId: string,
     @Body() body: { templateId: string; deckId?: string },
+    @GetUser() user: any,
   ) {
+    await this.assertProjectOwner(projectId, user.id);
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: { decks: { include: { slides: { select: { id: true } } } } },
@@ -648,7 +716,11 @@ export class GenerationController {
   @ApiOperation({ summary: 'Validate a deck and update validation results' })
   @ApiResponse({ status: 200, description: 'Validation completed', type: ValidationResultDto })
   @ApiResponse({ status: 404, description: 'Deck not found' })
-  async validateDeck(@Param('deckId') deckId: string): Promise<ValidationResultDto> {
+  async validateDeck(
+    @Param('deckId') deckId: string,
+    @GetUser() user: any,
+  ): Promise<ValidationResultDto> {
+    await this.assertDeckOwner(deckId, user.id);
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },
       include: { slides: true },
@@ -728,7 +800,11 @@ export class GenerationController {
     description: 'Generation status retrieved',
     type: GenerationStatusDto,
   })
-  async getGenerationStatus(@Param('deckId') deckId: string): Promise<GenerationStatusDto | any> {
+  async getGenerationStatus(
+    @Param('deckId') deckId: string,
+    @GetUser() user: any,
+  ): Promise<GenerationStatusDto | any> {
+    await this.assertDeckOwner(deckId, user.id);
     const status = this.qualityControlService.getStatus(deckId);
 
     if (!status) {
@@ -794,7 +870,11 @@ export class GenerationController {
   @ApiOperation({ summary: 'Check if deck is ready for export' })
   @ApiResponse({ status: 200, description: 'Export readiness checked', type: ExportReadinessDto })
   @ApiResponse({ status: 404, description: 'Deck not found' })
-  async checkExportReady(@Param('deckId') deckId: string): Promise<ExportReadinessDto> {
+  async checkExportReady(
+    @Param('deckId') deckId: string,
+    @GetUser() user: any,
+  ): Promise<ExportReadinessDto> {
+    await this.assertDeckOwner(deckId, user.id);
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },
       select: {
@@ -846,6 +926,7 @@ export class GenerationController {
   }
 
   @Get('metrics')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Get aggregate generation metrics (admin only)' })
   @ApiResponse({ status: 200, description: 'Metrics retrieved', type: AggregateMetricsDto })
   async getAggregateMetrics(): Promise<AggregateMetricsDto> {
@@ -893,7 +974,8 @@ export class GenerationController {
 
   @Get('history/:deckId')
   @ApiOperation({ summary: 'Get quality history for a deck' })
-  async getQualityHistory(@Param('deckId') deckId: string) {
+  async getQualityHistory(@Param('deckId') deckId: string, @GetUser() user: any) {
+    await this.assertDeckOwner(deckId, user.id);
     const { QualityHistoryService } = await import('../export/services');
     const historyService = new QualityHistoryService(this.prisma);
 
@@ -908,7 +990,8 @@ export class GenerationController {
 
   @Get('trends/:deckId')
   @ApiOperation({ summary: 'Get quality trends over time' })
-  async getQualityTrends(@Param('deckId') deckId: string) {
+  async getQualityTrends(@Param('deckId') deckId: string, @GetUser() user: any) {
+    await this.assertDeckOwner(deckId, user.id);
     const { QualityHistoryService } = await import('../export/services');
     const historyService = new QualityHistoryService(this.prisma);
 
@@ -923,7 +1006,8 @@ export class GenerationController {
 
   @Get('compare/:deckId')
   @ApiOperation({ summary: 'Compare quality between versions' })
-  async compareQualityVersions(@Param('deckId') deckId: string) {
+  async compareQualityVersions(@Param('deckId') deckId: string, @GetUser() user: any) {
+    await this.assertDeckOwner(deckId, user.id);
     const { QualityHistoryService } = await import('../export/services');
     const historyService = new QualityHistoryService(this.prisma);
 
@@ -948,7 +1032,8 @@ export class GenerationController {
 
   @Post('quality-check/:deckId')
   @ApiOperation({ summary: 'Run quality check and record in history' })
-  async runQualityCheck(@Param('deckId') deckId: string) {
+  async runQualityCheck(@Param('deckId') deckId: string, @GetUser() user: any) {
+    await this.assertDeckOwner(deckId, user.id);
     // Get deck first
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },

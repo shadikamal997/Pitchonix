@@ -1578,34 +1578,89 @@ export class ProTemplateRendererService {
     const missing = this.collectMissingNodes(html, content);
     if (missing.length === 0) return html;
 
+    // Minimum page occupancy gate: skip overflow entirely when total content
+    // weight is below the threshold for ≥35% page fill (≈ weight 4). This
+    // eliminates near-empty continuation pages created by 1–3 stray bullets
+    // or a single short overflow paragraph. Per certification requirement:
+    // continuation pages must not be created below minimum occupancy threshold.
+    const totalWeight = this.chunkWeight(missing);
+    if (totalWeight < 4) return html;
+
     const c = template.tokens.colors;
-    const footer = this.footer(c, page, total);
-    const paragraphs = missing
-      .filter((node) => node.type === 'paragraph')
-      .map((node) => `<p>${node.value}</p>`)
-      .join('');
-    const bullets = missing
-      .filter((node) => node.type === 'bullet')
-      .map(
-        (node, index) =>
-          `<div class="pro-overflow-item"><b>${index + 1}</b><span>${node.value}</span></div>`,
-      )
-      .join('');
-    const metrics = missing
-      .filter((node) => node.type === 'metric')
-      .map((node) => `<div class="pro-overflow-metric">${node.value}</div>`)
+    const chunks = this.chunkOverflowNodes(missing);
+    const appendix = chunks
+      .map((chunk, chunkIndex) => {
+        const footer = this.footer(c, page + chunkIndex + 1, Math.max(total, page + chunks.length));
+        const paragraphs = chunk
+          .filter((node) => node.type === 'paragraph')
+          .map((node) => `<p>${node.value}</p>`)
+          .join('');
+        const bullets = chunk
+          .filter((node) => node.type === 'bullet')
+          .map(
+            (node, index) =>
+              `<div class="pro-overflow-item"><b>${index + 1}</b><span>${node.value}</span></div>`,
+          )
+          .join('');
+        const metrics = chunk
+          .filter((node) => node.type === 'metric')
+          .map((node) => `<div class="pro-overflow-metric">${node.value}</div>`)
+          .join('');
+
+        return `<div class="page-break"></div><section class="pro-sheet pro-content pro-overflow-appendix" data-overflow-nodes="${chunk.length}">
+          <div class="pro-label"><span></span>Continued</div>
+          <h2>${content.title}${chunks.length > 1 ? ` (${chunkIndex + 1})` : ''}</h2>
+          ${paragraphs ? `<div class="pro-overflow-paragraphs">${paragraphs}</div>` : ''}
+          ${bullets ? `<div class="pro-overflow-list">${bullets}</div>` : ''}
+          ${metrics ? `<div class="pro-overflow-metrics">${metrics}</div>` : ''}
+          ${footer}
+        </section>`;
+      })
       .join('');
 
-    const appendix = `<section class="pro-sheet pro-content pro-overflow-appendix" data-overflow-nodes="${missing.length}">
-      <div class="pro-label"><span></span>Preserved overflow content</div>
-      <h2>${content.title} · Continued Details</h2>
-      ${paragraphs ? `<div class="pro-overflow-paragraphs">${paragraphs}</div>` : ''}
-      ${bullets ? `<div class="pro-overflow-list">${bullets}</div>` : ''}
-      ${metrics ? `<div class="pro-overflow-metrics">${metrics}</div>` : ''}
-      ${footer}
-    </section>`;
+    return `${html}${appendix}`;
+  }
 
-    return `${html}<div class="page-break"></div>${appendix}`;
+  private nodeWeight(node: { type: string; value: string }): number {
+    const len = String(node.value || '').length;
+    if (node.type === 'paragraph') return Math.max(2, Math.ceil(len / 420));
+    if (node.type === 'metric') return 1;
+    return Math.max(1, Math.ceil(len / 180));
+  }
+
+  private chunkWeight(nodes: Array<{ type: string; value: string }>): number {
+    return nodes.reduce((sum, node) => sum + this.nodeWeight(node), 0);
+  }
+
+  private chunkOverflowNodes<T extends { type: string; value: string }>(nodes: T[]): T[][] {
+    const chunks: T[][] = [];
+    let current: T[] = [];
+    let weight = 0;
+    for (const node of nodes) {
+      const nodeWeight = this.nodeWeight(node);
+      // Raised from 14 → 20 to produce denser, fuller continuation pages.
+      if (current.length > 0 && weight + nodeWeight > 20) {
+        chunks.push(current);
+        current = [];
+        weight = 0;
+      }
+      current.push(node);
+      weight += nodeWeight;
+    }
+    if (current.length) chunks.push(current);
+
+    // Merge thin last chunk into previous to prevent near-empty continuation pages.
+    // Threshold 8 ≈ 40% page occupancy; cap merged total at 26 to stay on-page.
+    if (chunks.length >= 2) {
+      const lastWeight = this.chunkWeight(chunks[chunks.length - 1]);
+      const prevWeight = this.chunkWeight(chunks[chunks.length - 2]);
+      if (lastWeight < 8 && prevWeight + lastWeight <= 26) {
+        chunks[chunks.length - 2] = [...chunks[chunks.length - 2], ...chunks[chunks.length - 1]];
+        chunks.pop();
+      }
+    }
+
+    return chunks;
   }
 
   private collectMissingNodes(
@@ -1679,7 +1734,7 @@ export class ProTemplateRendererService {
       /* ── Base ── */
       .pro-page { padding: 0 !important; background: ${c.paper} !important; }
       .pro-sheet {
-        width: 210mm; min-height: 297mm; position: relative; overflow: hidden;
+        width: 210mm; min-height: 297mm; position: relative; overflow: visible;
         background: ${c.paper}; color: ${c.ink};
         font-family: '${body}', Inter, -apple-system, sans-serif;
         padding: 25mm 21mm 25mm;
@@ -2314,6 +2369,31 @@ export class ProTemplateRendererService {
       .fam-hc-card span {
         padding: 11px 13px; font-size: 12px; line-height: 1.5;
         color: ${c.ink}; font-weight: 500; display: block;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════════════
+         OVERFLOW APPENDIX
+         Continuation pages for content that exceeds the primary render capacity.
+         Styled to match the main content family across all design tokens.
+      ════════════════════════════════════════════════════════════════════════ */
+      .pro-overflow-paragraphs { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8mm; }
+      .pro-overflow-list { margin-top: 6mm; display: flex; flex-direction: column; gap: 7px; }
+      .pro-overflow-item {
+        display: flex; gap: 9px; align-items: flex-start;
+        background: ${c.accentSoft}; border: 1px solid ${c.line};
+        border-radius: 14px; padding: 10px 12px;
+      }
+      .pro-overflow-item b {
+        min-width: 22px; height: 22px; border-radius: 99px;
+        background: ${c.accent}; display: inline-flex;
+        align-items: center; justify-content: center;
+        color: white; font-size: 10px; font-weight: 900; flex-shrink: 0;
+      }
+      .pro-overflow-item span { font-size: 12px; line-height: 1.4; font-weight: 500; color: ${c.ink}; }
+      .pro-overflow-metrics { display: flex; flex-wrap: wrap; gap: 6mm; margin-top: 8mm; }
+      .pro-overflow-metric {
+        background: ${c.accentSoft}; border: 1px solid ${c.line}; border-radius: 14px;
+        padding: 8mm 6mm; text-align: center; font-size: 18px; font-weight: 900; color: ${c.ink};
       }
     `;
   }

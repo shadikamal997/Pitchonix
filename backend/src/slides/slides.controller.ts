@@ -16,19 +16,30 @@ export class SlidesController {
 
   @Post('deck/:deckId')
   @ApiOperation({ summary: 'Create a new slide' })
-  create(@Param('deckId') deckId: string, @Body() createSlideDto: CreateSlideDto) {
+  async create(
+    @Param('deckId') deckId: string,
+    @Body() createSlideDto: CreateSlideDto,
+    @GetUser() user: any,
+  ) {
+    // Phase Ω.CERT — close read/write IDOR: verify the caller owns the deck
+    // before creating slides on it.
+    await this.slidesService.verifyDeckOwnership(deckId, user.id);
     return this.slidesService.create(deckId, createSlideDto);
   }
 
   @Get('deck/:deckId')
   @ApiOperation({ summary: 'Get all slides for a deck' })
-  findAll(@Param('deckId') deckId: string) {
+  async findAll(@Param('deckId') deckId: string, @GetUser() user: any) {
+    // Phase Ω.CERT — close read IDOR: only the deck owner may list its slides.
+    await this.slidesService.verifyDeckOwnership(deckId, user.id);
     return this.slidesService.findAll(deckId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get slide by ID' })
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string, @GetUser() user: any) {
+    // Phase Ω.CERT — close read IDOR: only the owning user may read a slide.
+    await this.slidesService.verifyOwnership(id, user.id);
     return this.slidesService.findOne(id);
   }
 

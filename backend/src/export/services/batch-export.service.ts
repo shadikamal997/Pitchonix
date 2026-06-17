@@ -152,14 +152,16 @@ export class BatchExportService {
         },
       });
 
-      // If merging is requested, merge all exports
+      // If merging is requested, do not collapse the batch to one file until a
+      // real merger exists. Returning every output is non-lossy and satisfies the
+      // batch contract; callers may zip/download them individually.
       const options = (job.options as Record<string, any>) || {};
       if (options.merge && outputUrls.length > 1) {
         const mergedUrl = await this.mergeExports(outputUrls, job.format);
         await this.prisma.exportJob.update({
           where: { id: jobId },
           data: {
-            outputUrls: [mergedUrl],
+            outputUrls: mergedUrl,
           },
         });
       }
@@ -356,25 +358,16 @@ export class BatchExportService {
   /**
    * Merge multiple exports into one file
    */
-  private async mergeExports(urls: string[], format: string): Promise<string> {
+  private async mergeExports(urls: string[], format: string): Promise<string[]> {
     // If only one file, return it directly
     if (urls.length === 1) {
-      return urls[0];
+      return urls;
     }
 
     this.logger.log(`Merging ${urls.length} ${format} files...`);
 
-    // For now, implement basic merging strategy
-    // In production, this would:
-    // 1. Download all files from URLs
-    // 2. Use libraries like pptxgenjs (PPTX) or pdf-lib (PDF) to merge
-    // 3. Upload merged file to storage
-    // 4. Return new merged file URL
-
-    // Return the first URL as fallback until full merge implementation
-    // This allows the system to work while full merge is developed
-    this.logger.warn(`Merge not fully implemented, returning first file for ${format}`);
-    return urls[0];
+    this.logger.warn(`Merge not implemented for ${format}; returning all ${urls.length} files`);
+    return urls;
   }
 
   /**

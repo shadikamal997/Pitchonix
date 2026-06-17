@@ -15,6 +15,8 @@ model User {
   email     String   @unique
   password  String
   name      String?
+  googleId  String?  @unique
+  picture   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -80,6 +82,14 @@ model User {
   excelWorkbookOperations ExcelWorkbookOperation[]
   feasibilityProjects     FeasibilityProject[]
   uploadedAssets          UploadedAsset[]
+  // Phase Ω.CERT.FINAL — close orphan-record paths: these previously had bare
+  // userId columns with no FK, so rows survived (orphaned) after user deletion.
+  uploadedImages          UploadedImage[]
+  convertedFiles          ConvertedFile[]
+  betaTelemetryEvents     BetaTelemetry[]
+  betaFeedback            BetaFeedback[]
+  cvAnalysisSnapshots     CvAnalysisSnapshot[]
+  cvDocuments             CvDocument[]
 
   @@map("users")
 }
@@ -1289,6 +1299,7 @@ model Workspace {
   projects   Project[]
   brandKits  BrandKit[] // Phase 37A
   subscriptions Subscription[] // Phase Ω.4B
+  convertedFiles ConvertedFile[] // Phase Ω.CERT.FINAL — orphan-path closure
 
   @@index([organizationId])
   @@map("workspaces")
@@ -1432,6 +1443,8 @@ model UploadedImage {
 
   // Optional user association
   userId String?
+  // Phase Ω.CERT.FINAL — FK so the row is cleaned (userId nulled) on user delete.
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Metadata
   width  Int?
@@ -1614,6 +1627,10 @@ model ConvertedFile {
   id            String  @id @default(uuid())
   userId        String?
   workspaceId   String?
+  // Phase Ω.CERT.FINAL — FKs so converted files don't orphan on user/workspace
+  // deletion (userId / workspaceId nulled rather than left dangling).
+  user          User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  workspace     Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
   /// Optional FK to the previous ConvertedFile in the lineage chain.
   parentId      String?
@@ -1699,6 +1716,7 @@ model CvProfile {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   documents     CvDocument[]
+  analysisSnapshots CvAnalysisSnapshot[] // Phase Ω.CERT.FINAL
 
   @@index([userId])
   @@map("cv_profiles")
@@ -1709,6 +1727,9 @@ model CvDocument {
   profileId     String
   profile       CvProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   userId        String
+  // Phase Ω.CERT.FINAL — make userId a real FK (was a bare column). Cascade so
+  // a user's documents are removed with them (also covered via profile cascade).
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// 'cv' | 'resume' | 'coverLetter' | 'portfolio'
   doctype       String
@@ -1740,6 +1761,8 @@ model CvDocument {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  analysisSnapshots CvAnalysisSnapshot[] // Phase Ω.CERT.FINAL
+
   @@index([userId])
   @@index([profileId])
   @@index([doctype])
@@ -1759,6 +1782,11 @@ model CvAnalysisSnapshot {
   profileId    String
   /// Optional — set when the snapshot is tied to a specific CvDocument.
   documentId   String?
+  // Phase Ω.CERT.FINAL — real FKs (were bare columns). Snapshots are removed
+  // with their owning user/profile; documentId nulls when its document is gone.
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile      CvProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  document     CvDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
 
   /// 'analysis' | 'job-match' | 'benchmark' | 'variants' | 'interview'
   kind         String
@@ -1830,6 +1858,9 @@ model CvSectionMappingMemory {
 model BetaTelemetry {
   id        String   @id @default(uuid())
   userId    String?
+  // Phase Ω.CERT.FINAL — FK; telemetry survives user deletion (userId nulled)
+  // so analytics aren't lost, but the row is no longer a dangling reference.
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   event     String
   durationMs Int?
   success   Boolean  @default(true)
@@ -1845,6 +1876,8 @@ model BetaTelemetry {
 model BetaFeedback {
   id          String   @id @default(uuid())
   userId      String
+  // Phase Ω.CERT.FINAL — required FK; feedback is removed with its author.
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type        String
   message     String   @db.Text
   context     Json?

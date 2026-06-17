@@ -345,14 +345,6 @@ export class FeasibilityStudioService {
         status: 'available_in_report',
         note: 'Executive summary is generated as the first report section and can be exported from PDF Studio.',
       },
-      investorDeck: {
-        status: 'not_generated',
-        note: 'Deck generation will use the Presentation Engine in the next cross-format phase.',
-      },
-      financialModel: {
-        status: 'not_generated',
-        note: 'Excel financial model generation will use Excel Studio once assumptions are confirmed.',
-      },
     };
   }
 
@@ -407,16 +399,14 @@ export class FeasibilityStudioService {
           subtitle: `${this.label(analysis.studyType)} · ${analysis.recommendation}`,
           description: analysis.businessObjective,
           score: analysis.scores.overallScore,
-          overview: scoreMetrics.slice(1).map((metric) => `${metric.label}: ${metric.value}`),
+          overview: scoreMetrics.map((metric) => `${metric.label}: ${metric.value}`),
         }),
         structured: {
           templateId,
           title: analysis.projectName,
           subtitle: `${this.label(analysis.studyType)} · ${analysis.recommendation}`,
           paragraphs: [analysis.businessObjective],
-          bullets: scoreMetrics
-            .slice(1)
-            .map((metric) => `${metric.label}: ${metric.value} (${metric.detail})`),
+          bullets: scoreMetrics.map((metric) => `${metric.label}: ${metric.value} (${metric.detail})`),
           metrics: scoreMetrics,
         },
       },

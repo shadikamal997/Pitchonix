@@ -8,6 +8,7 @@ interface User {
   isVerified?: boolean;
   onboardingCompleted?: boolean;
   twoFactorEnabled?: boolean;
+  picture?: string | null;
 }
 
 interface AuthState {

@@ -15,8 +15,10 @@ export class PaginationIntelligenceService {
   private readonly maxOccupancy = 0.9;
   private readonly idealOccupancy = 0.80;
   // Minimum occupancy a continuation page must have before forward-merge triggers.
-  // Raised from 0.28 → 0.40 to eliminate thin continuation tails (Phase Ω.PDF.QUALITY.1C).
-  private readonly minContinuationOccupancy = 0.40;
+  // Raised from 0.28 → 0.40 (Phase Ω.PDF.QUALITY.1C) → 0.50 (Page Utilization Certification).
+  // At 0.50 any continuation page below 50% fill is forward-merged or tail-balanced,
+  // targeting the ≥70% average continuation occupancy certification requirement.
+  private readonly minContinuationOccupancy = 0.50;
 
   estimatePage(page: PageComposition): VisualEstimate {
     const sectionHeights = page.sections.map((section) => this.estimateSectionHeight(section));

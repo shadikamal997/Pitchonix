@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import PptxGenJS from 'pptxgenjs';
+import { buildSafePdfStudioDocument } from './safe-document-model';
 
 // Map our colorScheme keys to hex colours (no leading #)
 const SCHEME_COLORS: Record<string, { primary: string; secondary: string; accent: string }> = {
@@ -46,7 +47,8 @@ export class PptxExportService {
     const pptx = new PptxGenJS();
     pptx.author = 'Pitchonix';
     pptx.company = 'Pitchonix';
-    pptx.title = document.title;
+    const safeDocument = buildSafePdfStudioDocument(document);
+    pptx.title = safeDocument.title;
     pptx.subject = document.outline?.detectedType || 'Document';
     pptx.layout = 'LAYOUT_WIDE'; // 13.33 × 7.5 inches
 
@@ -68,7 +70,7 @@ export class PptxExportService {
       line: { color: palette.accent },
     });
 
-    titleSlide.addText(document.title, {
+    titleSlide.addText(safeDocument.title, {
       x: 1,
       y: 1.8,
       w: 11.33,
@@ -114,7 +116,7 @@ export class PptxExportService {
     );
 
     // ── Content slides ───────────────────────────────────────────────────────
-    const contentPages = (document.pages as any[]).filter((p) => p.pageType !== 'toc');
+    const contentPages = safeDocument.pages.filter((p) => p.pageType !== 'toc');
     let slideNumber = 2;
 
     for (const page of contentPages) {
@@ -123,9 +125,8 @@ export class PptxExportService {
         continue;
       }
 
-      const titleText = page.title || '';
-      const rawText = page.content?.text || '';
-      const parts = this.parseContentForSlide(rawText);
+      const titleText = page.displayTitle || '';
+      const parts = this.parseContentForSlide(page.normalizedText);
       let slide = this.addContentSlide(pptx, palette, titleText, false);
       let continuationIndex = 0;
       let yPos = 1.25;
@@ -134,7 +135,7 @@ export class PptxExportService {
       for (const part of parts) {
         const requiredHeight = this.partHeight(part);
         if (yPos + requiredHeight > maxY) {
-          this.addFooter(slide, document.title, slideNumber++, palette);
+          this.addFooter(slide, safeDocument.title, slideNumber++, palette);
           continuationIndex++;
           slide = this.addContentSlide(pptx, palette, titleText, continuationIndex > 0);
           yPos = 1.25;
@@ -171,29 +172,29 @@ export class PptxExportService {
               x: 0.55,
               y: yPos,
               w: 12.5,
-              h: 0.35,
+              h: requiredHeight,
               fontSize: 15,
               color: '1F2937',
               valign: 'top',
             },
           );
-          yPos += 0.4;
+          yPos += requiredHeight;
         } else if (part.type === 'text' && part.text.trim()) {
           slide.addText(part.text, {
             x: 0.3,
             y: yPos,
             w: 12.7,
-            h: 0.35,
+            h: requiredHeight,
             fontSize: 14,
             color: '374151',
             valign: 'top',
             wrap: true,
           });
-          yPos += 0.4;
+          yPos += requiredHeight;
         }
       }
 
-      this.addFooter(slide, document.title, slideNumber++, palette);
+      this.addFooter(slide, safeDocument.title, slideNumber++, palette);
     }
 
     const uint8Array = await pptx.write({ outputType: 'arraybuffer' });
@@ -313,8 +314,8 @@ export class PptxExportService {
   private partHeight(part: { type: string; text: string }): number {
     if (part.type === 'h2') return 0.55;
     if (part.type === 'h3') return 0.45;
-    if (part.type === 'bullet') return 0.4;
-    const lines = Math.max(1, Math.ceil((part.text || '').length / 120));
+    if (part.type === 'bullet') return Math.max(0.4, Math.ceil((part.text || '').length / 95) * 0.35);
+    const lines = Math.max(1, Math.ceil((part.text || '').length / 105));
     return Math.max(0.4, lines * 0.4);
   }
 
