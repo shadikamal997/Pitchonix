@@ -134,6 +134,9 @@ export class PdfExportService {
     // Determine if this is a visual document (flyer, one-pager, marketing)
     const isVisualDocument = this.isVisualDocumentType(document.documentType);
 
+    // Detect Arabic / RTL content to enable proper bidirectional rendering
+    const isRtlDocument = this.hasRtlContent(pages);
+
     let pageContent = '';
 
     const useProTemplate = this.proTemplateRendererService.canRender(proTemplateId);
@@ -150,30 +153,37 @@ export class PdfExportService {
     } else {
       // Use traditional layout for structured documents — body composition is
       // now driven by the template's declared `layouts` (Phase Ω.2 P0#10).
-      pageContent = this.generateStructuredPages(pages, style, purify, document, templateConfig);
+      pageContent = this.generateStructuredPages(pages, style, purify, document, templateConfig, isRtlDocument);
     }
 
     // Complete HTML document with modern, print-optimized styling
+    const rtlFontImport = isRtlDocument
+      ? `<link rel="preconnect" href="https://fonts.googleapis.com">
+         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+         <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">`
+      : '';
     const html = `
       <!DOCTYPE html>
-      <html lang="en">
+      <html lang="${isRtlDocument ? 'ar' : 'en'}" dir="${isRtlDocument ? 'rtl' : 'ltr'}">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>${safeTitle}</title>
+        ${rtlFontImport}
         <style>
           * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
           }
-          
+
           body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: ${isRtlDocument ? "'Cairo', 'Noto Sans Arabic', 'Tahoma', 'Arial Unicode MS', Arial, sans-serif" : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"};
             font-size: 16px;
-            line-height: 1.6;
+            line-height: ${isRtlDocument ? '1.8' : '1.6'};
             color: #1F2937;
             background: ${isVisualDocument || useProTemplate ? 'white' : '#F9FAFB'};
+            direction: ${isRtlDocument ? 'rtl' : 'ltr'};
           }
           ${useProTemplate ? this.proTemplateRendererService.getStyles(proTemplateId!) : ''}
           
@@ -217,6 +227,30 @@ export class PdfExportService {
             line-height: 1.6;
           }
           
+          /* RTL overrides */
+          ${isRtlDocument ? `
+          h1, h2, h3, h4, h5, h6, p, li, td, th, div {
+            text-align: right;
+          }
+          ul, ol {
+            padding-right: 24px;
+            padding-left: 0;
+          }
+          .section-card {
+            border-right: 4px solid;
+            border-left: none !important;
+          }
+          .footer-block {
+            flex-direction: row-reverse;
+          }
+          ` : ''}
+
+          /* Signature blocks — keep all parties together */
+          .signature-block {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
           /* Prevent page breaks inside elements */
           .hero-header,
           .section-card,
@@ -460,12 +494,15 @@ export class PdfExportService {
     purify: any,
     document?: any,
     templateConfig?: any,
+    isRtl = false,
   ): string {
     let pageIndex = 0;
     let firstContentPage = true;
     const parts: string[] = [];
     const hasCoverPage = pages.some((p: any) => p.pageType === 'cover');
-    const nonTocPages = pages.filter((p: any) => p.pageType !== 'toc');
+    // Use pages.length so pageNumber and totalPages both count all rendered pages,
+    // preventing mismatches like "Page 25 of 24" when TOC is excluded.
+    const totalPageCount = pages.length;
     const proseBody = this.pickProseBody(templateConfig);
 
     for (const page of pages) {
@@ -491,7 +528,7 @@ export class PdfExportService {
                 companyName: document.metadata?.companyName || '',
                 contact: document.metadata?.contact || '',
                 pageNumber: pageIndex + 1,
-                totalPages: nonTocPages.length,
+                totalPages: totalPageCount,
               },
               style,
             )
@@ -541,8 +578,31 @@ export class PdfExportService {
       const htmlContent =
         page.content?.html || this.convertMarkdownToHtml(page.content?.text || '');
       const content = purify.sanitize(htmlContent);
-      const title = purify.sanitize(page.title || '');
+      const rawTitle = purify.sanitize(page.title || '');
       const textStyles = this.buildTextStyle(page.content?.styles || {});
+
+      // Suppress the card-level title when:
+      // (a) the title is empty (cross-section merged page) or
+      // (b) the HTML content already opens with an <h1>/<h2>/<h3> whose text
+      //     matches the page title — prevents the heading appearing twice.
+      const contentStartsWithHeading = /^\s*<h[123][^>]*>/i.test(content);
+      const titleIsDuplicatedInContent =
+        rawTitle.length > 0 &&
+        contentStartsWithHeading &&
+        content.toLowerCase().includes(rawTitle.toLowerCase().slice(0, 20));
+      const title = titleIsDuplicatedInContent || !rawTitle ? '' : rawTitle;
+
+      // Wrap signature sections to keep all parties on the same page.
+      // Pattern: lines with multiple underscores (signature lines) or Arabic
+      // party labels (الطرف الأول / الطرف الثاني / Party N / Signature).
+      const hasSignaturePattern =
+        /_{4,}|الطرف\s+(الأول|الثاني|الثالث)|party\s+\d|التوقيع|signature/i.test(
+          page.content?.text || '',
+        );
+      const wrapSignature = (html: string) =>
+        hasSignaturePattern
+          ? `<div class="signature-block" style="page-break-inside:avoid;break-inside:avoid;">${html}</div>`
+          : html;
 
       // Header only on first content page when there is no cover page
       // (cover page already introduces the document title)
@@ -560,7 +620,7 @@ export class PdfExportService {
               companyName: document.metadata?.companyName || '',
               contact: document.metadata?.contact || '',
               pageNumber: pageIndex + 1,
-              totalPages: nonTocPages.length,
+              totalPages: totalPageCount,
             },
             style,
           )
@@ -576,7 +636,7 @@ export class PdfExportService {
       const chartsHtml = this.renderChartsHtml(page.content?.charts || [], style);
 
       const innerHtml = `<div style="${textStyles}">${content}</div>` + imageHtml + chartsHtml;
-      const card = this.composeContentBody(proseBody, title, innerHtml, style);
+      const card = wrapSignature(this.composeContentBody(proseBody, title, innerHtml, style));
       const placedImagesHtml = this.renderPlacedImages(page.content?.placedImages || [], purify);
       const pageHtml = `<div style="position:relative;">${headerHTML}${card}${footerHTML}${placedImagesHtml}</div>`;
 
@@ -585,6 +645,14 @@ export class PdfExportService {
     }
 
     return parts.join('');
+  }
+
+  private hasRtlContent(pages: any[]): boolean {
+    const arabicRange = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
+    return pages.some((p: any) => {
+      const text = [p.title, p.content?.text, p.content?.html].filter(Boolean).join(' ');
+      return arabicRange.test(text);
+    });
   }
 
   private renderPlacedImages(images: any[], purify: any): string {

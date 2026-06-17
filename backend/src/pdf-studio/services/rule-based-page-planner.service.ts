@@ -343,19 +343,27 @@ export class RuleBasedPagePlannerService {
 
   private isMetadataOnly(page: PlannedPage): boolean {
     if (page.wordCount > 80) return false;
-    return /^(date|author|prepared|overview|table of contents|metadata)/i.test(
+    // Near-empty pages (≤ 3 words): CONFIDENTIAL, blank placeholders, stray labels
+    if (page.wordCount <= 3) return true;
+    return /^(date|author|prepared|overview|table of contents|metadata|confidential|draft|private)/i.test(
       page.contentText.trim(),
     );
   }
 
   private mergePlannedPages(page1: PlannedPage, page2: PlannedPage): PlannedPage {
     const blocks = [...page1.blocks, ...page2.blocks];
+    const isMultiSection = page1.sectionId !== page2.sectionId;
     return {
       ...page1,
       blocks,
       contentText: this.renderBlocks(blocks),
       wordCount: this.countWords(this.renderBlocks(blocks)),
       isContinuation: page1.isContinuation,
+      // For cross-section merges the blocks already carry their own heading text;
+      // a page-level title would be misleading (it would show page1's section
+      // title even though page2's content is also present on this page).
+      sectionTitle: isMultiSection ? '' : page1.sectionTitle,
+      pageTitle: isMultiSection ? '' : page1.pageTitle,
       pageTemplate: this.selectTemplate(page1.sectionType, blocks),
     };
   }
