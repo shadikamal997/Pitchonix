@@ -886,11 +886,11 @@ export class PdfExportService {
         });
 
         await page.setContent(html, {
-          waitUntil: ['domcontentloaded', 'load'],
-          timeout: 60000,
+          waitUntil: 'domcontentloaded',
+          timeout: 30000,
         });
 
-        // Wait for any images to load
+        // Give images a bounded chance to settle without pinning Chrome under load.
         await page.evaluate(() => {
           return Promise.all(
             Array.from(document.images)
@@ -900,8 +900,7 @@ export class PdfExportService {
                   new Promise((resolve, reject) => {
                     img.onload = resolve;
                     img.onerror = reject;
-                    // Timeout after 5 seconds
-                    setTimeout(resolve, 5000);
+                    setTimeout(resolve, 2000);
                   }),
               ),
           );

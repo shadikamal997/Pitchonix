@@ -1,5 +1,7 @@
 import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
-import PptxGenJS from 'pptxgenjs';
+// pptxgenjs ships as CommonJS with no default export; `import *` captures the constructor.
+import * as PptxGenJSModule from 'pptxgenjs';
+const PptxGenJS = (PptxGenJSModule as any).default ?? PptxGenJSModule;
 import { PrismaService } from '../prisma/prisma.service';
 import { join } from 'path';
 import * as fs from 'fs';
@@ -110,7 +112,7 @@ export class ExportService {
   /**
    * Add a slide to the presentation based on its type
    */
-  private addSlideToPptx(pptx: PptxGenJS, slideData: any, brandColors: BrandColors) {
+  private addSlideToPptx(pptx: any, slideData: any, brandColors: BrandColors) {
     const slide = pptx.addSlide();
 
     switch (slideData.type) {

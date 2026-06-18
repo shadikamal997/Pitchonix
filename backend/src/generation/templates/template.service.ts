@@ -43,7 +43,7 @@ export class TemplateService {
       tags: ['saas', 'b2b', 'crm', 'enterprise'],
       popular: true,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Technology',
         shortDescription: 'AI-powered CRM that helps sales teams close 30% more deals',
         problem:
@@ -81,7 +81,7 @@ export class TemplateService {
       tags: ['saas', 'ai', 'analytics', 'data'],
       popular: true,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Technology',
         shortDescription: 'Natural language analytics - ask questions, get instant insights',
         problem:
@@ -119,7 +119,7 @@ export class TemplateService {
       tags: ['saas', 'hr', 'recruiting', 'engagement'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Technology',
         shortDescription: 'All-in-one platform for hiring, onboarding, and retaining top talent',
         problem:
@@ -159,7 +159,7 @@ export class TemplateService {
       tags: ['fintech', 'payments', 'b2b', 'api'],
       popular: true,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Finance',
         shortDescription: 'Modern payment API for the next generation of internet businesses',
         problem:
@@ -197,7 +197,7 @@ export class TemplateService {
       tags: ['fintech', 'banking', 'b2b', 'smb'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Finance',
         shortDescription:
           'Banking, bookkeeping, and tax filing - all in one app for small businesses',
@@ -238,18 +238,18 @@ export class TemplateService {
       tags: ['ecommerce', 'dtc', 'sustainability', 'consumer'],
       popular: true,
       prefilled: {
-        companyName: '[Your Brand]',
+        companyName: 'Everleaf Goods',
         industry: 'E-commerce',
         shortDescription:
-          "Sustainable [product category] that don't compromise on quality or style",
+          "Sustainable daily essentials that don't compromise on quality or style",
         problem:
           'Consumers want sustainable products but current options are: expensive ($100+ for basics), poor quality (fall apart after 6 months), boring designs (beige everything). 73% of millennials willing to pay more for sustainable brands.',
         solution:
-          'Premium sustainable [products] at accessible prices ($39-$79). Made from recycled materials, carbon-neutral shipping, stylish designs. For every purchase, plant a tree. Quality guarantee: if it breaks in 2 years, free replacement.',
+          'Premium sustainable daily essentials at accessible prices ($39-$79). Made from recycled materials, carbon-neutral shipping, stylish designs. For every purchase, plant a tree. Quality guarantee: if it breaks in 2 years, free replacement.',
         targetCustomers:
           "Environmentally conscious millennials and Gen Z (25-40 years old, $50K+ income) in urban areas. Values sustainability but won't sacrifice quality. Shops online, influenced by Instagram/TikTok.",
         marketOpportunity:
-          'TAM: $8B (Sustainable consumer goods market), SAM: $2B ([Product category] segment), SOM: $200M (Realistic 10% market share in online sustainable [products])',
+          'TAM: $8B (Sustainable consumer goods market), SAM: $2B (daily essentials segment), SOM: $200M (Realistic 10% market share in online sustainable daily essentials)',
         competitors:
           'Traditional brands (Amazon Basics: cheap, unsustainable), Luxury eco brands (Patagonia: expensive $150+), Generic sustainable brands (poor quality, no brand loyalty)',
         differentiation:
@@ -279,7 +279,7 @@ export class TemplateService {
       tags: ['healthcare', 'telemedicine', 'telehealth', 'b2c'],
       popular: true,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Healthcare',
         shortDescription: 'See a doctor in 15 minutes from your phone - $39 per visit',
         problem:
@@ -319,7 +319,7 @@ export class TemplateService {
       tags: ['edtech', 'education', 'online-learning', 'saas'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Education',
         shortDescription: 'Learn in-demand skills with interactive projects, not boring videos',
         problem:
@@ -359,7 +359,7 @@ export class TemplateService {
       tags: ['foodtech', 'delivery', 'restaurants', 'marketplace'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Food & Beverage',
         shortDescription: 'Launch delivery restaurant brands with zero real estate costs',
         problem:
@@ -398,7 +398,7 @@ export class TemplateService {
       tags: ['proptech', 'real-estate', 'saas', 'b2b'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Real Estate',
         shortDescription: 'Property management software that actually works',
         problem:
@@ -437,7 +437,7 @@ export class TemplateService {
       tags: ['logistics', 'freight', 'marketplace', 'b2b'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Transportation',
         shortDescription: 'Book freight shipments instantly - no phone calls, no brokers',
         problem:
@@ -477,7 +477,7 @@ export class TemplateService {
       tags: ['iot', 'manufacturing', 'industrial', 'b2b'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Manufacturing',
         shortDescription: 'Predict machine failures before they happen - reduce downtime 80%',
         problem:
@@ -516,7 +516,7 @@ export class TemplateService {
       tags: ['climate', 'sustainability', 'marketplace', 'b2b'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Climate Tech',
         shortDescription: 'Help businesses reach net-zero with verified carbon offsets',
         problem:
@@ -555,7 +555,7 @@ export class TemplateService {
       tags: ['creator-economy', 'content', 'subscription', 'b2c'],
       popular: true,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Entertainment',
         shortDescription: 'Creators earn 5x more with memberships, coaching, and digital products',
         problem:
@@ -595,7 +595,7 @@ export class TemplateService {
       tags: ['devtools', 'api', 'infrastructure', 'b2b'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Technology',
         shortDescription: 'Launch, scale, and monetize APIs in minutes',
         problem:
@@ -634,7 +634,7 @@ export class TemplateService {
       tags: ['cybersecurity', 'security', 'b2b', 'smb'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Technology',
         shortDescription: 'Cybersecurity for small businesses - $99/month, no CISO required',
         problem:
@@ -673,7 +673,7 @@ export class TemplateService {
       tags: ['agritech', 'agriculture', 'iot', 'b2b'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Agriculture',
         shortDescription: 'Precision farming that increases yields 25% and reduces costs 20%',
         problem:
@@ -712,7 +712,7 @@ export class TemplateService {
       tags: ['legaltech', 'ai', 'contracts', 'b2b'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Legal Services',
         shortDescription: 'Draft and review contracts in minutes, not hours',
         problem:
@@ -751,7 +751,7 @@ export class TemplateService {
       tags: ['media', 'podcast', 'creator-economy', 'saas'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Entertainment',
         shortDescription: 'Podcasters grow 3x faster with our promotion and monetization tools',
         problem:
@@ -791,7 +791,7 @@ export class TemplateService {
       tags: ['insurtech', 'insurance', 'gig-economy', 'b2c'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Insurance',
         shortDescription: 'Insurance you can turn on and off - pay only for coverage you use',
         problem:
@@ -830,7 +830,7 @@ export class TemplateService {
       tags: ['travel', 'marketplace', 'experiences', 'b2c'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'Travel & Hospitality',
         shortDescription: 'Book authentic local experiences from real locals, not tour companies',
         problem:
@@ -869,7 +869,7 @@ export class TemplateService {
       tags: ['fashion', 'ai', 'ecommerce', 'b2b'],
       popular: false,
       prefilled: {
-        companyName: '[Your Company]',
+        companyName: 'Apex Example Labs',
         industry: 'E-commerce',
         shortDescription: 'Try clothes on virtually before buying - reduce returns 50%',
         problem:

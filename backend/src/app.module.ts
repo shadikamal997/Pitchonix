@@ -86,7 +86,12 @@ import { BillingModule } from './billing/billing.module';
       max: 100, // max items in cache
     }),
     // Rate Limiting - Protect against abuse
-    ThrottlerModule.forRoot([
+    // LOAD_TEST_MODE=true raises limits to allow load testing from a single IP.
+    ThrottlerModule.forRoot(process.env.LOAD_TEST_MODE === 'true' ? [
+      { name: 'short',  ttl: 1000,    limit: 10000 },
+      { name: 'medium', ttl: 60000,   limit: 100000 },
+      { name: 'long',   ttl: 3600000, limit: 1000000 },
+    ] : [
       {
         name: 'short',
         ttl: 1000, // 1 second

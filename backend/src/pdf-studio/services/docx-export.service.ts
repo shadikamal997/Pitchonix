@@ -14,9 +14,31 @@ import {
   WidthType,
   ShadingType,
   PageBreak,
+  ImageRun,
   UnderlineType,
 } from 'docx';
 import { buildSafePdfStudioDocument } from './safe-document-model';
+
+// Arabic/Hebrew Unicode blocks — used to detect RTL text
+const RTL_BLOCK_RE = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿֐-׿]/;
+
+function hasRtlContent(text: string): boolean {
+  return RTL_BLOCK_RE.test(text ?? '');
+}
+
+/** Convert "#2563EB" or "2563EB" → "2563EB" (bare, uppercase) */
+function bareHex(hex: string | null | undefined, fallback: string): string {
+  if (!hex) return fallback;
+  return hex.replace(/^#/, '').toUpperCase();
+}
+
+interface DocxBrandKit {
+  primaryHex: string;
+  accentHex: string;
+  fontFamily: string | null;
+  logo: Buffer | null;
+  isRtl: boolean;
+}
 
 @Injectable()
 export class DocxExportService {
@@ -34,7 +56,8 @@ export class DocxExportService {
 
     if (!document) throw new Error(`Document ${documentId} not found`);
 
-    const docxDoc = await this.buildDocxDocument(document);
+    const kit = await this.resolveBrandKit(document);
+    const docxDoc = await this.buildDocxDocument(document, kit);
     const docxBuffer = await Packer.toBuffer(docxDoc);
     const filename = `${document.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
 
@@ -42,42 +65,124 @@ export class DocxExportService {
     return { docxBuffer, filename };
   }
 
-  private async buildDocxDocument(document: any): Promise<Document> {
+  private async resolveBrandKit(document: any): Promise<DocxBrandKit> {
+    let brandKit: any = null;
+
+    if (document.userId) {
+      brandKit = await this.prisma.brandKit.findFirst({
+        where: { userId: document.userId, isDefault: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!brandKit) {
+        brandKit = await this.prisma.brandKit.findFirst({
+          where: { userId: document.userId },
+          orderBy: { createdAt: 'desc' },
+        });
+      }
+    }
+
+    const isRtl = hasRtlContent(document.title ?? '') ||
+      (document.pages ?? []).some((p: any) => hasRtlContent(p.normalizedText ?? ''));
+
+    if (!brandKit) {
+      return { primaryHex: '2563EB', accentHex: '60A5FA', fontFamily: null, logo: null, isRtl };
+    }
+
+    const tokens: any = brandKit.tokens ?? {};
+    const colors = tokens.colors ?? {};
+    const typography: any = tokens.typography ?? {};
+
+    const primaryHex  = bareHex(colors.primary  ?? brandKit.primaryColor,   '2563EB');
+    const accentHex   = bareHex(colors.accent,  '60A5FA');
+    const fontFamily  = typography.body?.family ?? brandKit.fontFamily ?? null;
+
+    // Attempt to fetch logo bytes for inline embedding
+    let logo: Buffer | null = null;
+    if (brandKit.logo) {
+      try {
+        const resp = await fetch(brandKit.logo);
+        if (resp.ok) logo = Buffer.from(await resp.arrayBuffer());
+      } catch {
+        // Logo fetch failed — skip
+      }
+    }
+
+    return { primaryHex, accentHex, fontFamily, logo, isRtl };
+  }
+
+  private async buildDocxDocument(document: any, kit: DocxBrandKit): Promise<Document> {
     const children: any[] = [];
     const safeDocument = buildSafePdfStudioDocument(document);
+    const isRtl = kit.isRtl;
+    const rtlAlign = isRtl ? AlignmentType.RIGHT : AlignmentType.LEFT;
 
-    // Title page from document metadata
+    const headingFont = kit.fontFamily ? { font: kit.fontFamily } : {};
+    const bodyFont    = kit.fontFamily ? { font: kit.fontFamily } : {};
+
+    // ── Logo (brand kit header) ──────────────────────────────────────────────
+    if (kit.logo) {
+      try {
+        children.push(
+          new Paragraph({
+            children: [
+              new ImageRun({
+                data: kit.logo,
+                transformation: { width: 120, height: 50 },
+              }),
+            ],
+            alignment: isRtl ? AlignmentType.RIGHT : AlignmentType.LEFT,
+            spacing: { after: 200 },
+          }),
+        );
+      } catch {
+        // ImageRun failed (bad logo format) — skip
+      }
+    }
+
+    // ── Title page ───────────────────────────────────────────────────────────
     children.push(
       new Paragraph({
         text: safeDocument.title,
         heading: HeadingLevel.TITLE,
         alignment: AlignmentType.CENTER,
         spacing: { after: 400 },
+        bidirectional: isRtl,
       }),
       new Paragraph({
-        text: document.outline?.detectedType || 'Document',
+        children: [
+          new TextRun({
+            text: document.outline?.detectedType || 'Document',
+            color: '6B7280',
+            ...bodyFont,
+          }),
+        ],
         alignment: AlignmentType.CENTER,
         spacing: { after: 200 },
-        run: { color: '6B7280' },
+        bidirectional: isRtl,
       }),
       new Paragraph({
-        text: new Date(document.createdAt).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
+        children: [
+          new TextRun({
+            text: new Date(document.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric', month: 'long', day: 'numeric',
+            }),
+            color: '9CA3AF',
+            ...bodyFont,
+          }),
+        ],
         alignment: AlignmentType.CENTER,
         spacing: { after: 800 },
-        run: { color: '9CA3AF' },
+        bidirectional: isRtl,
       }),
       new Paragraph({ children: [new PageBreak()] }),
     );
 
-    // Process pages — skip TOC, render cover as styled title block
+    // ── Content pages ────────────────────────────────────────────────────────
     const contentPages = safeDocument.pages.filter((p) => p.pageType !== 'toc');
 
     for (let i = 0; i < contentPages.length; i++) {
       const page = contentPages[i];
+      const pageIsRtl = isRtl || hasRtlContent(page.normalizedText ?? '') || hasRtlContent(page.displayTitle ?? '');
 
       if (page.pageType === 'cover') {
         const coverData = page.cover;
@@ -85,16 +190,18 @@ export class DocxExportService {
           new Paragraph({
             text: coverData?.title || safeDocument.title,
             heading: HeadingLevel.HEADING_1,
-            alignment: AlignmentType.CENTER,
+            alignment: pageIsRtl ? AlignmentType.RIGHT : AlignmentType.CENTER,
             spacing: { before: 400, after: 200 },
+            bidirectional: pageIsRtl,
           }),
         );
         if (coverData?.subtitle) {
           children.push(
             new Paragraph({
               text: coverData.subtitle,
-              alignment: AlignmentType.CENTER,
+              alignment: pageIsRtl ? AlignmentType.RIGHT : AlignmentType.CENTER,
               spacing: { after: 200 },
+              bidirectional: pageIsRtl,
             }),
           );
         }
@@ -108,21 +215,28 @@ export class DocxExportService {
       if (page.displayTitle) {
         children.push(
           new Paragraph({
-            text: page.displayTitle,
+            children: [
+              new TextRun({
+                text: page.displayTitle,
+                bold: true,
+                color: kit.primaryHex,
+                ...headingFont,
+              }),
+            ],
             heading: HeadingLevel.HEADING_1,
+            alignment: pageIsRtl ? AlignmentType.RIGHT : AlignmentType.LEFT,
             spacing: { before: 400, after: 200 },
+            bidirectional: pageIsRtl,
             border: {
-              bottom: { style: BorderStyle.SINGLE, size: 4, color: '2563EB', space: 4 },
+              bottom: { style: BorderStyle.SINGLE, size: 4, color: kit.primaryHex, space: 4 },
             },
           }),
         );
       }
 
-      // Parse and render markdown content
-      const paragraphs = this.parseMarkdownToParagraphs(page.normalizedText);
+      const paragraphs = this.parseMarkdownToParagraphs(page.normalizedText, pageIsRtl, kit);
       children.push(...paragraphs);
 
-      // Page break between pages (except last)
       if (i < contentPages.length - 1) {
         children.push(new Paragraph({ children: [new PageBreak()] }));
       }
@@ -148,112 +262,120 @@ export class DocxExportService {
     });
   }
 
-  /**
-   * Parse markdown text into DOCX Paragraph elements.
-   * Handles: # headings, - bullets, 1. numbered lists, **bold**, *italic*, plain text.
-   */
-  private parseMarkdownToParagraphs(content: string): Paragraph[] {
+  private parseMarkdownToParagraphs(
+    content: string,
+    pageIsRtl: boolean,
+    kit: DocxBrandKit,
+  ): Paragraph[] {
     if (!content?.trim()) return [];
     const paragraphs: Paragraph[] = [];
     const lines = content.split('\n');
+    const headingFont = kit.fontFamily ? { font: kit.fontFamily } : {};
+    const bodyFont    = kit.fontFamily ? { font: kit.fontFamily } : {};
 
     for (const rawLine of lines) {
       const line = rawLine.trimEnd();
 
-      // Empty line → small spacer
       if (!line.trim()) {
         paragraphs.push(new Paragraph({ text: '', spacing: { after: 80 } }));
         continue;
       }
 
-      // H1 heading
+      const lineIsRtl = pageIsRtl || hasRtlContent(line);
+      const align = lineIsRtl ? AlignmentType.RIGHT : AlignmentType.LEFT;
+
       if (/^#\s/.test(line)) {
         paragraphs.push(
           new Paragraph({
-            text: line.replace(/^#\s+/, ''),
+            children: [new TextRun({ text: line.replace(/^#\s+/, ''), bold: true, color: kit.primaryHex, ...headingFont })],
             heading: HeadingLevel.HEADING_1,
+            alignment: align,
             spacing: { before: 360, after: 160 },
+            bidirectional: lineIsRtl,
           }),
         );
         continue;
       }
 
-      // H2 heading
       if (/^##\s/.test(line)) {
         paragraphs.push(
           new Paragraph({
-            text: line.replace(/^##\s+/, ''),
+            children: [new TextRun({ text: line.replace(/^##\s+/, ''), bold: true, color: kit.primaryHex, ...headingFont })],
             heading: HeadingLevel.HEADING_2,
+            alignment: align,
             spacing: { before: 280, after: 120 },
+            bidirectional: lineIsRtl,
           }),
         );
         continue;
       }
 
-      // H3 heading
       if (/^###\s/.test(line)) {
         paragraphs.push(
           new Paragraph({
-            text: line.replace(/^###\s+/, ''),
+            children: [new TextRun({ text: line.replace(/^###\s+/, ''), bold: true, ...headingFont })],
             heading: HeadingLevel.HEADING_3,
+            alignment: align,
             spacing: { before: 200, after: 80 },
+            bidirectional: lineIsRtl,
           }),
         );
         continue;
       }
 
-      // Unordered bullet
       if (/^[-*•]\s/.test(line)) {
         paragraphs.push(
           new Paragraph({
-            children: this.parseInlineMarkdown(line.replace(/^[-*•]\s+/, '')),
+            children: this.parseInlineMarkdown(line.replace(/^[-*•]\s+/, ''), lineIsRtl, bodyFont),
             bullet: { level: 0 },
+            alignment: align,
             spacing: { after: 60 },
+            bidirectional: lineIsRtl,
           }),
         );
         continue;
       }
 
-      // Nested bullet (two spaces indent)
       if (/^\s{2,}[-*•]\s/.test(line)) {
         paragraphs.push(
           new Paragraph({
-            children: this.parseInlineMarkdown(line.trim().replace(/^[-*•]\s+/, '')),
+            children: this.parseInlineMarkdown(line.trim().replace(/^[-*•]\s+/, ''), lineIsRtl, bodyFont),
             bullet: { level: 1 },
+            alignment: align,
             spacing: { after: 40 },
+            bidirectional: lineIsRtl,
           }),
         );
         continue;
       }
 
-      // Numbered list
       if (/^\d+\.\s/.test(line)) {
         paragraphs.push(
           new Paragraph({
-            children: this.parseInlineMarkdown(line.replace(/^\d+\.\s+/, '')),
+            children: this.parseInlineMarkdown(line.replace(/^\d+\.\s+/, ''), lineIsRtl, bodyFont),
             numbering: { reference: 'default-numbering', level: 0 },
+            alignment: align,
             spacing: { after: 60 },
+            bidirectional: lineIsRtl,
           }),
         );
         continue;
       }
 
-      // Blockquote
       if (/^>\s/.test(line)) {
         paragraphs.push(
           new Paragraph({
-            children: [
-              new TextRun({ text: line.replace(/^>\s+/, ''), italics: true, color: '6B7280' }),
-            ],
+            children: [new TextRun({ text: line.replace(/^>\s+/, ''), italics: true, color: '6B7280', ...bodyFont })],
+            alignment: align,
             indent: { left: 720 },
             border: { left: { style: BorderStyle.SINGLE, size: 8, color: '9CA3AF', space: 8 } },
             spacing: { after: 100 },
+            bidirectional: lineIsRtl,
           }),
         );
         continue;
       }
 
-      // Horizontal rule
       if (/^---+$/.test(line.trim()) || /^\*\*\*+$/.test(line.trim())) {
         paragraphs.push(
           new Paragraph({
@@ -265,11 +387,12 @@ export class DocxExportService {
         continue;
       }
 
-      // Regular paragraph with inline formatting
       paragraphs.push(
         new Paragraph({
-          children: this.parseInlineMarkdown(line),
+          children: this.parseInlineMarkdown(line, lineIsRtl, bodyFont),
+          alignment: align,
           spacing: { after: 120 },
+          bidirectional: lineIsRtl,
         }),
       );
     }
@@ -277,24 +400,24 @@ export class DocxExportService {
     return paragraphs;
   }
 
-  /**
-   * Parse inline markdown (**bold**, *italic*, `code`) into TextRun elements.
-   */
-  private parseInlineMarkdown(text: string): TextRun[] {
+  private parseInlineMarkdown(
+    text: string,
+    isRtl: boolean,
+    fontOpts: { font?: string },
+  ): TextRun[] {
     const runs: TextRun[] = [];
-    // Tokenise: **bold**, *italic*, `code`, plain
     const tokenRe = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
     let last = 0;
     let match: RegExpExecArray | null;
 
     while ((match = tokenRe.exec(text)) !== null) {
       if (match.index > last) {
-        runs.push(new TextRun({ text: text.slice(last, match.index) }));
+        runs.push(new TextRun({ text: text.slice(last, match.index), rightToLeft: isRtl, ...fontOpts }));
       }
       if (match[2] !== undefined) {
-        runs.push(new TextRun({ text: match[2], bold: true }));
+        runs.push(new TextRun({ text: match[2], bold: true, rightToLeft: isRtl, ...fontOpts }));
       } else if (match[3] !== undefined) {
-        runs.push(new TextRun({ text: match[3], italics: true }));
+        runs.push(new TextRun({ text: match[3], italics: true, rightToLeft: isRtl, ...fontOpts }));
       } else if (match[4] !== undefined) {
         runs.push(new TextRun({ text: match[4], font: 'Courier New', color: 'DC2626', size: 18 }));
       }
@@ -302,24 +425,30 @@ export class DocxExportService {
     }
 
     if (last < text.length) {
-      runs.push(new TextRun({ text: text.slice(last) }));
+      runs.push(new TextRun({ text: text.slice(last), rightToLeft: isRtl, ...fontOpts }));
     }
 
-    return runs.length ? runs : [new TextRun({ text })];
+    return runs.length ? runs : [new TextRun({ text, rightToLeft: isRtl, ...fontOpts })];
   }
 
-  private createTable(rows: string[][]): Table {
+  // Kept for potential internal callers (unused by exportDocument but part of public surface)
+  protected createTable(rows: string[][], isRtl = false): Table {
     const tableRows = rows.map(
       (row, rowIndex) =>
         new TableRow({
           children: row.map(
             (cell) =>
               new TableCell({
-                children: [new Paragraph({ text: cell })],
-                shading:
-                  rowIndex === 0
-                    ? { fill: '2563EB', type: ShadingType.SOLID, color: 'FFFFFF' }
-                    : undefined,
+                children: [
+                  new Paragraph({
+                    text: cell,
+                    alignment: isRtl ? AlignmentType.RIGHT : AlignmentType.LEFT,
+                    bidirectional: isRtl,
+                  }),
+                ],
+                shading: rowIndex === 0
+                  ? { fill: '2563EB', type: ShadingType.SOLID, color: 'FFFFFF' }
+                  : undefined,
               }),
           ),
         }),

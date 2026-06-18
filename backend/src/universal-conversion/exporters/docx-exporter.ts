@@ -242,7 +242,6 @@ function renderNode(n: DocumentNode, ctx?: { brand?: any; chartPng?: Buffer }): 
                 new ImageRun({
                   data: Buffer.from(base64, 'base64'),
                   transformation: { width: 480, height: 320 },
-                  type: 'png',
                 }),
               ],
             }),
@@ -280,7 +279,6 @@ function renderNode(n: DocumentNode, ctx?: { brand?: any; chartPng?: Buffer }): 
               new ImageRun({
                 data: ctx.chartPng,
                 transformation: { width: 560, height: 315 },
-                type: 'png',
               }),
             ],
           }),

@@ -1,11 +1,20 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ExportJob } from '@prisma/client';
 import { ExportService } from '../export.service';
+import * as path from 'path';
+import * as fs from 'fs';
+import AdmZip from 'adm-zip';
 
 export interface CreateBatchJobDto {
   deckIds: string[];
-  format: 'pptx' | 'pdf' | 'html';
+  format: 'pptx' | 'pdf';
   templateId?: string;
   options: Record<string, any>;
   userId: string;
@@ -24,6 +33,16 @@ export interface BatchJobStatus {
   estimatedCompletion: Date | null;
 }
 
+/** Maximum decks processed concurrently within a single batch job. */
+const MAX_CONCURRENT = 3;
+
+/**
+ * In-memory cancellation registry.
+ * Maps jobId → AbortController so processBatchJob can check abort.signal
+ * and stop processing mid-flight when cancelJob() is called.
+ */
+const cancelRegistry = new Map<string, AbortController>();
+
 @Injectable()
 export class BatchExportService {
   private readonly logger = new Logger(BatchExportService.name);
@@ -34,32 +53,30 @@ export class BatchExportService {
   ) {}
 
   /**
-   * Create a new batch export job
+   * Create a new batch export job and start processing asynchronously.
    */
   async createBatchJob(data: CreateBatchJobDto): Promise<ExportJob> {
-    // Validate that all decks exist
+    if (!['pptx', 'pdf'].includes(data.format)) {
+      throw new BadRequestException(
+        `Unsupported batch format '${data.format}'. Supported: pptx, pdf.`,
+      );
+    }
+
     const decks = await this.prisma.deck.findMany({
-      where: {
-        id: { in: data.deckIds },
-      },
+      where: { id: { in: data.deckIds }, project: { userId: data.userId } },
     });
 
     if (decks.length !== data.deckIds.length) {
-      throw new NotFoundException('One or more decks not found');
+      throw new NotFoundException('One or more decks not found or not owned by user');
     }
 
-    // Validate template if provided
     if (data.templateId) {
       const template = await this.prisma.exportTemplate.findUnique({
         where: { id: data.templateId },
       });
-
-      if (!template) {
-        throw new NotFoundException('Template not found');
-      }
+      if (!template) throw new NotFoundException('Template not found');
     }
 
-    // Create the job
     const job = await this.prisma.exportJob.create({
       data: {
         deckIds: data.deckIds,
@@ -73,100 +90,105 @@ export class BatchExportService {
       },
     });
 
-    // Start processing asynchronously (don't await)
     this.processBatchJob(job.id).catch((error) => {
-      this.logger.error(`Error processing batch job ${job.id}:`, error);
+      this.logger.error(`Batch job ${job.id} failed:`, error);
     });
 
     return job;
   }
 
   /**
-   * Process a batch export job
+   * Process a batch export job with real concurrency cap and cancellation.
    */
   async processBatchJob(jobId: string): Promise<void> {
+    const ac = new AbortController();
+    cancelRegistry.set(jobId, ac);
+
     try {
-      // Update job status to processing
       await this.prisma.exportJob.update({
         where: { id: jobId },
-        data: {
-          status: 'processing',
-          startedAt: new Date(),
-        },
+        data: { status: 'processing', startedAt: new Date() },
       });
 
-      const job = await this.prisma.exportJob.findUnique({
-        where: { id: jobId },
-      });
-
-      if (!job) {
-        throw new Error('Job not found');
-      }
+      const job = await this.prisma.exportJob.findUnique({ where: { id: jobId } });
+      if (!job) throw new Error('Job not found');
 
       const outputUrls: string[] = [];
       const errors: any[] = [];
       const totalDecks = job.deckIds.length;
 
-      // Process each deck
-      for (let i = 0; i < job.deckIds.length; i++) {
-        const deckId = job.deckIds[i];
+      // Process in fixed-size windows of MAX_CONCURRENT
+      for (let i = 0; i < totalDecks; i += MAX_CONCURRENT) {
+        if (ac.signal.aborted) {
+          this.logger.log(`Batch job ${jobId} aborted at deck index ${i}`);
+          break;
+        }
 
-        try {
-          // Update current deck and progress
-          await this.prisma.exportJob.update({
-            where: { id: jobId },
-            data: {
-              currentDeck: deckId,
-              progress: Math.round(((i + 1) / totalDecks) * 100),
-            },
-          });
+        const window = job.deckIds.slice(i, i + MAX_CONCURRENT);
 
-          // Export the deck
-          const outputUrl = await this.exportDeck(
-            deckId,
-            job.format,
-            job.templateId,
-            (job.options as Record<string, any>) || {},
-          );
+        const results = await Promise.allSettled(
+          window.map(async (deckId, idx) => {
+            if (ac.signal.aborted) throw new Error('Job cancelled');
 
-          outputUrls.push(outputUrl);
-        } catch (error) {
-          this.logger.error(`Error exporting deck ${deckId}:`, error);
-          errors.push({
-            deckId,
-            error: error.message,
-          });
+            await this.prisma.exportJob.update({
+              where: { id: jobId },
+              data: {
+                currentDeck: deckId,
+                progress: Math.round(((i + idx + 1) / totalDecks) * 100),
+              },
+            });
+
+            return this.exportDeck(
+              deckId,
+              job.format,
+              job.templateId,
+              (job.options as Record<string, any>) ?? {},
+            );
+          }),
+        );
+
+        for (let k = 0; k < results.length; k++) {
+          const r = results[k];
+          if (r.status === 'fulfilled') {
+            outputUrls.push(r.value);
+          } else {
+            this.logger.error(`Error exporting deck ${window[k]}:`, r.reason);
+            errors.push({ deckId: window[k], error: r.reason?.message ?? String(r.reason) });
+          }
         }
       }
 
-      // Update job as completed
+      const allFailed = errors.length === totalDecks;
+      const wasCancelled = ac.signal.aborted;
+      const finalStatus = wasCancelled ? 'failed' : allFailed ? 'failed' : 'completed';
+
+      // If merge was requested, create a ZIP
+      let finalUrls = outputUrls;
+      const options = (job.options as Record<string, any>) ?? {};
+      if (options.merge && outputUrls.length > 1 && !wasCancelled) {
+        try {
+          const zipUrl = await this.zipExports(outputUrls, job.format, jobId);
+          finalUrls = [zipUrl];
+        } catch (zipErr: any) {
+          this.logger.error(`ZIP merge failed for job ${jobId}: ${zipErr.message}`);
+          // Return individual files rather than losing them
+        }
+      }
+
       await this.prisma.exportJob.update({
         where: { id: jobId },
         data: {
-          status: errors.length === job.deckIds.length ? 'failed' : 'completed',
-          progress: 100,
+          status: finalStatus,
+          progress: wasCancelled ? job.progress : 100,
           currentDeck: null,
-          outputUrls,
-          errors: errors.length > 0 ? errors : null,
+          outputUrls: finalUrls,
+          errors: errors.length > 0
+            ? [...errors, ...(wasCancelled ? [{ error: 'Cancelled by user' }] : [])]
+            : wasCancelled ? [{ error: 'Cancelled by user' }] : null,
           completedAt: new Date(),
         },
       });
-
-      // If merging is requested, do not collapse the batch to one file until a
-      // real merger exists. Returning every output is non-lossy and satisfies the
-      // batch contract; callers may zip/download them individually.
-      const options = (job.options as Record<string, any>) || {};
-      if (options.merge && outputUrls.length > 1) {
-        const mergedUrl = await this.mergeExports(outputUrls, job.format);
-        await this.prisma.exportJob.update({
-          where: { id: jobId },
-          data: {
-            outputUrls: mergedUrl,
-          },
-        });
-      }
-    } catch (error) {
-      // Update job as failed
+    } catch (error: any) {
       await this.prisma.exportJob.update({
         where: { id: jobId },
         data: {
@@ -174,94 +196,57 @@ export class BatchExportService {
           errors: [{ error: error.message }],
           completedAt: new Date(),
         },
-      });
-
+      }).catch(() => {}); // ignore DB errors in error handler
       throw error;
+    } finally {
+      cancelRegistry.delete(jobId);
     }
   }
 
-  /**
-   * Export a single deck within a batch job
-   */
   private async exportDeck(
     deckId: string,
     format: string,
     templateId?: string,
     options?: Record<string, any>,
   ): Promise<string> {
-    // Get deck data
     const deck = await this.prisma.deck.findUnique({
       where: { id: deckId },
-      include: {
-        slides: {
-          orderBy: { order: 'asc' },
-        },
-        brandKit: true,
-      },
+      include: { slides: { orderBy: { order: 'asc' } }, brandKit: true },
     });
 
-    if (!deck) {
-      throw new NotFoundException(`Deck ${deckId} not found`);
-    }
+    if (!deck) throw new NotFoundException(`Deck ${deckId} not found`);
+    if (!deck.exportReady) throw new Error(`Deck ${deckId} is not ready for export`);
 
-    // Check export readiness
-    if (!deck.exportReady) {
-      throw new Error(`Deck ${deckId} is not ready for export`);
-    }
-
-    // Get template if provided
     let template = null;
     if (templateId) {
-      template = await this.prisma.exportTemplate.findUnique({
-        where: { id: templateId },
-      });
+      template = await this.prisma.exportTemplate.findUnique({ where: { id: templateId } });
     }
-
-    // Use ExportService to perform the actual export
-    let fileUrl: string;
 
     if (format === 'pptx') {
-      fileUrl = await this.exportService.exportToPPTX(deck);
+      return this.exportService.exportToPPTX(deck);
     } else if (format === 'pdf') {
-      // PDF export with template options
-      fileUrl = await this.exportService.exportToPDF(deck, {
-        template,
-        ...options,
-      });
-    } else {
-      throw new Error(`Unsupported format: ${format}`);
+      return this.exportService.exportToPDF(deck, { template, ...options });
     }
 
-    return fileUrl;
+    throw new Error(`Unsupported format: ${format}`);
   }
 
   /**
-   * Get batch job status
+   * Get batch job status (ownership-enforced).
    */
   async getJobStatus(jobId: string, userId: string): Promise<BatchJobStatus> {
-    const job = await this.prisma.exportJob.findUnique({
-      where: { id: jobId },
-    });
-
-    if (!job) {
-      throw new NotFoundException('Job not found');
-    }
-
-    // Check access
-    if (job.userId !== userId) {
-      throw new Error('Unauthorized');
-    }
+    const job = await this.prisma.exportJob.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('Job not found');
+    if (job.userId !== userId) throw new ForbiddenException('Access denied');
 
     const completedDecks = job.outputUrls.length;
     const totalDecks = job.deckIds.length;
-
-    // Estimate completion time
     let estimatedCompletion: Date | null = null;
+
     if (job.status === 'processing' && job.startedAt && completedDecks > 0) {
       const elapsed = Date.now() - job.startedAt.getTime();
       const avgTimePerDeck = elapsed / completedDecks;
-      const remainingDecks = totalDecks - completedDecks;
-      const remainingTime = avgTimePerDeck * remainingDecks;
+      const remainingTime = avgTimePerDeck * (totalDecks - completedDecks);
       estimatedCompletion = new Date(Date.now() + remainingTime);
     }
 
@@ -280,60 +265,46 @@ export class BatchExportService {
   }
 
   /**
-   * Cancel a batch job
+   * Cancel a running or pending batch job.
+   * Signals the AbortController so the processing loop stops on the next
+   * window boundary (within the current MAX_CONCURRENT window the in-flight
+   * exports will still complete; no work is lost or partially written).
    */
   async cancelJob(jobId: string, userId: string): Promise<void> {
-    const job = await this.prisma.exportJob.findUnique({
-      where: { id: jobId },
-    });
-
-    if (!job) {
-      throw new NotFoundException('Job not found');
-    }
-
-    // Check access
-    if (job.userId !== userId) {
-      throw new Error('Unauthorized');
-    }
-
-    // Can only cancel pending or processing jobs
+    const job = await this.prisma.exportJob.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('Job not found');
+    if (job.userId !== userId) throw new ForbiddenException('Access denied');
     if (job.status !== 'pending' && job.status !== 'processing') {
-      throw new Error('Can only cancel pending or processing jobs');
+      throw new BadRequestException('Can only cancel pending or processing jobs');
     }
 
-    await this.prisma.exportJob.update({
-      where: { id: jobId },
-      data: {
-        status: 'failed',
-        errors: [{ error: 'Cancelled by user' }],
-        completedAt: new Date(),
-      },
-    });
+    // Signal the processing loop to stop
+    const ac = cancelRegistry.get(jobId);
+    if (ac) {
+      ac.abort();
+      this.logger.log(`Abort signal sent for job ${jobId}`);
+    } else {
+      // Job is in DB as pending but hasn't started yet — update status directly
+      await this.prisma.exportJob.update({
+        where: { id: jobId },
+        data: {
+          status: 'failed',
+          errors: [{ error: 'Cancelled by user' }],
+          completedAt: new Date(),
+        },
+      });
+    }
   }
 
   /**
-   * Retry a failed batch job
+   * Retry a failed batch job.
    */
   async retryJob(jobId: string, userId: string): Promise<ExportJob> {
-    const job = await this.prisma.exportJob.findUnique({
-      where: { id: jobId },
-    });
+    const job = await this.prisma.exportJob.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('Job not found');
+    if (job.userId !== userId) throw new ForbiddenException('Access denied');
+    if (job.status !== 'failed') throw new BadRequestException('Can only retry failed jobs');
 
-    if (!job) {
-      throw new NotFoundException('Job not found');
-    }
-
-    // Check access
-    if (job.userId !== userId) {
-      throw new Error('Unauthorized');
-    }
-
-    // Can only retry failed jobs
-    if (job.status !== 'failed') {
-      throw new Error('Can only retry failed jobs');
-    }
-
-    // Reset job status
     const updatedJob = await this.prisma.exportJob.update({
       where: { id: jobId },
       data: {
@@ -347,7 +318,6 @@ export class BatchExportService {
       },
     });
 
-    // Start processing again
     this.processBatchJob(jobId).catch((error) => {
       this.logger.error(`Error retrying batch job ${jobId}:`, error);
     });
@@ -356,45 +326,74 @@ export class BatchExportService {
   }
 
   /**
-   * Merge multiple exports into one file
+   * ZIP all export files into one archive.
+   * Returns the path/URL of the ZIP file.
    */
-  private async mergeExports(urls: string[], format: string): Promise<string[]> {
-    // If only one file, return it directly
-    if (urls.length === 1) {
-      return urls;
+  private async zipExports(urls: string[], _format: string, jobId: string): Promise<string> {
+    const exportDir = process.env.EXPORT_DIR ?? path.join(process.cwd(), 'exports');
+    const zipName = `batch_${jobId}.zip`;
+    const zipPath = path.join(exportDir, zipName);
+
+    const zip = new AdmZip();
+
+    for (const url of urls) {
+      const filePath = url.startsWith('/')
+        ? path.join(exportDir, path.basename(url))
+        : url;
+
+      if (fs.existsSync(filePath)) {
+        zip.addLocalFile(filePath);
+      } else {
+        this.logger.warn(`ZIP: file not found at ${filePath} — skipping`);
+      }
     }
 
-    this.logger.log(`Merging ${urls.length} ${format} files...`);
-
-    this.logger.warn(`Merge not implemented for ${format}; returning all ${urls.length} files`);
-    return urls;
+    zip.writeZip(zipPath);
+    this.logger.log(`ZIP created: ${zipPath} (${urls.length} files)`);
+    return `/exports/${zipName}`;
   }
 
   /**
-   * Clean up old completed/failed jobs
+   * Clean up old completed/failed jobs and their ZIP artifacts.
    */
-  async cleanupOldJobs(daysOld: number = 30): Promise<number> {
+  async cleanupOldJobs(daysOld = 30): Promise<number> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
+    const oldJobs = await this.prisma.exportJob.findMany({
+      where: {
+        status: { in: ['completed', 'failed'] },
+        completedAt: { lt: cutoffDate },
+      },
+      select: { id: true, outputUrls: true },
+    });
+
+    // Delete ZIP artifacts
+    const exportDir = process.env.EXPORT_DIR ?? path.join(process.cwd(), 'exports');
+    for (const job of oldJobs) {
+      for (const url of job.outputUrls) {
+        if (url.includes(`batch_${job.id}`)) {
+          const filePath = path.join(exportDir, path.basename(url));
+          try {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          } catch {
+            // Ignore cleanup errors
+          }
+        }
+      }
+    }
+
     const result = await this.prisma.exportJob.deleteMany({
       where: {
-        status: {
-          in: ['completed', 'failed'],
-        },
-        completedAt: {
-          lt: cutoffDate,
-        },
+        status: { in: ['completed', 'failed'] },
+        completedAt: { lt: cutoffDate },
       },
     });
 
     return result.count;
   }
 
-  /**
-   * Get user's export jobs
-   */
-  async getUserJobs(userId: string, limit: number = 10): Promise<ExportJob[]> {
+  async getUserJobs(userId: string, limit = 10): Promise<ExportJob[]> {
     return this.prisma.exportJob.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },

@@ -10,23 +10,29 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { BillingService } from './billing.service';
+import { StripeService } from './stripe.service';
 
 // =============================================================================
-//  Phase Ω.4B — BillingController
+//  Phase Ω.4B / Ω.CERT.3 — BillingController
 //
-//  Public billing API for authenticated users:
-//    GET  /billing/plans          — list available plans
-//    GET  /billing/subscription   — current user's subscription + usage
-//    POST /billing/subscription   — subscribe to a plan
-//    DELETE /billing/subscription — cancel subscription at period end
-//    GET  /billing/usage          — current period usage + quota status
-//    POST /billing/usage          — record a usage event (internal/hook)
+//  Authenticated billing API:
+//    GET    /billing/plans              — list available plans
+//    GET    /billing/subscription       — current user's subscription + usage
+//    POST   /billing/subscription       — subscribe to a plan (local; Stripe via checkout)
+//    DELETE /billing/subscription       — cancel subscription at period end
+//    GET    /billing/usage              — current period usage + quota status
+//    POST   /billing/usage              — record a usage event (internal/hook)
+//    POST   /billing/checkout           — create Stripe Checkout session
+//    POST   /billing/portal             — create Stripe Customer Portal session
 // =============================================================================
 
 @Controller('billing')
-@UseGuards() // JwtAuthGuard is global; no extra guard needed
+@UseGuards() // JwtAuthGuard is global
 export class BillingController {
-  constructor(private readonly billing: BillingService) {}
+  constructor(
+    private readonly billing: BillingService,
+    private readonly stripe: StripeService,
+  ) {}
 
   @Get('plans')
   listPlans() {
@@ -66,5 +72,37 @@ export class BillingController {
     const userId = req.user?.id;
     await this.billing.recordUsage(userId, body.metric, body.value ?? 1);
     return { ok: true };
+  }
+
+  /**
+   * Create a Stripe Checkout session for upgrading to a paid plan.
+   * Returns { url } — client should redirect to this URL.
+   */
+  @Post('checkout')
+  @HttpCode(HttpStatus.OK)
+  async createCheckout(
+    @Req() req: any,
+    @Body() body: { plan: string; successUrl: string; cancelUrl: string },
+  ) {
+    const userId = req.user?.id;
+    const url = await this.stripe.createCheckoutSession({
+      userId,
+      planName: body.plan,
+      successUrl: body.successUrl,
+      cancelUrl: body.cancelUrl,
+    });
+    return { url };
+  }
+
+  /**
+   * Create a Stripe Customer Portal session.
+   * Returns { url } — client should redirect to this URL.
+   */
+  @Post('portal')
+  @HttpCode(HttpStatus.OK)
+  async createPortal(@Req() req: any, @Body() body: { returnUrl: string }) {
+    const userId = req.user?.id;
+    const url = await this.stripe.createPortalSession(userId, body.returnUrl);
+    return { url };
   }
 }

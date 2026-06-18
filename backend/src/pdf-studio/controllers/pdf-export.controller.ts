@@ -74,7 +74,7 @@ export class PdfExportController {
       throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
     }
 
-    if (document.project?.userId && document.project.userId !== user?.id) {
+    if (!user?.id || !document.project?.userId || document.project.userId !== user.id) {
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
     }
 

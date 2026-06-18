@@ -24,6 +24,7 @@ export enum TemplateType {
 
   // Analytics & Data (4)
   FINANCIAL_REPORT = 'financial_report',
+  FINANCIAL_PROJECTIONS = 'financial_projections',
   KPI_DASHBOARD_REPORT = 'kpi_dashboard_report',
   BUDGET_PLAN_REPORT = 'budget_plan_report',
   DATA_INSIGHTS_REPORT = 'data_insights_report',
@@ -53,6 +54,7 @@ export enum TemplateType {
   BOARD_MEETING_REPORT = 'board_meeting_report',
 
   // Marketing (4)
+  MARKETING_PLAN = 'marketing_plan',
   INVESTOR_PITCH_DECK = 'investor_pitch_deck',
   WHITEPAPER = 'whitepaper',
   CASE_STUDY_DOCUMENT = 'case_study_document',

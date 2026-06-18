@@ -1,4 +1,10 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 
 interface BrowserInstance {
@@ -7,23 +13,43 @@ interface BrowserInstance {
   lastUsed: Date;
 }
 
+interface BrowserWaiter {
+  resolve: (browser: puppeteer.Browser) => void;
+  reject: (error: Error) => void;
+  enqueuedAt: number;
+  timer: NodeJS.Timeout;
+}
+
 @Injectable()
 export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(BrowserPoolService.name);
   private readonly pool: BrowserInstance[] = [];
-  private readonly maxPoolSize = 3; // Maximum number of browser instances
+  private readonly maxPoolSize = positiveInt(process.env.PDF_EXPORT_CONCURRENCY, 3);
+  private readonly queueTimeoutMs = positiveInt(process.env.PDF_EXPORT_QUEUE_TIMEOUT_MS, 30_000);
+  private readonly shouldPrewarm = process.env.PDF_BROWSER_PREWARM !== 'false';
   private readonly maxIdleTime = 5 * 60 * 1000; // 5 minutes
+  private readonly waiters: BrowserWaiter[] = [];
+  private activeRenderCount = 0;
+  private creatingBrowserCount = 0;
+  private completedExports = 0;
+  private failedExports = 0;
+  private timeoutCount = 0;
+  private totalQueueWaitMs = 0;
+  private queueWaitSamples = 0;
   private cleanupInterval: NodeJS.Timeout;
 
   async onModuleInit() {
-    this.logger.log('Initializing browser pool...');
+    this.logger.log(
+      `Initializing browser pool (concurrency=${this.maxPoolSize}, queueTimeoutMs=${this.queueTimeoutMs}, prewarm=${this.shouldPrewarm})...`,
+    );
 
-    // Pre-warm the pool with one browser instance
-    try {
-      await this.createBrowserInstance();
-      this.logger.log('Browser pool initialized with 1 instance');
-    } catch (error) {
-      this.logger.error('Failed to initialize browser pool', error.stack);
+    if (this.shouldPrewarm) {
+      try {
+        await this.prewarmBrowser();
+        this.logger.log('Browser pool prewarmed and ready');
+      } catch (error) {
+        this.logger.error('Failed to prewarm browser pool', (error as Error).stack);
+      }
     }
 
     // Start cleanup interval (every 2 minutes)
@@ -43,6 +69,13 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
       clearInterval(this.cleanupInterval);
     }
 
+    while (this.waiters.length) {
+      const waiter = this.waiters.shift();
+      if (!waiter) continue;
+      clearTimeout(waiter.timer);
+      waiter.reject(new ServiceUnavailableException('PDF export browser pool is shutting down') as any);
+    }
+
     // Close all browsers
     const closePromises = this.pool.map(async (instance) => {
       try {
@@ -54,6 +87,7 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
 
     await Promise.all(closePromises);
     this.pool.length = 0;
+    this.activeRenderCount = 0;
     this.logger.log('Browser pool destroyed');
   }
 
@@ -65,23 +99,19 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
     const available = this.pool.find((instance) => !instance.inUse);
 
     if (available) {
-      available.inUse = true;
+      this.markBrowserAcquired(available);
       available.lastUsed = new Date();
       this.logger.debug('Reusing existing browser instance');
       return available.browser;
     }
 
     // Create a new browser if pool is not at max capacity
-    if (this.pool.length < this.maxPoolSize) {
+    if (this.hasBrowserCapacity()) {
       this.logger.debug('Creating new browser instance');
-      const instance = await this.createBrowserInstance();
-      instance.inUse = true;
-      return instance.browser;
+      return this.createAndAcquireBrowser();
     }
 
-    // Wait for a browser to become available
-    this.logger.debug('Pool at max capacity, waiting for available browser...');
-    return this.waitForAvailableBrowser();
+    return this.enqueueBrowserWaiter();
   }
 
   /**
@@ -91,6 +121,20 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
     const instance = this.pool.find((inst) => inst.browser === browser);
 
     if (instance) {
+      this.activeRenderCount = Math.max(0, this.activeRenderCount - 1);
+
+      const waiter = this.waiters.shift();
+      if (waiter) {
+        clearTimeout(waiter.timer);
+        this.recordQueueWait(waiter.enqueuedAt);
+        instance.inUse = true;
+        instance.lastUsed = new Date();
+        this.activeRenderCount += 1;
+        waiter.resolve(instance.browser);
+        this.logger.debug('Browser handed to queued PDF export');
+        return;
+      }
+
       instance.inUse = false;
       instance.lastUsed = new Date();
       this.logger.debug('Browser released back to pool');
@@ -115,10 +159,13 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
 
       try {
         const result = await fn(browser);
+        this.completedExports += 1;
         this.releaseBrowser(browser);
+        released = true;
         return result;
       } catch (error) {
         lastError = error as Error;
+        this.failedExports += 1;
         this.logger.warn(
           `Browser execution failed (attempt ${attempt}/${maxRetries}): ${error.message}`,
         );
@@ -133,7 +180,9 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
               await browser.close();
             } catch (_) {}
             this.pool.splice(index, 1);
+            this.activeRenderCount = Math.max(0, this.activeRenderCount - 1);
             this.logger.warn('Evicted crashed browser from pool');
+            this.dispatchQueuedWaiter();
           }
           released = true;
         } else {
@@ -156,9 +205,17 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
   getStats() {
     return {
       totalBrowsers: this.pool.length,
+      creatingBrowsers: this.creatingBrowserCount,
       inUse: this.pool.filter((i) => i.inUse).length,
       available: this.pool.filter((i) => !i.inUse).length,
       maxPoolSize: this.maxPoolSize,
+      queued: this.waiters.length,
+      activeRenderCount: this.activeRenderCount,
+      completedExports: this.completedExports,
+      failedExports: this.failedExports,
+      timeoutCount: this.timeoutCount,
+      averageQueueWaitMs:
+        this.queueWaitSamples > 0 ? Math.round(this.totalQueueWaitMs / this.queueWaitSamples) : 0,
     };
   }
 
@@ -192,36 +249,100 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
       const index = this.pool.indexOf(instance);
       if (index > -1) {
         this.pool.splice(index, 1);
+        if (instance.inUse) {
+          this.activeRenderCount = Math.max(0, this.activeRenderCount - 1);
+        }
+        void this.dispatchQueuedWaiter();
       }
     });
 
     return instance;
   }
 
-  /**
-   * Wait for a browser to become available, with a 30-second timeout.
-   */
-  private async waitForAvailableBrowser(): Promise<puppeteer.Browser> {
-    const timeoutMs = 30_000;
-    const pollMs = 100;
-    const start = Date.now();
+  private async prewarmBrowser(): Promise<void> {
+    const instance = await this.createBrowserInstance();
+    const page = await instance.browser.newPage();
+    try {
+      await page.setContent('<!doctype html><title>pdf-browser-ready</title>', {
+        waitUntil: 'domcontentloaded',
+        timeout: 10_000,
+      });
+    } finally {
+      await page.close();
+    }
+  }
 
+  private enqueueBrowserWaiter(): Promise<puppeteer.Browser> {
+    this.logger.debug('PDF export concurrency limit reached, queueing render request...');
+    const enqueuedAt = Date.now();
     return new Promise((resolve, reject) => {
-      const checkInterval = setInterval(() => {
-        const available = this.pool.find((instance) => !instance.inUse);
-        if (available) {
-          clearInterval(checkInterval);
-          available.inUse = true;
-          available.lastUsed = new Date();
-          resolve(available.browser);
-          return;
-        }
-        if (Date.now() - start > timeoutMs) {
-          clearInterval(checkInterval);
-          reject(new Error('Timed out waiting for a browser from the pool (30s)'));
-        }
-      }, pollMs);
+      const waiter: BrowserWaiter = {
+        enqueuedAt,
+        resolve,
+        reject,
+        timer: setTimeout(() => {
+          const index = this.waiters.indexOf(waiter);
+          if (index > -1) this.waiters.splice(index, 1);
+          this.timeoutCount += 1;
+          reject(
+            new ServiceUnavailableException(
+              `PDF export queue timeout exceeded (${this.queueTimeoutMs}ms)`,
+            ) as any,
+          );
+        }, this.queueTimeoutMs),
+      };
+      this.waiters.push(waiter);
     });
+  }
+
+  private async dispatchQueuedWaiter(): Promise<void> {
+    if (!this.waiters.length) return;
+    let available = this.pool.find((instance) => !instance.inUse);
+    if (!available && this.hasBrowserCapacity()) {
+      try {
+        available = await this.createBrowserInstanceWithCapacityReservation();
+      } catch (error) {
+        this.logger.error('Failed to create replacement browser for queued export', error);
+        return;
+      }
+    }
+    if (!available) return;
+    const waiter = this.waiters.shift();
+    if (!waiter) return;
+    clearTimeout(waiter.timer);
+    this.recordQueueWait(waiter.enqueuedAt);
+    this.markBrowserAcquired(available);
+    waiter.resolve(available.browser);
+  }
+
+  private markBrowserAcquired(instance: BrowserInstance): void {
+    instance.inUse = true;
+    instance.lastUsed = new Date();
+    this.activeRenderCount += 1;
+  }
+
+  private hasBrowserCapacity(): boolean {
+    return this.pool.length + this.creatingBrowserCount < this.maxPoolSize;
+  }
+
+  private async createAndAcquireBrowser(): Promise<puppeteer.Browser> {
+    const instance = await this.createBrowserInstanceWithCapacityReservation();
+    this.markBrowserAcquired(instance);
+    return instance.browser;
+  }
+
+  private async createBrowserInstanceWithCapacityReservation(): Promise<BrowserInstance> {
+    this.creatingBrowserCount += 1;
+    try {
+      return await this.createBrowserInstance();
+    } finally {
+      this.creatingBrowserCount = Math.max(0, this.creatingBrowserCount - 1);
+    }
+  }
+
+  private recordQueueWait(enqueuedAt: number): void {
+    this.totalQueueWaitMs += Date.now() - enqueuedAt;
+    this.queueWaitSamples += 1;
   }
 
   /**
@@ -258,4 +379,9 @@ export class BrowserPoolService implements OnModuleInit, OnModuleDestroy {
       }
     }
   }
+}
+
+function positiveInt(value: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt(String(value ?? ''), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }

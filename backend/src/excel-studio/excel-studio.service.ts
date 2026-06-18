@@ -27,7 +27,7 @@ type GeneratedWorkbookSheet = { name: string; rows: any[][] };
 
 // ── Template colour palette ────────────────────────────────────────────────
 // ARGB hex strings for XLSX cell styles (Alpha + RGB, no #).
-const TEMPLATE_PALETTE: Record<
+export const EXCEL_TEMPLATE_PALETTE: Record<
   string,
   { header: string; accent: string; text: string; light: string }
 > = {
@@ -95,120 +95,122 @@ const TEMPLATE_PALETTE: Record<
   },
 };
 
+export const EXCEL_TEMPLATE_REGISTRY: ExcelStudioTemplate[] = [
+  {
+    id: 'executive-emerald',
+    name: 'Executive Emerald Board Pack',
+    category: 'executive',
+    description:
+      'Premium executive summary, board-ready KPI bands, and calm Pitchonix green hierarchy.',
+    accent: '#4F7563',
+    strengths: ['Board summary', 'KPI storytelling', 'Audit-ready formatting'],
+  },
+  {
+    id: 'finance-midnight',
+    name: 'Finance Midnight Model',
+    category: 'finance',
+    description:
+      'Dark finance dashboard styling with dependency-safe formula review and variance callouts.',
+    accent: '#18241F',
+    strengths: ['Formula integrity', 'Variance panels', 'Scenario readability'],
+  },
+  {
+    id: 'sales-sage',
+    name: 'Sales Sage Pipeline',
+    category: 'sales',
+    description:
+      'Pipeline, quota, ARR, and funnel sheets with clear modern commercial reporting.',
+    accent: '#7A988A',
+    strengths: ['Revenue charts', 'Pipeline hygiene', 'Forecast scan flow'],
+  },
+  {
+    id: 'ops-copper',
+    name: 'Operations Copper Control',
+    category: 'operations',
+    description:
+      'Operational workbooks with status grids, SLA bands, and exception-first review panels.',
+    accent: '#A66F3F',
+    strengths: ['Exception handling', 'SLA views', 'Process tables'],
+  },
+  {
+    id: 'dashboard-ivory',
+    name: 'Dashboard Ivory Studio',
+    category: 'dashboard',
+    description:
+      'Clean visual dashboard system for stakeholder-ready scorecards and chart summaries.',
+    accent: '#C8A96A',
+    strengths: ['Dashboard layout', 'Chart recommendations', 'Presentation polish'],
+  },
+  {
+    id: 'investor-financial',
+    name: 'Investor Financial Model',
+    category: 'finance',
+    description:
+      'VC-facing financial model with assumptions, runway, ARR, burn, and scenario review sheets.',
+    accent: '#315E52',
+    strengths: ['Investor KPIs', 'Runway review', 'Assumption audit'],
+  },
+  {
+    id: 'corporate-reporting',
+    name: 'Corporate Reporting Pack',
+    category: 'executive',
+    description:
+      'Corporate reporting structure with department tabs, monthly variance, and management summary.',
+    accent: '#2F4858',
+    strengths: ['Management reporting', 'Variance hygiene', 'Department rollups'],
+  },
+  {
+    id: 'board-reporting',
+    name: 'Board Reporting System',
+    category: 'executive',
+    description:
+      'Board-level workbook system with decision log, risk register, KPI cockpit, and appendix.',
+    accent: '#473C33',
+    strengths: ['Board pack', 'Risk register', 'Decision support'],
+  },
+  {
+    id: 'marketing-analytics',
+    name: 'Marketing Analytics Studio',
+    category: 'dashboard',
+    description:
+      'Campaign, CAC, channel, funnel, and attribution review structure for marketing teams.',
+    accent: '#6F5B7C',
+    strengths: ['Campaign analysis', 'Funnel metrics', 'Channel scorecards'],
+  },
+  {
+    id: 'startup-metrics',
+    name: 'Startup Metrics Command Center',
+    category: 'dashboard',
+    description:
+      'Founder-friendly KPI workbook with MRR, activation, retention, runway, and growth loops.',
+    accent: '#355846',
+    strengths: ['SaaS KPIs', 'Retention view', 'Founder dashboard'],
+  },
+  {
+    id: 'financial-forecasting',
+    name: 'Financial Forecasting System',
+    category: 'finance',
+    description:
+      'Forecast-friendly workbook structure for assumptions, scenarios, actuals, and variance checks.',
+    accent: '#5B6042',
+    strengths: ['Forecast model', 'Scenario tabs', 'Variance checks'],
+  },
+  {
+    id: 'management-reporting',
+    name: 'Management Reporting Suite',
+    category: 'operations',
+    description:
+      'Operator-grade weekly and monthly reporting pack with owner notes and exception logs.',
+    accent: '#806443',
+    strengths: ['Owner notes', 'Exception logs', 'Weekly cadence'],
+  },
+];
+
 @Injectable()
 export class ExcelStudioService {
   private readonly workbookDir: string;
 
-  private readonly templates: ExcelStudioTemplate[] = [
-    {
-      id: 'executive-emerald',
-      name: 'Executive Emerald Board Pack',
-      category: 'executive',
-      description:
-        'Premium executive summary, board-ready KPI bands, and calm Pitchonix green hierarchy.',
-      accent: '#4F7563',
-      strengths: ['Board summary', 'KPI storytelling', 'Audit-ready formatting'],
-    },
-    {
-      id: 'finance-midnight',
-      name: 'Finance Midnight Model',
-      category: 'finance',
-      description:
-        'Dark finance dashboard styling with dependency-safe formula review and variance callouts.',
-      accent: '#18241F',
-      strengths: ['Formula integrity', 'Variance panels', 'Scenario readability'],
-    },
-    {
-      id: 'sales-sage',
-      name: 'Sales Sage Pipeline',
-      category: 'sales',
-      description:
-        'Pipeline, quota, ARR, and funnel sheets with clear modern commercial reporting.',
-      accent: '#7A988A',
-      strengths: ['Revenue charts', 'Pipeline hygiene', 'Forecast scan flow'],
-    },
-    {
-      id: 'ops-copper',
-      name: 'Operations Copper Control',
-      category: 'operations',
-      description:
-        'Operational workbooks with status grids, SLA bands, and exception-first review panels.',
-      accent: '#A66F3F',
-      strengths: ['Exception handling', 'SLA views', 'Process tables'],
-    },
-    {
-      id: 'dashboard-ivory',
-      name: 'Dashboard Ivory Studio',
-      category: 'dashboard',
-      description:
-        'Clean visual dashboard system for stakeholder-ready scorecards and chart summaries.',
-      accent: '#C8A96A',
-      strengths: ['Dashboard layout', 'Chart recommendations', 'Presentation polish'],
-    },
-    {
-      id: 'investor-financial',
-      name: 'Investor Financial Model',
-      category: 'finance',
-      description:
-        'VC-facing financial model with assumptions, runway, ARR, burn, and scenario review sheets.',
-      accent: '#315E52',
-      strengths: ['Investor KPIs', 'Runway review', 'Assumption audit'],
-    },
-    {
-      id: 'corporate-reporting',
-      name: 'Corporate Reporting Pack',
-      category: 'executive',
-      description:
-        'Corporate reporting structure with department tabs, monthly variance, and management summary.',
-      accent: '#2F4858',
-      strengths: ['Management reporting', 'Variance hygiene', 'Department rollups'],
-    },
-    {
-      id: 'board-reporting',
-      name: 'Board Reporting System',
-      category: 'executive',
-      description:
-        'Board-level workbook system with decision log, risk register, KPI cockpit, and appendix.',
-      accent: '#473C33',
-      strengths: ['Board pack', 'Risk register', 'Decision support'],
-    },
-    {
-      id: 'marketing-analytics',
-      name: 'Marketing Analytics Studio',
-      category: 'dashboard',
-      description:
-        'Campaign, CAC, channel, funnel, and attribution review structure for marketing teams.',
-      accent: '#6F5B7C',
-      strengths: ['Campaign analysis', 'Funnel metrics', 'Channel scorecards'],
-    },
-    {
-      id: 'startup-metrics',
-      name: 'Startup Metrics Command Center',
-      category: 'dashboard',
-      description:
-        'Founder-friendly KPI workbook with MRR, activation, retention, runway, and growth loops.',
-      accent: '#355846',
-      strengths: ['SaaS KPIs', 'Retention view', 'Founder dashboard'],
-    },
-    {
-      id: 'financial-forecasting',
-      name: 'Financial Forecasting System',
-      category: 'finance',
-      description:
-        'Forecast-friendly workbook structure for assumptions, scenarios, actuals, and variance checks.',
-      accent: '#5B6042',
-      strengths: ['Forecast model', 'Scenario tabs', 'Variance checks'],
-    },
-    {
-      id: 'management-reporting',
-      name: 'Management Reporting Suite',
-      category: 'operations',
-      description:
-        'Operator-grade weekly and monthly reporting pack with owner notes and exception logs.',
-      accent: '#806443',
-      strengths: ['Owner notes', 'Exception logs', 'Weekly cadence'],
-    },
-  ];
+  private readonly templates: ExcelStudioTemplate[] = EXCEL_TEMPLATE_REGISTRY;
 
   private readonly logger = new Logger(ExcelStudioService.name);
 
@@ -2525,7 +2527,8 @@ export class ExcelStudioService {
     if (!/\.xlsx$/i.test(project.filename) || !generatedSheets.length) {
       const workbook = this.readOriginalWorkbook(project);
       const palette =
-        TEMPLATE_PALETTE[project.activeTemplateId] || TEMPLATE_PALETTE['executive-emerald'];
+        EXCEL_TEMPLATE_PALETTE[project.activeTemplateId] ||
+        EXCEL_TEMPLATE_PALETTE['executive-emerald'];
       for (const sheet of generatedSheets)
         this.appendStyledSheet(workbook, sheet.name, sheet.rows, palette);
       return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx', cellStyles: true });
@@ -2538,7 +2541,8 @@ export class ExcelStudioService {
     if (!workbookEntry || !relsEntry || !contentTypesEntry) {
       const workbook = this.readOriginalWorkbook(project);
       const palette =
-        TEMPLATE_PALETTE[project.activeTemplateId] || TEMPLATE_PALETTE['executive-emerald'];
+        EXCEL_TEMPLATE_PALETTE[project.activeTemplateId] ||
+        EXCEL_TEMPLATE_PALETTE['executive-emerald'];
       for (const sheet of generatedSheets)
         this.appendStyledSheet(workbook, sheet.name, sheet.rows, palette);
       return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx', cellStyles: true });
@@ -2658,7 +2662,8 @@ export class ExcelStudioService {
   private async buildPackageWorkbook(project: ExcelStudioProject, format: string) {
     const workbook = await this.buildWorkbookWithOperations(project);
     const palette =
-      TEMPLATE_PALETTE[project.activeTemplateId] || TEMPLATE_PALETTE['executive-emerald'];
+      EXCEL_TEMPLATE_PALETTE[project.activeTemplateId] ||
+      EXCEL_TEMPLATE_PALETTE['executive-emerald'];
     this.appendStyledSheet(
       workbook,
       'Pitchonix Comparison',
@@ -2908,7 +2913,7 @@ export class ExcelStudioService {
           { label: 'Operating Cost', value: '42000' },
         ];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    const palette = TEMPLATE_PALETTE[templateId] || TEMPLATE_PALETTE['executive-emerald'];
+    const palette = EXCEL_TEMPLATE_PALETTE[templateId] || EXCEL_TEMPLATE_PALETTE['executive-emerald'];
 
     this.appendStyledSheet(
       workbook,

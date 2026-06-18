@@ -203,6 +203,7 @@ export class SlideFactory {
         SlideType.SOLUTION,
         SlideType.MARKET_OPPORTUNITY,
         SlideType.BUSINESS_MODEL,
+        SlideType.COMPETITION,
         SlideType.TRACTION,
         SlideType.TEAM,
         SlideType.ASK,
@@ -227,6 +228,7 @@ export class SlideFactory {
         SlideType.PRODUCT_FEATURES,
         SlideType.CASE_STUDY,
         SlideType.PRICING,
+        SlideType.ASK,
       ],
       company_profile: [
         SlideType.COVER,

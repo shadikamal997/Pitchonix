@@ -182,7 +182,7 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
     },
   },
 
-  // ========== ANALYTICS & DATA (4 Templates) ==========
+  // ========== ANALYTICS & DATA ==========
 
   [TemplateType.FINANCIAL_REPORT]: {
     type: TemplateType.FINANCIAL_REPORT,
@@ -210,6 +210,43 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
       headerStyle: 'solid',
       cardStyle: 'sharp',
       spacing: 'compact',
+    },
+    pages: {
+      includeCoverPage: true,
+      includeTableOfContents: true,
+      includeFooter: true,
+      includePageNumbers: true,
+    },
+  },
+
+  [TemplateType.FINANCIAL_PROJECTIONS]: {
+    type: TemplateType.FINANCIAL_PROJECTIONS,
+    name: 'Financial Projections',
+    description: 'Forward-looking financial model narrative with assumptions, scenarios, and runway.',
+    category: TemplateCategory.ANALYTICS,
+    layouts: [
+      LayoutComponentType.COVER_PAGE,
+      LayoutComponentType.METRICS_STRIP,
+      LayoutComponentType.CHART_BLOCK,
+      LayoutComponentType.TABLE_BLOCK,
+      LayoutComponentType.TIMELINE_BLOCK,
+      LayoutComponentType.CONCLUSION_BLOCK,
+      LayoutComponentType.FOOTER_BLOCK,
+    ],
+    defaultSections: [
+      'Executive Summary',
+      'Key Assumptions',
+      'Revenue Forecast',
+      'Expense Forecast',
+      'Scenario Analysis',
+      'Cash Runway',
+      'Funding Requirements',
+    ],
+    style: {
+      colorScheme: 'emerald',
+      headerStyle: 'solid',
+      cardStyle: 'sharp',
+      spacing: 'normal',
     },
     pages: {
       includeCoverPage: true,
@@ -820,7 +857,47 @@ export const TEMPLATE_CONFIGS: Record<TemplateType, TemplateConfig> = {
     },
   },
 
-  // ========== MARKETING (4 Templates) ==========
+  // ========== MARKETING ==========
+
+  [TemplateType.MARKETING_PLAN]: {
+    type: TemplateType.MARKETING_PLAN,
+    name: 'Marketing Plan',
+    description:
+      'Campaign-ready marketing strategy document with audience, channel, budget, and KPI sections.',
+    category: TemplateCategory.MARKETING,
+    layouts: [
+      LayoutComponentType.COVER_PAGE,
+      LayoutComponentType.HERO_HEADER,
+      LayoutComponentType.METRICS_STRIP,
+      LayoutComponentType.SECTION_CARD,
+      LayoutComponentType.CHART_BLOCK,
+      LayoutComponentType.TABLE_BLOCK,
+      LayoutComponentType.TIMELINE_BLOCK,
+      LayoutComponentType.CONCLUSION_BLOCK,
+      LayoutComponentType.FOOTER_BLOCK,
+    ],
+    defaultSections: [
+      'Executive Summary',
+      'Target Audience',
+      'Positioning',
+      'Channel Strategy',
+      'Campaign Calendar',
+      'Budget Allocation',
+      'Success Metrics',
+    ],
+    style: {
+      colorScheme: 'orange',
+      headerStyle: 'gradient',
+      cardStyle: 'rounded',
+      spacing: 'normal',
+    },
+    pages: {
+      includeCoverPage: true,
+      includeTableOfContents: true,
+      includeFooter: true,
+      includePageNumbers: true,
+    },
+  },
 
   [TemplateType.INVESTOR_PITCH_DECK]: {
     type: TemplateType.INVESTOR_PITCH_DECK,
@@ -1157,6 +1234,10 @@ export function autoSelectTemplate(detectedType: string): TemplateType {
     notes: TemplateType.CLEAN_BUSINESS_REPORT,
     'notes document': TemplateType.CLEAN_BUSINESS_REPORT,
     financial: TemplateType.FINANCIAL_REPORT,
+    'financial projections': TemplateType.FINANCIAL_PROJECTIONS,
+    forecast: TemplateType.FINANCIAL_PROJECTIONS,
+    marketing: TemplateType.MARKETING_PLAN,
+    'marketing plan': TemplateType.MARKETING_PLAN,
     proposal: TemplateType.CLIENT_PROPOSAL_PRO,
     strategy: TemplateType.STRATEGY_DOCUMENT,
     product: TemplateType.PRODUCT_REQUIREMENTS,

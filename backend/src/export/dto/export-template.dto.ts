@@ -108,9 +108,9 @@ export class CreateBatchExportDto {
   @IsString({ each: true })
   deckIds: string[];
 
-  @ApiProperty({ example: 'pdf', enum: ['pptx', 'pdf', 'html'] })
-  @IsEnum(['pptx', 'pdf', 'html'])
-  format: 'pptx' | 'pdf' | 'html';
+  @ApiProperty({ example: 'pdf', enum: ['pptx', 'pdf'] })
+  @IsEnum(['pptx', 'pdf'])
+  format: 'pptx' | 'pdf';
 
   @ApiProperty({ example: 'template-uuid', required: false })
   @IsString()

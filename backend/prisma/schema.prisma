@@ -46,8 +46,9 @@ model User {
   suspendReason String?
   banReason     String?
 
-  // Phase Ω.4B — Billing
-  subscriptions Subscription[]
+  // Phase Ω.4B — Billing / Stripe
+  stripeCustomerId String? @unique // set on first Checkout session creation
+  subscriptions    Subscription[]
 
   projects                Project[]
   brandKits               BrandKit[]
@@ -2154,6 +2155,8 @@ model Plan {
   storageGb   Float   @default(1.0)
   price       Float   @default(0) // USD / month per seat
   isActive    Boolean @default(true)
+  // Stripe — one price ID per plan (monthly). Null for the free plan.
+  stripePriceId String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2174,11 +2177,17 @@ model Subscription {
   // active | trialing | suspended | cancelled
   status      String     @default("active")
   seatCount   Int        @default(1)
-  // Billing period
+  // Billing period (mirrors Stripe's current_period_*)
   currentPeriodStart DateTime @default(now())
   currentPeriodEnd   DateTime
   cancelAtPeriodEnd  Boolean  @default(false)
   cancelledAt        DateTime?
+  trialEnd           DateTime?
+  // Stripe references — null until user upgrades to a paid plan
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
+  stripePriceId        String?
+  stripeStatus         String? // mirrors Stripe subscription status verbatim
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2188,6 +2197,8 @@ model Subscription {
   @@index([userId])
   @@index([workspaceId])
   @@index([status])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
   @@map("subscriptions")
 }
 
@@ -2230,4 +2241,26 @@ model RetentionPolicy {
 
   @@unique([resourceType, planId])
   @@map("retention_policies")
+}
+
+// =============================================================================
+//  Phase Ω.CERT.3 — Stripe Webhook Event log
+//
+//  Provides idempotency: before processing any webhook, check that its
+//  stripeEventId has not already been recorded. This prevents double-processing
+//  on Stripe retries.
+// =============================================================================
+
+model StripeWebhookEvent {
+  id             String    @id @default(uuid())
+  stripeEventId  String    @unique  // event.id from Stripe
+  eventType      String             // e.g. "customer.subscription.updated"
+  payload        Json               // full raw event (for debugging)
+  processedAt    DateTime?          // null = recorded but not yet processed
+  errorMessage   String?
+  createdAt      DateTime  @default(now())
+
+  @@index([eventType])
+  @@index([processedAt])
+  @@map("stripe_webhook_events")
 }
